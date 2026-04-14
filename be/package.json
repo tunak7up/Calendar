@@ -12,7 +12,9 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "mysql2": "^3.20.0",
-    "nodemon": "^3.1.14"
+    "mysql2": "^3.21.1",
+    "nodemon": "^3.1.14",
+    "sequelize": "^6.37.8",
+    "tedious": "^19.2.1"
   }
 }

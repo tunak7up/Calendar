@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .title {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Welcome to My Website</h1>
+        <a href="#"> Đăng ký lịch</a>
+        <a href="">theo dõi lịch</a>
+    </header>
+    <h3 class="title">Đăng Ký</h3>
+    <form action="/register" method="post">
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
+        <button type="submit">Đăng Ký</button>
+    </form>
+    <script>
+        document.querySelector('form').addEventListener('submit', function (event) {
+            event.preventDefault(); // Ngăn chặn gửi form mặc định
+
+            const username = document.querySelector('input[name="username"]').value;
+            const password = document.querySelector('input[name="password"]').value;
+
+            alert(`Username: ${username}\nPassword: ${password}`);
+        });
+    </script>
+</body>
+
+</html>

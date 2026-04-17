@@ -1,20 +1,22 @@
 {
   "name": "be",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1",
     "mysql2": "^3.21.1",
     "nodemon": "^3.1.14",
     "sequelize": "^6.37.8",
-    "tedious": "^19.2.1"
+    "tedious": "^19.2.1",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1"
   }
 }

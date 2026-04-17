@@ -32,8 +32,8 @@ task.hasMany(comment, { foreignKey: 'task_id', as: 'comments' });
 comment.belongsTo(person, { foreignKey: 'person_id', as: 'commenter' });
 person.hasMany(comment, { foreignKey: 'person_id', as: 'comments' });
 
-comment_attachment.belongsTo(comment, { foreignKey: 'comment_id', as: 'comment' });
 comment.hasMany(comment_attachment, { foreignKey: 'comment_id', as: 'attachments' });
+comment_attachment.belongsTo(comment, { foreignKey: 'comment_id', as: 'comment' });
 
 report_attachment.belongsTo(daily_report, { foreignKey: 'report_id', as: 'daily_report' });
 daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachments' });
@@ -41,10 +41,8 @@ daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachme
 task_attachment.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 task.hasMany(task_attachment, { foreignKey: 'task_id', as: 'attachments' });
 
-task.hasMany(person, { through: task_participant, foreignKey: 'task_id', as: 'participants' });
-person.hasMany(task, { through: task_participant, foreignKey: 'participant_id', as: 'participating_tasks' });
-role.hasMany(person, { through: task_participant, foreignKey: 'role_id', as: 'persons' });
-person.hasMany(role, { through: task_participant, foreignKey: 'person_id', as: 'roles' });
+task.belongsToMany(person, { through: task_participant, foreignKey: 'task_id', as: 'participants' });
+person.belongsToMany(task, { through: task_participant, foreignKey: 'participant_id', as: 'participating_tasks', onDelete: 'NO ACTION' });
 
 notification.belongsTo(person, { foreignKey: 'notificate_to', as: 'recipient' });
 person.hasMany(notification, { foreignKey: 'notificate_to', as: 'notifications' });
@@ -55,7 +53,7 @@ request_detail.belongsTo(request, { foreignKey: 'request_id', as: 'request' });
 request.hasMany(request_detail, { foreignKey: 'request_id', as: 'details' });
 
 response.belongsTo(request, { foreignKey: 'request_id', as: 'request' });
-request.hasMany(response, { foreignKey: 'request_id', as: 'responses' });
+request.hasOne(response, { foreignKey: 'request_id', as: 'response' });
 response.belongsTo(person, { foreignKey: 'responser_id', as: 'responser' });
 person.hasMany(response, { foreignKey: 'responser_id', as: 'responses' });
 
@@ -68,6 +66,7 @@ async function testConnection() {
     console.log('Connection has been established successfully.');
   } catch (error) {
     console.error('Unable to connect to the database:', error);
+    console.log(error.parent.errors);
   } 
 }
 

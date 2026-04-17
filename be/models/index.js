@@ -9,7 +9,6 @@ const comment = require('./comment');
 const comment_attachment = require('./comment_attachment');
 const report_attachment = require('./report_attachment');
 const task_participant = require('./task_participant');
-const role = require('./role');
 const task_attachment = require('./task_attachment');
 const notification = require('./notification');
 const schedule = require('./schedule');
@@ -60,18 +59,6 @@ person.hasMany(response, { foreignKey: 'responser_id', as: 'responses' });
 schedule.belongsTo(person, { foreignKey: 'person_id', as: 'person' });
 person.hasMany(schedule, { foreignKey: 'person_id', as: 'schedules' });
 
-async function testConnection() {
-  try {
-    await sequelize.sync({ force: true });
-    console.log('Connection has been established successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-    console.log(error.parent.errors);
-  } 
-}
-
-testConnection();
-
 module.exports = {
     person,
     task,
@@ -83,7 +70,6 @@ module.exports = {
     comment_attachment,
     report_attachment,
     task_participant,
-    role,
     task_attachment,
     notification,
     schedule

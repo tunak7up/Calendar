@@ -1,12 +1,25 @@
 const express = require('express');
 const app = express();
-const personRoutes = require('./routes/personRoutes');
+const router = require('./routes');
+const cors = require('cors');
+const sequelize = require('./config/db');
+
 
 const port = 3000; 
 
 app.use(express.json());
-app.use('/api/persons', personRoutes);
+app.use(cors());
+app.use('/api', router);
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+async function startServer() {
+  try {
+    await sequelize.sync();
+    console.log('Database synced successfully.');
+
+    app.listen(port, () => console.log(`Server running on port ${port}`));
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+}
+
+startServer();

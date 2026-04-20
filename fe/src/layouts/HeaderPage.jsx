@@ -2,10 +2,10 @@ import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuIt
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 
 const navigationBase = [
-  { name: 'Dashboard', href: '#', id: 'dashboard' },
-  { name: 'Register Work', href: '#', id: 'work' },
   { name: 'My Schedule', href: '#', id: 'schedule' },
-
+  { name: 'Register Work', href: '#', id: 'work' },
+  { name: 'Task', href: '#', id: 'task' },
+  { name: 'Settings', href: '#', id: 'settings' }
 ]
 
 function classNames(...classes) {

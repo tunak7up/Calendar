@@ -5,7 +5,7 @@ const navigationBase = [
   { name: 'Dashboard', href: '#', id: 'dashboard' },
   { name: 'Register Work', href: '#', id: 'work' },
   { name: 'My Schedule', href: '#', id: 'schedule' },
-  { name: 'Settings', href: '#', id: 'settings' },
+
 ]
 
 function classNames(...classes) {
@@ -14,8 +14,8 @@ function classNames(...classes) {
 
 export default function HeaderPage({ activeItem, onSelect }) {
   const navigation = navigationBase.map(item => ({
-     ...item,
-     current: item.id === activeItem
+    ...item,
+    current: item.id === activeItem
   }));
 
   return (
@@ -31,12 +31,12 @@ export default function HeaderPage({ activeItem, onSelect }) {
                 <XMarkIcon aria-hidden="true" className="hidden h-6 w-6 group-data-open:block" />
               </DisclosureButton>
             </div>
-            
+
             {/* Logo */}
             <div className="flex shrink-0 items-center mr-8">
               <a href="#" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">Precision Workspace</a>
             </div>
-            
+
             {/* Desktop Nav */}
             <div className="hidden sm:block">
               <div className="flex space-x-2">
@@ -47,8 +47,8 @@ export default function HeaderPage({ activeItem, onSelect }) {
                     id={`nav-${item.id}`}
                     aria-current={item.current ? 'page' : undefined}
                     onClick={(e) => {
-                       e.preventDefault();
-                       if (onSelect) onSelect(item.id);
+                      e.preventDefault();
+                      if (onSelect) onSelect(item.id);
                     }}
                     className={classNames(
                       item.current
@@ -63,7 +63,7 @@ export default function HeaderPage({ activeItem, onSelect }) {
               </div>
             </div>
           </div>
-          
+
           {/* Right side items */}
           <div className="flex items-center space-x-3">
             {/* Search */}
@@ -89,7 +89,7 @@ export default function HeaderPage({ activeItem, onSelect }) {
               <BellIcon aria-hidden="true" className="h-[1.35rem] w-[1.35rem]" />
               <span className="absolute top-[3px] right-[4px] block h-1.5 w-1.5 rounded-full bg-red-500 ring-[1.5px] ring-white" />
             </button>
-            
+
             {/* Help */}
             <button
               type="button"
@@ -118,11 +118,7 @@ export default function HeaderPage({ activeItem, onSelect }) {
                     Your Profile
                   </a>
                 </MenuItem>
-                <MenuItem>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
-                    Settings
-                  </a>
-                </MenuItem>
+
                 <MenuItem>
                   <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
                     Sign out

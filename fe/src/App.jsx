@@ -6,9 +6,11 @@ import RegistrationHistoryDetails from './pages/RegistrationHistoryDetails'
 import RegisterWork from './pages/RegisterWork'
 import RegisterLeave from './pages/RegisterLeave'
 import MySchedule from './pages/MySchedule'
+import Login from './pages/Login'
 import './styles/App.css'
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeSidebarItem, setActiveSidebarItem] = useState('schedule'); // 'list', 'leave', 'work', 'schedule'
   const [selectedRequest, setSelectedRequest] = useState(null);
 
@@ -35,6 +37,11 @@ function App() {
       return <RegistrationHistoryDetails request={selectedRequest} onBack={handleBackToHistory} />;
     }
     return <RegistrationHistory onViewDetails={handleViewDetails} onNavigate={setActiveSidebarItem} />;
+  }
+
+  // Show login page if not authenticated
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
   return (

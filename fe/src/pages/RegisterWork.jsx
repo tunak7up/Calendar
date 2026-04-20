@@ -12,16 +12,6 @@ export default function RegisterWork() {
   const [isRepeatDropdownOpen, setIsRepeatDropdownOpen] = useState(false);
   const [repeatOption, setRepeatOption] = useState('none');
   const [repeatInterval, setRepeatInterval] = useState(1);
-  const dropdownBtnRef = useRef(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
-
-  const handleToggleDropdown = () => {
-    if (!isRepeatDropdownOpen && dropdownBtnRef.current) {
-      const rect = dropdownBtnRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 8 + window.scrollY, left: rect.left + window.scrollX });
-    }
-    setIsRepeatDropdownOpen(v => !v);
-  };
   
   // Custom End Condition states
   const [endOption, setEndOption] = useState('never'); // 'never', 'date', 'count'
@@ -194,9 +184,9 @@ export default function RegisterWork() {
               <div className="flex flex-row items-center gap-3 flex-nowrap">
 
                 {/* Step 1: Dropdown lặp lại */}
-                <div className="relative flex-shrink-0" ref={dropdownBtnRef}>
+                <div className="relative flex-shrink-0">
                   <button 
-                    onClick={handleToggleDropdown}
+                    onClick={() => setIsRepeatDropdownOpen(!isRepeatDropdownOpen)}
                     className="flex items-center justify-between gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm text-[14px] font-semibold text-gray-900 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[155px]"
                   >
                     <span>
@@ -211,8 +201,7 @@ export default function RegisterWork() {
                     <>
                       <div className="fixed inset-0 z-[100]" onClick={() => setIsRepeatDropdownOpen(false)}></div>
                       <div
-                        className="fixed min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[101] overflow-hidden"
-                        style={{ top: dropdownPos.top, left: dropdownPos.left }}
+                        className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[101] overflow-hidden"
                       >
                         {['none', 'weekly', 'yearly'].map(opt => (
                           <button

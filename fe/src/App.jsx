@@ -8,6 +8,8 @@ import RegisterWork from './pages/RegisterWork'
 import RegisterLeave from './pages/RegisterLeave'
 import MySchedule from './pages/MySchedule'
 import Login from './pages/Login'
+import SidebarTask from './layouts/SidebarTask'
+import AddTask from './pages/AddTask'
 import TaskList from './pages/TaskList'
 import './styles/App.css'
 
@@ -46,7 +48,10 @@ function App() {
     if (activeSidebarItem === 'schedule') {
       return <MySchedule />;
     }
-    if (activeSidebarItem === 'task' || activeSidebarItem === 'task_list') {
+    if (activeSidebarItem === 'task' || activeSidebarItem === 'task_add') {
+      return <AddTask />;
+    }
+    if (activeSidebarItem === 'task_list') {
       return <TaskList />;
     }
 
@@ -66,9 +71,9 @@ function App() {
 
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
-      <HeaderPage activeItem={headerActiveItem} onSelect={handleHeaderSelect} />
-      {isTaskSection ? (
-        <SidebarTask activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
+      <HeaderPage activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
+      {activeSidebarItem.startsWith('task') ? (
+        <SidebarTask activeItem={activeSidebarItem === 'task' ? 'task_add' : activeSidebarItem} onSelect={setActiveSidebarItem} />
       ) : (
         <SidebarRegister activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
       )}

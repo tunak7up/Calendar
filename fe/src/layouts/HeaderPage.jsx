@@ -1,18 +1,23 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 
-const navigation = [
-  { name: 'Dashboard', href: '#', current: false },
-  { name: 'Register Work', href: '#', current: true },
-  { name: 'My Schedule', href: '#', current: false },
-  { name: 'Settings', href: '#', current: false },
+const navigationBase = [
+  { name: 'Dashboard', href: '#', id: 'dashboard' },
+  { name: 'Register Work', href: '#', id: 'work' },
+  { name: 'My Schedule', href: '#', id: 'schedule' },
+  { name: 'Settings', href: '#', id: 'settings' },
 ]
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function HeaderPage() {
+export default function HeaderPage({ activeItem, onSelect }) {
+  const navigation = navigationBase.map(item => ({
+     ...item,
+     current: item.id === activeItem
+  }));
+
   return (
     <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -39,7 +44,12 @@ export default function HeaderPage() {
                   <a
                     key={item.name}
                     href={item.href}
+                    id={`nav-${item.id}`}
                     aria-current={item.current ? 'page' : undefined}
+                    onClick={(e) => {
+                       e.preventDefault();
+                       if (onSelect) onSelect(item.id);
+                    }}
                     className={classNames(
                       item.current
                         ? 'text-[#0056b3] bg-[#edf3fb] font-semibold relative after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#0056b3] after:rounded-t-[2px]'

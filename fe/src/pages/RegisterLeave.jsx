@@ -1,55 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  SunIcon, 
-  CloudIcon, 
-  CalendarDaysIcon,
-  CalendarIcon
-} from '@heroicons/react/24/outline';
-
-const getFullDateStr = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const dayOfMonth = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${dayOfMonth}`;
-};
-
-const generateWeek = (dateObj) => {
-  const dates = [];
-  const date = new Date(dateObj.getTime());
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
-  const startOfWeek = new Date(date.setDate(diff));
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek.getTime());
-    d.setDate(startOfWeek.getDate() + i);
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const dateNum = d.getDate().toString();
-    const fullDate = getFullDateStr(d);
-    
-    dates.push({ day: dayName, date: dateNum, fullDate, dateObj: d });
-  }
-  return dates;
-};
+import { SunIcon, CloudIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import Button from '../components/Button';
+import WeekDatePicker, { getFullDateStr } from '../components/WeekDatePicker';
 
 export default function RegisterLeave() {
   const [selectedDateObj, setSelectedDateObj] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState('Morning');
 
-  const weekDates = generateWeek(selectedDateObj);
   const selectedDateStr = getFullDateStr(selectedDateObj);
 
-  const handleDateChange = (e) => {
-    const newDateStr = e.target.value; 
-    if (newDateStr) {
-      const [y, m, d] = newDateStr.split('-');
-      setSelectedDateObj(new Date(y, m - 1, d));
-    }
-  };
-
-  const handleDayClick = (dObj) => {
-    setSelectedDateObj(dObj);
-  };
+  const handleDayClick = (dObj) => setSelectedDateObj(dObj);
 
   return (
     <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
@@ -62,41 +22,12 @@ export default function RegisterLeave() {
         <div className="bg-[#f8fafc] rounded-3xl p-8 shadow-sm border border-gray-100">
           {/* Select Date */}
           <div className="mb-10">
-            <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-xs font-bold text-gray-500 tracking-wider uppercase m-0">Select Date</h2>
-              <div className="relative w-8 h-8">
-                <input 
-                  type="date" 
-                  value={selectedDateStr}
-                  onChange={handleDateChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
-                  <CalendarIcon className="w-5 h-5" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center max-w-2xl gap-2 overflow-x-auto pb-2">
-              {weekDates.map((d) => (
-                <button
-                  key={d.fullDate}
-                  onClick={() => handleDayClick(d.dateObj)}
-                  className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 ${
-                    selectedDateStr === d.fullDate
-                      ? 'bg-[#dbeafe] text-blue-700 shadow-sm'
-                      : 'text-gray-500 hover:bg-gray-100'
-                  }`}
-                >
-                  <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${selectedDateStr === d.fullDate ? 'text-blue-500' : 'text-gray-400'}`}>
-                    {d.day}
-                  </span>
-                  <span className={`text-xl font-bold ${selectedDateStr === d.fullDate ? 'text-blue-700' : 'text-gray-900'}`}>
-                    {d.date}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <WeekDatePicker
+              viewDate={selectedDateObj}
+              onViewChange={setSelectedDateObj}
+              selectedDates={[selectedDateStr]}
+              onDayClick={handleDayClick}
+            />
           </div>
 
           {/* Choose Shift */}
@@ -153,14 +84,9 @@ export default function RegisterLeave() {
             ></textarea>
           </div>
 
-          {/* Bottom Bar */}
           <div className="flex justify-end items-center gap-3">
-            <button className="px-6 py-2.5 rounded-lg text-sm font-semibold text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors">
-              Cancel
-            </button>
-            <button className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/30 transition-colors">
-              SUBMIT
-            </button>
+            <Button variant="secondary">Cancel</Button>
+            <Button>SUBMIT</Button>
           </div>
 
         </div>

@@ -8,6 +8,7 @@ import {
   CalendarIcon,
   BriefcaseIcon
 } from '@heroicons/react/24/outline';
+import Button from '../components/Button';
 
 const fakeData = [
   {
@@ -109,13 +110,10 @@ export default function RegistrationHistory({ onViewDetails, onNavigate }) {
             </select>
             
             <div className="relative ml-2">
-              <button 
-                onClick={() => setIsNewRequestOpen(!isNewRequestOpen)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm px-4 py-2.5 flex items-center gap-2 transition-colors"
-              >
+              <Button onClick={() => setIsNewRequestOpen(!isNewRequestOpen)}>
                 <PlusIcon className="w-5 h-5" />
                 New Request
-              </button>
+              </Button>
               
               {isNewRequestOpen && (
                 <>
@@ -213,13 +211,10 @@ export default function RegistrationHistory({ onViewDetails, onNavigate }) {
                       {item.approver}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button 
-                        onClick={() => onViewDetails(item)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      >
+                      <Button variant="soft-blue" onClick={() => onViewDetails(item)}>
                         <EyeIcon className="w-4 h-4" />
                         Xem chi tiết
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}

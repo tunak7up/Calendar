@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@plugin "flyonui";
+@import "flyonui/variants.css";
+@import "flyonui/src/vendor/fullcalendar.css";
+
+/* Highlight selected day from mini calendar */
+.fc-selected-day {
+  background-color: #eff6ff !important; /* blue-50 */
+}
+.fc-selected-day .fc-daygrid-day-number {
+  color: #1d4ed8 !important;
+  font-weight: 700;
+  background-color: #bfdbfe;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Show pointer cursor on day cells to hint they're clickable */
+.fc-daygrid-day {
+  cursor: pointer;
+}

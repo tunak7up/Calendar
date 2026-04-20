@@ -64,8 +64,8 @@ export default function SidebarRegister({ activeItem, onSelect }) {
 
           <ul className="space-y-3 font-medium">
             <li>
-              <a 
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('list'); }} 
+              <a
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('list'); }}
                 className={getLinkClass('list')}
               >
                 <ClipboardDocumentListIcon className={getIconClass('list')} />
@@ -73,8 +73,8 @@ export default function SidebarRegister({ activeItem, onSelect }) {
               </a>
             </li>
             <li>
-              <a 
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('leave'); }} 
+              <a
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('leave'); }}
                 className={getLinkClass('leave')}
               >
                 <CalendarDaysIcon className={getIconClass('leave')} />
@@ -82,20 +82,16 @@ export default function SidebarRegister({ activeItem, onSelect }) {
               </a>
             </li>
             <li>
-              <a 
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('work'); }} 
+              <a
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('work'); }}
                 className={getLinkClass('work')}
               >
                 <Squares2X2Icon className={getIconClass('work')} />
                 <span className="ms-4 font-semibold text-sm">Register Work</span>
               </a>
             </li>
-            <li>
-              <a href="#" className="flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer">
-                <Cog8ToothIcon className="w-5 h-5 text-[#64748b] group-hover:text-gray-900" />
-                <span className="ms-4 font-semibold text-sm">Settings</span>
-              </a>
-            </li>
+
+
           </ul>
         </div>
       </aside>

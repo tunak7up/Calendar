@@ -5,7 +5,7 @@ const navigationBase = [
   { name: 'Dashboard', href: '#', id: 'dashboard' },
   { name: 'Register Work', href: '#', id: 'work' },
   { name: 'My Schedule', href: '#', id: 'schedule' },
-
+  { name: 'Task', href: '#', id: 'task' },
 ]
 
 function classNames(...classes) {

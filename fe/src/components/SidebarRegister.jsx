@@ -7,7 +7,19 @@ import {
   Cog8ToothIcon
 } from '@heroicons/react/24/outline';
 
-export default function SidebarRegister() {
+export default function SidebarRegister({ activeItem, onSelect }) {
+  const getLinkClass = (itemName) => {
+    return activeItem === itemName
+      ? "flex items-center px-4 py-3 text-white bg-[#0056b3] rounded-xl shadow-md shadow-blue-500/20 group cursor-pointer"
+      : "flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer";
+  };
+
+  const getIconClass = (itemName) => {
+    return activeItem === itemName
+      ? "w-5 h-5 text-white"
+      : "w-5 h-5 text-[#64748b] group-hover:text-gray-900";
+  };
+
   return (
     <>
       <button
@@ -52,25 +64,34 @@ export default function SidebarRegister() {
 
           <ul className="space-y-3 font-medium">
             <li>
-              <a href="#" className="flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group">
-                <ClipboardDocumentListIcon className="w-5 h-5 text-[#64748b] group-hover:text-gray-900" />
+              <a 
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('list'); }} 
+                className={getLinkClass('list')}
+              >
+                <ClipboardDocumentListIcon className={getIconClass('list')} />
                 <span className="ms-4 font-semibold text-sm">List Request</span>
               </a>
             </li>
             <li>
-              <a href="#" className="flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group">
-                <CalendarDaysIcon className="w-5 h-5 text-[#64748b] group-hover:text-gray-900" />
+              <a 
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('leave'); }} 
+                className={getLinkClass('leave')}
+              >
+                <CalendarDaysIcon className={getIconClass('leave')} />
                 <span className="ms-4 font-semibold text-sm">Register Leave</span>
               </a>
             </li>
             <li>
-              <a href="#" className="flex items-center px-4 py-3 text-white bg-[#0056b3] rounded-xl shadow-md shadow-blue-500/20 group">
-                <Squares2X2Icon className="w-5 h-5 text-white" />
+              <a 
+                onClick={(e) => { e.preventDefault(); onSelect && onSelect('work'); }} 
+                className={getLinkClass('work')}
+              >
+                <Squares2X2Icon className={getIconClass('work')} />
                 <span className="ms-4 font-semibold text-sm">Register Work</span>
               </a>
             </li>
             <li>
-              <a href="#" className="flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group">
+              <a href="#" className="flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer">
                 <Cog8ToothIcon className="w-5 h-5 text-[#64748b] group-hover:text-gray-900" />
                 <span className="ms-4 font-semibold text-sm">Settings</span>
               </a>

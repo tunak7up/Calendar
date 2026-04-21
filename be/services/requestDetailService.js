@@ -1,20 +1,6 @@
 
 const { request_detail, request } = require('../models');
 
-const createRequestDetail = async ({
-    request_id,
-    date,
-    start_time,
-    end_time,
-}) => {
-    return await request_detail.create({
-        request_id,
-        date,
-        start_time,
-        end_time,
-    });
-};
-
 const getRequestDetailByRequestId = async (request_id) => {
     return await request_detail.findAll({ where: { request_id } });
 };
@@ -42,7 +28,6 @@ const deleteRequestDetail = async (id) => {
 };
 
 module.exports = {
-    createRequestDetail,
     getRequestDetailByRequestId,
     getRequestDetailByRequesterId,
     updateRequestDetail,

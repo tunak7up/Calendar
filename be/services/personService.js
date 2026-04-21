@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const { person, task, task_participant } = require('../models');
 
 const getAllPersons = async () => {
@@ -45,13 +46,13 @@ const updatePerson = async (
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
 
-  return await person.update({ name, password, status, role, username });
+  return await data.update({ name, password, status, role, username });
 };
 
 const removePerson = async (id) => {
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
-  await person.update({ status: false });
+  await data.update({ status: false });
 };
 
 

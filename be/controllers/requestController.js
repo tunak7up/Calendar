@@ -1,12 +1,13 @@
+const { get } = require('../routes');
 const requestService = require('../services/requestService');
 const { sendRes } = require('../utils/responseHelper');
 
-const createRequest = async (req, res) => {
+const createBulkRequest = async (req, res) => {
     try {
-        const request = await requestService.createRequest(req.body);
-        sendRes(res, 201, 'Request created successfully', request);
+        const requests = await requestService.createBulkRequest(req.body);
+        sendRes(res, 201, 'Bulk requests created successfully', requests);
     } catch (error) {
-        sendRes(res, 400, 'Error creating request', null, error.message);
+        sendRes(res, 400, 'Error creating bulk requests', null, error.message);
     }
 };
 
@@ -56,11 +57,21 @@ const deleteRequest = async (req, res) => {
     }
 };
 
+const getAllRequestDetails = async (req, res) => {
+    try {
+        const requestDetails = await requestService.getAllRequestDetails();
+        sendRes(res, 200, 'Request details retrieved successfully', requestDetails);
+    } catch (error) {
+        sendRes(res, 500, 'Error retrieving request details', null, error.message);
+    }   
+};
+
 module.exports = {
-    createRequest,
+    createBulkRequest,
     getRequestById,
     getRequestsByRequesterId,
     getAllRequests,
     updateRequestStatus,
-    deleteRequest
+    deleteRequest,
+    getAllRequestDetails
 };

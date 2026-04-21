@@ -10,14 +10,6 @@ const getRequestDetailByRequestId = async (req, res) => {
     }
 };
 
-const createRequestDetail = async (req, res) => {
-    try {
-        const requestDetail = await requestService.createRequestDetail(req.body);
-        sendRes(res, 201, 'Request detail created', requestDetail);
-    } catch (error) {
-        sendRes(res, 400, 'Error creating request detail', null, error.message);
-    }
-};
 
 const getRequestDetailByRequesterId = async (req, res) => {
     try {
@@ -50,7 +42,6 @@ const deleteRequestDetail = async (req, res) => {
 module.exports = {
     getRequestDetailByRequestId,
     getRequestDetailByRequesterId,
-    createRequestDetail,
     updateRequestDetail,
     deleteRequestDetail
 };

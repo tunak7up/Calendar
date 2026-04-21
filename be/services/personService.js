@@ -1,38 +1,56 @@
 const { person, task, task_participant } = require('../models');
 
 const getAllPersons = async () => {
-    return await person.findAll();
+  return await person.findAll();
 };
 
 const getPersonById = async (id) => {
-    const data = await person.findByPk(id);
-    if (!data) throw new Error('Person not found');
-    return data;
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  return data;
 };
 
 const getPersonByRole = async (role) => {
-    return await person.findAll({ where: { role } });
+  return await person.findAll({ where: { role } });
 };
 
-const createPerson = async ({ name, password, status, role, username }) => {
-
-    const existing = await person.findOne({ where: { username } });
-    if (existing) throw new Error('Username already exists');
-
-    return await person.create({ name, password, status, role, username });
+const createPerson = async (
+  {
+    name,
+    password,
+    status,
+    role,
+    username
+  }) => {
+  const existing = await person.findOne({ where: { username } });
+  if (existing) throw new Error('Username already exists');
+  return await person.create(
+    {
+      name,
+      password,
+      status,
+      role,
+      username
+    });
 };
 
-const updatePerson = async (id, { name, password, status, role, username }) => {
-    const data = await person.findByPk(id);
-    if (!data) throw new Error('Person not found');
+const updatePerson = async (
+  id,
+  { name,
+    password,
+    status,
+    role,
+    username }) => {
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
 
-    return await person.update({ name, password, status, role, username });
+  return await person.update({ name, password, status, role, username });
 };
 
 const removePerson = async (id) => {
-    const data = await person.findByPk(id);
-    if (!data) throw new Error('Person not found');
-    await person.update({ status: false });
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  await person.update({ status: false });
 };
 
 
@@ -55,11 +73,11 @@ const getTasksAndRolesByPersonId = async (personId) => {
 };
 
 module.exports = {
-    getAllPersons,
-    getTasksAndRolesByPersonId,
-    getPersonByRole,
-    getPersonById, 
-    createPerson, 
-    updatePerson, 
-    removePerson
+  getAllPersons,
+  getTasksAndRolesByPersonId,
+  getPersonByRole,
+  getPersonById,
+  createPerson,
+  updatePerson,
+  removePerson
 };

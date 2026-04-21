@@ -37,6 +37,16 @@ const createPerson = async (req, res) => {
     }
 };
 
+const getPersonByRole = async (req, res) => {
+    try {
+        const data = await personService.getPersonByRole(req.params.role);
+        res.json(data);
+    } catch (error) {
+        res.status(404).json({ error: error.message });
+    }
+};
+
+
 const updatePerson = async (req, res) => {
     try {
         const data = await personService.updatePerson(req.params.id, req.body);
@@ -57,6 +67,7 @@ const removePerson = async (req, res) => {
 
 module.exports = {
     getAllPersons,
+    getPersonByRole,
     getPersonById,
     createPerson,
     updatePerson,

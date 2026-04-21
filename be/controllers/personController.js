@@ -1,48 +1,49 @@
 const { person } = require('../models');
 const personService = require('../services/personService');
+const { sendRes } = require('../utils/responseHelper');
 
 const getAllPersons = async (rep, res) => {
     try {
         const persons = await personService.getAllPersons();
-        res.json(persons);
+        sendRes(res, 200, 'Persons retrieved successfully', persons);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendRes(res, 500, 'Error retrieving persons', null, error.message);
     }
 };
 
 const getPersonById = async (req, res) => {
     try {
         const person = await personService.getPersonById(req.params.id);
-        res.json(person);
+        sendRes(res, 200, 'Person retrieved successfully', person);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        sendRes(res, 404, 'Person not found', null, error.message);
     }
 };
 
 const getTasksAndRolesByPersonId = async (req, res) => {
     try {
         const data = await personService.getTasksAndRolesByPersonId(req.params.id);
-        res.json(data);
+        sendRes(res, 200, 'Tasks and roles retrieved successfully', data);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        sendRes(res, 404, 'Person not found', null, error.message);
     }
 };
 
 const createPerson = async (req, res) => {
     try {
         const person = await personService.createPerson(req.body);
-        res.json(person);
+        sendRes(res, 201, 'Person created successfully', person);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        sendRes(res, 400, 'Error creating person', null, error.message);
     }
 };
 
 const getPersonByRole = async (req, res) => {
     try {
         const data = await personService.getPersonByRole(req.params.role);
-        res.json(data);
+        sendRes(res, 200, 'Persons retrieved successfully', data);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        sendRes(res, 404, 'Person not found', null, error.message);
     }
 };
 
@@ -50,18 +51,18 @@ const getPersonByRole = async (req, res) => {
 const updatePerson = async (req, res) => {
     try {
         const data = await personService.updatePerson(req.params.id, req.body);
-        res.json(data);
+        sendRes(res, 200, 'Person updated successfully', data);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        sendRes(res, 400, 'Error updating person', null, error.message);
     }
 };
 
 const removePerson = async (req, res) => {
     try {
         await personService.removePerson(req.params.id);
-        res.json({ message: 'Person removed' });
+        sendRes(res, 200, 'Person removed successfully', null);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        sendRes(res, 404, 'Person not found', null, error.message);
     }
 };
 

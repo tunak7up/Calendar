@@ -1,10 +1,11 @@
+require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
 // Option 3: Passing parameters separately (other dialects)
-const sequelize = new Sequelize('Calendar', 'sa', 'Tuan1234', {
-  host: 'localhost',
-  port: 1433,
-  dialect: 'mssql',
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 1433,
+  dialect: process.env.DB_DIALECT || 'mssql',
   define: {
     freezeTableName: true,
     timestamps: false,

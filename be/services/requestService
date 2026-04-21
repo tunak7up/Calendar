@@ -1,0 +1,47 @@
+const { request } = require('../models');
+
+const createRequest = async ({
+        type,
+        requester_id,
+        approver_id,
+        reason,
+    }) => {
+    return await request.create({ 
+        type, 
+        requester_id, 
+        approver_id, 
+        status: 'pending', 
+        reason, 
+        created_at: new Date()
+    });
+};
+
+const getRequestById = async (request_id) => {
+    const data = await request.findByPk(request_id);
+    if (!data) throw new Error('Request not found');
+    return data;
+};
+
+const getAllRequests = async () => {
+    return await request.findAll();
+};
+
+const updateRequestStatus = async (request_id, status) => {
+    const data = await request.findByPk(request_id);
+    if (!data) throw new Error('Request not found');
+    return await data.update({ status });
+};
+
+const deleteRequest = async (request_id) => {
+    const data = await request.findByPk(request_id);
+    if (!data) throw new Error('Request not found');
+    await data.destroy();
+};
+
+module.exports = {
+    createRequest,
+    getRequestById,
+    getAllRequests,
+    updateRequestStatus,
+    deleteRequest
+};

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import HeaderPage from './layouts/HeaderPage'
 import SidebarRegister from './layouts/SidebarRegister'
-import SidebarTask from './layouts/SidebarTask'
 import RegistrationHistory from './pages/RegistrationHistory'
 import RegistrationHistoryDetails from './pages/RegistrationHistoryDetails'
 import RegisterWork from './pages/RegisterWork'

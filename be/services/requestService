@@ -26,6 +26,10 @@ const getAllRequests = async () => {
     return await request.findAll();
 };
 
+const getRequestsByRequesterId = async (requester_id) => {
+    return await request.findAll({ where: { requester_id } });
+};
+
 const updateRequestStatus = async (request_id, status) => {
     const data = await request.findByPk(request_id);
     if (!data) throw new Error('Request not found');
@@ -41,6 +45,7 @@ const deleteRequest = async (request_id) => {
 module.exports = {
     createRequest,
     getRequestById,
+    getRequestsByRequesterId,
     getAllRequests,
     updateRequestStatus,
     deleteRequest

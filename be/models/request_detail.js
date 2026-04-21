@@ -25,9 +25,6 @@ const request_detail = sequelize.define(
         end_time: {
             type: DataTypes.DATE,
         },
-        repeat_type: {
-            type: DataTypes.ENUM('none', 'daily', 'weekly', 'monthly'),
-        },
     }
 );
 

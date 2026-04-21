@@ -19,6 +19,16 @@ const getRequestById = async (req, res) => {
     }
 };
 
+const getRequestsByRequesterId = async (req, res) => {
+    try {
+        const requests = await requestService.getRequestsByRequesterId(req.params.requesterId);
+        sendRes(res, 200, 'Requests retrieved successfully', requests);
+    } catch (error) {
+        sendRes(res, 404, 'Requests not found', null, error.message);
+    }
+};
+
+
 const getAllRequests = async (req, res) => {
     try {
         const requests = await requestService.getAllRequests();
@@ -49,6 +59,7 @@ const deleteRequest = async (req, res) => {
 module.exports = {
     createRequest,
     getRequestById,
+    getRequestsByRequesterId,
     getAllRequests,
     updateRequestStatus,
     deleteRequest

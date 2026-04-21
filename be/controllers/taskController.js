@@ -1,5 +1,14 @@
 const taskService = require('../services/taskService');
 
+const createTask = async (req, res) => {
+    try {
+        const task = await taskService.createTask(req.body);
+        res.json(task);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
 const getAllTasks = async (req, res) => {
     try {
         const tasks = await taskService.getAllTasks();
@@ -56,6 +65,7 @@ const deleteTask = async (req, res) => {
 };
 
 module.exports = {
+    createTask,
     getAllTasks,
     getTaskById,
     getChildTasksByParentId,

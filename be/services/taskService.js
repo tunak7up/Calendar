@@ -1,4 +1,4 @@
-const { task } = require ('../models');
+const { task } = require('../models');
 const { Op } = require('sequelize');
 
 const createTask = async ({ name, description, parent_id, assigner_id, created_by, start_time, due_date, ended_at, title, parent_Id, priority }) => {

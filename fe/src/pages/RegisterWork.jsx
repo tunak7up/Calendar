@@ -12,7 +12,7 @@ export default function RegisterWork() {
   const [isRepeatDropdownOpen, setIsRepeatDropdownOpen] = useState(false);
   const [repeatOption, setRepeatOption] = useState('none');
   const [repeatInterval, setRepeatInterval] = useState(1);
-  
+
   // Custom End Condition states
   const [endOption, setEndOption] = useState('never'); // 'never', 'date', 'count'
   const [endDate, setEndDate] = useState(getFullDateStr(new Date()));
@@ -42,10 +42,10 @@ export default function RegisterWork() {
 
   const handleAddToSchedule = () => {
     if (draftDates.length === 0) return;
-    
+
     setSchedule(prev => {
       const newSchedule = [...prev];
-      
+
       draftDates.forEach(dateStr => {
         let generatedDates = [dateStr];
 
@@ -53,56 +53,70 @@ export default function RegisterWork() {
           let count = 1;
           const [y, m, d] = dateStr.split('-');
           let currentDate = new Date(Number(y), Number(m) - 1, Number(d));
-          
+
           while (true) {
-             if (repeatOption === 'weekly') {
-               currentDate.setDate(currentDate.getDate() + 7 * repeatInterval);
-             } else if (repeatOption === 'yearly') {
-               currentDate.setFullYear(currentDate.getFullYear() + 1 * repeatInterval);
-             }
+            if (repeatOption === 'weekly') {
+              currentDate.setDate(currentDate.getDate() + 7 * repeatInterval);
+            } else if (repeatOption === 'yearly') {
+              currentDate.setFullYear(currentDate.getFullYear() + 1 * repeatInterval);
+            }
 
-             const nextDateStr = getFullDateStr(currentDate);
+            const nextDateStr = getFullDateStr(currentDate);
 
-             if (endOption === 'count') {
-               if (count >= endCount) break;
-             } else if (endOption === 'date') {
-               if (endDate && nextDateStr > endDate) break;
-               // Fallback safety
-               if (!endDate && count >= 52) break;
-             } else {
-               // never - add a safe arbitrary limit
-               if (count >= 52) break; 
-             }
+            if (endOption === 'count') {
+              if (count >= endCount) break;
+            } else if (endOption === 'date') {
+              if (endDate && nextDateStr > endDate) break;
+              // Fallback safety
+              if (!endDate && count >= 52) break;
+            } else {
+              // never - add a safe arbitrary limit
+              if (count >= 52) break;
+            }
 
-             generatedDates.push(nextDateStr);
-             count++;
+            generatedDates.push(nextDateStr);
+            count++;
           }
         }
 
         generatedDates.forEach(gDateStr => {
-           const existingIndex = newSchedule.findIndex(item => item.date === gDateStr);
-           const shiftData = {
-             date: gDateStr,
-             shift: selectedShift,
-             hours: selectedShift === 'Full Day' ? 8 : 4
-           };
-           if (existingIndex >= 0) {
-             newSchedule[existingIndex] = shiftData;
-           } else {
-             newSchedule.push(shiftData);
-           }
+          const existingIndex = newSchedule.findIndex(item => item.date === gDateStr);
+          const shiftData = {
+            date: gDateStr,
+            shift: selectedShift,
+            hours: selectedShift === 'Full Day' ? 8 : 4
+          };
+          if (existingIndex >= 0) {
+            newSchedule[existingIndex] = shiftData;
+          } else {
+            newSchedule.push(shiftData);
+          }
         });
       });
 
       return newSchedule;
     });
-    
+
     resetForm();
   };
 
   const handleCancel = () => {
     resetForm();
     setSchedule([]);
+  };
+
+  const handleSubmit = () => {
+    if (schedule.length === 0) {
+      alert("Please select at least one work day.");
+      return;
+    }
+
+    const scheduleDetails = sortedSchedule.map(item => {
+      const timeRange = getTimeRangeStr(item.shift);
+      return `Date: ${item.date} | Time: ${timeRange} (${item.shift})`;
+    }).join('\n');
+
+    alert("Registration Summary:\n\n" + scheduleDetails);
   };
 
   const handleRemoveFromSchedule = (dateStr) => {
@@ -140,39 +154,36 @@ export default function RegisterWork() {
           <div className="mb-10">
             <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Choose Shift</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button 
+              <button
                 onClick={() => setSelectedShift('Morning')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Morning' 
-                    ? 'border-blue-500 bg-blue-50/30' 
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Morning'
+                    ? 'border-blue-500 bg-blue-50/30'
                     : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                  }`}
               >
                 <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Morning</span>
                 <span className="text-xs text-gray-400 mt-1 font-medium">08:00 - 12:00</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedShift('Afternoon')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Afternoon' 
-                    ? 'border-blue-500 bg-blue-50/30' 
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Afternoon'
+                    ? 'border-blue-500 bg-blue-50/30'
                     : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                  }`}
               >
                 <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Afternoon</span>
                 <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:00</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedShift('Full Day')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Full Day' 
-                    ? 'border-blue-500 bg-blue-50/30' 
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Full Day'
+                    ? 'border-blue-500 bg-blue-50/30'
                     : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                  }`}
               >
                 <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Full Day</span>
@@ -185,7 +196,7 @@ export default function RegisterWork() {
 
                 {/* Step 1: Dropdown lặp lại */}
                 <div className="relative flex-shrink-0">
-                  <button 
+                  <button
                     onClick={() => setIsRepeatDropdownOpen(!isRepeatDropdownOpen)}
                     className="flex items-center justify-between gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm text-[14px] font-semibold text-gray-900 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[155px]"
                   >
@@ -300,9 +311,9 @@ export default function RegisterWork() {
           {schedule.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Selected Schedule</h2>
-              <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+              <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm text-left text-gray-500">
-                  <thead className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-400">
+                  <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 font-semibold">Date</th>
                       <th className="px-6 py-3 font-semibold">Shift</th>
@@ -315,7 +326,7 @@ export default function RegisterWork() {
                       const [y, m, d] = item.date.split('-');
                       const dObj = new Date(y, m - 1, d);
                       const displayDate = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                      
+
                       return (
                         <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
@@ -328,7 +339,7 @@ export default function RegisterWork() {
                             {getTimeRangeStr(item.shift)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <Button 
+                            <Button
                               variant="danger-icon"
                               onClick={() => handleRemoveFromSchedule(item.date)}
                               title="Remove"
@@ -363,7 +374,7 @@ export default function RegisterWork() {
             </div>
             <div className="flex items-center gap-3">
               <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-              <Button>Register Work</Button>
+              <Button onClick={handleSubmit}>Register Work</Button>
             </div>
           </div>
 

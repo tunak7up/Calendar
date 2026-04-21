@@ -2,34 +2,33 @@ const { person, task, task_participant } = require('../models');
 const { get } = require('../routes');
 
 const getAllPersons = async () => {
-    return await person.findAll();
+  return await person.findAll();
 };
 
 const getPersonById = async (id) => {
-    const person = await person.findByPk(id);
-    if (!person) throw new Error('Person not found');
-    return person;
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  return data;
 }
 
 const createPerson = async ({ name, password, status, role, username }) => {
 
-    const existing = await person.findOne({ where: { username } });
-    if (existing) throw new Error('Username already exists');
+  const existing = await person.findOne({ where: { username } });
+  if (existing) throw new Error('Username already exists');
 
-    return await person.create({ name, password, status, role, username });
+  return await person.create({ name, password, status, role, username });
 };
 
 const updatePerson = async (id, { name, password, status, role, username }) => {
-    const person = await person.findByPk(id);
-    if (!person) throw new Error('Person not found');
-
-    return await person.update({ name, password, status, role, username });
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  return await data.update({ name, password, status, role, username });
 };
 
 const removePerson = async (id) => {
-    const person = await person.findByPk(id);
-    if (!person) throw new Error('Person not found');
-    await person.update({ status: false });
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  await data.update({ status: false });
 };
 
 
@@ -52,10 +51,10 @@ const getTasksAndRolesByPersonId = async (personId) => {
 };
 
 module.exports = {
-    getAllPersons,
-    getTasksAndRolesByPersonId,
-    getPersonById, 
-    createPerson, 
-    updatePerson, 
-    removePerson
+  getAllPersons,
+  getTasksAndRolesByPersonId,
+  getPersonById,
+  createPerson,
+  updatePerson,
+  removePerson
 };

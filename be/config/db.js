@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 
 // Option 3: Passing parameters separately (other dialects)
 const sequelize = new Sequelize('Calendar', 'sa', 'Tuan1234', {
-  host: 'localhost',
+  host: '192.168.10.46',
   port: 1433,
   dialect: 'mssql',
   define: {
@@ -10,7 +10,7 @@ const sequelize = new Sequelize('Calendar', 'sa', 'Tuan1234', {
     timestamps: false,
   },
   pool: {
-    max: 50, 
+    max: 50,
     min: 0,
     acquire: 30000,
     idle: 10000,

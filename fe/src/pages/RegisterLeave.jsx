@@ -6,10 +6,26 @@ import WeekDatePicker, { getFullDateStr } from '../components/WeekDatePicker';
 export default function RegisterLeave() {
   const [selectedDateObj, setSelectedDateObj] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState('Morning');
+  const [reason, setReason] = useState('');
 
   const selectedDateStr = getFullDateStr(selectedDateObj);
 
   const handleDayClick = (dObj) => setSelectedDateObj(dObj);
+
+  const handleSubmit = () => {
+    if (!selectedDateStr) {
+      alert("Please select a date.");
+      return;
+    }
+
+    alert(`Leave Registered!\nDate: ${selectedDateStr}\nShift: ${selectedShift}\nReason: ${reason}`);
+  };
+
+  const handleCancel = () => {
+    setSelectedDateObj(new Date());
+    setSelectedShift('Morning');
+    setReason('');
+  };
 
   return (
     <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
@@ -34,39 +50,36 @@ export default function RegisterLeave() {
           <div className="mb-10">
             <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Choose Shift</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button 
+              <button
                 onClick={() => setSelectedShift('Morning')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Morning' 
-                    ? 'border-blue-500 bg-blue-50/30' 
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Morning'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  }`}
               >
                 <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Morning</span>
                 <span className="text-xs text-gray-400 mt-1 font-medium">08:00 - 12:00</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedShift('Afternoon')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Afternoon' 
-                    ? 'border-blue-500 bg-blue-50/30' 
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Afternoon'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  }`}
               >
                 <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Afternoon</span>
                 <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:00</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedShift('Full Day')}
-                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${
-                  selectedShift === 'Full Day' 
-                    ? 'border-blue-500 bg-blue-50/30' 
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
+                className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Full Day'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  }`}
               >
                 <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Full Day</span>
@@ -78,15 +91,17 @@ export default function RegisterLeave() {
           {/* Reason */}
           <div className="mb-10">
             <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Reason</h2>
-            <textarea 
-              className="w-full h-40 p-4 rounded-2xl border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none"
+            <textarea
+              className="w-full h-40 p-4 rounded-2xl border-transparent focus:border-blue-500 focus:ring-2 text-black focus:ring-blue-500 bg-white shadow-sm resize-none"
               placeholder="Enter your reason here..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
             ></textarea>
           </div>
 
           <div className="flex justify-end items-center gap-3">
-            <Button variant="secondary">Cancel</Button>
-            <Button>SUBMIT</Button>
+            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+            <Button onClick={handleSubmit}>SUBMIT</Button>
           </div>
 
         </div>

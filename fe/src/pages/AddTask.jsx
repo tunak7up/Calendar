@@ -1,23 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CloudArrowUpIcon, XMarkIcon, PlusIcon, CalendarDaysIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 
 export default function AddTask() {
   const initialState = {
     taskName: '',
-    assigner: 'Vinh Lê',
+    assigner: '',
     startDate: '',
     dueDate: '',
-    priority: 'Medium',
-    subTasks: ['Review Site Survey', 'Validate Structural Integrity'],
-    assignees: ['Sarah Chen', 'Marcus Johnson']
+    priority: '',
+    subTasks: [],
+    assignees: []
   };
 
   const [formData, setFormData] = useState(initialState);
+  const [admins, setAdmins] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/person');
+        const data = await response.json();
+
+        const managers = data.filter(p => p.role === 'manager');
+        const emps = data.filter(p => p.role === 'employee');
+
+        setAdmins(managers);
+        setEmployees(emps);
+
+        // Update initial state with first admin if available
+        if (managers.length > 0) {
+          setFormData(prev => ({ ...prev, assigner: managers[0].name }));
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const handleReset = () => {
     setFormData({
       taskName: '',
-      assigner: 'Vinh Lê',
+      assigner: '',
       startDate: '',
       dueDate: '',
       priority: '',
@@ -59,7 +89,7 @@ export default function AddTask() {
         {/* Task Definition Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-sm font-semibold text-gray-800 mb-5">Task Definition</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div className="md:col-span-1">
               <label className="block text-xs font-semibold text-gray-700 mb-2">Task Name</label>
@@ -79,8 +109,10 @@ export default function AddTask() {
                 className="w-full bg-[#f8fafc] border-none text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 block p-3 outline-none appearance-none"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3e%3cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em' }}
               >
-                <option value="Vinh Lê">Vinh Lê</option>
-                <option value="John Doe">John Doe</option>
+                {admins.map(admin => (
+                  <option key={admin.person_id} value={admin.name}>{admin.name}</option>
+                ))}
+                {admins.length === 0 && <option value="">No admins found</option>}
               </select>
             </div>
           </div>
@@ -123,11 +155,10 @@ export default function AddTask() {
                 <button
                   key={level}
                   onClick={() => setFormData({ ...formData, priority: level })}
-                  className={`py-2 px-4 text-sm font-medium rounded-lg border transition-colors ${
-                    formData.priority === level
-                      ? 'bg-[#edf3fb] text-[#0056b3] border-[#86b7fe]'
-                      : 'bg-[#f8fafc] text-gray-500 border-transparent hover:bg-gray-100'
-                  }`}
+                  className={`py-2 px-4 text-sm font-medium rounded-lg border transition-colors ${formData.priority === level
+                    ? 'bg-[#edf3fb] text-[#0056b3] border-[#86b7fe]'
+                    : 'bg-[#f8fafc] text-gray-500 border-transparent hover:bg-gray-100'
+                    }`}
                 >
                   {level}
                 </button>
@@ -139,13 +170,13 @@ export default function AddTask() {
         {/* Execution Details Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-sm font-semibold text-gray-800 mb-5">Execution Details</h2>
-          
+
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <ListBulletIcon className="w-5 h-5 text-[#0056b3]" />
               <h3 className="text-sm font-semibold text-gray-800">Sub-tasks</h3>
             </div>
-            
+
             <div className="space-y-2 mb-3">
               {formData.subTasks.map((task, idx) => (
                 <div key={idx} className="bg-[#f8fafc] p-3 rounded-lg text-sm text-gray-700 font-medium">
@@ -153,7 +184,7 @@ export default function AddTask() {
                 </div>
               ))}
             </div>
-            
+
             <button
               onClick={addSubTask}
               className="flex items-center gap-1 text-[#0056b3] hover:text-[#004494] text-sm font-medium px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
@@ -177,12 +208,20 @@ export default function AddTask() {
                   </div>
                 ))}
               </div>
-              <button
-                onClick={addAssignee}
-                className="bg-[#0056b3] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#004494] transition-colors h-[48px]"
+              <select
+                onChange={(e) => {
+                  if (e.target.value && !formData.assignees.includes(e.target.value)) {
+                    setFormData({ ...formData, assignees: [...formData.assignees, e.target.value] });
+                  }
+                  e.target.value = "";
+                }}
+                className="bg-[#0056b3] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#004494] transition-colors h-[48px] appearance-none outline-none cursor-pointer"
               >
-                Add
-              </button>
+                <option value="" className="bg-white text-gray-900">Add Assignee</option>
+                {employees.filter(emp => !formData.assignees.includes(emp.name)).map(emp => (
+                  <option key={emp.person_id} value={emp.name} className="bg-white text-gray-900">{emp.name}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -190,7 +229,7 @@ export default function AddTask() {
         {/* Attachments Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-sm font-semibold text-gray-800 mb-5">Attachments</h2>
-          
+
           <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center bg-[#f8fafc] transition-colors hover:bg-gray-50">
             <div className="bg-[#edf3fb] p-3 rounded-xl mb-4">
               <CloudArrowUpIcon className="w-6 h-6 text-[#0056b3]" />

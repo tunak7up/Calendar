@@ -39,8 +39,8 @@ const createPerson = async (req, res) => {
 
 const updatePerson = async (req, res) => {
     try {
-        const person = await personService.updatePerson(req.params.id, req.body);
-        res.json(person);
+        const data = await personService.updatePerson(req.params.id, req.body);
+        res.json(data);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }

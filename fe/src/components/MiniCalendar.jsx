@@ -3,7 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-export default function MiniCalendar({ selectedDate, onSelectDate }) {
+export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [] }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(
     selectedDate ? new Date(selectedDate).getFullYear() : today.getFullYear()
@@ -88,6 +88,7 @@ export default function MiniCalendar({ selectedDate, onSelectDate }) {
         {cells.map((cell, idx) => {
           const isToday = cell.dateStr === todayStr;
           const isSelected = cell.dateStr === selectedDate;
+          const hasWorkHour = cell.dateStr ? workDays.includes(cell.dateStr) : false;
           const colPos = idx % 7; // 0=Sun, 6=Sat
 
           return (
@@ -96,7 +97,7 @@ export default function MiniCalendar({ selectedDate, onSelectDate }) {
               disabled={!cell.currentMonth}
               onClick={() => cell.dateStr && onSelectDate(cell.dateStr)}
               className={`
-                flex items-center justify-center h-8 w-8 mx-auto rounded-full text-[0.8rem] font-medium transition-colors
+                relative flex items-center justify-center h-8 w-8 mx-auto rounded-full text-[0.8rem] font-medium transition-colors
                 ${!cell.currentMonth ? 'text-gray-300 cursor-default' : ''}
                 ${cell.currentMonth && !isToday && !isSelected
                   ? colPos === 0 || colPos === 6
@@ -107,7 +108,10 @@ export default function MiniCalendar({ selectedDate, onSelectDate }) {
                 ${isSelected ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 font-bold' : ''}
               `}
             >
-              {cell.day}
+              <span>{cell.day}</span>
+              {hasWorkHour && (
+                <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isToday && !isSelected ? 'bg-white' : 'bg-gray-400'}`}></div>
+              )}
             </button>
           );
         })}

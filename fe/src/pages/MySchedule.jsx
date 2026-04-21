@@ -92,6 +92,25 @@ const fakeEvents = [
   }
 ];
 
+const fakeWorkingHours = [
+  {
+    id: 'work_1',
+    title: 'Ca làm việc của tôi',
+    start: '2026-04-21T08:00:00',
+    end: '2026-04-21T17:00:00',
+    extendedProps: { isWorkHour: true }
+  },
+  {
+    id: 'work_2',
+    title: 'Ca làm việc của tôi',
+    start: '2026-04-22T08:00:00',
+    end: '2026-04-22T17:00:00',
+    extendedProps: { isWorkHour: true }
+  }
+];
+
+const workDays = fakeWorkingHours.map(e => e.start.split('T')[0]);
+
 const getFullDateStr = (d) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -123,7 +142,23 @@ export default function MySchedule() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const calendarRef = useRef(null);
 
+  const [currentView, setCurrentView] = useState('dayGridMonth');
   const [events, setEvents] = useState(fakeEvents);
+
+  const handleDatesSet = useCallback((arg) => {
+    setCurrentView(arg.view.type);
+  }, []);
+
+  const displayEvents = [...events, ...fakeWorkingHours].map(e => {
+    if (e.extendedProps?.isWorkHour) {
+      return {
+        ...e,
+        display: 'background',
+        backgroundColor: 'rgba(59, 130, 246, 0.35)' // Darker transparent blue
+      };
+    }
+    return e;
+  });
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -164,7 +199,8 @@ export default function MySchedule() {
                 left: 'today prev,next title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
               }}
-              events={events}
+              events={displayEvents}
+              datesSet={handleDatesSet}
               editable={true}
               droppable={true}
               height="auto"
@@ -178,25 +214,32 @@ export default function MySchedule() {
                 const d = String(cellDate.getDate()).padStart(2, '0');
                 return `${y}-${m}-${d}` === selectedDate ? ['fc-selected-day'] : [];
               }}
-              eventContent={(arg) => (
-                <div
-                  className="truncate"
-                  style={{
-                    backgroundColor: arg.event.backgroundColor,
-                    color: arg.event.textColor,
-                    borderLeft: `4px solid ${arg.event.borderColor}`,
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
-                >
-                  {arg.event.title}
-                </div>
-              )}
+              eventContent={(arg) => {
+                if (arg.event.extendedProps?.isWorkHour) {
+                  return null;
+                }
+
+                // Normal event render
+                return (
+                  <div
+                    className="truncate"
+                    style={{
+                      backgroundColor: arg.event.backgroundColor,
+                      color: arg.event.textColor,
+                      borderLeft: `4px solid ${arg.event.borderColor}`,
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {arg.event.title}
+                  </div>
+                );
+              }}
             />
           </div>
         </div>
@@ -206,6 +249,7 @@ export default function MySchedule() {
           <MiniCalendar
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
+            workDays={workDays}
           />
         </div>
 
@@ -213,3 +257,4 @@ export default function MySchedule() {
     </div>
   );
 }
+

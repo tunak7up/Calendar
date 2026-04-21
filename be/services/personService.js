@@ -2,6 +2,7 @@ const { person, task, task_participant } = require('../models');
 
 const getAllPersons = async () => {
   return await person.findAll();
+  return await person.findAll();
 };
 
 const getPersonById = async (id) => {

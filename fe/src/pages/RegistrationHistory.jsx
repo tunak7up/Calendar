@@ -10,52 +10,45 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 
-const fakeData = [
-  {
-    id: 1,
-    type: 'leave',
-    name: 'Leave Request',
-    date: 'Oct 24, 2023',
-    refId: '#LR-99201',
-    status: 'Chờ phê duyệt',
-    approver: 'Alexander Thorne',
-  },
-  {
-    id: 2,
-    type: 'work',
-    name: 'Work Registration',
-    date: 'Oct 22, 2023',
-    refId: '#WR-88122',
-    status: 'Đã duyệt',
-    approver: 'Sarah Jenkins',
-  },
-  {
-    id: 3,
-    type: 'work',
-    name: 'Work Registration',
-    date: 'Oct 18, 2023',
-    refId: '#WR-77310',
-    status: 'Đã hủy',
-    approver: 'Alexander Thorne',
-  },
-  {
-    id: 4,
-    type: 'leave',
-    name: 'Leave Request',
-    date: 'Oct 15, 2023',
-    refId: '#LR-99105',
-    status: 'Đã duyệt',
-    approver: 'Sarah Jenkins',
-  }
-];
-
 export default function RegistrationHistory({ onViewDetails, onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All Request Types');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = fakeData.filter(item => {
+  React.useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/request/requester/1');
+        const result = await response.json();
+        if (result.success) {
+          const mappedData = result.data.map(item => ({
+            id: item.request_id,
+            type: item.type,
+            name: item.type === 'register' ? 'Work Registration' : 'Leave Request',
+            date: item.created_at,
+            refId: `#REQ-${item.request_id}`,
+            status: item.status === 'pending' ? 'Chờ phê duyệt' : item.status === 'approved' ? 'Đã duyệt' : 'Đã hủy',
+            approver: item.approver ? item.approver.name : 'N/A',
+            details: item.details,
+            reason: item.reason,
+            approverRole: item.approver ? item.approver.role : ''
+          }));
+          setRequests(mappedData);
+        }
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
+
+  const filteredData = requests.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         item.approver.toLowerCase().includes(searchTerm.toLowerCase());

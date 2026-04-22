@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import WeekDatePicker, { getFullDateStr } from '../components/WeekDatePicker';
@@ -9,6 +9,23 @@ export default function RegisterWork() {
   const [draftDates, setDraftDates] = useState([getFullDateStr(new Date())]);
   const [selectedShift, setSelectedShift] = useState('Morning');
   const [schedule, setSchedule] = useState([]);
+  const [workDays, setWorkDays] = useState([]);
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/schedule/person/1');
+        const result = await response.json();
+        if (result.success) {
+          const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
+          setWorkDays(days);
+        }
+      } catch (error) {
+        console.error('Error fetching schedule:', error);
+      }
+    };
+    fetchSchedule();
+  }, []);
   const [isRepeatDropdownOpen, setIsRepeatDropdownOpen] = useState(false);
   const [repeatOption, setRepeatOption] = useState('none');
   const [repeatInterval, setRepeatInterval] = useState(1);
@@ -105,18 +122,65 @@ export default function RegisterWork() {
     setSchedule([]);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (schedule.length === 0) {
       alert("Please select at least one work day.");
       return;
     }
 
-    const scheduleDetails = sortedSchedule.map(item => {
-      const timeRange = getTimeRangeStr(item.shift);
-      return `Date: ${item.date} | Time: ${timeRange} (${item.shift})`;
-    }).join('\n');
+    // Mapping schedule items to API request_details format
+    const requestDetails = schedule.map(item => {
+      let startTime, endTime;
+      if (item.shift === 'Morning') {
+        startTime = `${item.date} 08:30:00`;
+        endTime = `${item.date} 12:00:00`;
+      } else if (item.shift === 'Afternoon') {
+        startTime = `${item.date} 13:00:00`;
+        endTime = `${item.date} 17:30:00`;
+      } else { // Full Day
+        startTime = `${item.date} 08:30:00`;
+        endTime = `${item.date} 17:30:00`;
+      }
+      return {
+        date: item.date,
+        start_time: startTime,
+        end_time: endTime
+      };
+    });
 
-    alert("Registration Summary:\n\n" + scheduleDetails);
+    const payload = {
+      requester_id: 1, // Default user ID as per example
+      approver_id: null,
+      type: 'register',
+      reason: 'Đăng ký lịch làm việc',
+      request_details: requestDetails
+    };
+
+    try {
+      const response = await fetch('http://localhost:3000/api/request/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit request');
+      }
+
+      const result = await response.json();
+      alert("Đã đăng ký lịch làm việc thành công!");
+      console.log('Success:', result);
+      
+      // Clear schedule and reset form after success
+      setSchedule([]);
+      resetForm();
+    } catch (error) {
+      console.error('Error:', error);
+      alert("Có lỗi xảy ra khi đăng ký: " + error.message);
+    }
   };
 
   const handleRemoveFromSchedule = (dateStr) => {
@@ -147,6 +211,7 @@ export default function RegisterWork() {
               selectedDates={draftDates}
               onDayClick={handleDayClick}
               onCalendarPick={handleCalendarPick}
+              workDays={workDays}
             />
           </div>
 

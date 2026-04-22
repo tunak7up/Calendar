@@ -71,10 +71,12 @@ function App() {
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
       <HeaderPage activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
-      {activeSidebarItem.startsWith('task') ? (
-        <SidebarTask activeItem={activeSidebarItem === 'task' ? 'task_add' : activeSidebarItem} onSelect={setActiveSidebarItem} />
-      ) : (
-        <SidebarRegister activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
+      {activeSidebarItem !== 'schedule' && (
+        activeSidebarItem.startsWith('task') ? (
+          <SidebarTask activeItem={activeSidebarItem === 'task' ? 'task_add' : activeSidebarItem} onSelect={setActiveSidebarItem} />
+        ) : (
+          <SidebarRegister activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
+        )
       )}
       <main className="flex-1">
         {renderContent()}

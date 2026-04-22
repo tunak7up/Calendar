@@ -1,13 +1,12 @@
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
-import { useState, useRef, useCallback } from 'react';
 import MiniCalendar from '../components/MiniCalendar';
 
 const fakeEvents = [
-  // Single-day timed events
   {
     title: 'Quarterly Budget Review',
     start: '2026-04-01T10:00:00',
@@ -48,93 +47,15 @@ const fakeEvents = [
     borderColor: '#fecdd3',
     textColor: '#9f1239'
   },
-
-  // Multi-day all-day events (end is exclusive = last day + 1)
   {
     title: '1pm Project Deadline',
     start: '2026-04-05',
-    end: '2026-04-08', // spans Apr 5 → Apr 7
+    end: '2026-04-08',
     backgroundColor: '#e0e7ff',
     borderColor: '#c7d2fe',
     textColor: '#3730a3'
-  },
-  {
-    title: '11:30am Design Review',
-    start: '2026-04-14',
-    end: '2026-04-16', // spans Apr 14 → Apr 15
-    backgroundColor: '#f3e8ff',
-    borderColor: '#e9d5ff',
-    textColor: '#6b21a8'
-  },
-  {
-    title: 'Product Launch',
-    start: '2026-04-18',
-    end: '2026-04-21', // spans Apr 18 → Apr 20
-    backgroundColor: '#fae8ff',
-    borderColor: '#f5d0fe',
-    textColor: '#86198f'
-  },
-  {
-    title: 'Marketing Strategy Sprint',
-    start: '2026-04-23',
-    end: '2026-04-26', // spans Apr 23 → Apr 25
-    backgroundColor: '#ccfbf1',
-    borderColor: '#99f6e4',
-    textColor: '#115e59'
-  },
-  {
-    title: 'Annual Shareholders',
-    start: '2026-05-01',
-    end: '2026-05-03', // spans May 1 → May 2
-    backgroundColor: '#e0f2fe',
-    borderColor: '#bae6fd',
-    textColor: '#075985'
   }
 ];
-
-const fakeWorkingHours = [
-  {
-    id: 'work_1',
-    title: 'Ca làm việc của tôi',
-    start: '2026-04-21T08:00:00',
-    end: '2026-04-21T17:00:00',
-    extendedProps: { isWorkHour: true }
-  },
-  {
-    id: 'work_2',
-    title: 'Ca làm việc của tôi',
-    start: '2026-04-22T08:00:00',
-    end: '2026-04-22T17:00:00',
-    extendedProps: { isWorkHour: true }
-  }
-];
-
-const workDays = fakeWorkingHours.map(e => e.start.split('T')[0]);
-
-const getFullDateStr = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const dayOfMonth = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${dayOfMonth}`;
-};
-
-const generateWeek = (dateObj) => {
-  const dates = [];
-  const date = new Date(dateObj.getTime());
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  const startOfWeek = new Date(date.setDate(diff));
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek.getTime());
-    d.setDate(startOfWeek.getDate() + i);
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const dateNum = d.getDate().toString();
-    const fullDate = getFullDateStr(d);
-    dates.push({ day: dayName, date: dateNum, fullDate, dateObj: d });
-  }
-  return dates;
-};
 
 export default function MySchedule() {
   const today = new Date();
@@ -142,19 +63,40 @@ export default function MySchedule() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const calendarRef = useRef(null);
 
-  const [currentView, setCurrentView] = useState('dayGridMonth');
   const [events, setEvents] = useState(fakeEvents);
+  const [workingHours, setWorkingHours] = useState([]);
 
-  const handleDatesSet = useCallback((arg) => {
-    setCurrentView(arg.view.type);
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/schedule/person/1');
+        const result = await response.json();
+        if (result.success) {
+          const mappedWorkingHours = result.data.map(item => ({
+            id: `work_${item.schedule_id}`,
+            title: 'Lịch làm việc',
+            start: item.start_time,
+            end: item.end_time,
+            extendedProps: { isWorkHour: true }
+          }));
+          setWorkingHours(mappedWorkingHours);
+        }
+      } catch (error) {
+        console.error('Error fetching schedule:', error);
+      }
+    };
+
+    fetchSchedule();
   }, []);
 
-  const displayEvents = [...events, ...fakeWorkingHours].map(e => {
+  const workDays = workingHours.map(e => e.start.split(/[T ]/)[0]);
+
+  const displayEvents = [...events, ...workingHours].map(e => {
     if (e.extendedProps?.isWorkHour) {
       return {
         ...e,
         display: 'background',
-        backgroundColor: 'rgba(59, 130, 246, 0.35)' // Darker transparent blue
+        backgroundColor: 'rgba(59, 130, 246, 0.2)'
       };
     }
     return e;
@@ -162,13 +104,11 @@ export default function MySchedule() {
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
-    // Navigate FullCalendar to the selected date
     if (calendarRef.current) {
       calendarRef.current.getApi().gotoDate(dateStr);
     }
   };
 
-  // Drag & drop: update event start date
   const handleEventDrop = useCallback((info) => {
     const { event } = info;
     setEvents(prev => prev.map(e =>
@@ -178,7 +118,6 @@ export default function MySchedule() {
     ));
   }, []);
 
-  // Click on any day cell to "add task"
   const handleDateClick = useCallback((info) => {
     alert(`Đã chọn ngày: ${info.dateStr}\nChức năng tạo task sẽ được mở tại đây.`);
   }, []);
@@ -186,21 +125,20 @@ export default function MySchedule() {
   return (
     <div className="flex-1 p-8 pt-[80px] bg-white min-h-screen">
       <div className="max-w-7xl mx-auto flex gap-8">
-
+        
         {/* Main Calendar Area */}
         <div className="flex-1 min-w-0">
-          <div className="bg-white">
+          <div className="bg-white shadow-sm border border-gray-100 rounded-3xl p-6">
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
-              initialDate="2026-04-01"
+              initialDate={todayStr}
               headerToolbar={{
                 left: 'today prev,next title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
               }}
               events={displayEvents}
-              datesSet={handleDatesSet}
               editable={true}
               droppable={true}
               height="auto"
@@ -212,14 +150,18 @@ export default function MySchedule() {
                 const y = cellDate.getFullYear();
                 const m = String(cellDate.getMonth() + 1).padStart(2, '0');
                 const d = String(cellDate.getDate()).padStart(2, '0');
-                return `${y}-${m}-${d}` === selectedDate ? ['fc-selected-day'] : [];
+                const dateStr = `${y}-${m}-${d}`;
+                
+                const classes = [];
+                if (dateStr === selectedDate) classes.push('fc-selected-day');
+                if (workDays.includes(dateStr)) classes.push('fc-work-day');
+                
+                return classes;
               }}
               eventContent={(arg) => {
                 if (arg.event.extendedProps?.isWorkHour) {
                   return null;
                 }
-
-                // Normal event render
                 return (
                   <div
                     className="truncate"
@@ -257,4 +199,3 @@ export default function MySchedule() {
     </div>
   );
 }
-

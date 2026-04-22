@@ -1,29 +1,27 @@
-const { request, request_detail } = require('../models');
+const { request, request_detail, person, schedule } = require('../models');
 const sequelize = require('../config/db');
-const { get } = require('../routes');
 
 const createBulkRequest = async (data) => {
-    // S? d?ng Managed Transaction ?? Sequelize t? qu?n l? v?ng ??i t
     return await sequelize.transaction(async (t) => {
-        
-        // 1. T?o Request ch?nh
+
+
         const newRequest = await request.create({
             type: data.type,
             requester_id: data.requester_id,
             approver_id: data.approver_id,
             status: data.status || 'pending',
-            reason: data.reason
+            reason: data.reason,
+            created_at: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })
         }, { transaction: t });
 
-        // 2. Map d? li?u (L?u ? s?a start -> start_time, end -> end_time)
+
         const detailsData = data.request_details.map(detail => ({
-            request_id: newRequest.id || newRequest.request_id, // Ki?m tra k? t?n ID c?a model
-            start_time: detail.start_time, // S?a l?i cho ??ng v?i JSON b?n g?i
-            end_time: detail.end_time,     // S?a l?i cho ??ng v?i JSON b?n g?i
-            date: detail.date 
+            request_id: newRequest.request_id || newRequest.id,
+            start_time: detail.start_time,
+            end_time: detail.end_time,
+            date: detail.date
         }));
 
-        // 3. T?o h?ng lo?t chi ti?t
         await request_detail.bulkCreate(detailsData, { transaction: t });
 
         return newRequest;
@@ -31,13 +29,24 @@ const createBulkRequest = async (data) => {
 };
 
 const getRequestById = async (request_id) => {
-    const data = await request.findByPk(request_id);
+    const data = await request.findByPk(request_id, {
+        include: [
+            { model: request_detail, as: 'details' },
+            { model: person, as: 'approver', attributes: ['name', 'role'] }
+        ]
+    });
     if (!data) throw new Error('Request not found');
     return data;
 };
 
 const getAllRequests = async () => {
-    return await request.findAll();
+    return await request.findAll({
+        include: [
+            { model: request_detail, as: 'details' },
+            { model: person, as: 'approver', attributes: ['name', 'role'] }
+        ],
+        order: [['created_at', 'DESC']]
+    });
 };
 
 const getAllRequestDetails = async () => {
@@ -45,13 +54,54 @@ const getAllRequestDetails = async () => {
 };
 
 const getRequestsByRequesterId = async (requester_id) => {
-    return await request.findAll({ where: { requester_id } });
+    return await request.findAll({
+        where: { requester_id },
+        include: [
+            { model: request_detail, as: 'details' },
+            { model: person, as: 'approver', attributes: ['name', 'role'] }
+        ],
+        order: [['created_at', 'DESC']]
+    });
 };
 
 const updateRequestStatus = async (request_id, status) => {
-    const data = await request.findByPk(request_id);
-    if (!data) throw new Error('Request not found');
-    return await data.update({ status });
+    console.log(`Updating request ${request_id} to status: ${status}`);
+    return await sequelize.transaction(async (t) => {
+        const data = await request.findByPk(request_id, {
+            include: [{ model: request_detail, as: 'details' }],
+            transaction: t
+        });
+
+        if (!data) throw new Error('Request not found');
+
+        // Update the status
+        await data.update({ status }, { transaction: t });
+        console.log(`Request ${request_id} updated. Type: ${data.type}`);
+
+        // If approved and type is register, move details to schedule table
+        if (status.toLowerCase() === 'approved' && (data.type.toLowerCase() === 'register' || data.type.toLowerCase() === 'leave')) {
+            console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
+            
+            const scheduleEntries = data.details.map(detail => ({
+                person_id: data.requester_id,
+                start_time: detail.start_time,
+                end_time: detail.end_time,
+                working_date: detail.date
+            }));
+
+            if (scheduleEntries.length > 0) {
+                // Optional: Clear existing schedule for these dates to avoid duplicates if re-approved
+                // await schedule.destroy({ where: { person_id: data.requester_id, working_date: scheduleEntries.map(e => e.working_date) }, transaction: t });
+                
+                await schedule.bulkCreate(scheduleEntries, { transaction: t });
+                console.log(`Successfully synced ${scheduleEntries.length} entries to schedule.`);
+            } else {
+                console.log('No details found to sync.');
+            }
+        }
+
+        return data;
+    });
 };
 
 const deleteRequest = async (request_id) => {

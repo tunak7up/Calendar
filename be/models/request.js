@@ -33,7 +33,7 @@ const request = sequelize.define(
             type: DataTypes.TEXT,
         },        
         created_at: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         },
     });
 

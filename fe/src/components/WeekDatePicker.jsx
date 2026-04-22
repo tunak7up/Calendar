@@ -50,6 +50,7 @@ export default function WeekDatePicker({
   selectedDates = [],
   onDayClick,
   onCalendarPick,
+  workDays = [],
 }) {
   const weekDates = generateWeek(viewDate);
   const viewDateStr = getFullDateStr(viewDate);
@@ -85,6 +86,7 @@ export default function WeekDatePicker({
       <div className="flex justify-between items-center max-w-2xl gap-2 overflow-x-auto pb-2">
         {weekDates.map((d) => {
           const active = selectedDates.includes(d.fullDate);
+          const hasWork = workDays.includes(d.fullDate);
           return (
             <button
               key={d.fullDate}
@@ -99,6 +101,9 @@ export default function WeekDatePicker({
               <span className={`text-xl font-bold ${active ? 'text-blue-700' : 'text-gray-900'}`}>
                 {d.date}
               </span>
+              {hasWork && (
+                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${active ? 'bg-blue-600' : 'bg-blue-400'}`}></div>
+              )}
             </button>
           );
         })}

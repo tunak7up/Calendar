@@ -17,10 +17,10 @@ const schedule = sequelize.define(
             }
         },
         start_time: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         },
         end_time: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         },
         working_date: {
             type: DataTypes.DATEONLY,

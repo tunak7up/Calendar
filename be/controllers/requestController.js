@@ -1,4 +1,3 @@
-const { get } = require('../routes');
 const requestService = require('../services/requestService');
 const { sendRes } = require('../utils/responseHelper');
 

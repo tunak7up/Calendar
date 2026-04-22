@@ -5,18 +5,23 @@
 
 /* Highlight selected day from mini calendar */
 .fc-selected-day {
-  background-color: #eff6ff !important; /* blue-50 */
+  background-color: #fffbeb !important; /* amber-50 */
 }
 .fc-selected-day .fc-daygrid-day-number {
-  color: #1d4ed8 !important;
+  color: #b45309 !important; /* amber-700 */
   font-weight: 700;
-  background-color: #bfdbfe;
+  background-color: #fef3c7; /* amber-100 */
   border-radius: 50%;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Working day highlight */
+.fc-work-day {
+  background-color: #ecfeff !important; /* cyan-50 */
 }
 
 /* Show pointer cursor on day cells to hint they're clickable */

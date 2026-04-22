@@ -20,10 +20,10 @@ const request_detail = sequelize.define(
             type: DataTypes.DATEONLY,
         },
         start_time: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         },
         end_time: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         },
     }
 );

@@ -1,13 +1,7 @@
 import { CalendarIcon } from '@heroicons/react/24/outline';
+import { getFullDateStr } from '../utils/dateUtils';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-export const getFullDateStr = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 export const generateWeek = (dateObj) => {
   const dates = [];
@@ -28,6 +22,7 @@ export const generateWeek = (dateObj) => {
   }
   return dates;
 };
+
 
 // ── Component ─────────────────────────────────────────────────────────────────
 /**

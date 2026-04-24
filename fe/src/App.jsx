@@ -10,12 +10,21 @@ import Login from './pages/Login'
 import SidebarTask from './layouts/SidebarTask'
 import AddTask from './pages/AddTask'
 import TaskList from './pages/TaskList'
+import AddSubTask from './pages/AddSubTask'
+
 import './styles/App.css'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeSidebarItem, setActiveSidebarItem] = useState('schedule');
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [preSelectedDate, setPreSelectedDate] = useState(null);
+  const [currentParentTask, setCurrentParentTask] = useState(null);
+
+  const handleNavigateWithDate = (page, date) => {
+    setPreSelectedDate(date);
+    setActiveSidebarItem(page);
+  };
 
   const isTaskSection = activeSidebarItem === 'task' || activeSidebarItem.startsWith('task_');
 
@@ -27,32 +36,29 @@ function App() {
     setSelectedRequest(null);
   };
 
-  const handleHeaderSelect = (id) => {
-    if (id === 'task') {
-      // Khi nhấn Task trên header, mặc định vào task_list
-      setActiveSidebarItem('task_list');
-    } else {
-      setActiveSidebarItem(id);
-    }
-    setSelectedRequest(null);
-  };
-
   const renderContent = () => {
     if (activeSidebarItem === 'work') {
-      return <RegisterWork />;
+      return <RegisterWork initialDate={preSelectedDate} />;
     }
     if (activeSidebarItem === 'leave') {
-      return <RegisterLeave />;
+      return <RegisterLeave initialDate={preSelectedDate} />;
     }
     if (activeSidebarItem === 'schedule') {
-      return <MySchedule />;
+      return <MySchedule onNavigateWithDate={handleNavigateWithDate} />;
     }
     if (activeSidebarItem === 'task' || activeSidebarItem === 'task_add') {
-      return <AddTask />;
+      return <AddTask initialDate={preSelectedDate} />;
     }
     if (activeSidebarItem === 'task_list') {
-      return <TaskList />;
+      return <TaskList onAddSubTask={(task) => {
+        setCurrentParentTask(task);
+        setActiveSidebarItem('task_sub_add');
+      }} />;
     }
+    if (activeSidebarItem === 'task_sub_add') {
+      return <AddSubTask parentTask={currentParentTask} onBack={() => setActiveSidebarItem('task_list')} />;
+    }
+
 
     if (selectedRequest) {
       return <RegistrationHistoryDetails request={selectedRequest} onBack={handleBackToHistory} />;
@@ -66,12 +72,12 @@ function App() {
   }
 
   // Xác định activeItem cho header (task_list → 'task' để highlight đúng nav)
-  const headerActiveItem = isTaskSection ? 'task' : activeSidebarItem;
+  // const headerActiveItem = isTaskSection ? 'task' : activeSidebarItem;
 
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
       <HeaderPage activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
-      {activeSidebarItem !== 'schedule' && (
+      {activeSidebarItem !== 'schedule' && activeSidebarItem !== 'add_file' && (
         activeSidebarItem.startsWith('task') ? (
           <SidebarTask activeItem={activeSidebarItem === 'task' ? 'task_add' : activeSidebarItem} onSelect={setActiveSidebarItem} />
         ) : (
@@ -84,5 +90,6 @@ function App() {
     </div>
   )
 }
+
 
 export default App

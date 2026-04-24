@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, TrashIcon, CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
-import WeekDatePicker, { getFullDateStr } from '../components/WeekDatePicker';
+import WeekDatePicker from '../components/WeekDatePicker';
+import { getFullDateStr, getTimeRangeStr } from '../utils/dateUtils';
+import { scheduleService } from '../services/scheduleService';
+import { requestService } from '../services/requestService';
 
-export default function RegisterLeave() {
-  const [viewDateObj, setViewDateObj] = useState(new Date());
-  const [draftDates, setDraftDates] = useState([getFullDateStr(new Date())]);
+export default function RegisterLeave({ initialDate }) {
+  const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
+  const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : [getFullDateStr(new Date())]);
   const [selectedShift, setSelectedShift] = useState('Morning');
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
@@ -15,8 +18,7 @@ export default function RegisterLeave() {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/schedule/person/1');
-        const result = await response.json();
+        const result = await scheduleService.getPersonSchedule(1);
         if (result.success) {
           setWorkSchedules(result.data);
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
@@ -128,17 +130,7 @@ export default function RegisterLeave() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/request/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit request');
-      }
-
+      const result = await requestService.submitRequest(payload);
       alert("Đã gửi yêu cầu nghỉ phép thành công!");
       setSchedule([]);
       setReason('');
@@ -149,13 +141,14 @@ export default function RegisterLeave() {
     }
   };
 
+
   const handleRemoveFromSchedule = (dateStr) => {
     setSchedule(prev => prev.filter(item => item.date !== dateStr));
   };
 
   const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
   const getTimeRangeStr = (shift) => {
-    return shift === 'Morning' ? '08:00 - 12:00' : shift === 'Afternoon' ? '13:00 - 17:00' : '08:00 - 17:00';
+    return shift === 'Morning' ? '08:30 - 12:00' : shift === 'Afternoon' ? '13:00 - 17:30' : '08:30 - 17:30';
   };
 
   return (

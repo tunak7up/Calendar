@@ -9,6 +9,7 @@ import {
   BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
+import { requestService } from '../services/requestService';
 
 export default function RegistrationHistory({ onViewDetails, onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,8 +22,7 @@ export default function RegistrationHistory({ onViewDetails, onNavigate }) {
   React.useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/request/requester/1');
-        const result = await response.json();
+        const result = await requestService.getAllRequests(); // Should probably be specific to requester in real app
         if (result.success) {
           const mappedData = result.data.map(item => ({
             id: item.request_id,
@@ -47,6 +47,7 @@ export default function RegistrationHistory({ onViewDetails, onNavigate }) {
 
     fetchRequests();
   }, []);
+
 
   const filteredData = requests.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

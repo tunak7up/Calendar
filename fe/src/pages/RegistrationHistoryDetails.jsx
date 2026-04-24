@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import { requestService } from '../services/requestService';
 
 export default function RegistrationHistoryDetails({ request, onBack }) {
   if (!request) return null;
@@ -117,12 +118,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
                 <button
                   onClick={async () => {
                     try {
-                      const response = await fetch(`http://localhost:3000/api/request/${request.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: 'approved' })
-                      });
-                      const result = await response.json();
+                      const result = await requestService.updateStatus(request.id, 'approved');
                       if (result.success) {
                         alert('Đã phê duyệt thành công! Lịch làm việc đã được cập nhật.');
                         onBack(); // Go back to list to refresh
@@ -141,6 +137,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
                 </button>
               </div>
             )}
+
 
             {!isPending ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">

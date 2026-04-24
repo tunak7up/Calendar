@@ -1,5 +1,9 @@
 const { task, person, task_participant, task_attachment } = require('../models');
+
 const { Op } = require('sequelize');
+const createTask = async ({ name, description, parent_id, assigner_id, created_by, start_time, due_date, ended_at, title, parent_Id, priority }) => {
+    return await task.create({ name, description, parent_id, assigner_id, created_by, start_time, due_date, ended_at, title, status: 'pending', parent_Id, priority });
+};
 const sequelize = require('../config/db');
 
 const createTask = async (data) => {

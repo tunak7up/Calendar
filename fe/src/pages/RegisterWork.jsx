@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
-import WeekDatePicker, { getFullDateStr } from '../components/WeekDatePicker';
+import WeekDatePicker from '../components/WeekDatePicker';
+import { getFullDateStr, getTimeRangeStr } from '../utils/dateUtils';
+import { scheduleService } from '../services/scheduleService';
+import { requestService } from '../services/requestService';
 
 
-export default function RegisterWork() {
-  const [viewDateObj, setViewDateObj] = useState(new Date());
-  const [draftDates, setDraftDates] = useState([getFullDateStr(new Date())]);
+export default function RegisterWork({ initialDate }) {
+  const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
+  const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : [getFullDateStr(new Date())]);
   const [selectedShift, setSelectedShift] = useState('Morning');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
@@ -14,8 +17,7 @@ export default function RegisterWork() {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/schedule/person/1');
-        const result = await response.json();
+        const result = await scheduleService.getPersonSchedule(1);
         if (result.success) {
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
           setWorkDays(days);
@@ -157,20 +159,7 @@ export default function RegisterWork() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/request/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit request');
-      }
-
-      const result = await response.json();
+      const result = await requestService.submitRequest(payload);
       alert("Đã đăng ký lịch làm việc thành công!");
       console.log('Success:', result);
       
@@ -182,6 +171,7 @@ export default function RegisterWork() {
       alert("Có lỗi xảy ra khi đăng ký: " + error.message);
     }
   };
+
 
   const handleRemoveFromSchedule = (dateStr) => {
     setSchedule(prev => prev.filter(item => item.date !== dateStr));
@@ -228,7 +218,7 @@ export default function RegisterWork() {
               >
                 <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Morning</span>
-                <span className="text-xs text-gray-400 mt-1 font-medium">08:00 - 12:00</span>
+                <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 12:00</span>
               </button>
 
               <button
@@ -240,7 +230,7 @@ export default function RegisterWork() {
               >
                 <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Afternoon</span>
-                <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:00</span>
+                <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:30</span>
               </button>
 
               <button
@@ -252,7 +242,7 @@ export default function RegisterWork() {
               >
                 <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
                 <span className="font-bold text-gray-900">Full Day</span>
-                <span className="text-xs text-gray-400 mt-1 font-medium">08:00 - 17:00</span>
+                <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 17:30</span>
               </button>
             </div>
             {/* Container 1: Repeat controls */}

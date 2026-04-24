@@ -5,8 +5,17 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import MiniCalendar from '../components/MiniCalendar';
+import { scheduleService } from '../services/scheduleService';
+import { 
+  CalendarIcon, 
+  BriefcaseIcon, 
+  UserMinusIcon, 
+  PlusCircleIcon, 
+  XMarkIcon 
+} from '@heroicons/react/24/outline';
 
 const fakeEvents = [
+  // ... (keeping fakeEvents as is)
   {
     title: 'Quarterly Budget Review',
     start: '2026-04-01T10:00:00',
@@ -57,7 +66,7 @@ const fakeEvents = [
   }
 ];
 
-export default function MySchedule() {
+export default function MySchedule({ onNavigateWithDate }) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -65,12 +74,12 @@ export default function MySchedule() {
 
   const [events, setEvents] = useState(fakeEvents);
   const [workingHours, setWorkingHours] = useState([]);
+  const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay }
 
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/schedule/person/1');
-        const result = await response.json();
+        const result = await scheduleService.getPersonSchedule(1);
         if (result.success) {
           const mappedWorkingHours = result.data.map(item => ({
             id: `work_${item.schedule_id}`,
@@ -96,7 +105,7 @@ export default function MySchedule() {
       return {
         ...e,
         display: 'background',
-        backgroundColor: 'rgba(59, 130, 246, 0.2)'
+        backgroundColor: 'rgba(59, 130, 246, 0.15)'
       };
     }
     return e;
@@ -119,16 +128,17 @@ export default function MySchedule() {
   }, []);
 
   const handleDateClick = useCallback((info) => {
-    alert(`Đã chọn ngày: ${info.dateStr}\nChức năng tạo task sẽ được mở tại đây.`);
-  }, []);
+    const isWorkDay = workDays.includes(info.dateStr);
+    setMenuConfig({ date: info.dateStr, isWorkDay });
+  }, [workDays]);
 
   return (
-    <div className="flex-1 p-8 pt-[80px] bg-white min-h-screen">
+    <div className="flex-1 p-8 pt-[80px] bg-[#f8fafc] min-h-screen relative">
       <div className="max-w-7xl mx-auto flex gap-8">
         
         {/* Main Calendar Area */}
         <div className="flex-1 min-w-0">
-          <div className="bg-white shadow-sm border border-gray-100 rounded-3xl p-6">
+          <div className="bg-white shadow-xl shadow-blue-900/5 border border-gray-100 rounded-3xl p-6 transition-all">
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -159,23 +169,14 @@ export default function MySchedule() {
                 return classes;
               }}
               eventContent={(arg) => {
-                if (arg.event.extendedProps?.isWorkHour) {
-                  return null;
-                }
+                if (arg.event.extendedProps?.isWorkHour) return null;
                 return (
                   <div
-                    className="truncate"
+                    className="truncate px-2 py-1 rounded-md text-[0.7rem] font-bold border-l-4"
                     style={{
                       backgroundColor: arg.event.backgroundColor,
                       color: arg.event.textColor,
-                      borderLeft: `4px solid ${arg.event.borderColor}`,
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      borderColor: arg.event.borderColor,
                     }}
                   >
                     {arg.event.title}
@@ -187,15 +188,87 @@ export default function MySchedule() {
         </div>
 
         {/* Right Panel — Mini Calendar */}
-        <div className="w-64 shrink-0 border-l border-gray-100 pl-6 pt-2">
+        <div className="w-64 shrink-0 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit sticky top-[100px]">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Navigational View</h3>
           <MiniCalendar
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
             workDays={workDays}
           />
         </div>
-
       </div>
+
+      {/* Date Options Modal */}
+      {menuConfig && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Options for {menuConfig.date}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Choose an action to perform on this date</p>
+              </div>
+              <button 
+                onClick={() => setMenuConfig(null)}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-2">
+              <button
+                onClick={() => onNavigateWithDate('task_add', menuConfig.date)}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 group transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <PlusCircleIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-900">Create Task</div>
+                  <div className="text-xs text-gray-400">Add a new task to your schedule</div>
+                </div>
+              </button>
+
+              {!menuConfig.isWorkDay ? (
+                <button
+                  onClick={() => onNavigateWithDate('work', menuConfig.date)}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-green-50 group transition-all text-left"
+                >
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all">
+                    <BriefcaseIcon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">Register Work</div>
+                    <div className="text-xs text-gray-400">Schedule a work shift for this day</div>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={() => onNavigateWithDate('leave', menuConfig.date)}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 group transition-all text-left"
+                >
+                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
+                    <UserMinusIcon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">Register Leave</div>
+                    <div className="text-xs text-gray-400">Request time off for this work day</div>
+                  </div>
+                </button>
+              )}
+            </div>
+            
+            <div className="p-4 bg-gray-50/30 text-center">
+              <button 
+                onClick={() => setMenuConfig(null)}
+                className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

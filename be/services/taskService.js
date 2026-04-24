@@ -26,7 +26,7 @@ const createTask = async (data) => {
                 start_time: data.start_time,
                 due_date: data.due_date,
                 title: subTask.title,
-                status: subTask.status,
+                status: subTask.status || 'pending',
                 created_at: new Date(),
                 description: subTask.description,
                 priority: subTask.priority,

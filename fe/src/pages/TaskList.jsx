@@ -109,7 +109,7 @@ export default function TaskList({ onAddSubTask }) {
   React.useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/task/with-participants');
+        const response = await fetch('http://localhost:3000/api/task/participant/1');
         const result = await response.json();
         if (result.success) {
           setTasks(result.data);
@@ -201,6 +201,9 @@ export default function TaskList({ onAddSubTask }) {
                 <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Status
                 </th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Role
+                </th>
                 <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Actions
                 </th>
@@ -222,6 +225,9 @@ export default function TaskList({ onAddSubTask }) {
                   </td>
                   <td className="px-4 py-5">
                     <StatusBadge status={task.status.charAt(0).toUpperCase() + task.status.slice(1)} />
+                  </td>
+                  <td className="px-4 py-5 text-gray-600 text-sm whitespace-nowrap">
+                    {task.role || 'N/A'}
                   </td>
                   <td className="px-4 py-5 text-center flex items-center justify-center gap-4">
                     <button

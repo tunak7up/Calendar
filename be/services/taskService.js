@@ -88,6 +88,11 @@ const getAllTasksByParticipantsId = async (participantId) => {
     const tasks = await task.findAll({
         include: [
             {
+                model: person,
+                as: 'assigner',
+                attributes: ['name']
+            },
+            {
                 model: task_participant,
                 as: 'task_participants',
                 where: { participant_id: participantId },
@@ -96,10 +101,16 @@ const getAllTasksByParticipantsId = async (participantId) => {
         ]
     });
     return tasks.map(task => {
-        const taskData = task.toJSON();
-        taskData.role = taskData.task_participants[0].role;
-        delete taskData.task_participants;
-        return taskData;
+        const taskJson = task.toJSON();
+        return {
+            task_id: taskJson.task_id,
+            name: taskJson.title,
+            assigner: taskJson.assigner?.name || 'N/A',
+            due_date: taskJson.due_date,
+            status: taskJson.status || 'pending',
+            priority: taskJson.priority || 'medium',
+            role: taskJson.task_participants?.[0]?.role || 'N/A'
+        }
     });
 };
 

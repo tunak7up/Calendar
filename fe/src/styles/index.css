@@ -3,28 +3,150 @@
 @import "flyonui/variants.css";
 @import "flyonui/src/vendor/fullcalendar.css";
 
-/* Highlight selected day from mini calendar */
-.fc-selected-day {
-  background-color: #fffbeb !important; /* amber-50 */
+/* --- FullCalendar Modern Styling --- */
+
+/* 1. Header Toolbar Styling */
+.fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+  /* slate-800 */
+  letter-spacing: -0.025em;
 }
+
+.fc-button {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  /* slate-200 */
+  color: #64748b !important;
+  /* slate-500 */
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 12px !important;
+  text-transform: capitalize !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.fc-button:hover {
+  background-color: #f8fafc !important;
+  /* slate-50 */
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+.fc-button-active {
+  background-color: #3b82f6 !important;
+  /* blue-500 */
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 2. Grid & Day Number Styling */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #f1f5f9 !important;
+  /* slate-100 */
+}
+
+.fc-col-header-cell {
+  padding: 12px 0 !important;
+  background-color: #f8fafc;
+}
+
+.fc-col-header-cell-cushion {
+  color: #94a3b8 !important;
+  /* slate-400 */
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fc-daygrid-day-number {
+  font-weight: 600;
+  color: #64748b;
+  padding: 8px !important;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+/* 3. Special Day States */
+
+/* Highlight selected day from mini calendar */
+/* .fc-selected-day {
+  background-color: #fef9c3 !important;
+  /* yellow-100 */
+  /* z-index: 1 !important;
+} */ 
+
 .fc-selected-day .fc-daygrid-day-number {
-  color: #b45309 !important; /* amber-700 */
-  font-weight: 700;
-  background-color: #fef3c7; /* amber-100 */
-  border-radius: 50%;
-  width: 28px;
+  color: #854d0e !important;
+  /* yellow-800 */
+  font-weight: 800;
+  background-color: #facc15;
+  /* yellow-400 */
+  border-radius: 10px;
+  min-width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 4px;
 }
 
 /* Working day highlight */
 .fc-work-day {
-  background-color: #ecfeff !important; /* cyan-50 */
+  background-color: #bae6fd !important;
+  /* sky-200 */
+  border-left: 4px solid #0284c7 !important;
 }
 
-/* Show pointer cursor on day cells to hint they're clickable */
+.fc-work-day .fc-daygrid-day-number {
+  color: #0369a1 !important;
+  /* sky-700 */
+  font-weight: 800;
+}
+
+/* Today highlight */
+/* .fc-day-today {
+  background-color: #ffffff !important;
+} */
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: #3b82f6;
+  color: white !important;
+  border-radius: 10px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+/* 4. Event Styling */
+.fc-event {
+  border-radius: 8px !important;
+  padding: 2px 4px !important;
+  font-size: 0.75rem !important;
+  border: none !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.fc-daygrid-event-dot {
+  border-color: #3b82f6 !important;
+}
+
+/* Show pointer cursor on day cells */
 .fc-daygrid-day {
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.fc-daygrid-day:hover {
+  background-color: #f8fafc;
 }

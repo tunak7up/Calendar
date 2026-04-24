@@ -23,7 +23,7 @@ export default function AddTask({ initialDate }) {
     assigner: '',
     priority: 'Medium',
     subTasks: [],
-    assignees: [] // Objects: { name, role }
+    assignees: [] // Objects: { username, role }
   };
 
   const [formData, setFormData] = useState(initialState);
@@ -52,7 +52,7 @@ export default function AddTask({ initialDate }) {
           setAllUsers(persons);
 
           if (managersList.length > 0) {
-            setFormData(prev => ({ ...prev, assigner: managersList[0].name }));
+            setFormData(prev => ({ ...prev, assigner: managersList[0].username }));
           }
         }
 
@@ -79,19 +79,19 @@ export default function AddTask({ initialDate }) {
   const handleReset = () => {
     setFormData({
       ...initialState,
-      assigner: managers.length > 0 ? managers[0].name : ''
+      assigner: managers.length > 0 ? managers[0].username : ''
     });
   };
 
   const handleSubmit = async () => {
     try {
       // Find assigner_id from managers list
-      const assignerUser = managers.find(m => m.name === formData.assigner);
+      const assignerUser = managers.find(m => m.username === formData.assigner);
       const assigner_id = assignerUser ? assignerUser.person_id : null;
 
       // Map participants to participant_id
       const task_participants = formData.assignees.map(a => {
-        const p = allUsers.find(u => u.name === a.name);
+        const p = allUsers.find(u => u.username === a.username);
         return {
           participant_id: p ? p.person_id : null,
           role: a.role.charAt(0).toUpperCase() + a.role.slice(1) // Capitalize: assignee -> Assignee
@@ -141,24 +141,24 @@ export default function AddTask({ initialDate }) {
   };
 
 
-  const addAssignee = (name) => {
-    if (name && !formData.assignees.some(a => a.name === name)) {
+  const addAssignee = (username) => {
+    if (username && !formData.assignees.some(a => a.username === username)) {
       setFormData({
         ...formData,
-        assignees: [...formData.assignees, { name, role: 'assignee' }]
+        assignees: [...formData.assignees, { username, role: 'assignee' }]
       });
     }
   };
 
-  const updateAssigneeRole = (name, role) => {
+  const updateAssigneeRole = (username, role) => {
     setFormData({
       ...formData,
-      assignees: formData.assignees.map(a => a.name === name ? { ...a, role } : a)
+      assignees: formData.assignees.map(a => a.username === username ? { ...a, role } : a)
     });
   };
 
-  const removeAssignee = (name) => {
-    setFormData({ ...formData, assignees: formData.assignees.filter(a => a.name !== name) });
+  const removeAssignee = (username) => {
+    setFormData({ ...formData, assignees: formData.assignees.filter(a => a.username !== username) });
   };
 
 
@@ -198,7 +198,7 @@ export default function AddTask({ initialDate }) {
                   className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none appearance-none cursor-pointer transition-all"
                 >
                   {managers.map(admin => (
-                    <option key={admin.person_id} value={admin.name}>{admin.name}</option>
+                    <option key={admin.person_id} value={admin.username}>{admin.username}</option>
                   ))}
                   {managers.length === 0 && <option value="">No managers found</option>}
                 </select>
@@ -331,11 +331,11 @@ export default function AddTask({ initialDate }) {
                       <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-2xl border border-gray-100 shadow-sm group transition-all hover:border-blue-200">
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <img src={`https://ui-avatars.com/api/?name=${assignee.name}&background=random&color=fff&rounded=true&size=40`} alt="" className="w-10 h-10 rounded-xl" />
+                            <img src={`https://ui-avatars.com/api/?username=${assignee.username}&background=random&color=fff&rounded=true&size=40`} alt="" className="w-10 h-10 rounded-xl" />
                             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900 leading-none">{assignee.name}</p>
+                            <p className="text-sm font-bold text-gray-900 leading-none">{assignee.username}</p>
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-1.5">Personnel</p>
                           </div>
                         </div>
@@ -343,7 +343,7 @@ export default function AddTask({ initialDate }) {
                         <div className="flex items-center gap-3">
                           <select
                             value={assignee.role}
-                            onChange={(e) => updateAssigneeRole(assignee.name, e.target.value)}
+                            onChange={(e) => updateAssigneeRole(assignee.username, e.target.value)}
                             className="bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer hover:bg-white transition-colors"
                           >
                             <option value="assignee">Assignee</option>
@@ -351,7 +351,7 @@ export default function AddTask({ initialDate }) {
                             <option value="observer">Observer</option>
                           </select>
                           <button
-                            onClick={() => removeAssignee(assignee.name)}
+                            onClick={() => removeAssignee(assignee.username)}
                             className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <XMarkIcon className="w-5 h-5" />
@@ -380,8 +380,8 @@ export default function AddTask({ initialDate }) {
                   className="w-full bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none appearance-none cursor-pointer transition-all pr-12"
                 >
                   <option value="">+ Assign new personnel...</option>
-                  {allUsers.filter(u => !formData.assignees.some(a => a.name === u.name)).map(user => (
-                    <option key={user.person_id} value={user.name}>{user.name} ({user.role})</option>
+                  {allUsers.filter(u => !formData.assignees.some(a => a.username === u.username)).map(user => (
+                    <option key={user.person_id} value={user.username}>{user.username} ({user.role})</option>
                   ))}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">

@@ -63,9 +63,9 @@ const getAllTasks = async () => {
 };
 
 const getTaskById = async (id) => {
-    const task = await task.findByPk(id);
-    if (!task) throw new Error('Task not found');
-    return task;
+    const targetTask = await task.findByPk(id);
+    if (!targetTask) throw new Error('Task not found');
+    return targetTask;
 };
 
 const getChildTasksByParentId = async (parentId) => {
@@ -114,16 +114,17 @@ const getAllTasksWithParticipants = async () => {
     });
 };
 
-const updateTask = async (id, { name, description, parent_id, assigner_id, start_time, due_date, ended_at, title, status, priority }) => {
-    const task = await task.findByPk(id);
-    if (!task) throw new Error('Task not found');
-    return await task.update({ name, description, parent_id, assigner_id, start_time, due_date, ended_at, title, status, priority });
+const updateTask = async (id, data) => {
+    const targetTask = await task.findByPk(id);
+    if (!targetTask) throw new Error('Task not found');
+    await targetTask.update(data);
+    return targetTask;
 };
 
 const deleteTask = async (id) => {
-    const task = await task.findByPk(id);
-    if (!task) throw new Error('Task not found');
-    await task.destroy();
+    const targetTask = await task.findByPk(id);
+    if (!targetTask) throw new Error('Task not found');
+    await targetTask.destroy();
 };
 
 module.exports = {

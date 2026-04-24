@@ -32,10 +32,10 @@ const task = sequelize.define(
             },
         },
         start_time: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.DATE,
         },
         due_date: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.DATE,
         },
         title: {
             type: DataTypes.STRING(256),

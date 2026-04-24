@@ -1,9 +1,7 @@
 const { task, person, task_participant, task_attachment } = require('../models');
 
 const { Op } = require('sequelize');
-const createTask = async ({ name, description, parent_id, assigner_id, created_by, start_time, due_date, ended_at, title, parent_Id, priority }) => {
-    return await task.create({ name, description, parent_id, assigner_id, created_by, start_time, due_date, ended_at, title, status: 'pending', parent_Id, priority });
-};
+
 const sequelize = require('../config/db');
 
 const createTask = async (data) => {
@@ -91,6 +89,11 @@ const getAllTasksWithParticipants = async () => {
     const tasks = await task.findAll({
         include: [
             {
+                model: person,
+                as: 'assigner',
+                attributes: ['name']
+            },
+            {
                 model: task_participant,
                 as: 'participants',
                 attributes: ['role'],
@@ -109,6 +112,10 @@ const getAllTasksWithParticipants = async () => {
         return {
             task_id: task.task_id,
             name: task.title,
+            assigner: task.assigner?.name || 'N/A',
+            due_date: task.due_date,
+            status: task.status || 'pending',
+            priority: task.priority || 'medium',
             members: task.participants.map(p => ({
                 name: p.person_info?.name || 'N/A',
                 job_role: p.person_info?.role || 'N/A',

@@ -24,7 +24,7 @@ const task_participant = sequelize.define(
             },
         },
         role: {
-            type: DataTypes.ENUM('Assignee', 'Reviewer', 'Observer'),
+            type: DataTypes.STRING,
         },
     }
 );

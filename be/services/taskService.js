@@ -84,43 +84,22 @@ const getTasksByTimeRange = async (startTime, endTime) => {
     });
 };
 
-const getAllTasksWithParticipants = async () => {
+const getAllTasksByParticipantsId = async (participantId) => {
     const tasks = await task.findAll({
         include: [
             {
-                model: person,
-                as: 'assigner',
-                attributes: ['name']
-            },
-            {
                 model: task_participant,
-                as: 'participants',
+                as: 'task_participants',
+                where: { participant_id: participantId },
                 attributes: ['role'],
-                include: [
-                    {
-                        model: person,
-                        as: 'person_info',
-                        attributes: ['name', 'role']
-                    }
-                ]
             }
-        ],
-        attributes: ['task_id', 'title', 'status', 'due_date', 'priority']
+        ]
     });
     return tasks.map(task => {
-        return {
-            task_id: task.task_id,
-            name: task.title,
-            assigner: task.assigner?.name || 'N/A',
-            due_date: task.due_date,
-            status: task.status || 'pending',
-            priority: task.priority || 'medium',
-            members: task.participants.map(p => ({
-                name: p.person_info?.name || 'N/A',
-                job_role: p.person_info?.role || 'N/A',
-                project_role: p.role || 'N/A'
-            }))
-        }
+        const taskData = task.toJSON();
+        taskData.role = taskData.task_participants[0].role;
+        delete taskData.task_participants;
+        return taskData;
     });
 };
 
@@ -143,7 +122,7 @@ module.exports = {
     getTaskById,
     getChildTasksByParentId,
     getTasksByTimeRange,
-    getAllTasksWithParticipants,
+    getAllTasksByParticipantsId,
     updateTask,
     deleteTask,
     createTaskAttachment,

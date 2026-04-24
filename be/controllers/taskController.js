@@ -48,9 +48,10 @@ const getTasksByTimeRange = async (req, res) => {
     }
 };
 
-const getAllTasksWithParticipants = async (req, res) => {
+const getAllTasksByParticipantsId = async (req, res) => {
     try {
-        const tasks = await taskService.getAllTasksWithParticipants();
+        const participantId = req.params.participantId;
+        const tasks = await taskService.getAllTasksByParticipantsId(participantId);
         sendRes(res, 200, 'Tasks retrieved successfully', tasks);
     } catch (error) {
         sendRes(res, 500, 'Error retrieving tasks', null, error.message);
@@ -99,7 +100,7 @@ module.exports = {
     getAllTasks,
     getTaskById,
     getChildTasksByParentId,
-    getAllTasksWithParticipants,
+    getAllTasksByParticipantsId,
     getTasksByTimeRange,
     updateTask,
     deleteTask,

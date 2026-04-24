@@ -40,8 +40,11 @@ daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachme
 task_attachment.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 task.hasMany(task_attachment, { foreignKey: 'task_id', as: 'attachments' });
 
-task.belongsToMany(person, { through: task_participant, foreignKey: 'task_id', as: 'participants' });
-person.belongsToMany(task, { through: task_participant, foreignKey: 'participant_id', as: 'participating_tasks', onDelete: 'NO ACTION' });
+task.belongsToMany(person, { through: task_participant, foreignKey: 'task_id', otherKey: 'participant_id', as: 'participants' });
+person.belongsToMany(task, { through: task_participant, foreignKey: 'participant_id', otherKey: 'task_id', as: 'participating_tasks', onDelete: 'NO ACTION' });
+
+task.hasMany(task_participant, { foreignKey: 'task_id', as: 'task_participants' });
+task_participant.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 
 notification.belongsTo(person, { foreignKey: 'notificate_to', as: 'recipient' });
 person.hasMany(notification, { foreignKey: 'notificate_to', as: 'notifications' });

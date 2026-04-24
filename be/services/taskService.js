@@ -105,7 +105,7 @@ const getAllTasksWithParticipants = async () => {
                 ]
             }
         ],
-        attributes: ['task_id', 'title']
+        attributes: ['task_id', 'title', 'status', 'due_date', 'priority']
     });
     return tasks.map(task => {
         return {

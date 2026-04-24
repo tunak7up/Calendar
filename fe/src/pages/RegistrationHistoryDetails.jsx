@@ -100,7 +100,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-700">
-                            {detail.start_time.split('T')[1].substring(0, 5)} - {detail.end_time.split('T')[1].substring(0, 5)}
+                            {detail.start_time?.split(/[T ]/)[1]?.substring(0, 5) || detail.start_time} - {detail.end_time?.split(/[T ]/)[1]?.substring(0, 5) || detail.end_time}
                           </p>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Working Hours</p>
                         </div>

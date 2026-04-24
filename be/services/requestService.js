@@ -78,25 +78,34 @@ const updateRequestStatus = async (request_id, status) => {
         await data.update({ status }, { transaction: t });
         console.log(`Request ${request_id} updated. Type: ${data.type}`);
 
-        // If approved and type is register, move details to schedule table
-        if (status.toLowerCase() === 'approved' && (data.type.toLowerCase() === 'register' || data.type.toLowerCase() === 'leave')) {
+        // If approved, sync to schedule
+        if (status.toLowerCase() === 'approved') {
             console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
             
-            const scheduleEntries = data.details.map(detail => ({
-                person_id: data.requester_id,
-                start_time: detail.start_time,
-                end_time: detail.end_time,
-                working_date: detail.date
-            }));
+            if (data.type.toLowerCase() === 'register') {
+                const scheduleEntries = data.details.map(detail => ({
+                    person_id: data.requester_id,
+                    start_time: detail.start_time,
+                    end_time: detail.end_time,
+                    working_date: detail.date
+                }));
 
-            if (scheduleEntries.length > 0) {
-                // Optional: Clear existing schedule for these dates to avoid duplicates if re-approved
-                // await schedule.destroy({ where: { person_id: data.requester_id, working_date: scheduleEntries.map(e => e.working_date) }, transaction: t });
-                
-                await schedule.bulkCreate(scheduleEntries, { transaction: t });
-                console.log(`Successfully synced ${scheduleEntries.length} entries to schedule.`);
-            } else {
-                console.log('No details found to sync.');
+                if (scheduleEntries.length > 0) {
+                    await schedule.bulkCreate(scheduleEntries, { transaction: t });
+                    console.log(`Successfully synced ${scheduleEntries.length} entries to schedule.`);
+                }
+            } else if (data.type.toLowerCase() === 'leave') {
+                // For leave, we remove the corresponding work shifts from the schedule
+                for (const detail of data.details) {
+                    await schedule.destroy({
+                        where: {
+                            person_id: data.requester_id,
+                            working_date: detail.date
+                        },
+                        transaction: t
+                    });
+                }
+                console.log(`Successfully removed leave entries from schedule.`);
             }
         }
 

@@ -85,11 +85,48 @@ export default function AddTask({ initialDate }) {
 
   const handleSubmit = async () => {
     try {
+      // Find assigner_id from managers list
+      const assignerUser = managers.find(m => m.name === formData.assigner);
+      const assigner_id = assignerUser ? assignerUser.person_id : null;
+
+      // Map participants to participant_id
+      const task_participants = formData.assignees.map(a => {
+        const p = allUsers.find(u => u.name === a.name);
+        return {
+          participant_id: p ? p.person_id : null,
+          role: a.role.charAt(0).toUpperCase() + a.role.slice(1) // Capitalize: assignee -> Assignee
+        };
+      }).filter(p => p.participant_id !== null);
+
+      // Prepare sub_tasks with default status
+      const sub_tasks = formData.subTasks.map(st => ({
+        ...st,
+        status: 'pending',
+        priority: st.priority.toLowerCase()
+      }));
+
+      // Format times
+      const start_time = `${formData.startDate} ${formData.startTime}:00`;
+      const due_date = `${formData.dueDate} ${formData.endTime}:00`;
+
+      const payload = {
+        assigner_id,
+        start_time,
+        due_date,
+        title: formData.taskName,
+        status: 'pending',
+        description: formData.description,
+        priority: formData.priority.toLowerCase(),
+        sub_tasks,
+        task_participants
+      };
+
       const response = await fetch('http://localhost:3000/api/task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
+
       const result = await response.json();
       if (result.success) {
         alert('Task and sub-tasks created successfully!');

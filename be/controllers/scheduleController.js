@@ -19,6 +19,15 @@ const getScheduleByPersonId = async (req, res) => {
     }
 };
 
+const getAllSchedules = async (req, res) => {
+    try {
+        const schedules = await scheduleService.getAllSchedules();
+        sendRes(res, 200, 'Get All Schedules Successful', schedules);
+    } catch (error) {
+        sendRes(res, 400, 'Get All Schedules Failed', null, error.message);
+    }
+};
+
 const updateSchedule = async (req, res) => {
     try {
         const data = await scheduleService.updateSchedule(req.params.scheduleId, req.body);
@@ -40,6 +49,7 @@ const deleteSchedule = async (req, res) => {
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
+    getAllSchedules,
     updateSchedule,
     deleteSchedule
 };

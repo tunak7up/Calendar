@@ -101,7 +101,7 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
                 ${!cell.currentMonth ? 'text-gray-300 cursor-default' : ''}
                 ${cell.currentMonth && !isToday && !isSelected
                   ? colPos === 0 || colPos === 6
-                    ? 'text-blue-500 hover:bg-gray-100 cursor-pointer'
+                    ? 'text-blue-500 bg-gray-50 hover:bg-gray-100 cursor-pointer'
                     : 'text-gray-700 hover:bg-gray-100 cursor-pointer'
                   : ''}
                 ${isToday && !isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}

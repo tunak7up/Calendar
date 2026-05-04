@@ -11,8 +11,19 @@ import {
   BriefcaseIcon, 
   UserMinusIcon, 
   PlusCircleIcon, 
-  XMarkIcon 
+  XMarkIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
+
+const TASK_COLORS = [
+  { bg: '#f3e8ff', border: '#d8b4fe', text: '#6b21a8' }, // purple
+  { bg: '#e0f2fe', border: '#bae6fd', text: '#075985' }, // blue
+  { bg: '#dcfce7', border: '#bbf7d0', text: '#166534' }, // green
+  { bg: '#ffedd5', border: '#fed7aa', text: '#9a3412' }, // orange
+  { bg: '#fee2e2', border: '#fecaca', text: '#991b1b' }, // red
+  { bg: '#fef9c3', border: '#fef08a', text: '#854d0e' }, // yellow
+  { bg: '#ecfeff', border: '#cffafe', text: '#083344' }, // cyan
+];
 
 const fakeEvents = [
   // ... (keeping fakeEvents as is)
@@ -66,7 +77,7 @@ const fakeEvents = [
   }
 ];
 
-export default function MySchedule({ onNavigateWithDate }) {
+export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -74,14 +85,20 @@ export default function MySchedule({ onNavigateWithDate }) {
 
   const [events, setEvents] = useState(fakeEvents);
   const [workingHours, setWorkingHours] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay }
+  const [taskMenuConfig, setTaskMenuConfig] = useState(null); // { taskData, eventId }
 
   useEffect(() => {
-    const fetchSchedule = async () => {
+    const fetchData = async () => {
       try {
-        const result = await scheduleService.getPersonSchedule(1);
-        if (result.success) {
-          const mappedWorkingHours = result.data.map(item => ({
+        const [scheduleRes, taskRes] = await Promise.all([
+          scheduleService.getPersonSchedule(1),
+          fetch('http://localhost:3000/api/task/participant/1').then(res => res.json())
+        ]);
+        
+        if (scheduleRes.success) {
+          const mappedWorkingHours = scheduleRes.data.map(item => ({
             id: `work_${item.schedule_id}`,
             title: 'Lịch làm việc',
             start: item.start_time,
@@ -90,22 +107,40 @@ export default function MySchedule({ onNavigateWithDate }) {
           }));
           setWorkingHours(mappedWorkingHours);
         }
+
+        if (taskRes.success) {
+          const mappedTasks = taskRes.data.map(task => {
+            const colorSet = TASK_COLORS[task.task_id % TASK_COLORS.length];
+            return {
+              id: `task_${task.task_id}`,
+              title: task.name || 'Untitled Task',
+              start: task.start_time,
+              end: task.due_date,
+              allDay: false,
+              backgroundColor: colorSet.bg,
+              borderColor: colorSet.border,
+              textColor: colorSet.text,
+              extendedProps: { isTask: true, taskData: task }
+            };
+          });
+          setTasks(mappedTasks);
+        }
       } catch (error) {
-        console.error('Error fetching schedule:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchSchedule();
+    fetchData();
   }, []);
 
   const workDays = workingHours.map(e => e.start.split(/[T ]/)[0]);
 
-  const displayEvents = [...events, ...workingHours].map(e => {
+  const displayEvents = [...events, ...workingHours, ...tasks].map(e => {
     if (e.extendedProps?.isWorkHour) {
       return {
         ...e,
         display: 'background',
-        backgroundColor: 'rgba(59, 130, 246, 0.15)'
+        backgroundColor: '#bae6fd' // Match sky-200 from fc-work-day
       };
     }
     return e;
@@ -118,13 +153,61 @@ export default function MySchedule({ onNavigateWithDate }) {
     }
   };
 
-  const handleEventDrop = useCallback((info) => {
-    const { event } = info;
-    setEvents(prev => prev.map(e =>
-      e.title === event.title
-        ? { ...e, start: event.startStr, end: event.endStr || undefined }
-        : e
-    ));
+  const handleEventDrop = useCallback(async (info) => {
+    const { event, oldEvent } = info;
+    const isTask = event.extendedProps?.isTask;
+    
+    if (isTask) {
+      const taskData = event.extendedProps.taskData;
+      const taskId = taskData.task_id;
+      
+      const diffTime = event.start.getTime() - oldEvent.start.getTime();
+      
+      const oldStart = new Date(taskData.start_time || taskData.due_date);
+      const oldEnd = new Date(taskData.due_date);
+      
+      const newStartObj = new Date(oldStart.getTime() + diffTime);
+      const newEndObj = new Date(oldEnd.getTime() + diffTime);
+      
+      const newStart = newStartObj.toISOString();
+      const newEnd = newEndObj.toISOString();
+      
+      const updatedTaskData = { ...taskData, start_time: newStart, due_date: newEnd };
+      
+      const exclusiveEnd = new Date(newEndObj);
+      exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
+      
+      try {
+        await fetch(`http://localhost:3000/api/task/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            start_time: newStart,
+            due_date: newEnd
+          })
+        });
+        
+        setTasks(prev => prev.map(t => 
+          t.id === event.id 
+            ? { 
+                ...t, 
+                start: newStart, 
+                end: newEnd, 
+                extendedProps: { ...t.extendedProps, taskData: updatedTaskData } 
+              } 
+            : t
+        ));
+      } catch (error) {
+        console.error('Error updating task date:', error);
+        info.revert();
+      }
+    } else {
+      setEvents(prev => prev.map(e =>
+        e.title === event.title
+          ? { ...e, start: event.startStr, end: event.endStr || undefined }
+          : e
+      ));
+    }
   }, []);
 
   const handleDateClick = useCallback((info) => {
@@ -148,6 +231,11 @@ export default function MySchedule({ onNavigateWithDate }) {
                 left: 'today prev,next title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
               }}
+              views={{
+                dayGridMonth: { displayEventTime: false },
+                timeGridWeek: { displayEventTime: false },
+                timeGridDay: { displayEventTime: false }
+              }}
               events={displayEvents}
               editable={true}
               droppable={true}
@@ -155,6 +243,14 @@ export default function MySchedule({ onNavigateWithDate }) {
               dayMaxEvents={true}
               eventDrop={handleEventDrop}
               dateClick={handleDateClick}
+              eventClick={(info) => {
+                if (info.event.extendedProps?.isTask) {
+                  setTaskMenuConfig({
+                    taskData: info.event.extendedProps.taskData,
+                    eventId: info.event.id
+                  });
+                }
+              }}
               dayCellClassNames={(arg) => {
                 const cellDate = arg.date;
                 const y = cellDate.getFullYear();
@@ -164,7 +260,11 @@ export default function MySchedule({ onNavigateWithDate }) {
                 
                 const classes = [];
                 if (dateStr === selectedDate) classes.push('fc-selected-day');
-                if (workDays.includes(dateStr)) classes.push('fc-work-day');
+                
+                // Only highlight the whole day background in Month view
+                if (workDays.includes(dateStr) && arg.view.type === 'dayGridMonth') {
+                  classes.push('fc-work-day');
+                }
                 
                 return classes;
               }}
@@ -179,7 +279,10 @@ export default function MySchedule({ onNavigateWithDate }) {
                       borderColor: arg.event.borderColor,
                     }}
                   >
-                    {arg.event.title}
+                    {arg.view.type.startsWith('list') && arg.timeText && (
+                      <span className="mr-1 opacity-75">{arg.timeText}</span>
+                    )}
+                    <span>{arg.event.title}</span>
                   </div>
                 );
               }}
@@ -261,6 +364,68 @@ export default function MySchedule({ onNavigateWithDate }) {
             <div className="p-4 bg-gray-50/30 text-center">
               <button 
                 onClick={() => setMenuConfig(null)}
+                className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Task Options Modal */}
+      {taskMenuConfig && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Task Options</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Manage task {taskMenuConfig.taskData.name || 'Untitled'}</p>
+              </div>
+              <button 
+                onClick={() => setTaskMenuConfig(null)}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-2">
+              <button
+                onClick={() => {
+                  onTaskAction('task_sub_add', taskMenuConfig.taskData);
+                  setTaskMenuConfig(null);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-purple-50 group transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                  <PlusCircleIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-900">Create Sub-task</div>
+                  <div className="text-xs text-gray-400">Add a sub-task for this parent task</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  onTaskAction('task_details', taskMenuConfig.taskData);
+                  setTaskMenuConfig(null);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 group transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <EyeIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-900">View Task Details</div>
+                  <div className="text-xs text-gray-400">See full information for this task</div>
+                </div>
+              </button>
+            </div>
+            
+            <div className="p-4 bg-gray-50/30 text-center">
+              <button 
+                onClick={() => setTaskMenuConfig(null)}
                 className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
               >
                 Dismiss

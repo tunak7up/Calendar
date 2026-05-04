@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import MiniCalendar from '../components/MiniCalendar';
 import SubTaskModal from '../components/SubTaskModal';
+import WheelTimePicker from '../components/WheelTimePicker';
 
 export default function AddTask({ initialDate }) {
   const initialState = {
@@ -35,9 +36,13 @@ export default function AddTask({ initialDate }) {
   // Popover states
   const [isStartCalOpen, setIsStartCalOpen] = useState(false);
   const [isDueCalOpen, setIsDueCalOpen] = useState(false);
+  const [isStartTimeOpen, setIsStartTimeOpen] = useState(false);
+  const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
 
   const startCalRef = useRef(null);
   const dueCalRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const endTimeRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -71,6 +76,8 @@ export default function AddTask({ initialDate }) {
     const handleClickOutside = (event) => {
       if (startCalRef.current && !startCalRef.current.contains(event.target)) setIsStartCalOpen(false);
       if (dueCalRef.current && !dueCalRef.current.contains(event.target)) setIsDueCalOpen(false);
+      if (startTimeRef.current && !startTimeRef.current.contains(event.target)) setIsStartTimeOpen(false);
+      if (endTimeRef.current && !endTimeRef.current.contains(event.target)) setIsEndTimeOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -243,14 +250,25 @@ export default function AddTask({ initialDate }) {
                     </div>
                   )}
                 </div>
-                <div className="col-span-2 relative">
-                  <input
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all"
-                  />
+                <div className="col-span-2 relative" ref={startTimeRef}>
+                  <div
+                    onClick={() => setIsStartTimeOpen(!isStartTimeOpen)}
+                    className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
+                  >
+                    <span className="font-medium">{formData.startTime || 'Select time'}</span>
+                  </div>
                   <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {isStartTimeOpen && (
+                    <div className="absolute top-full right-0 mt-2 z-[100]">
+                      <WheelTimePicker
+                        value={formData.startTime}
+                        onChange={(time) => setFormData({ ...formData, startTime: time })}
+                        onClose={() => setIsStartTimeOpen(false)}
+                        maxTime={formData.startDate === formData.dueDate ? formData.endTime : undefined}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -279,14 +297,25 @@ export default function AddTask({ initialDate }) {
                     </div>
                   )}
                 </div>
-                <div className="col-span-2 relative">
-                  <input
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all"
-                  />
+                <div className="col-span-2 relative" ref={endTimeRef}>
+                  <div
+                    onClick={() => setIsEndTimeOpen(!isEndTimeOpen)}
+                    className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
+                  >
+                    <span className="font-medium">{formData.endTime || 'Select time'}</span>
+                  </div>
                   <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {isEndTimeOpen && (
+                    <div className="absolute top-full right-0 mt-2 z-[100]">
+                      <WheelTimePicker
+                        value={formData.endTime}
+                        onChange={(time) => setFormData({ ...formData, endTime: time })}
+                        onClose={() => setIsEndTimeOpen(false)}
+                        minTime={formData.startDate === formData.dueDate ? formData.startTime : undefined}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

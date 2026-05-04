@@ -82,18 +82,22 @@ export default function WeekDatePicker({
         {weekDates.map((d) => {
           const active = selectedDates.includes(d.fullDate);
           const hasWork = workDays.includes(d.fullDate);
+          const colPos = d.dateObj.getDay();
+          const isWeekend = colPos === 0 || colPos === 6;
+
           return (
             <button
               key={d.fullDate}
+              disabled={isWeekend}
               onClick={() => onDayClick(d.dateObj)}
               className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative ${
-                active ? 'bg-[#dbeafe] shadow-sm' : 'text-gray-500 hover:bg-gray-100'
+                active ? 'bg-[#dbeafe] shadow-sm' : (isWeekend ? 'opacity-40 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100')
               }`}
             >
-              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : 'text-gray-400'}`}>
+              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : (isWeekend ? 'text-gray-300' : 'text-gray-400')}`}>
                 {d.day}
               </span>
-              <span className={`text-xl font-bold ${active ? 'text-blue-700' : 'text-gray-900'}`}>
+              <span className={`text-xl font-bold ${active ? 'text-blue-700' : (isWeekend ? 'text-gray-300' : 'text-gray-900')}`}>
                 {d.date}
               </span>
               {hasWork && (

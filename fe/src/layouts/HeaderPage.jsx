@@ -1,22 +1,29 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 
-const navigationBase = [
+const userNavigation = [
   { name: 'My Schedule', href: '#', id: 'schedule' },
   { name: 'Register Work', href: '#', id: 'work' },
   { name: 'Task', href: '#', id: 'task' },
+];
 
- 
-]
+const adminNavigation = [
+  { name: 'Employees', href: '#', id: 'admin_employees' },
+  { name: 'Requests', href: '#', id: 'admin_requests' },
+  { name: 'Schedule', href: '#', id: 'admin_schedule' },
+  { name: 'Task', href: '#', id: 'admin_task' },
+];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function HeaderPage({ activeItem, onSelect }) {
-  const navigation = navigationBase.map(item => ({
+export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }) {
+  const currentNav = isAdmin ? adminNavigation : userNavigation;
+  
+  const navigation = currentNav.map(item => ({
     ...item,
-    current: item.id === activeItem
+    current: item.id === activeItem || (item.id === 'admin_task' && activeItem?.startsWith('task')) || (item.id === 'task' && activeItem?.startsWith('task')) || (item.id === 'work' && (activeItem === 'work' || activeItem === 'leave' || activeItem === 'list'))
   }));
 
   return (
@@ -99,6 +106,23 @@ export default function HeaderPage({ activeItem, onSelect }) {
               <span className="sr-only">Help</span>
               <QuestionMarkCircleIcon aria-hidden="true" className="h-[1.35rem] w-[1.35rem]" />
             </button>
+
+            {/* Admin Toggle */}
+            {setIsAdmin && (
+              <button
+                onClick={() => {
+                  setIsAdmin(!isAdmin);
+                  if (onSelect) onSelect(!isAdmin ? 'admin_schedule' : 'schedule');
+                }}
+                className={`ml-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
+                  isAdmin 
+                    ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
+                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                {isAdmin ? 'Admin View' : 'User View'}
+              </button>
+            )}
 
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">

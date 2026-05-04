@@ -60,7 +60,42 @@ const getAttachmentsByTaskId = async (taskId) => {
 };
 
 const getAllTasks = async () => {
-    return await task.findAll();
+    const tasks = await task.findAll({
+        include: [
+            {
+                model: person,
+                as: 'assigner',
+                attributes: ['name']
+            },
+            {
+                model: person,
+                as: 'participants',
+                attributes: ['name', 'person_id']
+            }
+        ],
+        order: [['created_at', 'DESC']]
+    });
+    
+    return tasks.map(t => {
+        const taskJson = t.toJSON();
+        const participants = taskJson.participants?.map(p => ({
+            person_id: p.person_id,
+            name: p.name,
+            role: p.task_participant?.role || 'N/A'
+        })) || [];
+        
+        return {
+            task_id: taskJson.task_id,
+            name: taskJson.title,
+            assigner: taskJson.assigner?.name || 'N/A',
+            start_time: taskJson.start_time,
+            due_date: taskJson.due_date,
+            status: taskJson.status || 'pending',
+            priority: taskJson.priority || 'medium',
+            participants: participants,
+            parent_id: taskJson.parent_id
+        };
+    });
 };
 
 const getTaskById = async (id) => {
@@ -70,7 +105,7 @@ const getTaskById = async (id) => {
 };
 
 const getChildTasksByParentId = async (parentId) => {
-    return await task.findAll({ where: { parentId: parentId } });
+    return await task.findAll({ where: { parent_id: parentId } });
 };
 
 const getTasksByTimeRange = async (startTime, endTime) => {
@@ -106,6 +141,7 @@ const getAllTasksByParticipantsId = async (participantId) => {
             task_id: taskJson.task_id,
             name: taskJson.title,
             assigner: taskJson.assigner?.name || 'N/A',
+            start_time: taskJson.start_time,
             due_date: taskJson.due_date,
             status: taskJson.status || 'pending',
             priority: taskJson.priority || 'medium',
@@ -117,6 +153,19 @@ const getAllTasksByParticipantsId = async (participantId) => {
 const updateTask = async (id, data) => {
     const targetTask = await task.findByPk(id);
     if (!targetTask) throw new Error('Task not found');
+
+    if (data.status === 'completed') {
+        const subTasks = await task.findAll({ where: { parent_id: id } });
+        if (subTasks.length > 0) {
+            const allCompleted = subTasks.every(st => st.status === 'completed');
+            if (!allCompleted) {
+                const error = new Error('Phải hoàn thành tất cả các sub-task trước khi hoàn thành task cha.');
+                error.status = 400;
+                throw error;
+            }
+        }
+    }
+
     await targetTask.update(data);
     return targetTask;
 };

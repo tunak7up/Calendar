@@ -113,30 +113,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
           </div>
 
           <div className="lg:col-span-1">
-            {isPending && (
-              <div className="mb-6">
-                <button
-                  onClick={async () => {
-                    try {
-                      const result = await requestService.updateStatus(request.id, 'approved');
-                      if (result.success) {
-                        alert('Đã phê duyệt thành công! Lịch làm việc đã được cập nhật.');
-                        onBack(); // Go back to list to refresh
-                      } else {
-                        alert('Lỗi: ' + result.message);
-                      }
-                    } catch (error) {
-                      console.error('Error approving request:', error);
-                      alert('Không thể kết nối đến máy chủ.');
-                    }
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  <CheckCircleIcon className="w-5 h-5" />
-                  Phê duyệt yêu cầu này
-                </button>
-              </div>
-            )}
+
 
 
             {!isPending ? (

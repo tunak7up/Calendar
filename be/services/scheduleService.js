@@ -27,6 +27,20 @@ const getScheduleByPersonId = async (personId) => {
     });
 };
 
+const getAllSchedules = async () => {
+    return await schedule.findAll({
+        include: [
+            { 
+                model: person, 
+                as: 'person',
+                required: true,
+                attributes: ['person_id', 'name']
+            }
+        ],
+        order: [['working_date', 'ASC']]
+    });
+};
+
 const updateSchedule = async (schedule_id, { start_time, end_time, working_date }) => {
     const data = await schedule.findByPk(schedule_id);
     if (!data) throw new Error('Schedule not found');
@@ -42,6 +56,7 @@ const deleteSchedule = async (schedule_id) => {
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
+    getAllSchedules,
     updateSchedule,
     deleteSchedule
 };

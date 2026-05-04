@@ -74,13 +74,18 @@
 }
 
 /* 3. Special Day States */
+.fc-day-sat,
+.fc-day-sun {
+  background-color: #f1f5f9 !important;
+  /* slate-100 */
+}
 
 /* Highlight selected day from mini calendar */
 /* .fc-selected-day {
   background-color: #fef9c3 !important;
   /* yellow-100 */
-  /* z-index: 1 !important;
-} */ 
+/* z-index: 1 !important;
+} */
 
 .fc-selected-day .fc-daygrid-day-number {
   color: #854d0e !important;
@@ -111,9 +116,9 @@
 }
 
 /* Today highlight */
-/* .fc-day-today {
-  background-color: #ffffff !important;
-} */
+.fc-day-today {
+  background-color: transparent !important;
+}
 
 .fc-day-today .fc-daygrid-day-number {
   background-color: #3b82f6;
@@ -139,6 +144,12 @@
 
 .fc-daygrid-event-dot {
   border-color: #3b82f6 !important;
+}
+
+/* Sync background events (work shifts in week/day view) with month view style */
+.fc-bg-event {
+  background-color: #bae6fd !important;
+  opacity: 1 !important;
 }
 
 /* Show pointer cursor on day cells */

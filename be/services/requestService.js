@@ -2,9 +2,18 @@ const { request, request_detail, person, schedule } = require('../models');
 const sequelize = require('../config/db');
 
 const createBulkRequest = async (data) => {
+    // Validation for work registration: No weekends allowed
+    if (data.type === 'register') {
+        for (const detail of data.request_details) {
+            const date = new Date(detail.date);
+            const day = date.getDay();
+            if (day === 0 || day === 6) {
+                throw new Error(`Bạn không thể đăng ký làm việc vào Thứ 7 hoặc Chủ Nhật (${detail.date}).`);
+            }
+        }
+    }
+
     return await sequelize.transaction(async (t) => {
-
-
         const newRequest = await request.create({
             type: data.type,
             requester_id: data.requester_id,
@@ -43,7 +52,8 @@ const getAllRequests = async () => {
     return await request.findAll({
         include: [
             { model: request_detail, as: 'details' },
-            { model: person, as: 'approver', attributes: ['name', 'role'] }
+            { model: person, as: 'approver', attributes: ['name', 'role'] },
+            { model: person, as: 'requester', attributes: ['name', 'username'] }
         ],
         order: [['created_at', 'DESC']]
     });

@@ -38,6 +38,11 @@ export default function RegisterWork({ initialDate }) {
   const [endCount, setEndCount] = useState(13);
 
   const handleDayClick = (dObj) => {
+    const day = dObj.getDay();
+    if (day === 0 || day === 6) {
+      alert("Bạn không thể đăng ký làm việc vào Thứ 7 và Chủ Nhật.");
+      return;
+    }
     const dStr = getFullDateStr(dObj);
     setDraftDates(prev =>
       prev.includes(dStr) ? prev.filter(s => s !== dStr) : [...prev, dStr]
@@ -45,6 +50,13 @@ export default function RegisterWork({ initialDate }) {
   };
 
   const handleCalendarPick = (newDateStr) => {
+    const [y, m, d] = newDateStr.split('-').map(Number);
+    const dObj = new Date(y, m - 1, d);
+    const day = dObj.getDay();
+    if (day === 0 || day === 6) {
+      alert("Bạn không thể đăng ký làm việc vào Thứ 7 và Chủ Nhật.");
+      return;
+    }
     setDraftDates(prev => prev.includes(newDateStr) ? prev : [...prev, newDateStr]);
   };
 
@@ -99,6 +111,11 @@ export default function RegisterWork({ initialDate }) {
         }
 
         generatedDates.forEach(gDateStr => {
+          // Double check if generated date is a weekend (e.g. from yearly repeat)
+          const [gy, gm, gd] = gDateStr.split('-').map(Number);
+          const gObj = new Date(gy, gm - 1, gd);
+          if (gObj.getDay() === 0 || gObj.getDay() === 6) return;
+
           const existingIndex = newSchedule.findIndex(item => item.date === gDateStr);
           const shiftData = {
             date: gDateStr,

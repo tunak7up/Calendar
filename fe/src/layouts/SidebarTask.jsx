@@ -54,15 +54,6 @@ export default function SidebarTask({ activeItem, onSelect }) {
                     <ul className="space-y-3 font-medium">
                         <li>
                             <a
-                                onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_list'); }}
-                                className={getLinkClass('task_list')}
-                            >
-                                <ClipboardDocumentListIcon className={getIconClass('task_list')} />
-                                <span className="ms-4 text-sm font-medium">List Task</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a
                                 onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_add'); }}
                                 className={getLinkClass('task_add')}
                             >
@@ -70,6 +61,16 @@ export default function SidebarTask({ activeItem, onSelect }) {
                                 <span className="ms-4 text-sm font-medium">New Task</span>
                             </a>
                         </li>
+                        <li>
+                            <a
+                                onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_list'); }}
+                                className={getLinkClass('task_list')}
+                            >
+                                <ClipboardDocumentListIcon className={getIconClass('task_list')} />
+                                <span className="ms-4 text-sm font-medium">List Task</span>
+                            </a>
+                        </li>
+
                     </ul>
                 </div>
             </aside>

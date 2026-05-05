@@ -82,26 +82,26 @@ function App() {
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
       {location.pathname !== '/login' && (
-        <HeaderPage 
-          activeItem={location.pathname} 
-          isAdmin={isAdmin} 
-          setIsAdmin={setIsAdmin} 
+        <HeaderPage
+          activeItem={location.pathname}
+          isAdmin={isAdmin}
+          setIsAdmin={setIsAdmin}
         />
       )}
-      
+
       {renderSidebar()}
 
       <main className="flex-1">
         <Routes>
-          <Route path="/login" element={<Login onLogin={() => { navigate(authIsAdmin ? '/admin/schedule' : '/schedule'); }} />} />
-          
+          <Route path="/login" element={<Login onLogin={() => { navigate('/schedule'); }} />} />
+
           {/* User Routes */}
           <Route path="/schedule" element={<MySchedule />} />
           <Route path="/register/work" element={<RegisterWork />} />
           <Route path="/register/leave" element={<RegisterLeave />} />
           <Route path="/history" element={<RegistrationHistory />} />
           <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
-          
+
           <Route path="/tasks" element={<TaskList isAdmin={isAdmin} />} />
           <Route path="/tasks/add" element={<AddTask />} />
           <Route path="/tasks/:id" element={<TaskDetails />} />
@@ -114,7 +114,7 @@ function App() {
           <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
 
           {/* Redirects */}
-          <Route path="/" element={<Navigate to={isLoggedIn ? (authIsAdmin ? "/admin/schedule" : "/schedule") : "/login"} />} />
+          <Route path="/" element={<Navigate to={isLoggedIn ? "/schedule" : "/login"} />} />
         </Routes>
       </main>
     </div>

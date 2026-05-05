@@ -8,8 +8,11 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: process.env.DB_DIALECT || 'mssql',
   timezone: '+07:00',
   dialectOptions: {
-    dateStrings: true,
-    typeCast: true,
+    options: {
+      encrypt: false,              // true nếu dùng Azure SQL
+      trustServerCertificate: true, // bỏ qua lỗi TLS khi kết nối ngoài
+      enableArithAbort: true,
+    },
   },
   define: {
     freezeTableName: true,
@@ -34,5 +37,4 @@ async function testConnection() {
   }
 }
 
-testConnection();
 module.exports = sequelize;

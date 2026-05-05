@@ -13,13 +13,16 @@ app.use('/api', router);
 
 async function startServer() {
   try {
+    await sequelize.authenticate();
+    console.log('Database connection established successfully.');
     await sequelize.sync({ force: false });
     console.log('Database synced successfully.');
-
-    app.listen(port, () => console.log(`Server running on port ${port}`));
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error('Unable to connect to the database:', error.message);
+    console.error('Server will still start, but DB features may not work.');
   }
+
+  app.listen(port, () => console.log(`Server running on port ${port}`));
 }
 
 startServer();

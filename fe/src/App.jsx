@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 import HeaderPage from './layouts/HeaderPage'
 import SidebarRegister from './layouts/SidebarRegister'
 import RegistrationHistory from './pages/RegistrationHistory'
@@ -22,20 +23,30 @@ import AdminWorkHours from './pages/AdminWorkHours'
 import './styles/App.css'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, isAdmin: authIsAdmin, isLoading, logout } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Đồng bộ isAdmin từ AuthContext
+  useEffect(() => {
+    setIsAdmin(authIsAdmin);
+  }, [authIsAdmin]);
+
   // Redirect to login if not logged in
   useEffect(() => {
-    if (!isLoggedIn && location.pathname !== '/login') {
+    if (!isLoading && !isLoggedIn && location.pathname !== '/login') {
       navigate('/login');
     }
-  }, [isLoggedIn, location.pathname, navigate]);
+  }, [isLoggedIn, isLoading, location.pathname, navigate]);
+
+  // Hiện loading khi đang kiểm tra auth
+  if (isLoading) {
+    return null;
+  }
 
   if (!isLoggedIn && location.pathname !== '/login') {
-    return null; // Or a loading spinner
+    return null;
   }
 
   const isTaskPath = location.pathname.startsWith('/tasks');
@@ -82,7 +93,7 @@ function App() {
 
       <main className="flex-1">
         <Routes>
-          <Route path="/login" element={<Login onLogin={() => { setIsLoggedIn(true); navigate('/schedule'); }} />} />
+          <Route path="/login" element={<Login onLogin={() => { navigate('/schedule'); }} />} />
           
           {/* User Routes */}
           <Route path="/schedule" element={<MySchedule />} />

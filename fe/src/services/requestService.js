@@ -6,6 +6,7 @@ export const requestService = {
     body: JSON.stringify(payload),
   }),
   getAllRequests: () => apiFetch('/request/'),
+  getRequestsByRequester: (requesterId) => apiFetch(`/request/requester/${requesterId}`),
   getRequestById: (id) => apiFetch(`/request/${id}`),
   updateStatus: (id, status) => apiFetch(`/request/${id}`, {
     method: 'PUT',

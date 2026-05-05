@@ -12,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/api';
 
 function StatusBadge({ status }) {
   if (status === 'Completed') {
@@ -57,6 +59,7 @@ function StatCard({ icon, label, value, iconBg, iconColor }) {
 
 export default function TaskList({ isAdmin }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
@@ -65,9 +68,9 @@ export default function TaskList({ isAdmin }) {
   React.useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const url = isAdmin ? 'http://localhost:3000/api/task' : 'http://localhost:3000/api/task/participant/1';
-        const response = await fetch(url);
-        const result = await response.json();
+        const result = isAdmin
+          ? await apiFetch('/task')
+          : await apiFetch(`/task/participant/${user.person_id}`);
         if (result.success) {
           setTasks(result.data);
         }
@@ -81,15 +84,15 @@ export default function TaskList({ isAdmin }) {
     fetchTasks();
 
     if (isAdmin) {
-      fetch('http://localhost:3000/api/person')
-        .then(res => res.json())
+      apiFetch('/person')
         .then(data => {
           if (data.success) {
             setEmployees(data.data);
           }
-        });
+        })
+        .catch(err => console.error('Error fetching employees:', err));
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const displayTasks = isAdmin && selectedEmployeeId !== 'all'
     ? tasks.filter(t => t.participants && t.participants.some(p => p.person_id.toString() === selectedEmployeeId))

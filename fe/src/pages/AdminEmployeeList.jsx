@@ -6,6 +6,7 @@ import {
   PencilSquareIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
+import { apiFetch } from '../services/api';
 
 export default function AdminEmployeeList() {
   const [employees, setEmployees] = useState([]);
@@ -22,8 +23,7 @@ export default function AdminEmployeeList() {
 
   const fetchEmployees = () => {
     setLoading(true);
-    fetch('http://localhost:3000/api/person')
-      .then(res => res.json())
+    apiFetch('/person')
       .then(data => {
         if (data.success) {
           setEmployees(data.data);
@@ -64,8 +64,8 @@ export default function AdminEmployeeList() {
     e.preventDefault();
     try {
       const url = selectedUser 
-        ? `http://localhost:3000/api/person/${selectedUser.person_id}` 
-        : 'http://localhost:3000/api/person';
+        ? `/person/${selectedUser.person_id}` 
+        : '/person';
       
       const method = selectedUser ? 'PUT' : 'POST';
       
@@ -75,18 +75,14 @@ export default function AdminEmployeeList() {
         delete payload.password;
       }
 
-      const res = await fetch(url, {
+      const result = await apiFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
+      if (result) {
         setIsModalOpen(false);
         fetchEmployees();
-      } else {
-        const err = await res.json();
-        alert('Failed to save: ' + err.message);
       }
     } catch (error) {
       console.error('Error saving user:', error);

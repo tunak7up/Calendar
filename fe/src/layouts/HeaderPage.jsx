@@ -1,6 +1,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const userNavigation = [
   { name: 'My Schedule', path: '/schedule', id: 'schedule' },
@@ -23,6 +24,8 @@ function classNames(...classes) {
 export default function HeaderPage({ isAdmin, setIsAdmin }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const isManager = user?.role === 'manager';
   const currentNav = isAdmin ? adminNavigation : userNavigation;
   
   const navigation = currentNav.map(item => ({
@@ -76,8 +79,8 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
 
           {/* Right side items */}
           <div className="flex items-center space-x-3">
-            {/* Admin Toggle */}
-            {setIsAdmin && (
+            {/* Admin Toggle — chỉ hiện khi user là manager */}
+            {isManager && setIsAdmin && (
               <button
                 onClick={() => {
                   const newIsAdmin = !isAdmin;
@@ -96,13 +99,14 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
 
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">
-              <MenuButton className="flex rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">
+              <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">
                 <span className="sr-only">Open user menu</span>
                 <img
                   alt="User Avatar"
-                  src="https://ui-avatars.com/api/?name=User&background=101c23&color=12a4d9&rounded=true&size=32"
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.username || 'U')}&background=101c23&color=12a4d9&rounded=true&size=32`}
                   className="h-8 w-8 rounded-md"
                 />
+                <span className="hidden sm:block text-sm font-semibold text-gray-700">{user?.name || user?.username}</span>
               </MenuButton>
               <MenuItems
                 transition
@@ -115,7 +119,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
                 </MenuItem>
 
                 <MenuItem>
-                  <button onClick={() => navigate('/login')} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
+                  <button onClick={() => { logout(); navigate('/login'); }} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
                     Sign out
                   </button>
                 </MenuItem>

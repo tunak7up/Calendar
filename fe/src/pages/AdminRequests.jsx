@@ -7,6 +7,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
+import { apiFetch } from '../services/api';
 
 export default function AdminRequests() {
   const [requests, setRequests] = useState([]);
@@ -22,8 +23,7 @@ export default function AdminRequests() {
 
   const fetchRequests = () => {
     setLoading(true);
-    fetch('http://localhost:3000/api/request')
-      .then(res => res.json())
+    apiFetch('/request')
       .then(data => {
         if (data.success) {
           setRequests(data.data);
@@ -35,12 +35,11 @@ export default function AdminRequests() {
 
   const handleUpdateStatus = async (requestId, status) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/request/${requestId}`, {
+      const result = await apiFetch(`/request/${requestId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (res.ok) {
+      if (result) {
         fetchRequests();
       }
     } catch (error) {

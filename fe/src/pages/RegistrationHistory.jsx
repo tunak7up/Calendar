@@ -11,9 +11,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { requestService } from '../services/requestService';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegistrationHistory() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All Request Types');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
@@ -26,7 +28,7 @@ export default function RegistrationHistory() {
   React.useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const result = await requestService.getAllRequests();
+        const result = await requestService.getRequestsByRequester(user.person_id);
         if (result.success) {
           const mappedData = result.data.map(item => ({
             id: item.request_id,

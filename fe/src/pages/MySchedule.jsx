@@ -7,6 +7,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { useNavigate } from 'react-router-dom';
 import MiniCalendar from '../components/MiniCalendar';
 import { scheduleService } from '../services/scheduleService';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/api';
 import { 
   BriefcaseIcon, 
   UserMinusIcon, 
@@ -27,6 +29,7 @@ const TASK_COLORS = [
 
 export default function MySchedule() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -42,8 +45,8 @@ export default function MySchedule() {
     const fetchData = async () => {
       try {
         const [scheduleRes, taskRes] = await Promise.all([
-          scheduleService.getPersonSchedule(1),
-          fetch('http://localhost:3000/api/task/participant/1').then(res => res.json())
+          scheduleService.getPersonSchedule(user.person_id),
+          apiFetch(`/task/participant/${user.person_id}`)
         ]);
         
         if (scheduleRes.success) {
@@ -79,8 +82,8 @@ export default function MySchedule() {
       }
     };
 
-    fetchData();
-  }, []);
+    if (user?.person_id) fetchData();
+  }, [user]);
 
   const workDays = workingHours.map(e => e.start.split(/[T ]/)[0]);
 
@@ -130,9 +133,8 @@ export default function MySchedule() {
       const updatedTaskData = { ...taskData, start_time: newStart, due_date: newEnd };
       
       try {
-        await fetch(`http://localhost:3000/api/task/${taskId}`, {
+        await apiFetch(`/task/${taskId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             start_time: newStart,
             due_date: newEnd

@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ClipboardDocumentListIcon,
     PlusIcon,
-    ClipboardDocumentCheckIcon
+    ClipboardDocumentCheckIcon,
+    Bars3Icon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function SidebarTask() {
     const location = useLocation();
+    const [isOpen, setIsOpen] = useState(false);
 
     const getLinkClass = (path) => {
         return location.pathname === path
@@ -22,59 +25,46 @@ export default function SidebarTask() {
     };
 
     return (
-        <>
-            <button
-                data-drawer-target="task-sidebar"
-                data-drawer-toggle="task-sidebar"
-                aria-controls="task-sidebar"
-                type="button"
-                className="inline-flex items-center p-2 mt-3 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
-            >
-                <span className="sr-only">Open sidebar</span>
-                <svg className="w-6 h-6" aria-hidden="true" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M5 7h14M5 12h14M5 17h10" />
-                </svg>
-            </button>
-
-            <aside
-                id="task-sidebar"
-                className="fixed top-[56px] left-0 z-40 w-64 h-[calc(100vh-56px)] transition-transform -translate-x-full sm:translate-x-0"
-                aria-label="Sidebar"
-            >
-                <div className="h-full px-4 py-8 overflow-y-auto bg-[#f8fafc] border-r border-gray-100">
-                    {/* Brand block */}
-                    <div className="flex items-center mb-10 px-2">
-                        <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30">
-                            <ClipboardDocumentCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
-                        </div>
-                        <div className="flex flex-col ml-3">
-                            <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Task</span>
-                            <span className="text-gray-500 text-[0.65rem] -mt-0.5">Manage your tasks</span>
-                        </div>
+        <aside
+            id="task-sidebar"
+            className="fixed top-[56px] left-0 z-40 w-64 h-[calc(100vh-56px)] transition-transform -translate-x-full sm:translate-x-0"
+            aria-label="Sidebar"
+        >
+            <div className="h-full px-4 py-8 overflow-y-auto bg-[#f8fafc] border-r border-gray-100">
+                {/* Brand block */}
+                <div className="flex items-center mb-10 px-2">
+                    <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30">
+                        <ClipboardDocumentCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
                     </div>
-
-                    <ul className="space-y-3 font-medium">
-                        <li>
-                            <Link
-                                to="/tasks/add"
-                                className={getLinkClass('/tasks/add')}
-                            >
-                                <PlusIcon className={getIconClass('/tasks/add')} />
-                                <span className="ms-4 text-sm font-medium">New Task</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/tasks"
-                                className={getLinkClass('/tasks')}
-                            >
-                                <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
-                                <span className="ms-4 text-sm font-medium">List Task</span>
-                            </Link>
-                        </li>
-                    </ul>
+                    <div className="flex flex-col ml-3">
+                        <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Task</span>
+                        <span className="text-gray-500 text-[0.65rem] -mt-0.5">Manage your tasks</span>
+                    </div>
                 </div>
-            </aside>
-        </>
+
+                <ul className="space-y-3 font-medium">
+                    <li>
+                        <Link
+                            to="/tasks/add"
+                            className={getLinkClass('/tasks/add')}
+                            onClick={() => setIsOpen(false)}
+                        >
+                            <PlusIcon className={getIconClass('/tasks/add')} />
+                            <span className="ms-4 text-sm font-medium">New Task</span>
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            to="/tasks"
+                            className={getLinkClass('/tasks')}
+                            onClick={() => setIsOpen(false)}
+                        >
+                            <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
+                            <span className="ms-4 text-sm font-medium">List Task</span>
+                        </Link>
+                    </li>
+                </ul>
+            </div>
+        </aside>
     );
 }

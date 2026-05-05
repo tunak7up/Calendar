@@ -82,24 +82,24 @@ export default function AdminSchedule() {
   };
 
   return (
-    <div className="flex-1 p-8 pt-[80px] bg-[#f8fafc] min-h-screen relative">
-      <div className="max-w-7xl mx-auto flex gap-8">
+    <div className="flex-1 p-3 sm:p-8 pt-[80px] bg-[#f8fafc] min-h-screen relative">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 lg:gap-8">
 
         {/* Main Calendar Area */}
         <div className="flex-1 min-w-0">
           {/* Header with title and employee filter */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Company Schedule</h1>
-              <p className="text-gray-500 mt-1">Overview of all employee work shifts</p>
+              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Company Schedule</h1>
+              <p className="text-gray-500 mt-1 text-sm hidden sm:block">Overview of all employee work shifts</p>
             </div>
             
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200">
-              <UsersIcon className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-2 sm:gap-3 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-sm border border-gray-200">
+              <UsersIcon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
               <select
                 value={selectedEmployeeId}
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="border-none bg-transparent font-bold text-gray-700 outline-none focus:ring-0 cursor-pointer"
+                className="border-none bg-transparent font-bold text-gray-700 text-sm outline-none focus:ring-0 cursor-pointer max-w-[140px] sm:max-w-none"
               >
                 <option value="all">All Employees</option>
                 {employees.map(emp => (
@@ -109,7 +109,7 @@ export default function AdminSchedule() {
             </div>
           </div>
 
-          <div className="bg-white shadow-xl shadow-blue-900/5 border border-gray-100 rounded-3xl p-6 transition-all">
+          <div className="bg-white shadow-xl shadow-blue-900/5 border border-gray-100 rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all">
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -160,16 +160,20 @@ export default function AdminSchedule() {
           </div>
         </div>
 
-        {/* Right Panel — Mini Calendar */}
-        <div className="w-64 shrink-0 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit sticky top-[100px]">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Navigational View</h3>
-          <MiniCalendar
-            selectedDate={selectedDate}
-            onSelectDate={handleSelectDate}
-            workDays={scheduleDays}
-            viewDate={viewDate}
-            onViewChange={handleMiniCalendarViewChange}
-          />
+        {/* Right Panel — Mini Calendar: sidebar on desktop, compact strip on mobile */}
+        <div className="lg:w-64 lg:shrink-0 bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm lg:h-fit lg:sticky lg:top-[100px]">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">Navigational View</h3>
+          <div className="flex justify-center lg:block">
+            <div className="w-full max-w-xs lg:max-w-none">
+              <MiniCalendar
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
+                workDays={scheduleDays}
+                viewDate={viewDate}
+                onViewChange={handleMiniCalendarViewChange}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

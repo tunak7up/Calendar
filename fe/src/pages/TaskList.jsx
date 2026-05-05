@@ -99,19 +99,19 @@ export default function TaskList({ isAdmin }) {
     : tasks;
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-4 sm:p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
       {/* Page Header */}
-      <div className="flex items-start justify-between mb-7">
-        <div>
-          <h1 className="text-[2rem] font-extrabold text-gray-900 leading-tight tracking-tight">Task Registry</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage and monitor administrative chronologies</p>
+      <div className="flex items-start justify-between mb-5 sm:mb-7 gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-[2rem] font-extrabold text-gray-900 leading-tight tracking-tight">Task Registry</h1>
+          <p className="text-gray-500 text-sm mt-1 hidden sm:block">Manage and monitor administrative chronologies</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {isAdmin && (
             <select
               value={selectedEmployeeId}
               onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
+              className="border border-gray-200 bg-white text-gray-700 text-xs sm:text-sm font-semibold rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-[#0056b3] max-w-[130px] sm:max-w-none"
             >
               <option value="all">All Employees</option>
               {employees.map(emp => (
@@ -119,26 +119,21 @@ export default function TaskList({ isAdmin }) {
               ))}
             </select>
           )}
-          <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <ArrowDownTrayIcon className="w-4 h-4" />
-            Export Report
-          </button>
           {!isAdmin && (
             <button
               onClick={() => navigate('/tasks/add')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0056b3] hover:bg-[#004494] text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#0056b3] hover:bg-[#004494] text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
             >
               <PlusIcon className="w-4 h-4" />
-              Create Task
+              <span className="hidden sm:inline">Create Task</span>
+              <span className="sm:hidden">Create</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Stat Cards */}
-      <div className="flex gap-4 mb-8 flex-wrap">
+      <div className="flex gap-3 sm:gap-4 mb-6 sm:mb-8 flex-wrap">
         <StatCard
           label="Total Tasks"
           value={displayTasks.length}
@@ -174,7 +169,8 @@ export default function TaskList({ isAdmin }) {
         {loading ? (
           <div className="p-10 text-center text-gray-400">Loading tasks...</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 w-[35%]">
@@ -255,6 +251,7 @@ export default function TaskList({ isAdmin }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {/* Pagination footer */}
@@ -264,6 +261,15 @@ export default function TaskList({ isAdmin }) {
           </span>
         </div>
       </div>
+
+      {/* Floating Action Button for Mobile */}
+      <button
+        onClick={() => navigate('/tasks/add')}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-[#0056b3] text-white rounded-full shadow-2xl flex items-center justify-center sm:hidden z-40 active:scale-95 transition-transform"
+        title="Create Task"
+      >
+        <PlusIcon className="w-7 h-7" />
+      </button>
     </div>
   );
 }

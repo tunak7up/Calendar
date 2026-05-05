@@ -91,24 +91,26 @@ export default function AdminEmployeeList() {
   };
 
   return (
-    <div className="flex-1 p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-4 sm:p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-5 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Employees</h1>
-            <p className="text-gray-500 mt-1">Manage personnel and roles</p>
+            <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Employees</h1>
+            <p className="text-gray-500 mt-1 text-sm hidden sm:block">Manage personnel and roles</p>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2 sm:gap-3 items-center">
             <button
               onClick={() => openModal()}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0056b3] hover:bg-[#004494] text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#0056b3] hover:bg-[#004494] text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
             >
-              <PlusIcon className="w-5 h-5" />
-              Add User
+              <PlusIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Add User</span>
+              <span className="sm:hidden">Add</span>
             </button>
-            <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2">
-              <UsersIcon className="w-5 h-5 text-gray-400" />
-              <span className="font-bold text-gray-700">{employees.length} Total</span>
+            <div className="bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-1.5 sm:gap-2">
+              <UsersIcon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
+              <span className="font-bold text-gray-700 text-sm">{employees.length}</span>
+              <span className="text-gray-500 text-sm hidden sm:inline">Total</span>
             </div>
           </div>
         </div>

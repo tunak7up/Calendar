@@ -1,29 +1,36 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const userNavigation = [
-  { name: 'My Schedule', href: '#', id: 'schedule' },
-  { name: 'Register Work', href: '#', id: 'work' },
-  { name: 'Task', href: '#', id: 'task' },
+  { name: 'My Schedule', path: '/schedule', id: 'schedule' },
+  { name: 'Register Work', path: '/history', id: 'work' }, // Point to history/list as entry point
+  { name: 'Task', path: '/tasks', id: 'task' },
 ];
 
 const adminNavigation = [
-  { name: 'Employees', href: '#', id: 'admin_employees' },
-  { name: 'Requests', href: '#', id: 'admin_requests' },
-  { name: 'Schedule', href: '#', id: 'admin_schedule' },
-  { name: 'Task', href: '#', id: 'admin_task' },
+  { name: 'Employees', path: '/admin/employees', id: 'admin_employees' },
+  { name: 'Requests', path: '/admin/requests', id: 'admin_requests' },
+  { name: 'Schedule', path: '/admin/schedule', id: 'admin_schedule' },
+  { name: 'Work Hours', path: '/admin/work-hours', id: 'admin_workhours' },
+  { name: 'Task', path: '/tasks', id: 'admin_task' },
 ];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }) {
+export default function HeaderPage({ isAdmin, setIsAdmin }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const currentNav = isAdmin ? adminNavigation : userNavigation;
   
   const navigation = currentNav.map(item => ({
     ...item,
-    current: item.id === activeItem || (item.id === 'admin_task' && activeItem?.startsWith('task')) || (item.id === 'task' && activeItem?.startsWith('task')) || (item.id === 'work' && (activeItem === 'work' || activeItem === 'leave' || activeItem === 'list'))
+    current: location.pathname === item.path || 
+             (item.id === 'task' && location.pathname.startsWith('/tasks')) ||
+             (item.id === 'admin_task' && location.pathname.startsWith('/tasks')) ||
+             (item.id === 'work' && (location.pathname.startsWith('/register') || location.pathname.startsWith('/history')))
   }));
 
   return (
@@ -42,22 +49,17 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
 
             {/* Logo */}
             <div className="flex shrink-0 items-center mr-8">
-              <a href="#" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">Precision Workspace</a>
+              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">Precision Workspace</Link>
             </div>
 
             {/* Desktop Nav */}
             <div className="hidden sm:block">
               <div className="flex space-x-2">
                 {navigation.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
-                    id={`nav-${item.id}`}
+                    to={item.path}
                     aria-current={item.current ? 'page' : undefined}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (onSelect) onSelect(item.id);
-                    }}
                     className={classNames(
                       item.current
                         ? 'text-[#0056b3] bg-[#edf3fb] font-semibold relative after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#0056b3] after:rounded-t-[2px]'
@@ -66,7 +68,7 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
                     )}
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -74,45 +76,13 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
 
           {/* Right side items */}
           <div className="flex items-center space-x-3">
-            {/* Search */}
-            <div className="hidden md:block mr-4">
-              <div className="relative flex items-center w-[260px]">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 text-gray-500" />
-                </div>
-                <input
-                  type="search"
-                  placeholder="Search operations..."
-                  className="block w-full rounded-md border border-gray-200 py-[6px] pl-9 pr-3 text-gray-900 bg-[#f1f3f5] placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#86b7fe] sm:text-sm transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Notifications */}
-            <button
-              type="button"
-              className="relative rounded-full p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-            >
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="h-[1.35rem] w-[1.35rem]" />
-              <span className="absolute top-[3px] right-[4px] block h-1.5 w-1.5 rounded-full bg-red-500 ring-[1.5px] ring-white" />
-            </button>
-
-            {/* Help */}
-            <button
-              type="button"
-              className="relative rounded-full p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-            >
-              <span className="sr-only">Help</span>
-              <QuestionMarkCircleIcon aria-hidden="true" className="h-[1.35rem] w-[1.35rem]" />
-            </button>
-
             {/* Admin Toggle */}
             {setIsAdmin && (
               <button
                 onClick={() => {
-                  setIsAdmin(!isAdmin);
-                  if (onSelect) onSelect(!isAdmin ? 'admin_schedule' : 'schedule');
+                  const newIsAdmin = !isAdmin;
+                  setIsAdmin(newIsAdmin);
+                  navigate(newIsAdmin ? '/admin/schedule' : '/schedule');
                 }}
                 className={`ml-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
                   isAdmin 
@@ -139,15 +109,15 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
                 className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
                 <MenuItem>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
+                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
                     Your Profile
-                  </a>
+                  </Link>
                 </MenuItem>
 
                 <MenuItem>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
+                  <button onClick={() => navigate('/login')} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
                     Sign out
-                  </a>
+                  </button>
                 </MenuItem>
               </MenuItems>
             </Menu>
@@ -161,8 +131,8 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
           {navigation.map((item) => (
             <DisclosureButton
               key={item.name}
-              as="a"
-              href={item.href}
+              as={Link}
+              to={item.path}
               aria-current={item.current ? 'page' : undefined}
               className={classNames(
                 item.current ? 'bg-[#edf3fb] text-[#0056b3] border-l-4 border-[#0056b3]' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 border-l-4 border-transparent',
@@ -176,4 +146,4 @@ export default function HeaderPage({ activeItem, onSelect, isAdmin, setIsAdmin }
       </DisclosurePanel>
     </Disclosure>
   )
-}
+}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import HeaderPage from './layouts/HeaderPage'
 import SidebarRegister from './layouts/SidebarRegister'
 import RegistrationHistory from './pages/RegistrationHistory'
@@ -16,112 +17,97 @@ import SidebarAdmin from './layouts/SidebarAdmin'
 import AdminEmployeeList from './pages/AdminEmployeeList'
 import AdminRequests from './pages/AdminRequests'
 import AdminSchedule from './pages/AdminSchedule'
+import AdminWorkHours from './pages/AdminWorkHours'
 
 import './styles/App.css'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSidebarItem, setActiveSidebarItem] = useState('schedule');
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [preSelectedDate, setPreSelectedDate] = useState(null);
-  const [currentParentTask, setCurrentParentTask] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleNavigateWithDate = (page, date) => {
-    setPreSelectedDate(date);
-    setActiveSidebarItem(page);
-  };
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoggedIn && location.pathname !== '/login') {
+      navigate('/login');
+    }
+  }, [isLoggedIn, location.pathname, navigate]);
 
-  const handleTaskAction = (action, task) => {
-    if (action === 'task_sub_add') {
-      setCurrentParentTask(task);
-      setActiveSidebarItem('task_sub_add');
-    } else if (action === 'task_details') {
-      setSelectedTask(task);
-      setActiveSidebarItem('task_details');
-    }
-  };
-
-  const isTaskSection = activeSidebarItem === 'task' || activeSidebarItem.startsWith('task_');
-
-  const handleViewDetails = (request) => {
-    setSelectedRequest(request);
-  };
-
-  const handleBackToHistory = () => {
-    setSelectedRequest(null);
-  };
-
-  const renderContent = () => {
-    if (activeSidebarItem === 'work') {
-      return <RegisterWork initialDate={preSelectedDate} />;
-    }
-    if (activeSidebarItem === 'leave') {
-      return <RegisterLeave initialDate={preSelectedDate} />;
-    }
-    if (activeSidebarItem === 'schedule') {
-      return <MySchedule onNavigateWithDate={handleNavigateWithDate} onTaskAction={handleTaskAction} />;
-    }
-    if (activeSidebarItem === 'task' || activeSidebarItem === 'task_add') {
-      return <AddTask initialDate={preSelectedDate} />;
-    }
-    if (activeSidebarItem === 'task_list' || activeSidebarItem === 'admin_task') {
-      return <TaskList 
-        isAdmin={isAdmin}
-        onAddSubTask={(task) => handleTaskAction('task_sub_add', task)} 
-        onViewTask={(task) => handleTaskAction('task_details', task)} 
-      />;
-    }
-    if (activeSidebarItem === 'task_sub_add') {
-      return <AddSubTask parentTask={currentParentTask} onBack={() => setActiveSidebarItem('task_list')} />;
-    }
-    if (activeSidebarItem === 'task_details') {
-      return <TaskDetails task={selectedTask} onBack={() => setActiveSidebarItem('task_list')} />;
-    }
-
-    if (activeSidebarItem === 'admin_employees') {
-      return <AdminEmployeeList />;
-    }
-    if (activeSidebarItem === 'admin_requests') {
-      return <AdminRequests />;
-    }
-    if (activeSidebarItem === 'admin_schedule') {
-      return <AdminSchedule />;
-    }
-
-    if (selectedRequest) {
-      return <RegistrationHistoryDetails request={selectedRequest} onBack={handleBackToHistory} />;
-    }
-    return <RegistrationHistory onViewDetails={handleViewDetails} onNavigate={setActiveSidebarItem} />;
+  if (!isLoggedIn && location.pathname !== '/login') {
+    return null; // Or a loading spinner
   }
 
-  // Show login page if not authenticated
-  if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
+  const isTaskPath = location.pathname.startsWith('/tasks');
+  const isAdminPath = location.pathname.startsWith('/admin');
+  const isRegisterPath = location.pathname.startsWith('/register') || location.pathname === '/history' || location.pathname.startsWith('/history/');
 
-  // Xác định activeItem cho header (task_list → 'task' để highlight đúng nav)
-  // const headerActiveItem = isTaskSection ? 'task' : activeSidebarItem;
+  const renderSidebar = () => {
+    if (location.pathname === '/schedule' || location.pathname === '/admin/schedule') {
+      return null;
+    }
+
+    // Admin pages with only 1 sidebar item — don't show sidebar
+    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours'];
+    if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
+      return null;
+    }
+
+    if (isAdmin && isAdminPath) {
+      return <SidebarAdmin activeItem={location.pathname} />;
+    }
+
+    if (isTaskPath) {
+      return <SidebarTask activeItem={location.pathname} />;
+    }
+
+    if (isRegisterPath) {
+      return <SidebarRegister activeItem={location.pathname} />;
+    }
+
+    return null;
+  }
 
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
-      <HeaderPage activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
-      {activeSidebarItem !== 'schedule' && activeSidebarItem !== 'admin_schedule' && activeSidebarItem !== 'add_file' && (
-        isAdmin && ['admin_employees', 'admin_requests', 'task_list', 'task_add', 'task_details', 'task_sub_add', 'admin_task'].includes(activeSidebarItem) ? (
-          <SidebarAdmin activeItem={activeSidebarItem === 'admin_task' ? 'task_list' : activeSidebarItem} onSelect={setActiveSidebarItem} />
-        ) : activeSidebarItem.startsWith('task') ? (
-          <SidebarTask activeItem={activeSidebarItem === 'task' ? 'task_add' : activeSidebarItem} onSelect={setActiveSidebarItem} />
-        ) : (
-          <SidebarRegister activeItem={activeSidebarItem} onSelect={setActiveSidebarItem} />
-        )
+      {location.pathname !== '/login' && (
+        <HeaderPage 
+          activeItem={location.pathname} 
+          isAdmin={isAdmin} 
+          setIsAdmin={setIsAdmin} 
+        />
       )}
+      
+      {renderSidebar()}
+
       <main className="flex-1">
-        {renderContent()}
+        <Routes>
+          <Route path="/login" element={<Login onLogin={() => { setIsLoggedIn(true); navigate('/schedule'); }} />} />
+          
+          {/* User Routes */}
+          <Route path="/schedule" element={<MySchedule />} />
+          <Route path="/register/work" element={<RegisterWork />} />
+          <Route path="/register/leave" element={<RegisterLeave />} />
+          <Route path="/history" element={<RegistrationHistory />} />
+          <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
+          
+          <Route path="/tasks" element={<TaskList isAdmin={isAdmin} />} />
+          <Route path="/tasks/add" element={<AddTask />} />
+          <Route path="/tasks/:id" element={<TaskDetails />} />
+          <Route path="/tasks/sub-add/:parentId" element={<AddSubTask />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/employees" element={isAdmin ? <AdminEmployeeList /> : <Navigate to="/schedule" />} />
+          <Route path="/admin/requests" element={isAdmin ? <AdminRequests /> : <Navigate to="/schedule" />} />
+          <Route path="/admin/schedule" element={isAdmin ? <AdminSchedule /> : <Navigate to="/schedule" />} />
+          <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
+
+          {/* Redirects */}
+          <Route path="/" element={<Navigate to={isLoggedIn ? "/schedule" : "/login"} />} />
+        </Routes>
       </main>
     </div>
   )
 }
-
 
 export default App

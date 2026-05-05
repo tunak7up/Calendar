@@ -7,19 +7,25 @@ import {
   ListBulletIcon,
   UserGroupIcon,
   ClockIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MiniCalendar from '../components/MiniCalendar';
 import SubTaskModal from '../components/SubTaskModal';
 import WheelTimePicker from '../components/WheelTimePicker';
 
-export default function AddTask({ initialDate }) {
+export default function AddTask() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialDateFromState = location.state?.date;
+
   const initialState = {
     taskName: '',
     description: '',
-    startDate: initialDate || new Date().toISOString().split('T')[0],
+    startDate: initialDateFromState || new Date().toISOString().split('T')[0],
     startTime: '08:30',
-    dueDate: initialDate || new Date().toISOString().split('T')[0],
+    dueDate: initialDateFromState || new Date().toISOString().split('T')[0],
     endTime: '17:30',
     assigner: '',
     priority: 'Medium',
@@ -138,6 +144,7 @@ export default function AddTask({ initialDate }) {
       if (result.success) {
         alert('Task and sub-tasks created successfully!');
         handleReset();
+        navigate('/tasks');
       } else {
         alert('Error: ' + result.message);
       }
@@ -174,6 +181,13 @@ export default function AddTask({ initialDate }) {
     <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
       <div className="max-w-4xl mx-auto space-y-6 pb-20">
         <div>
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-4"
+          >
+            <ArrowLeftIcon className="w-4 h-4" />
+            Back
+          </button>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New Task</h1>
           <p className="text-gray-500 mt-1">Configure parameters and assignees for the new operational objective.</p>
         </div>
@@ -487,10 +501,10 @@ export default function AddTask({ initialDate }) {
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-4 pt-6">
           <button
-            onClick={handleReset}
+            onClick={() => navigate(-1)}
             className="text-gray-400 text-sm font-bold hover:text-gray-600 transition-colors px-6 py-3 rounded-xl hover:bg-gray-50"
           >
-            Cancel & Reset
+            Cancel
           </button>
           <button
             onClick={handleSubmit}

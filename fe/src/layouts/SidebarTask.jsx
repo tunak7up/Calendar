@@ -4,16 +4,19 @@ import {
     PlusIcon,
     ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
 
-export default function SidebarTask({ activeItem, onSelect }) {
-    const getLinkClass = (itemName) => {
-        return activeItem === itemName
+export default function SidebarTask() {
+    const location = useLocation();
+
+    const getLinkClass = (path) => {
+        return location.pathname === path
             ? "flex items-center px-4 py-3 text-[#0056b3] bg-[#edf3fb] rounded-xl font-semibold cursor-pointer"
             : "flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group";
     };
 
-    const getIconClass = (itemName) => {
-        return activeItem === itemName
+    const getIconClass = (path) => {
+        return location.pathname === path
             ? "w-5 h-5 text-[#0056b3]"
             : "w-5 h-5 text-[#64748b] group-hover:text-gray-900";
     };
@@ -46,31 +49,29 @@ export default function SidebarTask({ activeItem, onSelect }) {
                         </div>
                         <div className="flex flex-col ml-3">
                             <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Task</span>
-
                             <span className="text-gray-500 text-[0.65rem] -mt-0.5">Manage your tasks</span>
                         </div>
                     </div>
 
                     <ul className="space-y-3 font-medium">
                         <li>
-                            <a
-                                onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_add'); }}
-                                className={getLinkClass('task_add')}
+                            <Link
+                                to="/tasks/add"
+                                className={getLinkClass('/tasks/add')}
                             >
-                                <PlusIcon className={getIconClass('task_add')} />
+                                <PlusIcon className={getIconClass('/tasks/add')} />
                                 <span className="ms-4 text-sm font-medium">New Task</span>
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a
-                                onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_list'); }}
-                                className={getLinkClass('task_list')}
+                            <Link
+                                to="/tasks"
+                                className={getLinkClass('/tasks')}
                             >
-                                <ClipboardDocumentListIcon className={getIconClass('task_list')} />
+                                <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
                                 <span className="ms-4 text-sm font-medium">List Task</span>
-                            </a>
+                            </Link>
                         </li>
-
                     </ul>
                 </div>
             </aside>

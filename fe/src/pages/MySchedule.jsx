@@ -4,10 +4,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
+import { useNavigate } from 'react-router-dom';
 import MiniCalendar from '../components/MiniCalendar';
 import { scheduleService } from '../services/scheduleService';
 import { 
-  CalendarIcon, 
   BriefcaseIcon, 
   UserMinusIcon, 
   PlusCircleIcon, 
@@ -25,65 +25,14 @@ const TASK_COLORS = [
   { bg: '#ecfeff', border: '#cffafe', text: '#083344' }, // cyan
 ];
 
-const fakeEvents = [
-  // ... (keeping fakeEvents as is)
-  {
-    title: 'Quarterly Budget Review',
-    start: '2026-04-01T10:00:00',
-    end: '2026-04-01T11:30:00',
-    backgroundColor: '#fef3c7',
-    borderColor: '#fde68a',
-    textColor: '#92400e'
-  },
-  {
-    title: '9am Team Standup',
-    start: '2026-04-08T09:00:00',
-    end: '2026-04-08T10:00:00',
-    backgroundColor: '#ffedd5',
-    borderColor: '#fed7aa',
-    textColor: '#9a3412'
-  },
-  {
-    title: '10am Team Meeting',
-    start: '2026-04-14T10:00:00',
-    end: '2026-04-14T11:00:00',
-    backgroundColor: '#e0f2fe',
-    borderColor: '#bae6fd',
-    textColor: '#075985'
-  },
-  {
-    title: '12pm Lunch with Client',
-    start: '2026-04-16T12:00:00',
-    end: '2026-04-16T18:00:00',
-    backgroundColor: '#dcfce7',
-    borderColor: '#bbf7d0',
-    textColor: '#166534'
-  },
-  {
-    title: '2:30pm Sales Call',
-    start: '2026-04-22T14:30:00',
-    end: '2026-04-22T15:30:00',
-    backgroundColor: '#ffe4e6',
-    borderColor: '#fecdd3',
-    textColor: '#9f1239'
-  },
-  {
-    title: '1pm Project Deadline',
-    start: '2026-04-05',
-    end: '2026-04-08',
-    backgroundColor: '#e0e7ff',
-    borderColor: '#c7d2fe',
-    textColor: '#3730a3'
-  }
-];
-
-export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
+export default function MySchedule() {
+  const navigate = useNavigate();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
 
-  const [events, setEvents] = useState(fakeEvents);
   const [workingHours, setWorkingHours] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay }
@@ -135,7 +84,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
 
   const workDays = workingHours.map(e => e.start.split(/[T ]/)[0]);
 
-  const displayEvents = [...events, ...workingHours, ...tasks].map(e => {
+  const displayEvents = [...workingHours, ...tasks].map(e => {
     if (e.extendedProps?.isWorkHour) {
       return {
         ...e,
@@ -150,6 +99,12 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
     setSelectedDate(dateStr);
     if (calendarRef.current) {
       calendarRef.current.getApi().gotoDate(dateStr);
+    }
+  };
+
+  const handleMiniCalendarViewChange = (newDate) => {
+    if (calendarRef.current) {
+      calendarRef.current.getApi().gotoDate(newDate);
     }
   };
 
@@ -173,9 +128,6 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
       const newEnd = newEndObj.toISOString();
       
       const updatedTaskData = { ...taskData, start_time: newStart, due_date: newEnd };
-      
-      const exclusiveEnd = new Date(newEndObj);
-      exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
       
       try {
         await fetch(`http://localhost:3000/api/task/${taskId}`, {
@@ -201,12 +153,6 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
         console.error('Error updating task date:', error);
         info.revert();
       }
-    } else {
-      setEvents(prev => prev.map(e =>
-        e.title === event.title
-          ? { ...e, start: event.startStr, end: event.endStr || undefined }
-          : e
-      ));
     }
   }, []);
 
@@ -243,6 +189,9 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
               dayMaxEvents={true}
               eventDrop={handleEventDrop}
               dateClick={handleDateClick}
+              datesSet={(info) => {
+                setViewDate(info.view.currentStart);
+              }}
               eventClick={(info) => {
                 if (info.event.extendedProps?.isTask) {
                   setTaskMenuConfig({
@@ -261,7 +210,6 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
                 const classes = [];
                 if (dateStr === selectedDate) classes.push('fc-selected-day');
                 
-                // Only highlight the whole day background in Month view
                 if (workDays.includes(dateStr) && arg.view.type === 'dayGridMonth') {
                   classes.push('fc-work-day');
                 }
@@ -297,6 +245,8 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
             workDays={workDays}
+            viewDate={viewDate}
+            onViewChange={handleMiniCalendarViewChange}
           />
         </div>
       </div>
@@ -320,7 +270,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
             
             <div className="p-4 space-y-2">
               <button
-                onClick={() => onNavigateWithDate('task_add', menuConfig.date)}
+                onClick={() => navigate('/tasks/add', { state: { date: menuConfig.date } })}
                 className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 group transition-all text-left"
               >
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -334,7 +284,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
 
               {!menuConfig.isWorkDay ? (
                 <button
-                  onClick={() => onNavigateWithDate('work', menuConfig.date)}
+                  onClick={() => navigate('/register/work', { state: { date: menuConfig.date } })}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-green-50 group transition-all text-left"
                 >
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all">
@@ -347,7 +297,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
                 </button>
               ) : (
                 <button
-                  onClick={() => onNavigateWithDate('leave', menuConfig.date)}
+                  onClick={() => navigate('/register/leave', { state: { date: menuConfig.date } })}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 group transition-all text-left"
                 >
                   <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
@@ -372,6 +322,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
           </div>
         </div>
       )}
+
       {/* Task Options Modal */}
       {taskMenuConfig && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -392,7 +343,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
             <div className="p-4 space-y-2">
               <button
                 onClick={() => {
-                  onTaskAction('task_sub_add', taskMenuConfig.taskData);
+                  navigate(`/tasks/sub-add/${taskMenuConfig.taskData.task_id}`, { state: { parentTask: taskMenuConfig.taskData } });
                   setTaskMenuConfig(null);
                 }}
                 className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-purple-50 group transition-all text-left"
@@ -408,7 +359,7 @@ export default function MySchedule({ onNavigateWithDate, onTaskAction }) {
 
               <button
                 onClick={() => {
-                  onTaskAction('task_details', taskMenuConfig.taskData);
+                  navigate(`/tasks/${taskMenuConfig.taskData.task_id}`, { state: { task: taskMenuConfig.taskData } });
                   setTaskMenuConfig(null);
                 }}
                 className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 group transition-all text-left"

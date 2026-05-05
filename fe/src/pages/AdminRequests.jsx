@@ -3,7 +3,9 @@ import {
   ClipboardDocumentCheckIcon, 
   CheckIcon,
   XMarkIcon,
-  ClockIcon
+  ClockIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 export default function AdminRequests() {
@@ -11,6 +13,8 @@ export default function AdminRequests() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   useEffect(() => {
     fetchRequests();
@@ -61,8 +65,19 @@ export default function AdminRequests() {
     return true;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredRequests.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedRequests = filteredRequests.slice(startIndex, startIndex + pageSize);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -72,7 +87,10 @@ export default function AdminRequests() {
           <div className="flex gap-3 items-center">
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setCurrentPage(1);
+              }}
               className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
             >
               <option value="all">All Types</option>
@@ -81,7 +99,10 @@ export default function AdminRequests() {
             </select>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
               className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
             >
               <option value="all">All Statuses</option>
@@ -114,12 +135,12 @@ export default function AdminRequests() {
                   <tr>
                     <td colSpan="6" className="text-center py-12 text-gray-400">Loading requests...</td>
                   </tr>
-                ) : filteredRequests.length === 0 ? (
+                ) : paginatedRequests.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="text-center py-12 text-gray-400">No requests found.</td>
                   </tr>
                 ) : (
-                  filteredRequests.map((req) => (
+                  paginatedRequests.map((req) => (
                     <tr key={req.request_id || req.id} className="hover:bg-blue-50/30 transition-colors group border-b border-gray-50 last:border-b-0">
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${
@@ -167,6 +188,45 @@ export default function AdminRequests() {
               </tbody>
             </table>
           </div>
+          
+          {filteredRequests.length > 0 && (
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-100 bg-gray-50/50">
+              <span className="text-sm text-gray-500">
+                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests
+              </span>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeftIcon className="w-5 h-5" />
+                </button>
+                
+                {[...Array(totalPages)].map((_, i) => (
+                  <button 
+                    key={i + 1}
+                    onClick={() => goToPage(i + 1)}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                      currentPage === i + 1 
+                        ? 'text-white bg-[#0056b3]' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                
+                <button 
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRightIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

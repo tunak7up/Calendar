@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [] }) {
+export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [], viewDate, onViewChange }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(
     selectedDate ? new Date(selectedDate).getFullYear() : today.getFullYear()
@@ -12,14 +12,44 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
     selectedDate ? new Date(selectedDate).getMonth() : today.getMonth()
   );
 
+  useEffect(() => {
+    if (viewDate) {
+      const d = new Date(viewDate);
+      setViewYear(d.getFullYear());
+      setViewMonth(d.getMonth());
+    }
+  }, [viewDate]);
+
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-    else setViewMonth(m => m - 1);
+    let newMonth, newYear;
+    if (viewMonth === 0) { 
+      newMonth = 11; 
+      newYear = viewYear - 1;
+    } else {
+      newMonth = viewMonth - 1;
+      newYear = viewYear;
+    }
+    setViewMonth(newMonth);
+    setViewYear(newYear);
+    if (onViewChange) {
+      onViewChange(new Date(newYear, newMonth, 1));
+    }
   };
 
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-    else setViewMonth(m => m + 1);
+    let newMonth, newYear;
+    if (viewMonth === 11) { 
+      newMonth = 0; 
+      newYear = viewYear + 1;
+    } else {
+      newMonth = viewMonth + 1;
+      newYear = viewYear;
+    }
+    setViewMonth(newMonth);
+    setViewYear(newYear);
+    if (onViewChange) {
+      onViewChange(new Date(newYear, newMonth, 1));
+    }
   };
 
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;

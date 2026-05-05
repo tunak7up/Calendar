@@ -4,18 +4,20 @@ import {
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
   Squares2X2Icon,
-  Cog8ToothIcon
 } from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
 
-export default function SidebarRegister({ activeItem, onSelect }) {
-  const getLinkClass = (itemName) => {
-    return activeItem === itemName
+export default function SidebarRegister() {
+  const location = useLocation();
+
+  const getLinkClass = (path) => {
+    return location.pathname === path
       ? "flex items-center px-4 py-3 text-white bg-[#0056b3] rounded-xl shadow-md shadow-blue-500/20 group cursor-pointer"
       : "flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer";
   };
 
-  const getIconClass = (itemName) => {
-    return activeItem === itemName
+  const getIconClass = (path) => {
+    return location.pathname === path
       ? "w-5 h-5 text-white"
       : "w-5 h-5 text-[#64748b] group-hover:text-gray-900";
   };
@@ -64,34 +66,32 @@ export default function SidebarRegister({ activeItem, onSelect }) {
 
           <ul className="space-y-3 font-medium">
             <li>
-              <a
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('list'); }}
-                className={getLinkClass('list')}
+              <Link
+                to="/history"
+                className={getLinkClass('/history')}
               >
-                <ClipboardDocumentListIcon className={getIconClass('list')} />
+                <ClipboardDocumentListIcon className={getIconClass('/history')} />
                 <span className="ms-4 font-semibold text-sm">List Request</span>
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('leave'); }}
-                className={getLinkClass('leave')}
+              <Link
+                to="/register/leave"
+                className={getLinkClass('/register/leave')}
               >
-                <CalendarDaysIcon className={getIconClass('leave')} />
+                <CalendarDaysIcon className={getIconClass('/register/leave')} />
                 <span className="ms-4 font-semibold text-sm">Register Leave</span>
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                onClick={(e) => { e.preventDefault(); onSelect && onSelect('work'); }}
-                className={getLinkClass('work')}
+              <Link
+                to="/register/work"
+                className={getLinkClass('/register/work')}
               >
-                <Squares2X2Icon className={getIconClass('work')} />
+                <Squares2X2Icon className={getIconClass('/register/work')} />
                 <span className="ms-4 font-semibold text-sm">Register Work</span>
-              </a>
+              </Link>
             </li>
-
-
           </ul>
         </div>
       </aside>

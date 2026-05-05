@@ -10,56 +10,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
-
+import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
-
-const SAMPLE_TASKS = [
-  {
-    id: 'TASK-2024-001',
-    title: 'Quarterly Financial Audit',
-    startDate: 'Oct 12, 2023',
-    dueDate: 'Jan 15, 2024',
-    status: 'Completed',
-    endedDate: 'Jan 14, 2024',
-  },
-  {
-    id: 'TASK-2024-045',
-    title: 'Cloud Infrastructure Migration',
-    startDate: 'Nov 01, 2023',
-    dueDate: 'Mar 20, 2024',
-    status: 'In Progress',
-    endedDate: null,
-  },
-  {
-    id: 'TASK-2024-089',
-    title: 'Annual Compliance Review',
-    startDate: 'Dec 15, 2023',
-    dueDate: 'Apr 10, 2024',
-    status: 'Pending',
-    endedDate: null,
-  },
-  {
-    id: 'TASK-2024-112',
-    title: 'Talent Acquisition Strategy',
-    startDate: 'Jan 05, 2024',
-    dueDate: 'Feb 28, 2024',
-    status: 'In Progress',
-    endedDate: null,
-  },
-  {
-    id: 'TASK-2023-452',
-    title: 'Network Security Patching',
-    startDate: 'Sep 15, 2023',
-    dueDate: 'Oct 01, 2023',
-    status: 'Completed',
-    endedDate: 'Sep 28, 2023',
-  },
-];
-
-const TOTAL_TASKS = 124;
-const PENDING = 18;
-const COMPLETED = 84;
-const OVERDUE = 22;
 
 function StatusBadge({ status }) {
   if (status === 'Completed') {
@@ -103,12 +55,12 @@ function StatCard({ icon, label, value, iconBg, iconColor }) {
   );
 }
 
-export default function TaskList({ onAddSubTask, onViewTask, isAdmin }) {
+export default function TaskList({ isAdmin }) {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
 
   React.useEffect(() => {
     const fetchTasks = async () => {
@@ -143,8 +95,6 @@ export default function TaskList({ onAddSubTask, onViewTask, isAdmin }) {
     ? tasks.filter(t => t.participants && t.participants.some(p => p.person_id.toString() === selectedEmployeeId))
     : tasks;
 
-  const totalPages = Math.ceil(displayTasks.length / 10);
-
   return (
     <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
       {/* Page Header */}
@@ -174,6 +124,7 @@ export default function TaskList({ onAddSubTask, onViewTask, isAdmin }) {
           </button>
           {!isAdmin && (
             <button
+              onClick={() => navigate('/tasks/add')}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0056b3] hover:bg-[#004494] text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
             >
               <PlusIcon className="w-4 h-4" />
@@ -282,7 +233,7 @@ export default function TaskList({ onAddSubTask, onViewTask, isAdmin }) {
                   <td className="px-4 py-5 text-center flex items-center justify-center gap-4">
                     {!isAdmin && (
                       <button
-                        onClick={() => onAddSubTask(task)}
+                        onClick={() => navigate(`/tasks/sub-add/${task.task_id}`, { state: { parentTask: task } })}
                         title="Add Sub-task"
                         className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                       >
@@ -290,7 +241,7 @@ export default function TaskList({ onAddSubTask, onViewTask, isAdmin }) {
                       </button>
                     )}
                     <button
-                      onClick={() => onViewTask && onViewTask(task)}
+                      onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
                       title="View details"
                       className="text-gray-400 hover:text-[#0056b3] transition-colors"
                     >

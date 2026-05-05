@@ -7,10 +7,21 @@ import {
   CalendarIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
-import { requestService } from '../services/requestService';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function RegistrationHistoryDetails({ request, onBack }) {
-  if (!request) return null;
+export default function RegistrationHistoryDetails() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const request = location.state?.request;
+
+  if (!request) return (
+    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+      <div className="max-w-4xl mx-auto text-center py-20">
+        <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
+      </div>
+    </div>
+  );
 
   const isPending = request.status === 'Chờ phê duyệt';
 
@@ -19,7 +30,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center text-sm text-gray-500 mb-2">
-            <span className="hover:text-gray-900 cursor-pointer" onClick={onBack}>Registration History</span>
+            <span className="hover:text-gray-900 cursor-pointer" onClick={() => navigate(-1)}>Registration History</span>
             <span className="mx-2">›</span>
             <span className="text-gray-900 font-medium">Details</span>
           </div>
@@ -113,9 +124,6 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
           </div>
 
           <div className="lg:col-span-1">
-
-
-
             {!isPending ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
                 <div className="relative mb-4 mt-2">
@@ -157,7 +165,7 @@ export default function RegistrationHistoryDetails({ request, onBack }) {
 
         <div className="mt-8 flex justify-end">
           <button 
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-blue-600 font-medium hover:text-blue-800 transition-colors"
           >
             <ArrowLeftIcon className="w-4 h-4" />

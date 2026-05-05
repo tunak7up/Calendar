@@ -6,22 +6,40 @@ import {
   CalendarDaysIcon,
   UserIcon,
   FlagIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  PaperClipIcon
 } from '@heroicons/react/24/outline';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 
-export default function AddSubTask({ parentTask, onBack }) {
+export default function AddSubTask() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const parentTask = location.state?.parentTask;
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 'Medium'
+    priority: 'Medium',
+    attachmentUrl: ''
   });
+
+  if (!parentTask) return (
+    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+      <div className="max-w-4xl mx-auto text-center py-20">
+        <h2 className="text-xl font-bold text-gray-900">Parent task not found</h2>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
+      </div>
+    </div>
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     const payload = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      priority: formData.priority,
       parent_id: parentTask.task_id,
       assigner_id: parentTask.assigner_id,
       start_time: parentTask.start_time,
@@ -38,8 +56,21 @@ export default function AddSubTask({ parentTask, onBack }) {
       
       const result = await response.json();
       if (result.success) {
+        // If there's an attachment, send it too
+        if (formData.attachmentUrl.trim()) {
+          const subTaskId = result.data.task_id;
+          await fetch('http://localhost:3000/api/task/attachment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              task_id: subTaskId, 
+              url: formData.attachmentUrl.trim() 
+            })
+          });
+        }
+        
         alert('Sub-task created successfully!');
-        onBack();
+        navigate(-1);
       } else {
         alert('Error: ' + result.message);
       }
@@ -55,7 +86,7 @@ export default function AddSubTask({ parentTask, onBack }) {
         {/* Header */}
         <div className="mb-8">
           <button 
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-4 group"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -130,8 +161,23 @@ export default function AddSubTask({ parentTask, onBack }) {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1 flex items-center gap-2">
+                    <PaperClipIcon className="w-4 h-4" />
+                    Attachment (Link/URL)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://docs.google.com/..."
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-gray-700 font-medium"
+                    value={formData.attachmentUrl}
+                    onChange={(e) => setFormData({ ...formData, attachmentUrl: e.target.value })}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-2 ml-1">Optional. Add a link to related resources or instructions.</p>
+                </div>
+
                 <div className="pt-4">
-                  <Button type="submit" className="w-full py-4 text-lg">
+                  <Button type="submit" className="w-full py-4 text-lg font-bold">
                     Create Sub-task
                   </Button>
                 </div>
@@ -139,7 +185,7 @@ export default function AddSubTask({ parentTask, onBack }) {
             </div>
           </div>
 
-          {/* Sidebar - Parent Task Info (Fixed) */}
+          {/* Sidebar - Parent Task Info */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 overflow-hidden relative">
               <div className="absolute top-0 right-0 p-4 opacity-5">

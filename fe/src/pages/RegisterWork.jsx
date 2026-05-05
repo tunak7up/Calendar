@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import WeekDatePicker from '../components/WeekDatePicker';
 import { getFullDateStr, getTimeRangeStr } from '../utils/dateUtils';
@@ -7,7 +8,11 @@ import { scheduleService } from '../services/scheduleService';
 import { requestService } from '../services/requestService';
 
 
-export default function RegisterWork({ initialDate }) {
+export default function RegisterWork() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialDate = location.state?.date;
+
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
   const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : [getFullDateStr(new Date())]);
   const [selectedShift, setSelectedShift] = useState('Morning');
@@ -137,8 +142,13 @@ export default function RegisterWork({ initialDate }) {
   };
 
   const handleCancel = () => {
-    resetForm();
-    setSchedule([]);
+    if (schedule.length > 0) {
+      if (window.confirm("Are you sure you want to discard your draft schedule?")) {
+        navigate(-1);
+      }
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleSubmit = async () => {
@@ -183,6 +193,7 @@ export default function RegisterWork({ initialDate }) {
       // Clear schedule and reset form after success
       setSchedule([]);
       resetForm();
+      navigate('/history');
     } catch (error) {
       console.error('Error:', error);
       alert("Có lỗi xảy ra khi đăng ký: " + error.message);
@@ -205,8 +216,15 @@ export default function RegisterWork({ initialDate }) {
     <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-4"
+          >
+            <ArrowLeftIcon className="w-4 h-4" />
+            Back
+          </button>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Register Work Day</h1>
-          <p className="text-gray-500 mt-2 text-[0.95rem]">Configure your upcoming session by selecting your project and preferred time slot.</p>
+          <p className="text-gray-500 mt-2 text-[0.95rem]">Configure your upcoming session by selecting your preferred time slot.</p>
         </div>
 
         <div className="bg-[#f8fafc] rounded-3xl p-8 shadow-sm border border-gray-100">

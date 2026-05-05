@@ -5,27 +5,33 @@ import {
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
   PlusIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
 
-export default function SidebarAdmin({ activeItem, onSelect }) {
-  const getLinkClass = (itemName) => {
-    return activeItem === itemName
+export default function SidebarAdmin() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const getLinkClass = (itemPath) => {
+    return path === itemPath
       ? "flex items-center px-4 py-3 text-white bg-red-600 rounded-xl shadow-md shadow-red-500/20 group cursor-pointer"
       : "flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer";
   };
 
-  const getIconClass = (itemName) => {
-    return activeItem === itemName
+  const getIconClass = (itemPath) => {
+    return path === itemPath
       ? "w-5 h-5 text-white"
       : "w-5 h-5 text-[#64748b] group-hover:text-gray-900";
   };
 
   let section = '';
-  if (activeItem === 'admin_employees') section = 'employees';
-  else if (activeItem === 'admin_requests') section = 'requests';
-  else if (activeItem === 'admin_schedule') section = 'schedule';
-  else if (activeItem.startsWith('task')) section = 'tasks';
+  if (path === '/admin/employees') section = 'employees';
+  else if (path === '/admin/requests') section = 'requests';
+  else if (path === '/admin/schedule') section = 'schedule';
+  else if (path === '/admin/work-hours') section = 'workhours';
+  else if (path.startsWith('/tasks')) section = 'tasks';
 
   return (
     <>
@@ -73,56 +79,67 @@ export default function SidebarAdmin({ activeItem, onSelect }) {
           <ul className="space-y-3 font-medium">
             {section === 'employees' && (
               <li>
-                <a
-                  onClick={(e) => { e.preventDefault(); onSelect && onSelect('admin_employees'); }}
-                  className={getLinkClass('admin_employees')}
+                <Link
+                  to="/admin/employees"
+                  className={getLinkClass('/admin/employees')}
                 >
-                  <UsersIcon className={getIconClass('admin_employees')} />
+                  <UsersIcon className={getIconClass('/admin/employees')} />
                   <span className="ms-4 font-semibold text-sm">Manage Employees</span>
-                </a>
+                </Link>
               </li>
             )}
             {section === 'requests' && (
               <li>
-                <a
-                  onClick={(e) => { e.preventDefault(); onSelect && onSelect('admin_requests'); }}
-                  className={getLinkClass('admin_requests')}
+                <Link
+                  to="/admin/requests"
+                  className={getLinkClass('/admin/requests')}
                 >
-                  <ClipboardDocumentCheckIcon className={getIconClass('admin_requests')} />
+                  <ClipboardDocumentCheckIcon className={getIconClass('/admin/requests')} />
                   <span className="ms-4 font-semibold text-sm">Review Requests</span>
-                </a>
+                </Link>
               </li>
             )}
             {section === 'schedule' && (
               <li>
-                <a
-                  onClick={(e) => { e.preventDefault(); onSelect && onSelect('admin_schedule'); }}
-                  className={getLinkClass('admin_schedule')}
+                <Link
+                  to="/admin/schedule"
+                  className={getLinkClass('/admin/schedule')}
                 >
-                  <CalendarDaysIcon className={getIconClass('admin_schedule')} />
+                  <CalendarDaysIcon className={getIconClass('/admin/schedule')} />
                   <span className="ms-4 font-semibold text-sm">Company Schedule</span>
-                </a>
+                </Link>
+              </li>
+            )}
+            {section === 'workhours' && (
+              <li>
+                <Link
+                  to="/admin/work-hours"
+                  className={getLinkClass('/admin/work-hours')}
+                >
+                  <ClockIcon className={getIconClass('/admin/work-hours')} />
+                  <span className="ms-4 font-semibold text-sm">Work Hours</span>
+                </Link>
               </li>
             )}
             {section === 'tasks' && (
               <>
                 <li>
-                  <a
-                    onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_list'); }}
-                    className={getLinkClass('task_list')}
+                  <Link
+                    to="/tasks"
+                    className={getLinkClass('/tasks')}
                   >
-                    <ClipboardDocumentListIcon className={getIconClass('task_list')} />
+                    <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
                     <span className="ms-4 font-semibold text-sm">All Tasks</span>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    onClick={(e) => { e.preventDefault(); onSelect && onSelect('task_add'); }}
-                    className={getLinkClass('task_add')}
+                  <Link
+                    to="/tasks/add"
+                    className={getLinkClass('/tasks/add')}
                   >
-                    <PlusIcon className={getIconClass('task_add')} />
+                    <PlusIcon className={getIconClass('/tasks/add')} />
                     <span className="ms-4 font-semibold text-sm">Create Task</span>
-                  </a>
+                  </Link>
                 </li>
               </>
             )}

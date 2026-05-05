@@ -95,7 +95,7 @@ export default function AdminEmployeeList() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>

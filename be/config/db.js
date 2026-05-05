@@ -8,11 +8,8 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: process.env.DB_DIALECT || 'mssql',
   timezone: '+07:00',
   dialectOptions: {
-    options: {
-      encrypt: false,              // true nếu dùng Azure SQL
-      trustServerCertificate: true, // bỏ qua lỗi TLS khi kết nối ngoài
-      enableArithAbort: true,
-    },
+    dateStrings: true,
+    typeCast: true,
   },
   define: {
     freezeTableName: true,
@@ -29,7 +26,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 async function testConnection() {
   try {
-    await sequelize.authenticate();
+    await sequelize.sync({ force: false });
     console.log('Connection has been established successfully.');
     console.log(sequelize.config.database);
   } catch (error) {

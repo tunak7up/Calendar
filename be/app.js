@@ -3,8 +3,7 @@ const app = express();
 const router = require('./routes');
 const cors = require('cors');
 const sequelize = require('./config/db');
-const multer = require('multer');
-const port = 3000; 
+const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

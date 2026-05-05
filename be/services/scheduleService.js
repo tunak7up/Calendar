@@ -18,8 +18,8 @@ const getScheduleByPersonId = async (personId) => {
     return await schedule.findAll({
         where: { person_id: personId },
         include: [
-            { 
-                model: person, 
+            {
+                model: person,
                 as: 'person',
                 required: true
             }
@@ -30,11 +30,11 @@ const getScheduleByPersonId = async (personId) => {
 const getAllSchedules = async () => {
     return await schedule.findAll({
         include: [
-            { 
-                model: person, 
+            {
+                model: person,
                 as: 'person',
                 required: true,
-                attributes: ['person_id', 'name']
+                attributes: ['person_id', 'name', 'username']
             }
         ],
         order: [['working_date', 'ASC']]

@@ -7,5 +7,6 @@ router.use('/request', require('./request'));
 router.use('/request-detail', require('./requestDetail'));
 router.use('/schedule', require('./schedule'));
 router.use('/response', require('./response'));
+router.use('/comment', require('./comment'));
 
 module.exports = router;

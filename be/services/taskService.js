@@ -1,4 +1,4 @@
-const { task, person, task_participant, task_attachment } = require('../models');
+const { task, person, task_participant, task_attachment, comment, comment_attachment } = require('../models');
 const { Op } = require('sequelize');
 
 const sequelize = require('../config/db');
@@ -47,7 +47,26 @@ const createTask = async (data) => {
 
         return parentTask;
     });
-}
+};
+
+const createSubTask = async ({ parentTaskId, data }) => {
+    const parentTaskData = task.findByPk(parentTaskId);
+    if (!parentTaskData) throw new Error('Parent task not found');
+    return await task.create({
+        parent_id: parentTaskId,
+        assigner_id: parentTaskData.assigner_id,
+        created_by: parentTaskData.created_by,
+        start_time: parentTaskData.start_time,
+        due_date: parentTaskData.due_date,
+        title: data.title,
+        status: data.status || 'pending',
+        created_at: new Date(),
+        description: data.description,
+        priority: data.priority,
+        ended_at: null,
+        ...data
+    });
+};
 
 const createTaskAttachment = async ({ task_id, url }) => {
     return await task_attachment.create({ task_id, url });
@@ -75,7 +94,7 @@ const getAllTasks = async () => {
         ],
         order: [['created_at', 'DESC']]
     });
-    
+
     return tasks.map(t => {
         const taskJson = t.toJSON();
         const participants = taskJson.participants?.map(p => ({
@@ -83,7 +102,7 @@ const getAllTasks = async () => {
             name: p.name,
             role: p.task_participant?.role || 'N/A'
         })) || [];
-        
+
         return {
             task_id: taskJson.task_id,
             name: taskJson.title,
@@ -159,7 +178,7 @@ const updateTask = async (id, data) => {
         if (subTasks.length > 0) {
             const allCompleted = subTasks.every(st => st.status === 'completed');
             if (!allCompleted) {
-                const error = new Error('Phải hoàn thành tất cả các sub-task trước khi hoàn thành task cha.');
+                const error = new Error('Phải ho�?n th�?nh tất cả các sub-task trước khi ho�?n th�?nh task cha.');
                 error.status = 400;
                 throw error;
             }
@@ -178,6 +197,7 @@ const deleteTask = async (id) => {
 
 module.exports = {
     createTask,
+    createSubTask,
     getAllTasks,
     getTaskById,
     getChildTasksByParentId,

@@ -11,6 +11,15 @@ const createTask = async (req, res) => {
     }
 };
 
+const createSubTask = async (req, res) => {
+    try {
+        const task = await taskService.createSubTask(req.params.id, req.body);
+        sendRes(res, 201, 'Sub-task created successfully', task);
+    } catch (error) {
+        sendRes(res, 400, 'Error creating sub-task', null, error.message);
+    }
+};
+
 const getAllTasks = async (req, res) => {
     try {
         const tasks = await taskService.getAllTasks();
@@ -94,9 +103,9 @@ const getAttachmentsByTaskId = async (req, res) => {
     }
 };
 
-
 module.exports = {
     createTask,
+    createSubTask,
     getAllTasks,
     getTaskById,
     getChildTasksByParentId,

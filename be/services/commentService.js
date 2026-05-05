@@ -12,7 +12,6 @@ const getAllComments = async () => {
 };
 
 const createCommentByTaskId = async (taskId, data) => {
-    console.log('createCommentByTaskId data:', data);
     return await sequelize.transaction(async (t) => {
         const newComment = await comment.create({
             task_id: taskId,

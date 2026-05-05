@@ -170,23 +170,37 @@ const getAllTasksByParticipantsId = async (participantId) => {
 };
 
 const updateTask = async (id, data) => {
-    const targetTask = await task.findByPk(id);
-    if (!targetTask) throw new Error('Task not found');
+    const parentTask = await task.findByPk(id);
+    if (!parentTask) throw new Error('Task not found');
 
     if (data.status === 'completed') {
         const subTasks = await task.findAll({ where: { parent_id: id } });
         if (subTasks.length > 0) {
             const allCompleted = subTasks.every(st => st.status === 'completed');
             if (!allCompleted) {
-                const error = new Error('Pháº£i hoÃ?n thÃ?nh táº¥t cáº£ cÃ¡c sub-task trÆ°á»›c khi hoÃ?n thÃ?nh task cha.');
+                const error = new Error('Phai hoan thanh tat ca sub-task truoc khi hoan thanh task cha.');
                 error.status = 400;
                 throw error;
             }
         }
     }
 
-    await targetTask.update(data);
-    return targetTask;
+    return await sequelize.transaction(async (t) => {
+        const updatedParent = await parentTask.update(data, { transaction: t });
+
+        if (data.start_time || data.due_date) {
+            const dateFields = {};
+            if (data.start_time) dateFields.start_time = data.start_time;
+            if (data.due_date) dateFields.due_date = data.due_date;
+
+            await task.update(dateFields, {
+                where: { parent_id: id },
+                transaction: t,
+            });
+        }
+
+        return updatedParent;
+    });
 };
 
 const deleteTask = async (id) => {

@@ -79,23 +79,6 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
 
           {/* Right side items */}
           <div className="flex items-center space-x-3">
-            {/* Admin Toggle — chỉ hiện khi user là manager */}
-            {isManager && setIsAdmin && (
-              <button
-                onClick={() => {
-                  const newIsAdmin = !isAdmin;
-                  setIsAdmin(newIsAdmin);
-                  navigate(newIsAdmin ? '/admin/schedule' : '/schedule');
-                }}
-                className={`ml-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${isAdmin
-                    ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200'
-                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-                  }`}
-              >
-                {isAdmin ? 'Admin View' : 'User View'}
-              </button>
-            )}
-
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">
               <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">

@@ -85,7 +85,6 @@ function App() {
         <HeaderPage
           activeItem={location.pathname}
           isAdmin={isAdmin}
-          setIsAdmin={setIsAdmin}
         />
       )}
 
@@ -93,7 +92,10 @@ function App() {
 
       <main className="flex-1">
         <Routes>
-          <Route path="/login" element={<Login onLogin={() => { navigate('/schedule'); }} />} />
+          <Route path="/login" element={<Login onLogin={(data) => { 
+            const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+            navigate(payload.role === 'manager' ? '/admin/schedule' : '/schedule'); 
+          }} />} />
 
           {/* User Routes */}
           <Route path="/schedule" element={<MySchedule />} />
@@ -114,7 +116,7 @@ function App() {
           <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
 
           {/* Redirects */}
-          <Route path="/" element={<Navigate to={isLoggedIn ? "/schedule" : "/login"} />} />
+          <Route path="/" element={<Navigate to={isLoggedIn ? (authIsAdmin ? "/admin/schedule" : "/schedule") : "/login"} />} />
         </Routes>
       </main>
     </div>

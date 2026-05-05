@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
     try {
       const data = await loginApi(username, password);
       login(data); // Lưu token vào context + localStorage
-      onLogin && onLogin();
+      onLogin && onLogin(data);
     } catch (err) {
       setError(err.message || 'Sai tên đăng nhập hoặc mật khẩu.');
     } finally {

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
+import { loginApi } from '../services/authService';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -7,15 +9,23 @@ export default function Login({ onLogin }) {
   const [savePassword, setSavePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    // TODO: integrate with auth service
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const data = await loginApi(username, password);
+      login(data); // Lưu token vào context + localStorage
       onLogin && onLogin();
-    }, 1000);
+    } catch (err) {
+      setError(err.message || 'Sai tên đăng nhập hoặc mật khẩu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -35,6 +45,14 @@ export default function Login({ onLogin }) {
 
         {/* Form card */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
             {/* Username */}

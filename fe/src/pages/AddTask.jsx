@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { apiFetch } from '../services/api';
 import {
   CloudArrowUpIcon,
   XMarkIcon,
@@ -53,8 +54,7 @@ export default function AddTask() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/person');
-        const result = await response.json();
+        const result = await apiFetch('/person');
 
         if (result.success && Array.isArray(result.data)) {
           const persons = result.data;
@@ -134,13 +134,10 @@ export default function AddTask() {
         task_participants
       };
 
-      const response = await fetch('http://localhost:3000/api/task', {
+      const result = await apiFetch('/task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      const result = await response.json();
       if (result.success) {
         alert('Task and sub-tasks created successfully!');
         handleReset();

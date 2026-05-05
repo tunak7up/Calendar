@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
+import { apiFetch } from '../services/api';
 
 export default function TaskDetails() {
   const { id } = useParams();
@@ -40,15 +41,13 @@ export default function TaskDetails() {
 
   const fetchTaskData = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/task/${id}`);
-      const data = await res.json();
+      const data = await apiFetch(`/task/${id}`);
       if (data.success) {
         setFullTask(data.data);
         
         // If it's a sub-task, fetch parent info
         if (data.data.parent_id) {
-          const pRes = await fetch(`http://localhost:3000/api/task/${data.data.parent_id}`);
-          const pData = await pRes.json();
+          const pData = await apiFetch(`/task/${data.data.parent_id}`);
           if (pData.success) {
             setParentTask(pData.data);
           }
@@ -63,8 +62,7 @@ export default function TaskDetails() {
 
   const fetchSubTasks = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/task/parent/${id}`);
-      const data = await res.json();
+      const data = await apiFetch(`/task/parent/${id}`);
       if (data.success) {
         const enhancedSubTasks = (data.data || []).map(st => ({
           ...st,
@@ -132,12 +130,10 @@ export default function TaskDetails() {
     setIsSubmitting(true);
     try {
       if (newStatus !== selectedSubTask.status) {
-        const res = await fetch(`http://localhost:3000/api/task/${selectedSubTask.task_id}`, {
+        const result = await apiFetch(`/task/${selectedSubTask.task_id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus })
         });
-        const result = await res.json();
         if (!result.success) {
           alert(result.message);
           setIsSubmitting(false);
@@ -146,9 +142,8 @@ export default function TaskDetails() {
       }
 
       if (productUrl.trim()) {
-        await fetch('http://localhost:3000/api/task/attachment', {
+        await apiFetch('/task/attachment', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ task_id: selectedSubTask.task_id, url: productUrl.trim() })
         });
       }

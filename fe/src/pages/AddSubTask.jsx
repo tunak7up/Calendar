@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../services/api';
 import { 
   PlusIcon, 
   ArrowLeftIcon,
@@ -48,20 +49,17 @@ export default function AddSubTask() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/task', {
+      const result = await apiFetch('/task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       
-      const result = await response.json();
       if (result.success) {
         // If there's an attachment, send it too
         if (formData.attachmentUrl.trim()) {
           const subTaskId = result.data.task_id;
-          await fetch('http://localhost:3000/api/task/attachment', {
+          await apiFetch('/task/attachment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               task_id: subTaskId, 
               url: formData.attachmentUrl.trim() 

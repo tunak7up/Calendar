@@ -6,6 +6,7 @@ import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import MiniCalendar from '../components/MiniCalendar';
 import { UsersIcon } from '@heroicons/react/24/outline';
+import { apiFetch } from '../services/api';
 
 const PERSON_COLORS = [
   { bg: '#dbeafe', border: '#bfdbfe', text: '#1e3a8a' }, // blue
@@ -30,8 +31,7 @@ export default function AdminSchedule() {
 
   useEffect(() => {
     // Fetch Employees for Filter
-    fetch('http://localhost:3000/api/person')
-      .then(res => res.json())
+    apiFetch('/person')
       .then(data => {
         if (data.success) {
           setEmployees(data.data);
@@ -39,8 +39,7 @@ export default function AdminSchedule() {
       });
 
     // Fetch All Schedules
-    fetch('http://localhost:3000/api/schedule')
-      .then(res => res.json())
+    apiFetch('/schedule')
       .then(data => {
         if (data.success) {
           const mappedSchedules = data.data.map(item => {

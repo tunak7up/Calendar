@@ -6,11 +6,13 @@ import WeekDatePicker from '../components/WeekDatePicker';
 import { getFullDateStr, getTimeRangeStr } from '../utils/dateUtils';
 import { scheduleService } from '../services/scheduleService';
 import { requestService } from '../services/requestService';
+import { useAuth } from '../context/AuthContext';
 
 
 export default function RegisterWork() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
@@ -22,7 +24,7 @@ export default function RegisterWork() {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const result = await scheduleService.getPersonSchedule(1);
+        const result = await scheduleService.getPersonSchedule(user.person_id);
         if (result.success) {
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
           setWorkDays(days);
@@ -178,7 +180,7 @@ export default function RegisterWork() {
     });
 
     const payload = {
-      requester_id: 1, // Default user ID as per example
+      requester_id: user.person_id,
       approver_id: null,
       type: 'register',
       reason: 'Đăng ký lịch làm việc',

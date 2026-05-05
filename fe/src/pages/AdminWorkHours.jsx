@@ -8,6 +8,7 @@ import {
   FunnelIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { apiFetch } from '../services/api';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -35,8 +36,8 @@ export default function AdminWorkHours() {
     setLoading(true);
     try {
       const [empRes, schedRes] = await Promise.all([
-        fetch('http://localhost:3000/api/person').then(r => r.json()),
-        fetch('http://localhost:3000/api/schedule').then(r => r.json())
+        apiFetch('/person'),
+        apiFetch('/schedule')
       ]);
 
       if (empRes.success) setEmployees(empRes.data);

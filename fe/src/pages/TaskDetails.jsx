@@ -18,11 +18,13 @@ import {
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
 import { apiFetch } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function TaskDetails() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const taskFromState = location.state?.task;
 
   const [fullTask, setFullTask] = useState(taskFromState || {});
@@ -30,6 +32,7 @@ export default function TaskDetails() {
   const [parentTask, setParentTask] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [persons, setPersons] = useState({});
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,14 +63,28 @@ export default function TaskDetails() {
     }
   };
 
+  const fetchComments = async () => {
+    try {
+      const data = await apiFetch(`/comment/task/${id}`);
+      if (data.success) {
+        setComments(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
   const fetchSubTasks = async () => {
     try {
       const data = await apiFetch(`/task/parent/${id}`);
       if (data.success) {
-        const enhancedSubTasks = (data.data || []).map(st => ({
-          ...st,
-          comments: [],
-          newComment: ''
+        const enhancedSubTasks = await Promise.all((data.data || []).map(async st => {
+          const cData = await apiFetch(`/comment/task/${st.task_id}`);
+          return {
+            ...st,
+            comments: cData.success ? cData.data : [],
+            newComment: ''
+          };
         }));
         setSubTasks(enhancedSubTasks);
       }
@@ -76,46 +93,72 @@ export default function TaskDetails() {
     }
   };
 
+  const fetchPersons = async () => {
+    try {
+      const res = await apiFetch('/person');
+      if (res.success) {
+        const pMap = {};
+        res.data.forEach(p => pMap[p.person_id] = p.name || p.username);
+        setPersons(pMap);
+      }
+    } catch (error) {
+      console.error('Error fetching persons:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPersons();
+  }, []);
+
   useEffect(() => {
     if (id) {
       fetchTaskData();
+      fetchComments();
       fetchSubTasks();
     }
   }, [id]);
 
-  const handleAddComment = (taskId = null) => {
-    if (!newComment.trim() && taskId === null) return;
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
 
-    if (taskId === null) {
-      const commentObj = {
-        id: Date.now(),
-        user: 'You',
-        text: newComment,
-        time: new Date().toISOString()
-      };
-      setComments([...comments, commentObj]);
-      setNewComment('');
+    try {
+      const res = await apiFetch(`/comment/task/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          person_id: user.person_id,
+          content: newComment.trim()
+        })
+      });
+
+      if (res.success) {
+        setNewComment('');
+        fetchComments();
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
 
-  const handleAddSubTaskComment = (subTaskId) => {
-    setSubTasks(prev => prev.map(st => {
-      if (st.task_id === subTaskId) {
-        if (!st.newComment?.trim()) return st;
-        const commentObj = {
-          id: Date.now(),
-          user: 'You',
-          text: st.newComment,
-          time: new Date().toISOString()
-        };
-        return {
-          ...st,
-          comments: [...(st.comments || []), commentObj],
-          newComment: ''
-        };
+  const handleAddSubTaskComment = async (subTaskId) => {
+    const subTask = subTasks.find(st => st.task_id === subTaskId);
+    if (!subTask || !subTask.newComment?.trim()) return;
+
+    try {
+      const res = await apiFetch(`/comment/task/${subTaskId}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          person_id: user.person_id,
+          content: subTask.newComment.trim()
+        })
+      });
+
+      if (res.success) {
+        // Refresh subtasks to get the new comment
+        fetchSubTasks();
       }
-      return st;
-    }));
+    } catch (error) {
+      console.error('Error adding sub-task comment:', error);
+    }
   };
 
   const handleOpenModal = (subTask, isParent = false) => {
@@ -201,27 +244,32 @@ export default function TaskDetails() {
           Back to list
         </button>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           {/* Header */}
-          <div className="p-8 border-b border-gray-100">
-            <div className="flex justify-between items-start mb-4">
+          <div className="p-5 sm:p-8 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div>
-                <div className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-2">
-                  {parentTask ? 'Sub-task' : 'Task'} ID: REQ-{fullTask.task_id}
+                <div className="flex items-center gap-3 mb-1.5">
+                  <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
+                    {parentTask ? 'Sub-task' : 'Task'} ID: REQ-{fullTask.task_id}
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize ${getPriorityColor(fullTask.priority)}`}>
+                    {fullTask.priority || 'Normal'} Priority
+                  </span>
                 </div>
-                <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
                   {fullTask.title || fullTask.name || 'Untitled Task'}
                 </h1>
                 {parentTask && (
-                  <div className="mt-4 flex items-center gap-2 p-3 bg-blue-50/50 rounded-2xl border border-blue-100 w-fit">
-                    <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
-                      <ListBulletIcon className="w-4 h-4" />
+                  <div className="mt-3 flex items-center gap-2 p-2 bg-blue-50/50 rounded-xl border border-blue-100 w-fit">
+                    <div className="p-1 bg-blue-100 text-blue-600 rounded-md">
+                      <ListBulletIcon className="w-3 h-3" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-blue-400 uppercase tracking-tight">Belongs to parent task</p>
+                      <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">Belongs to parent task</p>
                       <button 
                         onClick={() => navigate(`/tasks/${parentTask.task_id}`, { state: { task: parentTask } })}
-                        className="text-sm font-bold text-blue-700 hover:underline text-left"
+                        className="text-xs font-bold text-blue-700 hover:underline text-left"
                       >
                         {parentTask.title || parentTask.name}
                       </button>
@@ -229,8 +277,8 @@ export default function TaskDetails() {
                   </div>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <span className={`px-4 py-1.5 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusColor(fullTask.status)}`}>
+              <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
+                <span className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${getStatusColor(fullTask.status)}`}>
                   {fullTask.status || 'Unknown'}
                 </span>
                 <button
@@ -243,95 +291,61 @@ export default function TaskDetails() {
             </div>
           </div>
 
-          {/* Details Grid */}
-          <div className="p-8 bg-gray-50/50 border-b border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                  <UserIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Assigner</p>
-                  <p className="text-gray-900 font-semibold">{fullTask.assigner || 'Unassigned'}</p>
-                </div>
+          {/* Compact Details Bar */}
+          <div className="px-5 py-3 sm:px-8 sm:py-4 bg-gray-50/50 border-b border-gray-100">
+            <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <UserIcon className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-500 font-medium">Assigner:</span>
+                <span className="text-gray-900 font-semibold">{fullTask.assigner || 'Unassigned'}</span>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <ClockIcon className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-500 font-medium">Start:</span>
+                <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.start_time)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-500 font-medium">Due:</span>
+                <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4">
-                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                  <ClockIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Start Time</p>
-                  <p className="text-gray-900 font-semibold">
-                    {formatDateTime(fullTask.start_time)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4">
-                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                  <CalendarDaysIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Due Time</p>
-                  <p className="text-gray-900 font-semibold">
-                    {formatDateTime(fullTask.due_date)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4">
-                <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
-                  <FlagIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Priority</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold capitalize ${getPriorityColor(fullTask.priority)}`}>
-                    {fullTask.priority || 'Normal'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 col-span-1 md:col-span-2">
-                <div className="p-3 bg-teal-50 text-teal-600 rounded-xl">
-                  <ShieldCheckIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Role</p>
-                  <p className="text-gray-900 font-semibold">{fullTask.role || 'N/A'}</p>
-                </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-500 font-medium">Role:</span>
+                <span className="text-gray-900 font-semibold">{fullTask.role || 'N/A'}</span>
               </div>
             </div>
           </div>
 
           {/* Description */}
-          <div className="p-8 border-b border-gray-100">
+          <div className="p-5 sm:p-8 border-b border-gray-100">
             <div className="flex items-center gap-2 mb-4">
               <DocumentTextIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">Description</h2>
             </div>
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
                 {fullTask.description || 'No description provided.'}
               </p>
             </div>
           </div>
 
           {/* Comments Section */}
-          <div className="p-8 bg-gray-50/30">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="p-5 sm:p-8 bg-gray-50/30">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">Comments</h2>
             </div>
 
-            <div className="space-y-4 mb-6">
+            <div className="space-y-4 mb-4 sm:mb-6">
               {comments.map(c => (
-                <div key={c.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[80%]">
+                <div key={c.comment_id || c.id} className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-indigo-600">{c.user}</span>
-                    <span className="text-[10px] text-gray-400">{formatDateTime(c.time)}</span>
+                    <span className="text-xs font-bold text-indigo-600">{persons[c.person_id] || 'Unknown User'}</span>
+                    <span className="text-[10px] text-gray-400">{formatDateTime(c.created_at || c.time)}</span>
                   </div>
-                  <p className="text-sm text-gray-700">{c.text}</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.content || c.text}</p>
                 </div>
               ))}
             </div>
@@ -354,27 +368,27 @@ export default function TaskDetails() {
         </div>
 
         {/* Sub-tasks Section */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-            <ListBulletIcon className="w-6 h-6 text-indigo-500" />
-            <h2 className="text-xl font-extrabold text-gray-900">Sub-Tasks</h2>
-            <span className="ml-auto bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-xs font-bold">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+            <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
+            <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">Sub-Tasks</h2>
+            <span className="ml-auto bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
               {subTasks.length} {subTasks.length === 1 ? 'Task' : 'Tasks'}
             </span>
           </div>
 
-          <div className="p-6 space-y-8">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
             {subTasks.length === 0 ? (
               <p className="text-center text-gray-400 py-8 font-semibold">No sub-tasks found.</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {subTasks.map(sub => (
-                  <div key={sub.task_id} className="bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all border-l-4 border-l-indigo-500">
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-6">
+                  <div key={sub.task_id} className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all border-l-4 border-l-indigo-500">
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4 sm:mb-6">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
-                          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
+                          <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
                             <span className={`px-3 py-1 rounded-full font-bold uppercase tracking-wider border ${getStatusColor(sub.status)}`}>
                               {sub.status || 'pending'}
                             </span>
@@ -414,12 +428,12 @@ export default function TaskDetails() {
                         </div>
                         <div className="space-y-3 mb-4">
                           {(sub.comments || []).map(sc => (
-                            <div key={sc.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 text-xs">
+                            <div key={sc.comment_id || sc.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 text-xs">
                               <div className="flex justify-between items-center mb-1">
-                                <span className="font-bold text-indigo-600">{sc.user}</span>
-                                <span className="text-[8px] text-gray-400">{formatDateTime(sc.time)}</span>
+                                <span className="font-bold text-indigo-600">{persons[sc.person_id] || 'Unknown User'}</span>
+                                <span className="text-[8px] text-gray-400">{formatDateTime(sc.created_at || sc.time)}</span>
                               </div>
-                              <p className="text-gray-700">{sc.text}</p>
+                              <p className="text-gray-700 whitespace-pre-wrap">{sc.content || sc.text}</p>
                             </div>
                           ))}
                         </div>

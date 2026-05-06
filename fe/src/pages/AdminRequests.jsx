@@ -15,6 +15,7 @@ export default function AdminRequests() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionRequestId, setActionRequestId] = useState(null);
   const pageSize = 8;
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function AdminRequests() {
       });
       if (result) {
         fetchRequests();
+        setActionRequestId(null);
       }
     } catch (error) {
       console.error('Error updating request status:', error);
@@ -75,22 +77,26 @@ export default function AdminRequests() {
     }
   };
 
+  const handleRowClick = (id) => {
+    setActionRequestId(prev => prev === id ? null : id);
+  };
+
   return (
-    <div className="flex-1 p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-4 sm:p-8 mt-[56px] bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Review Requests</h1>
-            <p className="text-gray-500 mt-1">Approve or reject employee work/leave registrations</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Review Requests</h1>
+            <p className="text-gray-500 mt-1 text-sm sm:text-base">Approve or reject employee work/leave registrations</p>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full sm:w-auto">
             <select
               value={filterType}
               onChange={(e) => {
                 setFilterType(e.target.value);
                 setCurrentPage(1);
               }}
-              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
+              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3] flex-1 sm:flex-none min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
               <option value="all">All Types</option>
               <option value="register">Register</option>
@@ -102,23 +108,23 @@ export default function AdminRequests() {
                 setFilterStatus(e.target.value);
                 setCurrentPage(1);
               }}
-              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
+              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3] flex-1 sm:flex-none min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
-            <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2">
+            <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2 w-full sm:w-auto justify-center">
               <ClipboardDocumentCheckIcon className="w-5 h-5 text-gray-400" />
               <span className="font-bold text-gray-700">{filteredRequests.length} Total</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden flex flex-col">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col">
           <div className="overflow-x-auto overflow-y-auto max-h-[65vh] custom-scrollbar">
-            <table className="w-full text-left border-collapse relative">
+            <table className="w-full text-left border-collapse relative min-w-[700px]">
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10 shadow-sm">
                 <tr>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
@@ -126,62 +132,68 @@ export default function AdminRequests() {
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Reason</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Date Submitted</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-gray-400">Loading requests...</td>
+                    <td colSpan="5" className="text-center py-12 text-gray-400">Loading requests...</td>
                   </tr>
                 ) : paginatedRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-gray-400">No requests found.</td>
+                    <td colSpan="5" className="text-center py-12 text-gray-400">No requests found.</td>
                   </tr>
                 ) : (
                   paginatedRequests.map((req) => (
-                    <tr key={req.request_id || req.id} className="hover:bg-blue-50/30 transition-colors group border-b border-gray-50 last:border-b-0">
-                      <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${
-                          req.type === 'leave' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                        }`}>
-                          {req.type}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-sm font-semibold text-gray-900">
-                        {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? 'Đăng ký lịch làm việc' : req.reason}>
-                        {req.type === 'register' ? 'Đăng ký lịch làm việc' : (req.reason || 'N/A')}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-500 font-medium flex items-center gap-2">
-                        <ClockIcon className="w-4 h-4 text-gray-400" />
-                        {new Date(req.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        {getStatusBadge(req.status)}
-                      </td>
-                      <td className="py-4 px-6 text-right space-x-2">
-                        {req.status?.toLowerCase() === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleUpdateStatus(req.request_id || req.id, 'approved')}
-                              className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors border border-emerald-100 hover:border-emerald-500"
-                              title="Approve"
-                            >
-                              <CheckIcon className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleUpdateStatus(req.request_id || req.id, 'rejected')}
-                              className="p-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-100 hover:border-red-500"
-                              title="Reject"
-                            >
-                              <XMarkIcon className="w-5 h-5" />
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
+                    <React.Fragment key={req.request_id || req.id}>
+                      <tr 
+                        onClick={() => handleRowClick(req.request_id || req.id)}
+                        className="hover:bg-blue-50/30 transition-colors group border-b border-gray-50 last:border-b-0 cursor-pointer select-none"
+                      >
+                        <td className="py-4 px-6">
+                          <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${
+                            req.type === 'leave' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                          }`}>
+                            {req.type}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm font-semibold text-gray-900">
+                          {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? 'Đăng ký lịch làm việc' : req.reason}>
+                          {req.type === 'register' ? 'Đăng ký lịch làm việc' : (req.reason || 'N/A')}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-500 font-medium flex items-center gap-2">
+                          <ClockIcon className="w-4 h-4 text-gray-400" />
+                          {new Date(req.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          {getStatusBadge(req.status)}
+                        </td>
+                      </tr>
+                      {actionRequestId === (req.request_id || req.id) && req.status?.toLowerCase() === 'pending' && (
+                        <tr className="bg-blue-50/50 border-b border-gray-50">
+                          <td colSpan="5" className="px-6 py-3">
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={() => handleUpdateStatus(req.request_id || req.id, 'approved')}
+                                className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors border border-emerald-100 hover:border-emerald-500 font-semibold text-xs flex items-center gap-1.5 shadow-sm"
+                                title="Approve"
+                              >
+                                <CheckIcon className="w-4 h-4" /> Approve
+                              </button>
+                              <button
+                                onClick={() => handleUpdateStatus(req.request_id || req.id, 'rejected')}
+                                className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-100 hover:border-red-500 font-semibold text-xs flex items-center gap-1.5 shadow-sm"
+                                title="Reject"
+                              >
+                                <XMarkIcon className="w-4 h-4" /> Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
@@ -189,9 +201,9 @@ export default function AdminRequests() {
           </div>
           
           {filteredRequests.length > 0 && (
-            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-100 bg-gray-50/50">
-              <span className="text-sm text-gray-500">
-                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests
+            <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-gray-50/50 gap-4">
+              <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests (Click a pending row to review)
               </span>
               <div className="flex items-center gap-1">
                 <button 

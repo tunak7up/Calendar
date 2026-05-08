@@ -19,6 +19,8 @@ import AdminEmployeeList from './pages/AdminEmployeeList'
 import AdminRequests from './pages/AdminRequests'
 import AdminSchedule from './pages/AdminSchedule'
 import AdminWorkHours from './pages/AdminWorkHours'
+import Profile from './pages/Profile'
+import Dashboard from './pages/Dashboard'
 
 import './styles/App.css'
 
@@ -54,7 +56,7 @@ function App() {
   const isRegisterPath = location.pathname.startsWith('/register') || location.pathname === '/history' || location.pathname.startsWith('/history/');
 
   const renderSidebar = () => {
-    if (location.pathname === '/schedule' || location.pathname === '/admin/schedule') {
+    if (location.pathname === '/schedule' || location.pathname === '/admin/schedule' || location.pathname === '/dashboard') {
       return null;
     }
 
@@ -94,10 +96,11 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login onLogin={(data) => { 
             const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
-            navigate(payload.role === 'manager' ? '/admin/schedule' : '/schedule'); 
+            navigate(payload.role === 'manager' ? '/admin/schedule' : '/dashboard'); 
           }} />} />
 
           {/* User Routes */}
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/schedule" element={<MySchedule />} />
           <Route path="/register/work" element={<RegisterWork />} />
           <Route path="/register/leave" element={<RegisterLeave />} />
@@ -109,6 +112,10 @@ function App() {
           <Route path="/tasks/:id" element={<TaskDetails />} />
           <Route path="/tasks/sub-add/:parentId" element={<AddSubTask />} />
 
+          {/* Profile Routes */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:id" element={<Profile />} />
+
           {/* Admin Routes */}
           <Route path="/admin/employees" element={isAdmin ? <AdminEmployeeList /> : <Navigate to="/schedule" />} />
           <Route path="/admin/requests" element={isAdmin ? <AdminRequests /> : <Navigate to="/schedule" />} />
@@ -116,7 +123,7 @@ function App() {
           <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
 
           {/* Redirects */}
-          <Route path="/" element={<Navigate to={isLoggedIn ? (authIsAdmin ? "/admin/schedule" : "/schedule") : "/login"} />} />
+          <Route path="/" element={<Navigate to={isLoggedIn ? (authIsAdmin ? "/admin/schedule" : "/dashboard") : "/login"} />} />
         </Routes>
       </main>
     </div>

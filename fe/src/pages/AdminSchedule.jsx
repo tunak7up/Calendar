@@ -5,8 +5,11 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import MiniCalendar from '../components/MiniCalendar';
-import { UsersIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, XMarkIcon, ArrowLeftIcon, PlusIcon, CheckCircleIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
+import { taskService } from '../services/taskService';
+import { scheduleService } from '../services/scheduleService';
+import { useNavigate } from 'react-router-dom';
 
 const PERSON_COLORS = [
   { bg: '#dbeafe', border: '#bfdbfe', text: '#1e3a8a' }, // blue
@@ -25,9 +28,18 @@ export default function AdminSchedule() {
   const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
 
+  const navigate = useNavigate();
   const [schedules, setSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
+  const [allTasksCache, setAllTasksCache] = useState(null);
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalDate, setModalDate] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalData, setModalData] = useState([]);
+  const [selectedModalPerson, setSelectedModalPerson] = useState(null);
 
   useEffect(() => {
     // Fetch Employees for Filter
@@ -39,7 +51,7 @@ export default function AdminSchedule() {
       });
 
     // Fetch All Schedules
-    apiFetch('/schedule')
+    scheduleService.getAllSchedules()
       .then(data => {
         if (data.success) {
           const mappedSchedules = data.data.map(item => {
@@ -47,7 +59,7 @@ export default function AdminSchedule() {
             return {
               id: `sched_${item.schedule_id}`,
               title: `${item.person?.name || 'Unknown'}`,
-              start: item.working_date,
+              start: item.working_date?.split?.('T')?.[0],
               allDay: true,
               person_id: item.person_id,
               backgroundColor: colorSet.bg,
@@ -78,6 +90,65 @@ export default function AdminSchedule() {
   const handleMiniCalendarViewChange = (newDate) => {
     if (calendarRef.current) {
       calendarRef.current.getApi().gotoDate(newDate);
+    }
+  };
+
+  const handleDateClick = async (arg) => {
+    const clickedDateStr = arg.dateStr;
+    setModalDate(clickedDateStr);
+    setIsModalOpen(true);
+    setSelectedModalPerson(null);
+    setModalLoading(true);
+
+    try {
+      const peopleWorking = schedules.filter(s => s.start === clickedDateStr);
+      
+      // Fetch Daily Reports for this specific date (Fast, 1 request)
+      const reportPromise = apiFetch(`/daily-report/date/${clickedDateStr}`);
+      
+      // Fetch all tasks once and cache them, to avoid N+1 queries per person
+      let tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
+      if (!allTasksCache) {
+        tasksPromise = taskService.getAllTasks();
+      }
+
+      const [reportRes, tasksRes] = await Promise.all([reportPromise, tasksPromise]);
+      const reports = reportRes.success ? (reportRes.data || reportRes.message || []) : [];
+      
+      let allTasks = allTasksCache;
+      if (!allTasksCache && tasksRes.success) {
+        allTasks = tasksRes.data || tasksRes.message || [];
+        setAllTasksCache(allTasks);
+      }
+
+      const enrichedData = peopleWorking.map(sched => {
+        let personTasks = [];
+        if (allTasks) {
+          personTasks = allTasks.filter(t => 
+            (t.status === 'pending' || t.status === 'in progress') &&
+            t.participants?.some(p => p.person_id === sched.person_id)
+          );
+        }
+        
+        const personReport = reports.find(r => r.person_id === sched.person_id);
+        
+        return {
+          person_id: sched.person_id,
+          name: sched.title,
+          username: sched.extendedProps.person?.username || '',
+          shift: `${sched.extendedProps.start_time} - ${sched.extendedProps.end_time}`,
+          check_in: personReport ? personReport.check_in : null,
+          has_reported: personReport && personReport.description ? true : false,
+          report: personReport || null,
+          tasks: personTasks
+        };
+      });
+
+      setModalData(enrichedData);
+    } catch (error) {
+      console.error("Failed to load date details", error);
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -115,10 +186,10 @@ export default function AdminSchedule() {
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
               initialDate={todayStr}
-              headerToolbar={{
-                left: 'today prev,next title',
-                right: 'dayGridMonth,timeGridWeek,listMonth'
-              }}
+              // headerToolbar={{
+              //   left: 'today prev,next title',
+              //   right: 'dayGridMonth,timeGridWeek,listMonth'
+              // }}
               views={{
                 dayGridMonth: { displayEventTime: false },
                 timeGridWeek: { displayEventTime: false },
@@ -126,6 +197,7 @@ export default function AdminSchedule() {
               events={displayEvents}
               height="auto"
               dayMaxEvents={true}
+              dateClick={handleDateClick}
               datesSet={(info) => {
                 setViewDate(info.view.currentStart);
               }}
@@ -176,6 +248,168 @@ export default function AdminSchedule() {
           </div>
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                {selectedModalPerson && (
+                  <button 
+                    onClick={() => setSelectedModalPerson(null)}
+                    className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500 transition-colors"
+                  >
+                    <ArrowLeftIcon className="w-5 h-5" />
+                  </button>
+                )}
+                <h2 className="text-lg font-bold text-gray-900">
+                  {selectedModalPerson 
+                    ? `Tasks for ${selectedModalPerson.name}`
+                    : `Schedule for ${new Date(modalDate).toLocaleDateString()}`
+                  }
+                </h2>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {modalLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+              ) : !selectedModalPerson ? (
+                /* Day Summary View */
+                modalData.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No employees scheduled for this date.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {modalData.map(person => (
+                      <div 
+                        key={person.person_id}
+                        onClick={() => setSelectedModalPerson(person)}
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                            <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4" /> {person.shift}</span>
+                            <span>Check-in: {person.check_in ? new Date(person.check_in).toLocaleTimeString() : <span className="text-red-400">N/A</span>}</span>
+                            <span className="flex items-center gap-1">
+                              Report: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
+                            {person.tasks.length} tasks
+                          </div>
+                          <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                /* Person Task Detail View */
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-sm text-gray-500">Showing active tasks (Pending / In Progress)</p>
+                    <button 
+                      onClick={() => {
+                        navigate('/tasks/add', { 
+                          state: { 
+                            assignee: { 
+                              person_id: selectedModalPerson.person_id, 
+                              username: selectedModalPerson.username, 
+                              name: selectedModalPerson.name, 
+                              role: 'assignee' 
+                            } 
+                          } 
+                        });
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      <PlusIcon className="w-4 h-4" />
+                      Add Task
+                    </button>
+                  </div>
+                  
+                  {/* Daily Report Section */}
+                  <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
+                    <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                      <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+                      Daily Report
+                    </h3>
+                    {selectedModalPerson.report ? (
+                      <div className="space-y-3">
+                        <div className="flex gap-4 text-xs font-medium text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <ClockIcon className="w-4 h-4 text-gray-400" />
+                            Check-in: {selectedModalPerson.report.check_in ? new Date(selectedModalPerson.report.check_in).toLocaleTimeString() : 'N/A'}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ClockIcon className="w-4 h-4 text-gray-400" />
+                            Check-out: {selectedModalPerson.report.check_out ? new Date(selectedModalPerson.report.check_out).toLocaleTimeString() : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
+                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">No description provided</span>}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 italic">No report submitted for this date.</div>
+                    )}
+                  </div>
+
+                  
+                  {selectedModalPerson.tasks.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      No active tasks for this user.
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                      <table className="w-full text-left">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Task Name</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Due Date</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {selectedModalPerson.tasks.map(task => (
+                            <tr key={task.task_id} className="bg-white">
+                              <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
+                              <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                              <td className="py-3 px-4">
+                                <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
+                                  ${task.status === 'in progress' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}
+                                `}>
+                                  {task.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

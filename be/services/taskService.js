@@ -8,7 +8,7 @@ const createTask = async (data) => {
         const parentTask = await task.create({
             parent_id: null,
             assigner_id: data.assigner_id,
-            created_by: 1, //mocking for now
+            created_by: data.created_by || 2, // Use provided ID or fallback to Admin (ID: 2)
             start_time: data.start_time,
             due_date: data.due_date,
             title: data.title,
@@ -23,7 +23,7 @@ const createTask = async (data) => {
             const subTasks = data.sub_tasks.map(subTask => ({
                 parent_id: parentTask.task_id,
                 assigner_id: data.assigner_id,
-                created_by: 1,
+                created_by: data.created_by || 2,
                 start_time: data.start_time,
                 due_date: data.due_date,
                 title: subTask.title,
@@ -49,8 +49,8 @@ const createTask = async (data) => {
     });
 };
 
-const createSubTask = async ({ parentTaskId, data }) => {
-    const parentTaskData = task.findByPk(parentTaskId);
+const createSubTask = async (parentTaskId, data) => {
+    const parentTaskData = await task.findByPk(parentTaskId);
     if (!parentTaskData) throw new Error('Parent task not found');
     return await task.create({
         parent_id: parentTaskId,

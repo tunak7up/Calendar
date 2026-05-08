@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
+import { taskService } from '../services/taskService';
 
 function StatusBadge({ status }) {
   if (status === 'Completed') {
@@ -68,8 +69,8 @@ export default function TaskList({ isAdmin }) {
     const fetchTasks = async () => {
       try {
         const result = isAdmin
-          ? await apiFetch('/task')
-          : await apiFetch(`/task/participant/${user.person_id}`);
+          ? await taskService.getAllTasks()
+          : await taskService.getAllTasksByParticipantId(user.person_id);
         if (result.success) {
           setTasks(result.data);
         }

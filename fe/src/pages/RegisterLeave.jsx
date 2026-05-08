@@ -25,7 +25,7 @@ export default function RegisterLeave() {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const result = await scheduleService.getPersonSchedule(user.person_id);
+        const result = await scheduleService.getScheduleByPersonId(user.person_id);
         if (result.success) {
           setWorkSchedules(result.data);
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);

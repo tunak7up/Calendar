@@ -7,12 +7,14 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminEmployeeList() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -90,6 +92,26 @@ export default function AdminEmployeeList() {
     }
   };
 
+  const handleInlineUpdate = async (person_id, field, value) => {
+    try {
+      const empToUpdate = employees.find(e => e.person_id === person_id);
+      if (!empToUpdate) return;
+      
+      const payload = { ...empToUpdate, [field]: value };
+      
+      // Optimistic update
+      setEmployees(employees.map(e => e.person_id === person_id ? { ...e, [field]: value } : e));
+      
+      await apiFetch(`/person/${person_id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      console.error('Error updating inline:', error);
+      fetchEmployees(); // Revert on error
+    }
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -120,12 +142,11 @@ export default function AdminEmployeeList() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/80 border-b border-gray-100">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">ID</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">ID</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee Name</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Username</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Username</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Role</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Actions</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -139,8 +160,12 @@ export default function AdminEmployeeList() {
                   </tr>
                 ) : (
                   employees.map((emp) => (
-                    <tr key={emp.person_id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="py-4 px-6 text-sm font-semibold text-gray-500">#{emp.person_id}</td>
+                    <tr 
+                      key={emp.person_id} 
+                      onClick={() => navigate(`/profile/${emp.person_id}`)}
+                      className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                    >
+                      <td className="py-4 px-6 text-sm font-semibold text-gray-500 hidden sm:table-cell">#{emp.person_id}</td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <img
@@ -148,34 +173,35 @@ export default function AdminEmployeeList() {
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=101c23&color=12a4d9&rounded=true&size=40`}
                             className="h-10 w-10 rounded-full border-2 border-white shadow-sm"
                           />
-                          <span className="text-sm font-bold text-gray-900">{emp.name}</span>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.name}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">{emp.username}</td>
+                      <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
                       <td className="py-4 px-6">
-                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider">
-                          {emp.role || 'Employee'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        {emp.status ? (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100">
-                            <CheckCircleIcon className="w-4 h-4" /> Active
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-lg text-xs font-bold border border-red-100">
-                            <XCircleIcon className="w-4 h-4" /> Inactive
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <button
-                          onClick={() => openModal(emp)}
-                          className="p-1.5 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 hover:border-blue-200"
-                          title="Edit User"
+                        <select 
+                          value={emp.role || 'employee'} 
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
+                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
                         >
-                          <PencilSquareIcon className="w-5 h-5" />
-                        </button>
+                          <option value="employee">Employee</option>
+                          <option value="manager">Manager</option>
+                        </select>
+                      </td>
+                      <td className="py-4 px-6 text-center hidden sm:table-cell">
+                        <select
+                          value={emp.status ? "true" : "false"}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleInlineUpdate(emp.person_id, 'status', e.target.value === "true")}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${
+                            emp.status 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100' 
+                              : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
+                          }`}
+                        >
+                          <option value="true">Active</option>
+                          <option value="false">Inactive</option>
+                        </select>
                       </td>
                     </tr>
                   ))

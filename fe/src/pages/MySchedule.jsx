@@ -9,6 +9,7 @@ import MiniCalendar from '../components/MiniCalendar';
 import { scheduleService } from '../services/scheduleService';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
+import { taskService } from '../services/taskService';
 import { 
   BriefcaseIcon, 
   UserMinusIcon, 
@@ -45,8 +46,8 @@ export default function MySchedule() {
     const fetchData = async () => {
       try {
         const [scheduleRes, taskRes] = await Promise.all([
-          scheduleService.getPersonSchedule(user.person_id),
-          apiFetch(`/task/participant/${user.person_id}`)
+          scheduleService.getScheduleByPersonId(user.person_id),
+          taskService.getAllTasksByParticipantId(user.person_id)
         ]);
         
         if (scheduleRes.success) {

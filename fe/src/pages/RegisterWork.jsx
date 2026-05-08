@@ -24,7 +24,7 @@ export default function RegisterWork() {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const result = await scheduleService.getPersonSchedule(user.person_id);
+        const result = await scheduleService.getScheduleByPersonId(user.person_id);
         if (result.success) {
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
           setWorkDays(days);
@@ -191,7 +191,7 @@ export default function RegisterWork() {
       const result = await requestService.submitRequest(payload);
       alert("Đã đăng ký lịch làm việc thành công!");
       console.log('Success:', result);
-      
+
       // Clear schedule and reset form after success
       setSchedule([]);
       resetForm();
@@ -218,7 +218,7 @@ export default function RegisterWork() {
     <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-4"
           >
@@ -249,8 +249,8 @@ export default function RegisterWork() {
               <button
                 onClick={() => setSelectedShift('Morning')}
                 className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Morning'
-                    ? 'border-blue-500 bg-blue-50/30'
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
                   }`}
               >
                 <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
@@ -261,8 +261,8 @@ export default function RegisterWork() {
               <button
                 onClick={() => setSelectedShift('Afternoon')}
                 className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Afternoon'
-                    ? 'border-blue-500 bg-blue-50/30'
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
                   }`}
               >
                 <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
@@ -273,8 +273,8 @@ export default function RegisterWork() {
               <button
                 onClick={() => setSelectedShift('Full Day')}
                 className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Full Day'
-                    ? 'border-blue-500 bg-blue-50/30'
-                    : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
+                  ? 'border-blue-500 bg-blue-50/30'
+                  : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
                   }`}
               >
                 <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />

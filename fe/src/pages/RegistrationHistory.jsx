@@ -23,7 +23,6 @@ export default function RegistrationHistory() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [actionRequestId, setActionRequestId] = useState(null);
   const pageSize = 8;
 
   React.useEffect(() => {
@@ -77,8 +76,8 @@ export default function RegistrationHistory() {
     }
   };
 
-  const handleRowClick = (id) => {
-    setActionRequestId(prev => prev === id ? null : id);
+  const handleRowClick = (item) => {
+    navigate(`/history/${item.id}`, { state: { request: item } });
   };
 
   return (
@@ -181,7 +180,7 @@ export default function RegistrationHistory() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-          <div className="overflow-x-auto overflow-y-auto max-h-[50vh] sm:max-h-[65vh] custom-scrollbar">
+          <div className="overflow-x-auto overflow-y-auto h-[500px] custom-scrollbar">
             <table className="w-full text-sm text-left text-gray-500 relative min-w-[700px]">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50/90 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10 shadow-sm">
                 <tr>
@@ -205,8 +204,8 @@ export default function RegistrationHistory() {
                   paginatedData.map((item) => (
                     <React.Fragment key={item.id}>
                       <tr 
-                        onClick={() => handleRowClick(item.id)}
-                        className="bg-white border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer select-none"
+                        onClick={() => handleRowClick(item)}
+                        className={`border-b border-gray-50 transition-colors cursor-pointer select-none ${item.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -250,18 +249,6 @@ export default function RegistrationHistory() {
                           {item.approver}
                         </td>
                       </tr>
-                      {actionRequestId === item.id && (
-                        <tr className="bg-blue-50/50 border-b border-gray-50">
-                          <td colSpan="5" className="px-6 py-3">
-                            <div className="flex items-center gap-3">
-                              <Button variant="soft-blue" onClick={() => navigate(`/history/${item.id}`, { state: { request: item } })}>
-                                <EyeIcon className="w-4 h-4" />
-                                Xem chi tiết
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                     </React.Fragment>
                   ))
                 )}
@@ -272,7 +259,7 @@ export default function RegistrationHistory() {
           {filteredData.length > 0 && (
             <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-[#fafafa] gap-4">
               <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredData.length)}</span> of <span className="font-semibold text-gray-900">{filteredData.length}</span> requests (Click row for actions)
+                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredData.length)}</span> of <span className="font-semibold text-gray-900">{filteredData.length}</span> requests
               </span>
               <div className="flex items-center gap-1">
                 <button 

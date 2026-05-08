@@ -8,13 +8,26 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/api';
+import { useState } from 'react';
 
 export default function RegistrationHistoryDetails() {
   const location = useLocation();
   const navigate = useNavigate();
-  const request = location.state?.request;
+  const { user, isAdmin } = useAuth();
+  const rawReq = location.state?.request;
 
-  if (!request) return (
+  const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' : 
+                        rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' : 
+                        rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' : 
+                        (rawReq?.status || 'pending');
+
+  const [status, setStatus] = useState(initialStatus);
+  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  if (!rawReq) return (
     <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto text-center py-20">
         <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
@@ -23,7 +36,43 @@ export default function RegistrationHistoryDetails() {
     </div>
   );
 
-  const isPending = request.status === 'Chờ phê duyệt';
+  // Normalize request to handle both AdminRequests and RegistrationHistory formats
+  const request = {
+    id: rawReq.id || rawReq.request_id,
+    type: rawReq.type,
+    name: rawReq.name || (rawReq.type === 'register' ? 'Work Registration' : 'Leave Request'),
+    date: rawReq.date || new Date(rawReq.created_at).toLocaleDateString(),
+    refId: rawReq.refId || `#REQ-${rawReq.request_id}`,
+    approver: rawReq.approver?.name || (typeof rawReq.approver === 'string' ? rawReq.approver : 'N/A'),
+    approverRole: rawReq.approver?.role || rawReq.approverRole || '',
+    details: rawReq.details || [],
+    reason: rawReq.reason || '',
+    requesterName: rawReq.requester?.name || rawReq.requester?.username || user?.name || 'User',
+    requesterRole: rawReq.requester?.role || user?.role || 'Employee'
+  };
+
+  const isPending = status === 'pending';
+
+  const handleUpdateStatus = async () => {
+    setIsUpdating(true);
+    try {
+      const result = await apiFetch(`/request/${request.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: selectedStatus })
+      });
+      if (result.success) {
+        setStatus(selectedStatus);
+        alert('Status updated successfully!');
+      } else {
+        alert('Failed to update status.');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
@@ -34,17 +83,39 @@ export default function RegistrationHistoryDetails() {
             <span className="mx-2">›</span>
             <span className="text-gray-900 font-medium">Details</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               {request.name} - {request.refId}
             </h1>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full ${
-              request.status === 'Đã duyệt' ? 'text-green-800 bg-green-100' : 
-              request.status === 'Chờ phê duyệt' ? 'text-yellow-800 bg-yellow-100' : 'text-red-800 bg-red-100'
-            }`}>
-              {request.status === 'Đã duyệt' ? <CheckCircleIcon className="w-4 h-4 text-green-600" /> : null}
-              {request.status}
-            </span>
+            
+            {isAdmin && isPending ? (
+              <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+                <select 
+                  value={selectedStatus} 
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-w-[120px] bg-white"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <button 
+                  onClick={handleUpdateStatus}
+                  disabled={isUpdating}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isUpdating ? 'Saving...' : 'Update Status'}
+                </button>
+              </div>
+            ) : (
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full ${
+                status === 'approved' ? 'text-green-800 bg-green-100' : 
+                status === 'pending' ? 'text-yellow-800 bg-yellow-100' : 'text-red-800 bg-red-100'
+              }`}>
+                {status === 'approved' ? <CheckCircleIcon className="w-4 h-4 text-green-600" /> : null}
+                {status === 'pending' ? 'Pending' : status === 'approved' ? 'Approved' : 'Rejected'}
+              </span>
+            )}
           </div>
         </div>
 
@@ -77,6 +148,11 @@ export default function RegistrationHistoryDetails() {
               <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Original Request Details</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 mb-1">REQUESTER</h3>
+                  <p className="text-gray-900 font-semibold text-[0.95rem]">{request.requesterName}</p>
+                  <p className="text-gray-500 text-xs font-medium uppercase mt-0.5">{request.requesterRole}</p>
+                </div>
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-1">TYPE</h3>
                   <p className="text-gray-900 font-semibold text-[0.95rem]">{request.name}</p>

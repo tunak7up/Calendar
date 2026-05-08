@@ -18,6 +18,7 @@ import {
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
 import { apiFetch } from '../services/api';
+import { taskService } from '../services/taskService';
 import { useAuth } from '../context/AuthContext';
 
 export default function TaskDetails() {
@@ -44,13 +45,13 @@ export default function TaskDetails() {
 
   const fetchTaskData = async () => {
     try {
-      const data = await apiFetch(`/task/${id}`);
+      const data = await taskService.getTaskById(id);
       if (data.success) {
         setFullTask(data.data);
         
         // If it's a sub-task, fetch parent info
         if (data.data.parent_id) {
-          const pData = await apiFetch(`/task/${data.data.parent_id}`);
+          const pData = await taskService.getTaskById(data.data.parent_id);
           if (pData.success) {
             setParentTask(pData.data);
           }
@@ -76,7 +77,7 @@ export default function TaskDetails() {
 
   const fetchSubTasks = async () => {
     try {
-      const data = await apiFetch(`/task/parent/${id}`);
+      const data = await taskService.getChildTasksByParentId(id);
       if (data.success) {
         const enhancedSubTasks = await Promise.all((data.data || []).map(async st => {
           const cData = await apiFetch(`/comment/task/${st.task_id}`);
@@ -173,10 +174,7 @@ export default function TaskDetails() {
     setIsSubmitting(true);
     try {
       if (newStatus !== selectedSubTask.status) {
-        const result = await apiFetch(`/task/${selectedSubTask.task_id}`, {
-          method: 'PUT',
-          body: JSON.stringify({ status: newStatus })
-        });
+        const result = await taskService.updateTask(selectedSubTask.task_id, { status: newStatus });
         if (!result.success) {
           alert(result.message);
           setIsSubmitting(false);
@@ -185,10 +183,7 @@ export default function TaskDetails() {
       }
 
       if (productUrl.trim()) {
-        await apiFetch('/task/attachment', {
-          method: 'POST',
-          body: JSON.stringify({ task_id: selectedSubTask.task_id, url: productUrl.trim() })
-        });
+        await taskService.createTaskAttachment({ task_id: selectedSubTask.task_id, url: productUrl.trim() });
       }
 
       setIsModalOpen(false);

@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const userNavigation = [
+  { name: 'Dashboard', path: '/dashboard', id: 'dashboard' },
   { name: 'My Schedule', path: '/schedule', id: 'schedule' },
   { name: 'Register Work', path: '/history', id: 'work' }, // Point to history/list as entry point
   { name: 'Task', path: '/tasks', id: 'task' },

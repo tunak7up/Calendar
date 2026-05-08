@@ -9,6 +9,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
+import { scheduleService } from '../services/scheduleService';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -37,7 +38,7 @@ export default function AdminWorkHours() {
     try {
       const [empRes, schedRes] = await Promise.all([
         apiFetch('/person'),
-        apiFetch('/schedule')
+        scheduleService.getAllSchedules()
       ]);
 
       if (empRes.success) setEmployees(empRes.data);

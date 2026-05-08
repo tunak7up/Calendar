@@ -5,17 +5,20 @@ import {
   XMarkIcon,
   ClockIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [actionRequestId, setActionRequestId] = useState(null);
+  const navigate = useNavigate();
   const pageSize = 8;
 
   useEffect(() => {
@@ -34,18 +37,21 @@ export default function AdminRequests() {
       .finally(() => setLoading(false));
   };
 
-  const handleUpdateStatus = async (requestId, status) => {
+  const handleUpdateStatus = async (requestId, newStatus) => {
     try {
       const result = await apiFetch(`/request/${requestId}`, {
         method: 'PUT',
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status: newStatus })
       });
-      if (result) {
-        fetchRequests();
-        setActionRequestId(null);
+      if (result.success) {
+        // Update local state to reflect change immediately
+        setRequests(prev => prev.map(req => 
+          (req.request_id || req.id) === requestId ? { ...req, status: newStatus } : req
+        ));
       }
     } catch (error) {
-      console.error('Error updating request status:', error);
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
     }
   };
 
@@ -63,6 +69,12 @@ export default function AdminRequests() {
   const filteredRequests = requests.filter(req => {
     if (filterStatus !== 'all' && req.status?.toLowerCase() !== filterStatus) return false;
     if (filterType !== 'all' && req.type?.toLowerCase() !== filterType) return false;
+    if (searchTerm) {
+      const nameMatch = req.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+      const reasonMatch = req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!nameMatch && !reasonMatch) return false;
+    }
     return true;
   });
 
@@ -77,8 +89,8 @@ export default function AdminRequests() {
     }
   };
 
-  const handleRowClick = (id) => {
-    setActionRequestId(prev => prev === id ? null : id);
+  const handleRowClick = (req) => {
+    navigate(`/history/${req.request_id || req.id}`, { state: { request: req } });
   };
 
   return (
@@ -90,6 +102,21 @@ export default function AdminRequests() {
             <p className="text-gray-500 mt-1 text-sm sm:text-base">Approve or reject employee work/leave registrations</p>
           </div>
           <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full sm:w-auto">
+            <div className="relative w-full sm:w-48">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search requests..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
+              />
+            </div>
             <select
               value={filterType}
               onChange={(e) => {
@@ -123,15 +150,15 @@ export default function AdminRequests() {
         </div>
 
         <div className="bg-white border border-gray-100 shadow-sm rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col">
-          <div className="overflow-x-auto overflow-y-auto max-h-[65vh] custom-scrollbar">
+          <div className="overflow-x-auto overflow-y-auto h-[500px] custom-scrollbar">
             <table className="w-full text-left border-collapse relative min-w-[700px]">
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10 shadow-sm">
                 <tr>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Requester</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Reason</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Date Submitted</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -147,16 +174,9 @@ export default function AdminRequests() {
                   paginatedRequests.map((req) => (
                     <React.Fragment key={req.request_id || req.id}>
                       <tr 
-                        onClick={() => handleRowClick(req.request_id || req.id)}
-                        className="hover:bg-blue-50/30 transition-colors group border-b border-gray-50 last:border-b-0 cursor-pointer select-none"
+                        onClick={() => handleRowClick(req)}
+                        className={`transition-colors group border-b border-gray-50 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
                       >
-                        <td className="py-4 px-6">
-                          <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${
-                            req.type === 'leave' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                          }`}>
-                            {req.type}
-                          </span>
-                        </td>
                         <td className="py-4 px-6 text-sm font-semibold text-gray-900">
                           {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
                         </td>
@@ -170,29 +190,33 @@ export default function AdminRequests() {
                         <td className="py-4 px-6 text-center">
                           {getStatusBadge(req.status)}
                         </td>
-                      </tr>
-                      {actionRequestId === (req.request_id || req.id) && req.status?.toLowerCase() === 'pending' && (
-                        <tr className="bg-blue-50/50 border-b border-gray-50">
-                          <td colSpan="5" className="px-6 py-3">
-                            <div className="flex justify-end space-x-2">
-                              <button
-                                onClick={() => handleUpdateStatus(req.request_id || req.id, 'approved')}
-                                className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors border border-emerald-100 hover:border-emerald-500 font-semibold text-xs flex items-center gap-1.5 shadow-sm"
+                        <td className="py-4 px-6 text-center">
+                          {req.status?.toLowerCase() === 'pending' && (
+                            <div className="flex justify-center gap-2">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(req.request_id || req.id, 'approved');
+                                }}
                                 title="Approve"
+                                className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
                               >
-                                <CheckIcon className="w-4 h-4" /> Approve
+                                <CheckIcon className="w-5 h-5" />
                               </button>
-                              <button
-                                onClick={() => handleUpdateStatus(req.request_id || req.id, 'rejected')}
-                                className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-100 hover:border-red-500 font-semibold text-xs flex items-center gap-1.5 shadow-sm"
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(req.request_id || req.id, 'rejected');
+                                }}
                                 title="Reject"
+                                className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
                               >
-                                <XMarkIcon className="w-4 h-4" /> Reject
+                                <XMarkIcon className="w-5 h-5" />
                               </button>
                             </div>
-                          </td>
-                        </tr>
-                      )}
+                          )}
+                        </td>
+                      </tr>
                     </React.Fragment>
                   ))
                 )}
@@ -203,7 +227,7 @@ export default function AdminRequests() {
           {filteredRequests.length > 0 && (
             <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-gray-50/50 gap-4">
               <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests (Click a pending row to review)
+                Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests
               </span>
               <div className="flex items-center gap-1">
                 <button 

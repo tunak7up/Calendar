@@ -4,18 +4,22 @@ const { sendRes } = require('../utils/responseHelper');
 
 const createTask = async (req, res) => {
     try {
-        const task = await taskService.createTask(req.body);
+        const data = { ...req.body, created_by: req.user ? req.user.person_id : req.body.created_by };
+        const task = await taskService.createTask(data);
         sendRes(res, 201, 'Task created successfully', task);
     } catch (error) {
+        console.error('Error in createTask:', error);
         sendRes(res, 400, 'Error creating task', null, error.message);
     }
 };
 
 const createSubTask = async (req, res) => {
     try {
-        const task = await taskService.createSubTask(req.params.id, req.body);
+        const data = { ...req.body, created_by: req.user ? req.user.person_id : req.body.created_by };
+        const task = await taskService.createSubTask(req.params.id, data);
         sendRes(res, 201, 'Sub-task created successfully', task);
     } catch (error) {
+        console.error('Error in createSubTask:', error);
         sendRes(res, 400, 'Error creating sub-task', null, error.message);
     }
 };

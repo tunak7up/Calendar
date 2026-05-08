@@ -23,7 +23,7 @@ const schedule = sequelize.define(
             type: DataTypes.STRING,
         },
         working_date: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.STRING,
         }
     }
 );

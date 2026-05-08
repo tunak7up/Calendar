@@ -20,19 +20,19 @@ const daily_report = sequelize.define(
             type: DataTypes.TEXT,
         },
         working_date: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.STRING,
         },
         check_in: {
-            type: DataTypes.TIME,
+            type: DataTypes.STRING,
         },
         check_out: {
-            type: DataTypes.TIME,
+            type: DataTypes.STRING,
         }
     });
 
 const syncDailyReport = async () => {
     await daily_report.sync({ alter: true });
-    console.log('DailyReport table synced');
+    console.log('Daily report table synced');
 };
 
 syncDailyReport();

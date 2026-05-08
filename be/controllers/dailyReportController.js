@@ -55,11 +55,22 @@ const updateDailyReportDescription = async (req, res) => {
     }
 };
 
+const exportDailyReport = async (req, res) => {
+    try {
+        const { personIds, startDate, endDate } = req.body;
+        const reports = await dailyReportService.exportDailyReport(personIds, startDate, endDate);
+        sendRes(res, 200, reports);
+    } catch (error) {
+        sendRes(res, 400, { error: error.message });
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
     getDailyReportByPersonIdAndDate,
     getDailyReportByDate,
     getDailyReportByPersonId,
-    updateDailyReportDescription
+    updateDailyReportDescription,
+    exportDailyReport
 };

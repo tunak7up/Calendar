@@ -6,6 +6,8 @@ router.post('/', personController.createPerson);
 router.get('/', personController.getAllPersons);
 router.get('/:id', personController.getPersonById);
 router.get('/role/:role', personController.getPersonByRole);
+router.get('/:id/tasks', personController.getTasksByPersonId);
+router.get('/:id/tasks-roles', personController.getTasksAndRolesByPersonId);
 router.put('/:id', personController.updatePerson);
 router.delete('/:id', personController.removePerson);
 

@@ -66,11 +66,22 @@ const removePerson = async (req, res) => {
     }
 };
 
+const getTasksByPersonId = async (req, res) => {
+    try {
+        const tasks = await personService.getTasksByPersonId(req.params.id);
+        sendRes(res, 200, 'Tasks retrieved successfully', tasks);
+    } catch (error) {
+        sendRes(res, 404, 'Person not found', null, error.message);
+    }
+};
+
 module.exports = {
     getAllPersons,
     getPersonByRole,
     getPersonById,
     createPerson,
     updatePerson,
-    removePerson
+    removePerson,
+    getTasksAndRolesByPersonId,
+    getTasksByPersonId
 };

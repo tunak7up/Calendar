@@ -74,9 +74,24 @@ const getTasksAndRolesByPersonId = async (personId) => {
   }));
 };
 
+const getTasksByPersonId = async (personId) => {
+  const tasks = await task.findAll({
+    include: [
+      {
+        model: person,
+        as: 'participants',
+        where: { person_id: personId },
+        attributes: []
+      }
+    ]
+  });
+  return tasks;
+};
+
 module.exports = {
   getAllPersons,
   getTasksAndRolesByPersonId,
+  getTasksByPersonId,
   getPersonByRole,
   getPersonById,
   createPerson,

@@ -7,6 +7,6 @@ router.get('/', scheduleController.getAllSchedules);
 router.get('/person/:personId', scheduleController.getScheduleByPersonId);
 router.put('/:id', scheduleController.updateSchedule);
 router.delete('/:id', scheduleController.deleteSchedule);
-router.get('/person/:personId/time-range', scheduleController.getScheduleByPersonIdWithTimeRange);
+router.post('/person/:personId/time-range', scheduleController.getScheduleByPersonIdWithTimeRange);
 
 module.exports = router;

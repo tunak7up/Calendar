@@ -3,7 +3,7 @@ const { sendRes } = require('../utils/responseHelper');
 const jwt = require('jsonwebtoken');
 
 const secretKey = process.env.ACCESS_SECRET_KEY;
-const ACCESS_TOKEN_EXPIRY = '1h';
+const ACCESS_TOKEN_EXPIRY = '8h';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 /**

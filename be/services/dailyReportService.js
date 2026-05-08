@@ -2,6 +2,15 @@ const { daily_report } = require('../models');
 const sequelize = require('../config/db');
 
 const createDailyReport = async (data) => {
+    const existingReport = await daily_report.findOne({
+        where: {
+            person_id: data.person_id,
+            working_date: data.working_date
+        }
+    });
+    if (existingReport) {
+        throw new Error('Daily report already exists for this person and date');
+    }
     return await daily_report.create({
         person_id: data.person_id,
         description: null,

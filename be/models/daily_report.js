@@ -30,11 +30,11 @@ const daily_report = sequelize.define(
         }
     });
 
-const syncDailyReport = async () => {
-    await daily_report.sync({ alter: true });
-    console.log('Daily report table synced');
-};
+// const syncDailyReport = async () => {
+//     await daily_report.sync({ alter: true });
+//     console.log('Daily report table synced');
+// };
 
-syncDailyReport();
+// syncDailyReport();
 
 module.exports = daily_report;

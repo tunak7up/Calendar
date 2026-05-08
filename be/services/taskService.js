@@ -146,6 +146,8 @@ const getChildTasksByParentId = async (parentId) => {
 };
 
 const getTasksByTimeRange = async (startTime, endTime) => {
+    console.log('startTime:', startTime);
+    console.log('endTime:', endTime);
     return await task.findAll({
         where: {
             start_time: {

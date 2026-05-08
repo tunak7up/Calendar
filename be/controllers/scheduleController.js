@@ -46,10 +46,22 @@ const deleteSchedule = async (req, res) => {
     }
 };
 
+const getScheduleByPersonIdWithTimeRange = async (req, res) => {
+    try {
+        const { personId } = req.params;
+        const { startTime, endTime } = req.body;
+        const schedules = await scheduleService.getScheduleByPersonIdWithTimeRange({ personId, startTime, endTime });
+        sendRes(res, 200, 'Get Schedules Successful', schedules);
+    } catch (error) {
+        sendRes(res, 400, 'Get Schedules Failed', null, error.message);
+    }
+};
+
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
     getAllSchedules,
     updateSchedule,
-    deleteSchedule
+    deleteSchedule,
+    getScheduleByPersonIdWithTimeRange
 };

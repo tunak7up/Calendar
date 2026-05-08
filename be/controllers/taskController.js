@@ -49,7 +49,7 @@ const getChildTasksByParentId = async (req, res) => {
 
 const getTasksByTimeRange = async (req, res) => {
     try {
-        const { startTime, endTime } = req.query;
+        const { startTime, endTime } = req.body;
         const tasks = await taskService.getTasksByTimeRange(startTime, endTime);
         sendRes(res, 200, 'Tasks retrieved successfully', tasks);
     } catch (error) {

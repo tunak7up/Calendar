@@ -1,4 +1,6 @@
 const { schedule, person } = require('../models');
+const sequelize = require('../config/db');
+const { Op } = require('sequelize');
 
 const createSchedule = async ({
     person_id,
@@ -17,6 +19,24 @@ const createSchedule = async ({
 const getScheduleByPersonId = async (personId) => {
     return await schedule.findAll({
         where: { person_id: personId },
+        include: [
+            {
+                model: person,
+                as: 'person',
+                required: true
+            }
+        ],
+    });
+};
+
+const getScheduleByPersonIdWithTimeRange = async (data) => {
+    const { personId, startTime, endTime } = data;
+    return await schedule.findAll({
+        where: {
+            person_id: personId,
+            start_time: { [Op.gte]: startTime },
+            end_time: { [Op.lte]: endTime }
+        },
         include: [
             {
                 model: person,
@@ -58,5 +78,6 @@ module.exports = {
     getScheduleByPersonId,
     getAllSchedules,
     updateSchedule,
-    deleteSchedule
+    deleteSchedule,
+    getScheduleByPersonIdWithTimeRange
 };

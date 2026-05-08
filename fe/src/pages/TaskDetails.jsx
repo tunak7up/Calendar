@@ -206,7 +206,7 @@ export default function TaskDetails() {
 
   if (!id) {
     return (
-      <div className="flex-1 p-8 pt-[80px] sm:ml-64 bg-[#f1f4f8] min-h-screen flex items-center justify-center">
+      <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-500 mb-4">Task ID is missing.</div>
           <button onClick={() => navigate(-1)} className="text-blue-600 font-medium">Go back</button>
@@ -234,7 +234,7 @@ export default function TaskDetails() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen pb-20">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen pb-20">
       <div className="max-w-4xl mx-auto">
         <button
           onClick={() => navigate(-1)}

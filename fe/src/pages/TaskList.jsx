@@ -126,7 +126,7 @@ export default function TaskList({ isAdmin }) {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-8 sm:ml-64 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-4 sm:p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
       {/* Page Header */}
       <div className="flex items-start justify-between mb-5 sm:mb-7 gap-3 flex-wrap">
         <div className="min-w-0">

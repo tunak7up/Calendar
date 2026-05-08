@@ -15,7 +15,7 @@ export default function RegistrationHistoryDetails() {
   const request = location.state?.request;
 
   if (!request) return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto text-center py-20">
         <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
         <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
@@ -26,7 +26,7 @@ export default function RegistrationHistoryDetails() {
   const isPending = request.status === 'Chờ phê duyệt';
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center text-sm text-gray-500 mb-2">

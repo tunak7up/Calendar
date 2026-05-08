@@ -127,7 +127,7 @@ export default function AdminWorkHours() {
   const grandTotalHours = Math.round(employeeSummary.reduce((s, e) => s + e.totalHours, 0) * 100) / 100;
 
   return (
-    <div className="flex-1 p-8 pt-[80px] bg-[#f1f4f8] min-h-screen">
+    <div className="flex-1 p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">

@@ -215,7 +215,7 @@ export default function RegisterWork() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <button 

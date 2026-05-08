@@ -46,7 +46,7 @@ export default function AdminSchedule() {
             const colorSet = PERSON_COLORS[item.person_id % PERSON_COLORS.length];
             return {
               id: `sched_${item.schedule_id}`,
-              title: `${item.person?.username || 'Unknown'}`,
+              title: `${item.person?.name || 'Unknown'}`,
               start: item.working_date,
               allDay: true,
               person_id: item.person_id,
@@ -82,7 +82,7 @@ export default function AdminSchedule() {
   };
 
   return (
-    <div className="flex-1 p-3 sm:p-8 pt-[80px] bg-[#f8fafc] min-h-screen relative">
+    <div className="flex-1 p-3 sm:p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f8fafc] min-h-screen relative">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 lg:gap-8">
 
         {/* Main Calendar Area */}

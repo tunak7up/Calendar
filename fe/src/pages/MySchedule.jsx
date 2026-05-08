@@ -164,7 +164,7 @@ export default function MySchedule() {
   }, [workDays]);
 
   return (
-    <div className="flex-1 p-3 sm:p-8 pt-[80px] bg-[#f8fafc] min-h-screen relative">
+    <div className="flex-1 p-3 sm:p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f8fafc] min-h-screen relative">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 lg:gap-8">
         
         {/* Main Calendar Area */}

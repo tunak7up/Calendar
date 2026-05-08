@@ -26,7 +26,7 @@ export default function AddSubTask() {
   });
 
   if (!parentTask) return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px]">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
       <div className="max-w-4xl mx-auto text-center py-20">
         <h2 className="text-xl font-bold text-gray-900">Parent task not found</h2>
         <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
@@ -79,7 +79,7 @@ export default function AddSubTask() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 pt-[80px] bg-gray-50 min-h-screen">
+    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10 bg-gray-50 min-h-screen">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">

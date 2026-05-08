@@ -19,15 +19,22 @@ const daily_report = sequelize.define(
         description: {
             type: DataTypes.TEXT,
         },
-        created_at: {
-            type: DataTypes.DATE,
-        },
-        updated_at: {
-            type: DataTypes.DATE,
-        },
         working_date: {
             type: DataTypes.DATEONLY,
+        },
+        check_in: {
+            type: DataTypes.TIME,
+        },
+        check_out: {
+            type: DataTypes.TIME,
         }
     });
+
+const syncDailyReport = async () => {
+    await daily_report.sync({ alter: true });
+    console.log('DailyReport table synced');
+};
+
+syncDailyReport();
 
 module.exports = daily_report;

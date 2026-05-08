@@ -13,5 +13,6 @@ router.use('/request-detail', verifyToken, require('./requestDetail'));
 router.use('/schedule', verifyToken, require('./schedule'));
 router.use('/response', verifyToken, require('./response'));
 router.use('/comment', verifyToken, require('./comment'));
+router.use('/daily-report', verifyToken, require('./dailyReport'));
 
-module.exports = router;
+module.exports = router;

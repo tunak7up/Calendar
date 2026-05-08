@@ -46,10 +46,20 @@ const getDailyReportByPersonId = async (req, res) => {
     }
 };
 
+const updateDailyReportDescription = async (req, res) => {
+    try {
+        const reportUpdated = await dailyReportService.updateDailyReportDescription(req.params.id, req.body.description);
+        sendRes(res, 200, reportUpdated);
+    } catch (error) {
+        sendRes(res, 400, { error: error.message });
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
     getDailyReportByPersonIdAndDate,
     getDailyReportByDate,
-    getDailyReportByPersonId
+    getDailyReportByPersonId,
+    updateDailyReportDescription
 };

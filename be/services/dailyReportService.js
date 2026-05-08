@@ -31,6 +31,16 @@ const updateDailyReport = async (id, data) => {
     });
 };
 
+const updateDailyReportDescription = async (id, description) => {
+    const report = await daily_report.findByPk(id);
+    if (!report) {
+        throw new Error('Daily report not found');
+    }
+    return await report.update({
+        description: description
+    });
+};
+
 const getDailyReportByPersonIdAndDate = async (person_id, working_date) => {
     return await daily_report.findOne({
         where: {
@@ -60,5 +70,6 @@ module.exports = {
     updateDailyReport,
     getDailyReportByPersonIdAndDate,
     getDailyReportByDate,
-    getDailyReportByPersonId
+    getDailyReportByPersonId,
+    updateDailyReportDescription
 };

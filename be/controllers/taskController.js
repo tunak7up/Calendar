@@ -103,6 +103,26 @@ const getAttachmentsByTaskId = async (req, res) => {
     }
 };
 
+const getAllTasksByPersonId = async (req, res) => {
+    try {
+        const personId = req.params.personId;
+        const tasks = await taskService.getAllTasksByPersonId(personId);
+        sendRes(res, 200, 'Tasks retrieved successfully', tasks);
+    } catch (error) {
+        sendRes(res, 500, 'Error retrieving tasks', null, error.message);
+    }
+};
+
+const getAllPendingTasksByPersonId = async (req, res) => {
+    try {
+        const personId = req.params.personId;
+        const tasks = await taskService.getAllPendingTasksByPersonId(personId);
+        sendRes(res, 200, 'Pending tasks retrieved successfully', tasks);
+    } catch (error) {
+        sendRes(res, 500, 'Error retrieving pending tasks', null, error.message);
+    }
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -114,5 +134,7 @@ module.exports = {
     updateTask,
     deleteTask,
     createTaskAttachment,
-    getAttachmentsByTaskId
+    getAttachmentsByTaskId,
+    getAllTasksByPersonId,
+    getAllPendingTasksByPersonId
 };

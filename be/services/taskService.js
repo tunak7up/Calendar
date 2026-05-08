@@ -117,6 +117,43 @@ const getAllTasks = async () => {
     });
 };
 
+const getAllTasksByPersonId = async (personId) => {
+    const tasks = await task.findAll({
+        include: [
+            {
+                model: person,
+                as: 'participants',
+                attributes: ['name', 'person_id']
+            }
+        ],
+        order: [['created_at', 'DESC']],
+        where: {
+            person_id: personId
+        }
+    });
+
+    return tasks.map(t => {
+        const taskJson = t.toJSON();
+        const participants = taskJson.participants?.map(p => ({
+            person_id: p.person_id,
+            name: p.name,
+            role: p.task_participant?.role || 'N/A'
+        })) || [];
+
+        return {
+            task_id: taskJson.task_id,
+            name: taskJson.title,
+            assigner: taskJson.assigner?.name || 'N/A',
+            start_time: taskJson.start_time,
+            due_date: taskJson.due_date,
+            status: taskJson.status || 'pending',
+            priority: taskJson.priority || 'medium',
+            participants: participants,
+            parent_id: taskJson.parent_id
+        };
+    });
+};
+
 const getTaskById = async (id) => {
     const targetTask = await task.findByPk(id);
     if (!targetTask) throw new Error('Task not found');
@@ -214,6 +251,8 @@ module.exports = {
     createSubTask,
     getAllTasks,
     getTaskById,
+    getAllPendingTasksByPersonId,
+    getAllTasksByPersonId,
     getChildTasksByParentId,
     getTasksByTimeRange,
     getAllTasksByParticipantsId,

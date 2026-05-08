@@ -10,6 +10,8 @@ router.get('/:id', taskController.getTaskById);
 router.get('/parent/:parentId', taskController.getChildTasksByParentId);
 router.get('/participant/:participantId', taskController.getAllTasksByParticipantsId);
 router.get('/time-range', taskController.getTasksByTimeRange);
+router.get('/person/:personId', taskController.getAllTasksByPersonId);
+router.get('/person/:personId/pending', taskController.getAllPendingTasksByPersonId);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);
 router.post('/:parentId', taskController.createSubTask);

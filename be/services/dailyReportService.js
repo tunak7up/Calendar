@@ -1,6 +1,7 @@
 const { daily_report } = require('../models');
 const sequelize = require('../config/db');
 const ExcelJS = require('exceljs');
+const { Op } = require('sequelize');
 
 const createDailyReport = async (data) => {
     const existingReport = await daily_report.findOne({
@@ -54,7 +55,9 @@ const getDailyReportByPersonIdAndDate = async (person_id, working_date) => {
 const getDailyReportByDate = async (working_date) => {
     return await daily_report.findAll({
         where: {
-            working_date: working_date
+            working_date: {
+                [Op.like]: `%${working_date}%`
+            }
         }
     });
 };

@@ -4,7 +4,7 @@ import { apiFetch } from '../services/api';
 import { taskService } from '../services/taskService';
 import { formatDateTime } from '../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -139,6 +139,31 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Submit report failed", error);
       alert("Gặp lỗi trong quá trình xử lý, vui lòng thử lại.");
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    if (!reportText.trim()) {
+      alert('Vui lòng nhập nội dung báo cáo!');
+      return;
+    }
+
+    try {
+      if (reportId) {
+        const response = await apiFetch(`/daily-report/${reportId}/description`, {
+          method: 'PUT',
+          body: JSON.stringify({ description: reportText })
+        });
+        
+        if (response.success) {
+          alert('Đã lưu nội dung báo cáo thành công!');
+        }
+      } else {
+        alert("Không tìm thấy ID báo cáo, vui lòng Check-in trước.");
+      }
+    } catch (error) {
+      console.error("Save description failed", error);
+      alert("Lưu báo cáo thất bại, vui lòng thử lại.");
     }
   };
 
@@ -297,7 +322,15 @@ export default function Dashboard() {
                 rows={4}
                 className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-4 outline-none resize-none mb-4 disabled:opacity-60"
               />
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleSaveDescription}
+                  disabled={!!checkOutTime}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
+                  Save
+                </button>
                 <button
                   onClick={handleSubmitReport}
                   disabled={!!checkOutTime}

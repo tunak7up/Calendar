@@ -40,6 +40,7 @@ export default function AdminSchedule() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalData, setModalData] = useState([]);
   const [selectedModalPerson, setSelectedModalPerson] = useState(null);
+  const [taskStatusFilter, setTaskStatusFilter] = useState(['pending', 'in progress', 'completed']);
 
   useEffect(() => {
     // Fetch Employees for Filter
@@ -56,10 +57,12 @@ export default function AdminSchedule() {
         if (data.success) {
           const mappedSchedules = data.data.map(item => {
             const colorSet = PERSON_COLORS[item.person_id % PERSON_COLORS.length];
+            // Ensure date is in YYYY-MM-DD format regardless of type (Date or String)
+            const dateOnly = item.working_date ? new Date(item.working_date).toISOString().split('T')[0] : null;
             return {
               id: `sched_${item.schedule_id}`,
               title: `${item.person?.name || 'Unknown'}`,
-              start: item.working_date?.split?.('T')?.[0],
+              start: dateOnly,
               allDay: true,
               person_id: item.person_id,
               backgroundColor: colorSet.bg,
@@ -101,36 +104,39 @@ export default function AdminSchedule() {
     setModalLoading(true);
 
     try {
-      const peopleWorking = schedules.filter(s => s.start === clickedDateStr);
+      // Normalize clicked date
+      const targetDate = clickedDateStr.split(/[T ]/)[0];
+      const peopleWorking = schedules.filter(s => s.start === targetDate);
       
-      // Fetch Daily Reports for this specific date (Fast, 1 request)
-      const reportPromise = apiFetch(`/daily-report/date/${clickedDateStr}`);
+      // Fetch Daily Reports for this specific date
+      const reportPromise = apiFetch(`/daily-report/date/${targetDate}`);
       
-      // Fetch all tasks once and cache them, to avoid N+1 queries per person
-      let tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
-      if (!allTasksCache) {
+      // Fetch all tasks
+      let tasksPromise;
+      if (allTasksCache) {
+        tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
+      } else {
         tasksPromise = taskService.getAllTasks();
       }
 
       const [reportRes, tasksRes] = await Promise.all([reportPromise, tasksPromise]);
-      const reports = reportRes.success ? (reportRes.data || reportRes.message || []) : [];
+      const reports = reportRes.success ? (reportRes.data || []) : [];
       
       let allTasks = allTasksCache;
       if (!allTasksCache && tasksRes.success) {
-        allTasks = tasksRes.data || tasksRes.message || [];
+        allTasks = tasksRes.data || [];
         setAllTasksCache(allTasks);
       }
 
       const enrichedData = peopleWorking.map(sched => {
         let personTasks = [];
-        if (allTasks) {
+        if (allTasks && Array.isArray(allTasks)) {
           personTasks = allTasks.filter(t => 
-            (t.status === 'pending' || t.status === 'in progress') &&
-            t.participants?.some(p => p.person_id === sched.person_id)
+            t.participants?.some(p => Number(p.person_id) === Number(sched.person_id))
           );
         }
         
-        const personReport = reports.find(r => r.person_id === sched.person_id);
+        const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));
         
         return {
           person_id: sched.person_id,
@@ -138,7 +144,7 @@ export default function AdminSchedule() {
           username: sched.extendedProps.person?.username || '',
           shift: `${sched.extendedProps.start_time} - ${sched.extendedProps.end_time}`,
           check_in: personReport ? personReport.check_in : null,
-          has_reported: personReport && personReport.description ? true : false,
+          has_reported: !!(personReport && personReport.description),
           report: personReport || null,
           tasks: personTasks
         };
@@ -322,8 +328,40 @@ export default function AdminSchedule() {
               ) : (
                 /* Person Task Detail View */
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-sm text-gray-500">Showing active tasks (Pending / In Progress)</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setTaskStatusFilter(['pending', 'in progress', 'completed'])}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                          taskStatusFilter.length === 3
+                            ? 'bg-gray-800 text-white border-gray-800'
+                            : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {['pending', 'in progress', 'completed'].map(status => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            setTaskStatusFilter(prev => 
+                              prev.includes(status) 
+                                ? (prev.length > 1 ? prev.filter(s => s !== status) : prev) // Don't allow empty filter
+                                : [...prev, status]
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                            taskStatusFilter.includes(status)
+                              ? status === 'completed' ? 'bg-emerald-500 text-white border-emerald-500' :
+                                status === 'in progress' ? 'bg-blue-600 text-white border-blue-600' :
+                                'bg-amber-500 text-white border-amber-500'
+                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
                     <button 
                       onClick={() => {
                         navigate('/tasks/add', { 
@@ -337,7 +375,7 @@ export default function AdminSchedule() {
                           } 
                         });
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto justify-center"
                     >
                       <PlusIcon className="w-4 h-4" />
                       Add Task
@@ -372,34 +410,38 @@ export default function AdminSchedule() {
                   </div>
 
                   
-                  {selectedModalPerson.tasks.length === 0 ? (
+                  {selectedModalPerson.tasks.filter(t => taskStatusFilter.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      No active tasks for this user.
+                      No tasks match the selected filters.
                     </div>
                   ) : (
                     <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-                      <table className="w-full text-left">
+                      <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Task Name</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Due Date</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Task Name</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Due Date</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {selectedModalPerson.tasks.map(task => (
-                            <tr key={task.task_id} className="bg-white">
-                              <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
-                              <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
-                                  ${task.status === 'in progress' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}
-                                `}>
-                                  {task.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          {selectedModalPerson.tasks
+                            .filter(t => taskStatusFilter.includes(t.status?.toLowerCase()))
+                            .map(task => (
+                              <tr key={task.task_id} className="bg-white hover:bg-gray-50 transition-colors">
+                                <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
+                                <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                                <td className="py-3 px-4">
+                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
+                                    ${task.status?.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-700' : 
+                                      task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700' : 
+                                      'bg-amber-50 text-amber-700'}
+                                  `}>
+                                    {task.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
                         </tbody>
                       </table>
                     </div>

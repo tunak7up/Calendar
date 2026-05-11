@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  UsersIcon, 
+import {
+  UsersIcon,
   CheckCircleIcon,
   XCircleIcon,
   PencilSquareIcon,
@@ -65,12 +65,12 @@ export default function AdminEmployeeList() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      const url = selectedUser 
-        ? `/person/${selectedUser.person_id}` 
+      const url = selectedUser
+        ? `/person/${selectedUser.person_id}`
         : '/person';
-      
+
       const method = selectedUser ? 'PUT' : 'POST';
-      
+
       // Remove password from payload if it's empty (during edit)
       const payload = { ...formData };
       if (selectedUser && !payload.password) {
@@ -96,12 +96,12 @@ export default function AdminEmployeeList() {
     try {
       const empToUpdate = employees.find(e => e.person_id === person_id);
       if (!empToUpdate) return;
-      
+
       const payload = { ...empToUpdate, [field]: value };
-      
+
       // Optimistic update
       setEmployees(employees.map(e => e.person_id === person_id ? { ...e, [field]: value } : e));
-      
+
       await apiFetch(`/person/${person_id}`, {
         method: 'PUT',
         body: JSON.stringify(payload)
@@ -160,8 +160,8 @@ export default function AdminEmployeeList() {
                   </tr>
                 ) : (
                   employees.map((emp) => (
-                    <tr 
-                      key={emp.person_id} 
+                    <tr
+                      key={emp.person_id}
                       onClick={() => navigate(`/profile/${emp.person_id}`)}
                       className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
                     >
@@ -178,8 +178,8 @@ export default function AdminEmployeeList() {
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
                       <td className="py-4 px-6">
-                        <select 
-                          value={emp.role || 'employee'} 
+                        <select
+                          value={emp.role || 'employee'}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
                           className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
@@ -193,11 +193,10 @@ export default function AdminEmployeeList() {
                           value={emp.status ? "true" : "false"}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => handleInlineUpdate(emp.person_id, 'status', e.target.value === "true")}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${
-                            emp.status 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100' 
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${emp.status
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
                               : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
-                          }`}
+                            }`}
                         >
                           <option value="true">Active</option>
                           <option value="false">Inactive</option>
@@ -230,8 +229,9 @@ export default function AdminEmployeeList() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Nhập họ tên..."
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
                 />
               </div>
               <div>
@@ -240,8 +240,9 @@ export default function AdminEmployeeList() {
                   type="text"
                   required
                   value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  placeholder="Tên đăng nhập..."
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
                 />
               </div>
               <div>
@@ -252,20 +253,21 @@ export default function AdminEmployeeList() {
                   type="password"
                   required={!selectedUser}
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder={selectedUser ? "Để trống nếu không đổi..." : "Nhập mật khẩu..."}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({...formData, role: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer"
                 >
                   <option value="employee">Employee</option>
                   <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
+
                 </select>
               </div>
               <div className="flex items-center gap-2 pt-2">
@@ -273,7 +275,7 @@ export default function AdminEmployeeList() {
                   type="checkbox"
                   id="status"
                   checked={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
                 <label htmlFor="status" className="text-sm font-bold text-gray-700">Active Account</label>

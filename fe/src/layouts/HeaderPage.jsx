@@ -11,9 +11,9 @@ const userNavigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Schedule', path: '/admin/schedule', id: 'admin_schedule' },
   { name: 'Employees', path: '/admin/employees', id: 'admin_employees' },
   { name: 'Requests', path: '/admin/requests', id: 'admin_requests' },
-  { name: 'Schedule', path: '/admin/schedule', id: 'admin_schedule' },
   { name: 'Work Hours', path: '/admin/work-hours', id: 'admin_workhours' },
   { name: 'Task', path: '/tasks', id: 'admin_task' },
 ];

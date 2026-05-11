@@ -55,7 +55,9 @@ const getDailyReportByPersonIdAndDate = async (person_id, working_date) => {
 const getDailyReportByDate = async (working_date) => {
     return await daily_report.findAll({
         where: {
-            working_date: working_date
+            working_date: {
+                [Op.like]: `%${working_date}%`
+            }
         }
     });
 };

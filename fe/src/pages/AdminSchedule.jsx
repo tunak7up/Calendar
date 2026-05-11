@@ -71,10 +71,12 @@ export default function AdminSchedule() {
         if (data.success) {
           const mappedSchedules = data.data.map(item => {
             const colorSet = PERSON_COLORS[item.person_id % PERSON_COLORS.length];
+            // Ensure date is in YYYY-MM-DD format regardless of type (Date or String)
+            const dateOnly = item.working_date ? new Date(item.working_date).toISOString().split('T')[0] : null;
             return {
               id: `sched_${item.schedule_id}`,
               title: `${item.person?.name || 'Unknown'}`,
-              start: item.working_date?.split?.('T')?.[0],
+              start: dateOnly,
               allDay: true,
               person_id: item.person_id,
               backgroundColor: colorSet.bg,
@@ -137,23 +139,27 @@ export default function AdminSchedule() {
     setModalLoading(true);
 
     try {
-      const peopleWorking = schedules.filter(s => s.start === clickedDateStr);
+      // Normalize clicked date
+      const targetDate = clickedDateStr.split(/[T ]/)[0];
+      const peopleWorking = schedules.filter(s => s.start === targetDate);
       
-      // Fetch Daily Reports for this specific date (Fast, 1 request)
-      const reportPromise = apiFetch(`/daily-report/date/${clickedDateStr}`);
+      // Fetch Daily Reports for this specific date
+      const reportPromise = apiFetch(`/daily-report/date/${targetDate}`);
       
-      // Fetch all tasks once and cache them, to avoid N+1 queries per person
-      let tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
-      if (!allTasksCache) {
+      // Fetch all tasks
+      let tasksPromise;
+      if (allTasksCache) {
+        tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
+      } else {
         tasksPromise = taskService.getAllTasks();
       }
 
       const [reportRes, tasksRes] = await Promise.all([reportPromise, tasksPromise]);
-      const reports = reportRes.success ? (reportRes.data || reportRes.message || []) : [];
+      const reports = reportRes.success ? (reportRes.data || []) : [];
       
       let allTasks = allTasksCache;
       if (!allTasksCache && tasksRes.success) {
-        allTasks = tasksRes.data || tasksRes.message || [];
+        allTasks = tasksRes.data || [];
         setAllTasksCache(allTasks);
       }
 
@@ -169,7 +175,7 @@ export default function AdminSchedule() {
           );
         }
         
-        const personReport = reports.find(r => r.person_id === sched.person_id);
+        const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));
         
         return {
           person_id: sched.person_id,
@@ -177,7 +183,7 @@ export default function AdminSchedule() {
           username: sched.extendedProps.person?.username || '',
           shift: `${sched.extendedProps.start_time} - ${sched.extendedProps.end_time}`,
           check_in: personReport ? personReport.check_in : null,
-          has_reported: personReport && personReport.description ? true : false,
+          has_reported: !!(personReport && personReport.description),
           report: personReport || null,
           tasks: personTasks
         };
@@ -475,18 +481,18 @@ export default function AdminSchedule() {
                   </div>
 
                   
-                  {selectedModalPerson.tasks.length === 0 ? (
+                  {selectedModalPerson.tasks.filter(t => taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      No active tasks for this user.
+                      No tasks match the selected filters.
                     </div>
                   ) : (
                     <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-                      <table className="w-full text-left">
+                      <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Task Name</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Due Date</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Task Name</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Due Date</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">

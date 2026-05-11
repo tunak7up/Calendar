@@ -8,6 +8,8 @@ export const scheduleService = {
 
   getAllSchedules: () => apiFetch('/schedule'),
 
+  getSchedulesByRange: (start, end) => apiFetch(`/schedule/range?start=${start}&end=${end}`),
+
   getScheduleByPersonId: (personId) => apiFetch(`/schedule/person/${personId}`),
 
   updateSchedule: (id, scheduleData) => apiFetch(`/schedule/${id}`, {

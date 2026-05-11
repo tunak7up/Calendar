@@ -47,6 +47,25 @@ const getScheduleByPersonIdWithTimeRange = async (data) => {
     });
 };
 
+const getSchedulesByRange = async (startDate, endDate) => {
+    return await schedule.findAll({
+        where: {
+            working_date: {
+                [Op.between]: [startDate, endDate]
+            }
+        },
+        include: [
+            {
+                model: person,
+                as: 'person',
+                required: true,
+                attributes: ['person_id', 'name', 'username']
+            }
+        ],
+        order: [['working_date', 'ASC']]
+    });
+};
+
 const getAllSchedules = async () => {
     return await schedule.findAll({
         include: [
@@ -77,6 +96,7 @@ module.exports = {
     createSchedule,
     getScheduleByPersonId,
     getAllSchedules,
+    getSchedulesByRange,
     updateSchedule,
     deleteSchedule,
     getScheduleByPersonIdWithTimeRange

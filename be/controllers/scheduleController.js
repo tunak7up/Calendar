@@ -57,10 +57,24 @@ const getScheduleByPersonIdWithTimeRange = async (req, res) => {
     }
 };
 
+const getSchedulesByRange = async (req, res) => {
+    try {
+        const { start, end } = req.query;
+        if (!start || !end) {
+            return sendRes(res, 400, 'Start and end dates are required');
+        }
+        const schedules = await scheduleService.getSchedulesByRange(start, end);
+        sendRes(res, 200, 'Get Schedules By Range Successful', schedules);
+    } catch (error) {
+        sendRes(res, 400, 'Get Schedules Failed', null, error.message);
+    }
+};
+
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
     getAllSchedules,
+    getSchedulesByRange,
     updateSchedule,
     deleteSchedule,
     getScheduleByPersonIdWithTimeRange

@@ -1,6 +1,7 @@
 const { daily_report } = require('../models');
 const sequelize = require('../config/db');
 const ExcelJS = require('exceljs');
+const { Op } = require('sequelize');
 
 const createDailyReport = async (data) => {
     const existingReport = await daily_report.findOne({
@@ -55,6 +56,16 @@ const getDailyReportByDate = async (working_date) => {
     return await daily_report.findAll({
         where: {
             working_date: working_date
+        }
+    });
+};
+
+const getAllDailyReportsInRange = async (startDate, endDate) => {
+    return await daily_report.findAll({
+        where: {
+            working_date: {
+                [Op.between]: [startDate, endDate]
+            }
         }
     });
 };
@@ -133,6 +144,7 @@ module.exports = {
     getDailyReportByPersonIdAndDate,
     getDailyReportByDate,
     getDailyReportByPersonId,
+    getAllDailyReportsInRange,
     updateDailyReportDescription,
     exportDailyReport
 };

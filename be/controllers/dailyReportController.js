@@ -65,12 +65,23 @@ const exportDailyReport = async (req, res) => {
     }
 };
 
+const getAllDailyReportsInRange = async (req, res) => {
+    try {
+        const { start, end } = req.query;
+        const reports = await dailyReportService.getAllDailyReportsInRange(start, end);
+        sendRes(res, 200, 'Get Reports Successful', reports);
+    } catch (error) {
+        sendRes(res, 400, 'Get Reports Failed', null, error.message);
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
     getDailyReportByPersonIdAndDate,
     getDailyReportByDate,
     getDailyReportByPersonId,
+    getAllDailyReportsInRange,
     updateDailyReportDescription,
     exportDailyReport
 };

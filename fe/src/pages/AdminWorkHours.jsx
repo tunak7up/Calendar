@@ -6,10 +6,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
 import { scheduleService } from '../services/scheduleService';
+import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -18,12 +20,16 @@ const MONTH_NAMES = [
 
 export default function AdminWorkHours() {
   const today = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
-  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const [startDate, setStartDate] = useState(firstDay.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(lastDay.toISOString().split('T')[0]);
   const [employees, setEmployees] = useState([]);
   const [schedules, setSchedules] = useState([]);
+  const [dailyReports, setDailyReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,13 +42,15 @@ export default function AdminWorkHours() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [empRes, schedRes] = await Promise.all([
+      const [empRes, schedRes, reportRes] = await Promise.all([
         apiFetch('/person'),
-        scheduleService.getAllSchedules()
+        scheduleService.getAllSchedules(),
+        apiFetch(`/daily-report/range?start=${startDate}&end=${endDate}`)
       ]);
 
       if (empRes.success) setEmployees(empRes.data);
       if (schedRes.success) setSchedules(schedRes.data);
+      if (reportRes.success) setDailyReports(reportRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -71,27 +79,63 @@ export default function AdminWorkHours() {
     }
   };
 
-  // Filter schedules by selected month/year
+  // Filter schedules by selected date range
   const filteredSchedules = schedules.filter(s => {
-    const d = new Date(s.working_date);
-    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+    const workingDate = s.working_date.split('T')[0];
+    return workingDate >= startDate && workingDate <= endDate;
   });
+
+  const handleQuickMonthChange = (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    const [year, month] = val.split('-').map(Number);
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    setStartDate(firstDay.toISOString().split('T')[0]);
+    setEndDate(lastDay.toISOString().split('T')[0]);
+    setCurrentPage(1);
+  };
+
+  const getMonthOptions = () => {
+    const options = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+      const value = `${d.getFullYear()}-${d.getMonth()}`;
+      options.push(<option key={value} value={value}>{label}</option>);
+    }
+    return options;
+  };
 
   // Build per-employee summary
   const employeeSummary = employees.map(emp => {
     const empSchedules = filteredSchedules.filter(s => s.person_id === emp.person_id);
+    const empReports = dailyReports.filter(r => r.person_id === emp.person_id);
+    
     const totalDays = empSchedules.length;
-    const totalHours = empSchedules.reduce((sum, s) => sum + parseTimeToHours(s.start_time, s.end_time), 0);
+    const registeredHours = empSchedules.reduce((sum, s) => sum + parseTimeToHours(s.start_time, s.end_time), 0);
+    
+    const actualHours = empReports.reduce((sum, r) => {
+      if (!r.check_in || !r.check_out) return sum;
+      const start = new Date(r.check_in);
+      const end = new Date(r.check_out);
+      const diffMs = end.getTime() - start.getTime();
+      return sum + Math.max(0, diffMs / (1000 * 60 * 60));
+    }, 0);
 
     return {
       ...emp,
       totalDays,
-      totalHours: Math.round(totalHours * 100) / 100,
+      registeredHours: Math.round(registeredHours * 100) / 100,
+      actualHours: Math.round(actualHours * 100) / 100,
       schedules: empSchedules
     };
   }).filter(emp => {
-    if (selectedEmployeeId === 'all') return true;
-    return emp.person_id.toString() === selectedEmployeeId;
+    if (selectedEmployeeIds.length === 0) return true;
+    return selectedEmployeeIds.includes(emp.person_id.toString());
   });
 
   // Pagination
@@ -103,29 +147,12 @@ export default function AdminWorkHours() {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const prevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(y => y - 1);
-    } else {
-      setSelectedMonth(m => m - 1);
-    }
-    setCurrentPage(1);
-  };
 
-  const nextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(y => y + 1);
-    } else {
-      setSelectedMonth(m => m + 1);
-    }
-    setCurrentPage(1);
-  };
 
   // Aggregate totals
   const grandTotalDays = employeeSummary.reduce((s, e) => s + e.totalDays, 0);
-  const grandTotalHours = Math.round(employeeSummary.reduce((s, e) => s + e.totalHours, 0) * 100) / 100;
+  const grandTotalRegHours = Math.round(employeeSummary.reduce((s, e) => s + e.registeredHours, 0) * 100) / 100;
+  const grandTotalActHours = Math.round(employeeSummary.reduce((s, e) => s + e.actualHours, 0) * 100) / 100;
 
   return (
     <div className="flex-1 p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
@@ -136,94 +163,102 @@ export default function AdminWorkHours() {
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Work Hours Overview</h1>
             <p className="text-gray-500 mt-1">Track registered working hours and days for payroll calculation</p>
           </div>
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <ArrowPathIcon className="w-4 h-4" />
-            Refresh
-          </button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-              <UserIcon className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Employees</p>
-              <p className="text-2xl font-extrabold text-gray-900">{employeeSummary.length}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-4">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-              <CalendarDaysIcon className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Work Days</p>
-              <p className="text-2xl font-extrabold text-gray-900">{grandTotalDays}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-              <ClockIcon className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Hours</p>
-              <p className="text-2xl font-extrabold text-gray-900">{grandTotalHours}h</p>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => alert('Exporting data to CSV... Feature coming soon.')}
+              className="flex items-center gap-2 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/10"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={fetchData}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <ArrowPathIcon className="w-4 h-4" />
+              Refresh
+            </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Month Picker */}
-          <div className="flex items-center gap-3">
-            <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
-              <ChevronLeftIcon className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 min-w-[200px] justify-center">
-              <CalendarDaysIcon className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-bold text-gray-800">
-                {MONTH_NAMES[selectedMonth]} {selectedYear}
-              </span>
+       
+
+        {/* Filter Section - Separated into two cards */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-6">
+          {/* Time Selection Card */}
+          <div className="flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Quick Month Select */}
+              <div className="flex items-center gap-2 pl-3 border-r border-gray-100 pr-3">
+                <CalendarDaysIcon className="w-5 h-5 text-[#0056b3]" />
+                <select 
+                  onChange={handleQuickMonthChange}
+                  className="bg-transparent border-none text-sm font-bold text-[#0056b3] outline-none cursor-pointer hover:text-blue-700 transition-colors"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Month</option>
+                  {getMonthOptions()}
+                </select>
+              </div>
+
+              {/* From Date */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">From</span>
+                <input 
+                  id="startDateInput"
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-gray-50 border-none rounded-xl px-3 py-1.5 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#0056b3]/20 transition-all cursor-pointer h-10"
+                />
+              </div>
+
+              <div className="h-4 w-[1px] bg-gray-200 hidden sm:block"></div>
+
+              {/* To Date */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">To</span>
+                <input 
+                  id="endDateInput"
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-gray-50 border-none rounded-xl px-3 py-1.5 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#0056b3]/20 transition-all cursor-pointer h-10"
+                />
+              </div>
             </div>
-            <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
           </div>
 
-          {/* Employee filter */}
-          <div className="flex items-center gap-3">
-            <FunnelIcon className="w-5 h-5 text-gray-400" />
-            <select
-              value={selectedEmployeeId}
-              onChange={(e) => {
-                setSelectedEmployeeId(e.target.value);
+          {/* Employee Filter Card */}
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center">
+            <EmployeeMultiFilter 
+              employees={employees}
+              selectedIds={selectedEmployeeIds}
+              onSelectionChange={(ids) => {
+                setSelectedEmployeeIds(ids);
                 setCurrentPage(1);
               }}
-              className="border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]"
-            >
-              <option value="all">All Employees</option>
-              {employees.map(emp => (
-                <option key={emp.person_id} value={emp.person_id}>{emp.name || emp.username}</option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50/90 backdrop-blur-sm">
+        {/* Table Area with Scrolling */}
+        <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden mb-6">
+          <div className="max-h-[600px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead className="bg-gray-50/80 sticky top-0 z-10 backdrop-blur-sm shadow-sm">
                 <tr>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">#</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Work Days</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Total Hours</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Avg Hours/Day</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Hours Registered</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Hours Actual</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
                 </tr>
               </thead>
@@ -239,7 +274,7 @@ export default function AdminWorkHours() {
                 ) : (
                   paginatedData.map((emp, index) => {
                     const avgHours = emp.totalDays > 0 ? Math.round((emp.totalHours / emp.totalDays) * 10) / 10 : 0;
-                    const hoursLevel = emp.totalHours >= 160 ? 'full' : emp.totalHours >= 80 ? 'partial' : 'low';
+                    const hoursLevel = emp.totalHours >= 40 ? 'full' : emp.totalHours >= 20 ? 'partial' : 'low';
 
                     return (
                       <tr key={emp.person_id} className="hover:bg-blue-50/30 transition-colors">
@@ -266,10 +301,12 @@ export default function AdminWorkHours() {
                           </span>
                         </td>
                         <td className="py-4 px-6 text-center">
-                          <span className="text-sm font-extrabold text-gray-900">{emp.totalHours}h</span>
+                          <span className="text-sm font-extrabold text-gray-900">{emp.registeredHours}h</span>
                         </td>
                         <td className="py-4 px-6 text-center">
-                          <span className="text-sm font-semibold text-gray-600">{avgHours}h</span>
+                          <span className={`text-sm font-extrabold ${emp.actualHours >= emp.registeredHours ? 'text-emerald-600' : 'text-blue-600'}`}>
+                            {emp.actualHours}h
+                          </span>
                         </td>
                         <td className="py-4 px-6 text-center">
                           {hoursLevel === 'full' && (

@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import MiniCalendar from '../components/MiniCalendar';
-import { UsersIcon, XMarkIcon, ArrowLeftIcon, PlusIcon, CheckCircleIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, XMarkIcon, ArrowLeftIcon, PlusIcon, CheckCircleIcon, ClockIcon, DocumentTextIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
 import { taskService } from '../services/taskService';
 import { scheduleService } from '../services/scheduleService';
 import { useNavigate } from 'react-router-dom';
+import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
 const PERSON_COLORS = [
   { bg: '#dbeafe', border: '#bfdbfe', text: '#1e3a8a' }, // blue
@@ -29,9 +30,10 @@ export default function AdminSchedule() {
   const calendarRef = useRef(null);
 
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [schedules, setSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [allTasksCache, setAllTasksCache] = useState(null);
 
   // Modal states
@@ -40,6 +42,13 @@ export default function AdminSchedule() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalData, setModalData] = useState([]);
   const [selectedModalPerson, setSelectedModalPerson] = useState(null);
+  const [taskStatusFilters, setTaskStatusFilters] = useState(['pending', 'in progress']);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Fetch Employees for Filter
@@ -50,8 +59,14 @@ export default function AdminSchedule() {
         }
       });
 
-    // Fetch All Schedules
-    scheduleService.getAllSchedules()
+    // Fetch All Schedules is now handled by datesSet
+  }, []);
+
+  // Collect all dates that have at least one schedule
+  const scheduleDays = [...new Set(schedules.map(s => s.start?.split?.(/[T ]/)?.[0]).filter(Boolean))];
+
+  const fetchSchedulesInRange = (startStr, endStr) => {
+    scheduleService.getSchedulesByRange(startStr, endStr)
       .then(data => {
         if (data.success) {
           const mappedSchedules = data.data.map(item => {
@@ -71,14 +86,35 @@ export default function AdminSchedule() {
           setSchedules(mappedSchedules);
         }
       });
-  }, []);
+  };
 
-  // Collect all dates that have at least one schedule
-  const scheduleDays = [...new Set(schedules.map(s => s.start?.split?.(/[T ]/)?.[0]).filter(Boolean))];
+  const displayEvents = useMemo(() => {
+    const baseEvents = selectedEmployeeIds.length === 0 
+      ? schedules 
+      : schedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
 
-  const displayEvents = selectedEmployeeId === 'all' 
-    ? schedules 
-    : schedules.filter(s => s.person_id.toString() === selectedEmployeeId);
+    if (!isMobile) return baseEvents;
+
+    // Aggregate by date for mobile view
+    const aggregated = {};
+    baseEvents.forEach(e => {
+      const date = e.start;
+      if (!date) return;
+      if (!aggregated[date]) aggregated[date] = 0;
+      aggregated[date]++;
+    });
+
+    return Object.entries(aggregated).map(([date, count]) => ({
+      id: `summary_${date}`,
+      title: `${count} People Working`,
+      start: date,
+      allDay: true,
+      backgroundColor: '#eff6ff',
+      borderColor: '#bfdbfe',
+      textColor: '#1e4ed8',
+      extendedProps: { isSummary: true, count }
+    }));
+  }, [schedules, selectedEmployeeIds, isMobile]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -124,9 +160,12 @@ export default function AdminSchedule() {
       const enrichedData = peopleWorking.map(sched => {
         let personTasks = [];
         if (allTasks) {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          
           personTasks = allTasks.filter(t => 
-            (t.status === 'pending' || t.status === 'in progress') &&
-            t.participants?.some(p => p.person_id === sched.person_id)
+            t.participants?.some(p => p.person_id === sched.person_id) &&
+            (!t.due_date || new Date(t.due_date) >= todayStart)
           );
         }
         
@@ -159,24 +198,21 @@ export default function AdminSchedule() {
         {/* Main Calendar Area */}
         <div className="flex-1 min-w-0">
           {/* Header with title and employee filter */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Company Schedule</h1>
               <p className="text-gray-500 mt-1 text-sm hidden sm:block">Overview of all employee work shifts</p>
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-3 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-sm border border-gray-200">
-              <UsersIcon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
-              <select
-                value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="border-none bg-transparent font-bold text-gray-700 text-sm outline-none focus:ring-0 cursor-pointer max-w-[140px] sm:max-w-none"
-              >
-                <option value="all">All Employees</option>
-                {employees.map(emp => (
-                  <option key={emp.person_id} value={emp.person_id}>{emp.name}</option>
-                ))}
-              </select>
+            <div className="w-full sm:w-auto min-w-[280px]">
+              <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Employees</p>
+                <EmployeeMultiFilter 
+                  employees={employees}
+                  selectedIds={selectedEmployeeIds}
+                  onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
+                />
+              </div>
             </div>
           </div>
 
@@ -200,6 +236,9 @@ export default function AdminSchedule() {
               dateClick={handleDateClick}
               datesSet={(info) => {
                 setViewDate(info.view.currentStart);
+                const startStr = info.startStr.split('T')[0];
+                const endStr = info.endStr.split('T')[0];
+                fetchSchedulesInRange(startStr, endStr);
               }}
               dayCellClassNames={(arg) => {
                 const cellDate = arg.date;
@@ -214,6 +253,15 @@ export default function AdminSchedule() {
                 return classes;
               }}
               eventContent={(arg) => {
+                const isSummary = arg.event.extendedProps.isSummary;
+                if (isSummary) {
+                  return (
+                    <div className="flex items-center justify-center gap-1.5 py-1 px-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[10px] font-black shadow-sm">
+                      <UsersIcon className="w-3 h-3" />
+                      <span>{arg.event.extendedProps.count}</span>
+                    </div>
+                  );
+                }
                 return (
                   <div
                     className="truncate px-2 py-1 rounded-md text-[0.7rem] font-bold border-l-4 w-full"
@@ -322,8 +370,57 @@ export default function AdminSchedule() {
               ) : (
                 /* Person Task Detail View */
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-sm text-gray-500">Showing active tasks (Pending / In Progress)</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filter by Status</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        {/* Select for Status */}
+                        <div className="relative w-full sm:w-auto">
+                          <select
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val && !taskStatusFilters.includes(val)) {
+                                setTaskStatusFilters(prev => [...prev, val]);
+                              }
+                              e.target.value = "";
+                            }}
+                            defaultValue=""
+                            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all cursor-pointer w-full sm:min-w-[160px] appearance-none pr-8"
+                          >
+                            <option value="" disabled>Add Status...</option>
+                            {['pending', 'in progress', 'completed']
+                              .filter(s => !taskStatusFilters.includes(s))
+                              .map(s => (
+                                <option key={s} value={s} className="capitalize">{s}</option>
+                              ))
+                            }
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                             <ChevronDownIcon className="w-4 h-4" />
+                          </div>
+                        </div>
+
+                        {/* Status Tags */}
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:flex-1">
+                          {taskStatusFilters.map(status => (
+                            <div 
+                              key={status}
+                              className="flex items-center gap-1.5 bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg border border-blue-100 text-[10px] font-bold shadow-sm animate-in fade-in slide-in-from-left-1"
+                            >
+                              <span className="capitalize">{status}</span>
+                              <button 
+                                onClick={() => setTaskStatusFilters(prev => prev.filter(s => s !== status))}
+                                className="hover:bg-[#0056b3] hover:text-white rounded-md p-0.5 transition-colors"
+                              >
+                                <XMarkIcon className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          
+                          
+                        </div>
+                      </div>
+                    </div>
                     <button 
                       onClick={() => {
                         navigate('/tasks/add', { 
@@ -337,11 +434,17 @@ export default function AdminSchedule() {
                           } 
                         });
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                      className="flex items-center gap-1 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/10 w-full sm:w-auto justify-center"
                     >
                       <PlusIcon className="w-4 h-4" />
                       Add Task
                     </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400 font-medium">
+                      {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
+                    </p>
                   </div>
                   
                   {/* Daily Report Section */}
@@ -387,19 +490,23 @@ export default function AdminSchedule() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {selectedModalPerson.tasks.map(task => (
-                            <tr key={task.task_id} className="bg-white">
-                              <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
-                              <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
-                                  ${task.status === 'in progress' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}
-                                `}>
-                                  {task.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          {selectedModalPerson.tasks
+                            .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status))
+                            .map(task => (
+                              <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
+                                <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
+                                <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                                <td className="py-3 px-4">
+                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
+                                    ${task.status === 'in progress' ? 'bg-blue-50 text-blue-700' : 
+                                      task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                                      'bg-gray-100 text-gray-600'}
+                                  `}>
+                                    {task.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
                         </tbody>
                       </table>
                     </div>

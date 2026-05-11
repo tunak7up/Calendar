@@ -6,10 +6,12 @@ import {
   ClockIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
 export default function AdminRequests() {
   const [requests, setRequests] = useState([]);
@@ -17,13 +19,26 @@ export default function AdminRequests() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const pageSize = 8;
 
   useEffect(() => {
     fetchRequests();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = () => {
+    apiFetch('/person')
+      .then(data => {
+        if (data.success) {
+          setEmployees(data.data);
+        }
+      })
+      .catch(error => console.error("Error fetching employees:", error));
+  };
 
   const fetchRequests = () => {
     setLoading(true);
@@ -69,6 +84,15 @@ export default function AdminRequests() {
   const filteredRequests = requests.filter(req => {
     if (filterStatus !== 'all' && req.status?.toLowerCase() !== filterStatus) return false;
     if (filterType !== 'all' && req.type?.toLowerCase() !== filterType) return false;
+    
+    // Multi-employee filter
+    if (selectedEmployeeIds.length > 0) {
+      if (!selectedEmployeeIds.includes(req.requester_id?.toString()) && 
+          !selectedEmployeeIds.includes(req.requester?.person_id?.toString())) {
+        return false;
+      }
+    }
+
     if (searchTerm) {
       const nameMatch = req.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -147,6 +171,22 @@ export default function AdminRequests() {
               <span className="font-bold text-gray-700">{filteredRequests.length} Total</span>
             </div>
           </div>
+        </div>
+
+        {/* Multi-Employee Filter Section */}
+        <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <FunnelIcon className="w-3.5 h-3.5" />
+            Filter by specific employees
+          </p>
+          <EmployeeMultiFilter 
+            employees={employees}
+            selectedIds={selectedEmployeeIds}
+            onSelectionChange={(ids) => {
+              setSelectedEmployeeIds(ids);
+              setCurrentPage(1);
+            }}
+          />
         </div>
 
         <div className="bg-white border border-gray-100 shadow-sm rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col">

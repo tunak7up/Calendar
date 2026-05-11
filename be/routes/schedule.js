@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.post('/', scheduleController.createSchedule);
 router.get('/', scheduleController.getAllSchedules);
+router.get('/range', scheduleController.getSchedulesByRange);
 router.get('/person/:personId', scheduleController.getScheduleByPersonId);
 router.put('/:id', scheduleController.updateSchedule);
 router.delete('/:id', scheduleController.deleteSchedule);

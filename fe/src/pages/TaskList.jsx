@@ -12,6 +12,8 @@ import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 import { taskService } from '../services/taskService';
+import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
+import { FunnelIcon } from '@heroicons/react/24/outline';
 
 function StatusBadge({ status }) {
   if (status === 'Completed') {
@@ -60,7 +62,7 @@ export default function TaskList({ isAdmin }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [actionTaskId, setActionTaskId] = useState(null);
@@ -94,8 +96,8 @@ export default function TaskList({ isAdmin }) {
     }
   }, [isAdmin, user]);
 
-  const employeeTasks = isAdmin && selectedEmployeeId !== 'all'
-    ? tasks.filter(t => t.participants && t.participants.some(p => p.person_id.toString() === selectedEmployeeId))
+  const employeeTasks = isAdmin && selectedEmployeeIds.length > 0
+    ? tasks.filter(t => t.participants && t.participants.some(p => selectedEmployeeIds.includes(p.person_id.toString())))
     : tasks;
 
   const filteredTasks = filterStatus !== 'all'
@@ -146,16 +148,14 @@ export default function TaskList({ isAdmin }) {
             <option value="completed">Completed</option>
           </select>
           {isAdmin && (
-            <select
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="border border-gray-200 bg-white text-gray-700 text-xs sm:text-sm font-semibold rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-[#0056b3] max-w-[130px] sm:max-w-none"
-            >
-              <option value="all">All Employees</option>
-              {employees.map(emp => (
-                <option key={emp.person_id} value={emp.person_id}>{emp.name}</option>
-              ))}
-            </select>
+            <div className="w-full sm:min-w-[300px] flex-1 mt-2 sm:mt-0">
+              <EmployeeMultiFilter 
+                employees={employees}
+                selectedIds={selectedEmployeeIds}
+                onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
+                placeholder="Filter by employees..."
+              />
+            </div>
           )}
           {!isAdmin && (
             <button

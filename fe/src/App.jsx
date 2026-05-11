@@ -25,15 +25,11 @@ import Dashboard from './pages/Dashboard'
 import './styles/App.css'
 
 function App() {
-  const { isLoggedIn, isAdmin: authIsAdmin, isLoading, logout } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isLoggedIn, isAdmin, isLoading, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Đồng bộ isAdmin từ AuthContext
-  useEffect(() => {
-    setIsAdmin(authIsAdmin);
-  }, [authIsAdmin]);
+
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -123,7 +119,7 @@ function App() {
           <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
 
           {/* Redirects */}
-          <Route path="/" element={<Navigate to={isLoggedIn ? (authIsAdmin ? "/admin/schedule" : "/dashboard") : "/login"} />} />
+          <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/schedule" : "/dashboard") : "/login"} />} />
         </Routes>
       </main>
     </div>

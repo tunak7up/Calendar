@@ -17,7 +17,7 @@ const createDailyReport = async (data) => {
         person_id: data.person_id,
         description: null,
         working_date: data.working_date,
-        check_in: new Date().toISOString(),
+        check_in: new Date().toLocaleTimeString('it-IT'),
         check_out: null
     });
 };
@@ -28,7 +28,7 @@ const updateDailyReport = async (id, data) => {
         throw new Error('Daily report not found');
     }
     return await report.update({
-        check_out: new Date().toISOString(),
+        check_out: new Date().toLocaleTimeString('it-IT'),
         description: data.description
     });
 };

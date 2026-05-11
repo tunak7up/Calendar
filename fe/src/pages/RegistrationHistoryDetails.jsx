@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   ArrowLeftIcon,
   CheckCircleIcon,
   ChatBubbleOvalLeftEllipsisIcon,
@@ -18,21 +18,19 @@ export default function RegistrationHistoryDetails() {
   const { user, isAdmin } = useAuth();
   const rawReq = location.state?.request;
 
-  const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' : 
-                        rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' : 
-                        rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' : 
-                        (rawReq?.status || 'pending');
+  const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
+    rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
+      rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
+        (rawReq?.status || 'pending');
 
   const [status, setStatus] = useState(initialStatus);
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
   if (!rawReq) return (
-    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
-      <div className="max-w-4xl mx-auto text-center py-20">
-        <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
-        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
-      </div>
+    <div className="max-w-4xl mx-auto text-center py-20">
+      <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
+      <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
     </div>
   );
 
@@ -75,23 +73,23 @@ export default function RegistrationHistoryDetails() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
-      <div className="max-w-4xl mx-auto">
+    <>
+      <div>
         <div className="mb-8">
-          <div className="flex items-center text-sm text-gray-500 mb-2">
-            <span className="hover:text-gray-900 cursor-pointer" onClick={() => navigate(-1)}>Registration History</span>
-            <span className="mx-2">›</span>
-            <span className="text-gray-900 font-medium">Details</span>
+          <div className="flex items-center text-sm text-gray-400 mb-4 gap-2">
+            <span className="hover:text-blue-600 cursor-pointer font-bold transition-colors" onClick={() => navigate(-1)}>Registration History</span>
+            <span className="text-gray-300">/</span>
+            <span className="text-gray-900 font-bold">Details</span>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               {request.name} - {request.refId}
             </h1>
-            
+
             {isAdmin && isPending ? (
               <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
-                <select 
-                  value={selectedStatus} 
+                <select
+                  value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-w-[120px] bg-white"
                 >
@@ -99,7 +97,7 @@ export default function RegistrationHistoryDetails() {
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-                <button 
+                <button
                   onClick={handleUpdateStatus}
                   disabled={isUpdating}
                   className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors disabled:opacity-50 whitespace-nowrap"
@@ -108,10 +106,9 @@ export default function RegistrationHistoryDetails() {
                 </button>
               </div>
             ) : (
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full ${
-                status === 'approved' ? 'text-green-800 bg-green-100' : 
-                status === 'pending' ? 'text-yellow-800 bg-yellow-100' : 'text-red-800 bg-red-100'
-              }`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full ${status === 'approved' ? 'text-green-800 bg-green-100' :
+                  status === 'pending' ? 'text-yellow-800 bg-yellow-100' : 'text-red-800 bg-red-100'
+                }`}>
                 {status === 'approved' ? <CheckCircleIcon className="w-4 h-4 text-green-600" /> : null}
                 {status === 'pending' ? 'Pending' : status === 'approved' ? 'Approved' : 'Rejected'}
               </span>
@@ -127,7 +124,7 @@ export default function RegistrationHistoryDetails() {
                   <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6" />
                   <h2 className="text-lg font-bold">Nội dung phản hồi</h2>
                 </div>
-                
+
                 <div className="flex gap-4 mb-6">
                   <span className="text-4xl text-gray-200 font-serif leading-none">"</span>
                   <p className="text-gray-700 italic text-[1.05rem] leading-relaxed pt-2">
@@ -146,7 +143,7 @@ export default function RegistrationHistoryDetails() {
 
             <div className="bg-[#f8f9fa] rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Original Request Details</h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-1">REQUESTER</h3>
@@ -203,14 +200,14 @@ export default function RegistrationHistoryDetails() {
             {!isPending ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
                 <div className="relative mb-4 mt-2">
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${request.approver}&background=0D8ABC&color=fff&size=100`} 
-                    alt="Approver" 
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${request.approver}&background=0D8ABC&color=fff&size=100`}
+                    alt="Approver"
                     className="w-24 h-24 rounded-2xl object-cover shadow-md"
                   />
                   <span className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></span>
                 </div>
-                
+
                 <h3 className="text-[0.65rem] font-bold text-blue-600 tracking-wider mb-1 uppercase">Thông tin người phản hồi</h3>
                 <h2 className="text-xl font-bold text-gray-900">{request.approver}</h2>
                 <p className="text-sm text-gray-500 mb-6">{request.approverRole || 'Manager'}</p>
@@ -240,7 +237,7 @@ export default function RegistrationHistoryDetails() {
         </div>
 
         <div className="mt-8 flex justify-end">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-blue-600 font-medium hover:text-blue-800 transition-colors"
           >
@@ -257,6 +254,6 @@ export default function RegistrationHistoryDetails() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </>
+  )
 }

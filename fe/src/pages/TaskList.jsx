@@ -129,46 +129,50 @@ export default function TaskList({ isAdmin }) {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
-      {/* Page Header */}
-      <div className="flex items-start justify-between mb-5 sm:mb-7 gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-[2rem] font-extrabold text-gray-900 leading-tight tracking-tight">Task Registry</h1>
-          <p className="text-gray-500 text-sm mt-1 hidden sm:block">Manage and monitor administrative chronologies</p>
+    <div className="space-y-6 pb-20">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Task Registry</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage and monitor administrative chronologies</p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 flex-wrap justify-end">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border border-gray-200 bg-white text-gray-700 text-xs sm:text-sm font-semibold rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-[#0056b3] max-w-[130px] sm:max-w-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="in progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-          {isAdmin && (
-            <div className="w-full sm:min-w-[300px] flex-1 mt-2 sm:mt-0">
-              <EmployeeMultiFilter 
-                employees={employees}
-                selectedIds={selectedEmployeeIds}
-                onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
-                placeholder="Filter by employees..."
-              />
-            </div>
-          )}
-          {!isAdmin && (
-            <button
-              onClick={() => navigate('/tasks/add')}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#0056b3] hover:bg-[#004494] text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+           <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="border border-gray-200 bg-white text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none flex-1 md:flex-none"
             >
-              <PlusIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Create Task</span>
-              <span className="sm:hidden">Create</span>
-            </button>
-          )}
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+            {!isAdmin && (
+              <button
+                onClick={() => navigate('/tasks/add')}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+              >
+                <PlusIcon className="w-5 h-5" />
+                <span>Create Task</span>
+              </button>
+            )}
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <FunnelIcon className="w-3.5 h-3.5" />
+            Filter by Participants
+          </p>
+          <EmployeeMultiFilter 
+            employees={employees}
+            selectedIds={selectedEmployeeIds}
+            onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
+            placeholder="Select employees..."
+          />
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">

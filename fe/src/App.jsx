@@ -24,12 +24,12 @@ import Dashboard from './pages/Dashboard'
 
 import './styles/App.css'
 
+import MainLayout from './layouts/MainLayout'
+
 function App() {
   const { isLoggedIn, isAdmin, isLoading, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -77,6 +77,10 @@ function App() {
     return null;
   }
 
+  const sidebar = renderSidebar();
+  const hasSidebar = !!sidebar;
+  const isCalendarPage = location.pathname === '/schedule' || location.pathname === '/admin/schedule';
+
   return (
     <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
       {location.pathname !== '/login' && (
@@ -86,42 +90,48 @@ function App() {
         />
       )}
 
-      {renderSidebar()}
+      {sidebar}
 
-      <main className="flex-1">
-        <Routes>
-          <Route path="/login" element={<Login onLogin={(data) => { 
-            const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
-            navigate(payload.role === 'manager' ? '/admin/schedule' : '/dashboard'); 
-          }} />} />
+      {location.pathname === '/login' ? (
+        <main className="flex-1">
+          <Routes>
+            <Route path="/login" element={<Login onLogin={(data) => { 
+              const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+              navigate(payload.role === 'manager' ? '/admin/schedule' : '/dashboard'); 
+            }} />} />
+          </Routes>
+        </main>
+      ) : (
+        <MainLayout hasSidebar={hasSidebar} maxWidth={isCalendarPage ? 'max-w-full' : 'max-w-7xl'}>
+          <Routes>
+            {/* User Routes */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/schedule" element={<MySchedule />} />
+            <Route path="/register/work" element={<RegisterWork />} />
+            <Route path="/register/leave" element={<RegisterLeave />} />
+            <Route path="/history" element={<RegistrationHistory />} />
+            <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
 
-          {/* User Routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/schedule" element={<MySchedule />} />
-          <Route path="/register/work" element={<RegisterWork />} />
-          <Route path="/register/leave" element={<RegisterLeave />} />
-          <Route path="/history" element={<RegistrationHistory />} />
-          <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
+            <Route path="/tasks" element={<TaskList isAdmin={isAdmin} />} />
+            <Route path="/tasks/add" element={<AddTask />} />
+            <Route path="/tasks/:id" element={<TaskDetails />} />
+            <Route path="/tasks/sub-add/:parentId" element={<AddSubTask />} />
 
-          <Route path="/tasks" element={<TaskList isAdmin={isAdmin} />} />
-          <Route path="/tasks/add" element={<AddTask />} />
-          <Route path="/tasks/:id" element={<TaskDetails />} />
-          <Route path="/tasks/sub-add/:parentId" element={<AddSubTask />} />
+            {/* Profile Routes */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<Profile />} />
 
-          {/* Profile Routes */}
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:id" element={<Profile />} />
+            {/* Admin Routes */}
+            <Route path="/admin/employees" element={isAdmin ? <AdminEmployeeList /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/requests" element={isAdmin ? <AdminRequests /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/schedule" element={isAdmin ? <AdminSchedule /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/employees" element={isAdmin ? <AdminEmployeeList /> : <Navigate to="/schedule" />} />
-          <Route path="/admin/requests" element={isAdmin ? <AdminRequests /> : <Navigate to="/schedule" />} />
-          <Route path="/admin/schedule" element={isAdmin ? <AdminSchedule /> : <Navigate to="/schedule" />} />
-          <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
-
-          {/* Redirects */}
-          <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/schedule" : "/dashboard") : "/login"} />} />
-        </Routes>
-      </main>
+            {/* Redirects */}
+            <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/schedule" : "/dashboard") : "/login"} />} />
+          </Routes>
+        </MainLayout>
+      )}
     </div>
   )
 }

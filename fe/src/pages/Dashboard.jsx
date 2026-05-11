@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [reportText, setReportText] = useState('');
   const [reportId, setReportId] = useState(null);
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState({}); // { task_id: 'status' }
+  const [checkingReport, setCheckingReport] = useState(true);
 
   // Get YYYY-MM-DD for local timezone
   const getWorkingDate = () => {
@@ -37,17 +38,34 @@ export default function Dashboard() {
           const report = response.data || response.message;
           setReportId(report.report_id || report.id);
           setIsCheckedIn(true);
-          setCheckInTime(new Date(report.check_in));
           
-          if (report.check_out) {
-            setCheckOutTime(new Date(report.check_out));
-          }
+          const parseDate = (dateStr, fallbackDate) => {
+            if (!dateStr) return null;
+            let d = new Date(dateStr);
+            if (isNaN(d.getTime())) {
+              // Try prepending the working date if it's just a time string
+              d = new Date(`${fallbackDate}T${dateStr}`);
+              if (isNaN(d.getTime())) {
+                 // Try with a space instead of T for older browsers
+                 d = new Date(`${fallbackDate} ${dateStr}`);
+              }
+            }
+            return isNaN(d.getTime()) ? null : d;
+          };
+
+          const cIn = parseDate(report.check_in, report.working_date);
+          if (cIn) setCheckInTime(cIn);
+          
+          const cOut = parseDate(report.check_out, report.working_date);
+          if (cOut) setCheckOutTime(cOut);
           if (report.description) {
             setReportText(report.description);
           }
         }
       } catch (error) {
         console.error("Error fetching daily report", error);
+      } finally {
+        setCheckingReport(false);
       }
     };
 
@@ -98,6 +116,8 @@ export default function Dashboard() {
         setIsCheckedIn(true);
         setCheckInTime(now);
         setReportId(report.report_id || report.id);
+      } else {
+        alert(`Check-in failed: ${response.message || 'Unknown server error'}`);
       }
     } catch (error) {
       console.error("Check-in failed", error);
@@ -176,174 +196,189 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-8 mt-[56px] min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              Welcome, {user?.name || user?.username}!
-            </h1>
-            <p className="text-gray-500 mt-1">Here is your dashboard for today.</p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {checkInTime && (
-              <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 text-blue-500" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 leading-none">Check-in Time</span>
-                  <span className="text-sm font-semibold text-gray-800">{checkInTime.toLocaleTimeString()}</span>
-                </div>
-              </div>
-            )}
-            {checkOutTime && (
-              <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 text-green-500" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 leading-none">Check-out Time</span>
-                  <span className="text-sm font-semibold text-gray-800">{checkOutTime.toLocaleTimeString()}</span>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="space-y-6 pb-20">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Welcome back, {user?.name || user?.username}!
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Here is your workspace overview for today.</p>
         </div>
-
-        {!isCheckedIn ? (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-              <ClockIcon className="w-10 h-10 text-blue-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to start your day?</h2>
-            <p className="text-gray-500 mb-8 max-w-md">
-              Please check in to record your attendance and view your tasks for today.
-            </p>
-            <button
-              onClick={handleCheckIn}
-              className="px-8 py-3 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
-            >
-              Check-in Now
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col">
-              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800">Your Pending Tasks</h2>
-                <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{tasks.length} Tasks</span>
+        
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {checkInTime && (
+            <div className="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-emerald-100 flex items-center gap-3 flex-1 md:flex-none">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <ClockIcon className="w-6 h-6 text-emerald-600" />
               </div>
-              
-              <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar">
-                <table className="w-full text-left border-collapse relative min-w-[600px]">
-                  <thead className="sticky top-0 bg-white z-10 shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">Checked In</span>
+                <span className="text-sm font-bold text-gray-900">
+                  {checkInTime instanceof Date && !isNaN(checkInTime) 
+                    ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                    : '--:--'}
+                </span>
+              </div>
+            </div>
+          )}
+          {checkOutTime && (
+            <div className="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-blue-100 flex items-center gap-3 flex-1 md:flex-none">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <ClockIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">Checked Out</span>
+                <span className="text-sm font-bold text-gray-900">
+                  {checkOutTime instanceof Date && !isNaN(checkOutTime) 
+                    ? checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                    : '--:--'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {checkingReport ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : !isCheckedIn ? (
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+            <ClockIcon className="w-10 h-10 text-blue-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to start your day?</h2>
+          <p className="text-gray-500 mb-8 max-w-md">
+            Please check in to record your attendance and view your tasks for today.
+          </p>
+          <button
+            onClick={handleCheckIn}
+            className="px-8 py-3 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+          >
+            Check-in Now
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800">Your Pending Tasks</h2>
+              <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{tasks.length} Tasks</span>
+            </div>
+            
+            <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar">
+              <table className="w-full text-left border-collapse relative min-w-[600px]">
+                <thead className="sticky top-0 bg-white z-10 shadow-sm">
+                  <tr>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Title</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Priority</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Due Date</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
                     <tr>
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Title</th>
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Priority</th>
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Due Date</th>
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
+                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">Loading tasks...</td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {loading ? (
-                      <tr>
-                        <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">Loading tasks...</td>
-                      </tr>
-                    ) : tasks.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">
-                          You have no pending tasks today. Great job!
+                  ) : tasks.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">
+                        You have no pending tasks today. Great job!
+                      </td>
+                    </tr>
+                  ) : (
+                    tasks.map((task) => {
+                      const currentStatus = pendingStatusUpdates[task.task_id] || task.status?.toLowerCase() || 'pending';
+                      
+                      return (
+                      <tr 
+                        key={task.task_id}
+                        onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
+                        className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                      >
+                        <td className="py-4 px-6">
+                          <p className="font-bold text-gray-900">{task.name || task.title}</p>
+                          {task.parent_id && (
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                              <div className="w-2 h-2 border-b border-l border-gray-400 inline-block"></div>
+                              Sub-task of REQ-{task.parent_id}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-md ${
+                            task.priority === 'High' ? 'bg-red-50 text-red-600' :
+                            task.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
+                            'bg-green-50 text-green-600'
+                          }`}>
+                            {task.priority || 'Low'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600">
+                          {formatDateTime(task.due_date)}
+                        </td>
+                        <td className="py-4 px-6 text-center" onClick={e => e.stopPropagation()}>
+                          <select 
+                            value={currentStatus}
+                            onChange={(e) => handleStatusChange(e, task.task_id)}
+                            disabled={!!checkOutTime}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border-0 outline-none ring-1 ring-inset cursor-pointer
+                              ${currentStatus === 'completed' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' :
+                                currentStatus === 'in progress' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 hover:bg-blue-100' :
+                                'bg-gray-50 text-gray-700 ring-gray-500/20 hover:bg-gray-100'}
+                            `}
+                          >
+                            <option value="pending" className="bg-white text-gray-900 font-medium">Pending</option>
+                            <option value="in progress" className="bg-white text-gray-900 font-medium">In Progress</option>
+                            <option value="completed" className="bg-white text-gray-900 font-medium">Completed</option>
+                          </select>
                         </td>
                       </tr>
-                    ) : (
-                      tasks.map((task) => {
-                        const currentStatus = pendingStatusUpdates[task.task_id] || task.status?.toLowerCase() || 'pending';
-                        
-                        return (
-                        <tr 
-                          key={task.task_id}
-                          onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
-                          className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
-                        >
-                          <td className="py-4 px-6">
-                            <p className="font-bold text-gray-900">{task.name || task.title}</p>
-                            {task.parent_id && (
-                              <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                                <div className="w-2 h-2 border-b border-l border-gray-400 inline-block"></div>
-                                Sub-task of REQ-{task.parent_id}
-                              </p>
-                            )}
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className={`text-xs font-bold px-2 py-1 rounded-md ${
-                              task.priority === 'High' ? 'bg-red-50 text-red-600' :
-                              task.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
-                              'bg-green-50 text-green-600'
-                            }`}>
-                              {task.priority || 'Low'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-sm text-gray-600">
-                            {formatDateTime(task.due_date)}
-                          </td>
-                          <td className="py-4 px-6 text-center" onClick={e => e.stopPropagation()}>
-                            <select 
-                              value={currentStatus}
-                              onChange={(e) => handleStatusChange(e, task.task_id)}
-                              disabled={!!checkOutTime}
-                              className={`text-xs font-semibold px-3 py-1.5 rounded-full border-0 outline-none ring-1 ring-inset cursor-pointer
-                                ${currentStatus === 'completed' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' :
-                                  currentStatus === 'in progress' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 hover:bg-blue-100' :
-                                  'bg-gray-50 text-gray-700 ring-gray-500/20 hover:bg-gray-100'}
-                              `}
-                            >
-                              <option value="pending" className="bg-white text-gray-900 font-medium">Pending</option>
-                              <option value="in progress" className="bg-white text-gray-900 font-medium">In Progress</option>
-                              <option value="completed" className="bg-white text-gray-900 font-medium">Completed</option>
-                            </select>
-                          </td>
-                        </tr>
-                      );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-gray-800">Daily Report</h2>
-              </div>
-              <textarea
-                value={reportText}
-                onChange={(e) => setReportText(e.target.value)}
-                disabled={!!checkOutTime}
-                placeholder="What did you accomplish today? Any blockers?"
-                rows={4}
-                className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-4 outline-none resize-none mb-4 disabled:opacity-60"
-              />
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={handleSaveDescription}
-                  disabled={!!checkOutTime}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
-                  Save
-                </button>
-                <button
-                  onClick={handleSubmitReport}
-                  disabled={!!checkOutTime}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <PaperAirplaneIcon className="w-5 h-5" />
-                  Submit Report & Check-out
-                </button>
-              </div>
+                    );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-      </div>
+
+          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-bold text-gray-800">Daily Report</h2>
+            </div>
+            <textarea
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              disabled={!!checkOutTime}
+              placeholder="What did you accomplish today? Any blockers?"
+              rows={4}
+              className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-4 outline-none resize-none mb-4 disabled:opacity-60"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleSaveDescription}
+                disabled={!!checkOutTime}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
+                Save
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                disabled={!!checkOutTime}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <PaperAirplaneIcon className="w-5 h-5" />
+                Submit Report & Check-out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

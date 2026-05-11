@@ -164,21 +164,21 @@ export default function RegisterLeave() {
   };
 
   return (
-    <div className="flex-1 p-8 sm:ml-64 mt-[56px] pt-6 sm:pt-10">
-      <div className="max-w-4xl mx-auto">
+    <>
+      <div>
         <div className="mb-8">
           <button 
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-4"
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Register Leave</h1>
-          <p className="text-gray-500 mt-2 text-[0.95rem]">Select your leave dates and provide a reason for the request.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Register Leave</h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">Select your leave dates and provide a reason for the request.</p>
         </div>
 
-        <div className="bg-[#f8fafc] rounded-3xl p-8 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
           {/* Select Date */}
           <div className="mb-10">
             <WeekDatePicker
@@ -291,6 +291,6 @@ export default function RegisterLeave() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </>
+  )
 }

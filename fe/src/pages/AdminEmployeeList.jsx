@@ -113,101 +113,99 @@ export default function AdminEmployeeList() {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-8 mt-[56px] pt-6 sm:pt-10 bg-[#f1f4f8] min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-5 sm:mb-8">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Employees</h1>
-            <p className="text-gray-500 mt-1 text-sm hidden sm:block">Manage personnel and roles</p>
-          </div>
-          <div className="flex gap-2 sm:gap-3 items-center">
-            <button
-              onClick={() => openModal()}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#0056b3] hover:bg-[#004494] text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 transition-colors"
-            >
-              <PlusIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Add User</span>
-              <span className="sm:hidden">Add</span>
-            </button>
-            <div className="bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-1.5 sm:gap-2">
-              <UsersIcon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
-              <span className="font-bold text-gray-700 text-sm">{employees.length}</span>
-              <span className="text-gray-500 text-sm hidden sm:inline">Total</span>
-            </div>
-          </div>
+    <div className="space-y-6 pb-20">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Personnel Management</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Overview of company staff and access roles</p>
         </div>
-
-        <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/80 border-b border-gray-100">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">ID</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee Name</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Username</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Role</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-12 text-gray-400">Loading employees...</td>
-                  </tr>
-                ) : employees.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-12 text-gray-400">No employees found.</td>
-                  </tr>
-                ) : (
-                  employees.map((emp) => (
-                    <tr
-                      key={emp.person_id}
-                      onClick={() => navigate(`/profile/${emp.person_id}`)}
-                      className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
-                    >
-                      <td className="py-4 px-6 text-sm font-semibold text-gray-500 hidden sm:table-cell">#{emp.person_id}</td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <img
-                            alt={emp.name}
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=101c23&color=12a4d9&rounded=true&size=40`}
-                            className="h-10 w-10 rounded-full border-2 border-white shadow-sm"
-                          />
-                          <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
-                      <td className="py-4 px-6">
-                        <select
-                          value={emp.role || 'employee'}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
-                        >
-                          <option value="employee">Employee</option>
-                          <option value="manager">Manager</option>
-                        </select>
-                      </td>
-                      <td className="py-4 px-6 text-center hidden sm:table-cell">
-                        <select
-                          value={emp.status ? "true" : "false"}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleInlineUpdate(emp.person_id, 'status', e.target.value === "true")}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${emp.status
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
-                              : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
-                            }`}
-                        >
-                          <option value="true">Active</option>
-                          <option value="false">Inactive</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 flex-1 md:flex-none justify-center">
+            <UsersIcon className="w-5 h-5 text-gray-400" />
+            <span className="font-bold text-gray-700">{employees.length}</span>
+            <span className="text-gray-500 text-sm">Total staff</span>
           </div>
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span>Add New User</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">ID</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee Name</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Username</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Role</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-12 text-gray-400">Loading employees...</td>
+                </tr>
+              ) : employees.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-12 text-gray-400">No employees found.</td>
+                </tr>
+              ) : (
+                employees.map((emp) => (
+                  <tr
+                    key={emp.person_id}
+                    onClick={() => navigate(`/profile/${emp.person_id}`)}
+                    className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                  >
+                    <td className="py-4 px-6 text-sm font-semibold text-gray-500 hidden sm:table-cell">#{emp.person_id}</td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <img
+                          alt={emp.name}
+                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=101c23&color=12a4d9&rounded=true&size=40`}
+                          className="h-10 w-10 rounded-full border-2 border-white shadow-sm"
+                        />
+                        <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
+                    <td className="py-4 px-6">
+                      <select
+                        value={emp.role || 'employee'}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
+                      >
+                        <option value="employee">Employee</option>
+                        <option value="manager">Manager</option>
+                      </select>
+                    </td>
+                    <td className="py-4 px-6 text-center hidden sm:table-cell">
+                      <select
+                        value={emp.status ? "true" : "false"}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => handleInlineUpdate(emp.person_id, 'status', e.target.value === "true")}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${emp.status
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                            : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
+                          }`}
+                      >
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

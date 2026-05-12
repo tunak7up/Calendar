@@ -1,6 +1,7 @@
 const { schedule, person } = require('../models');
 const sequelize = require('../config/db');
 const { Op } = require('sequelize');
+const { toUTC } = require('../utils/timeUtils');
 
 const createSchedule = async ({
     person_id,
@@ -10,9 +11,9 @@ const createSchedule = async ({
 }) => {
     return await schedule.create({
         person_id,
-        start_time,
-        end_time,
-        working_date
+        start_time: toUTC(start_time),
+        end_time: toUTC(end_time),
+        working_date: toUTC(working_date)
     });
 };
 

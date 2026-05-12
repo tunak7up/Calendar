@@ -193,20 +193,18 @@ const updateTask = async (id, data) => {
     const parentTask = await task.findByPk(id);
     if (!parentTask) throw new Error('Task not found');
 
-    if (data.status === 'completed') {
-        const subTasks = await task.findAll({ where: { parent_id: id } });
-        if (subTasks.length > 0) {
-            const allCompleted = subTasks.every(st => st.status === 'completed');
-            if (!allCompleted) {
-                const error = new Error('Phai hoan thanh tat ca sub-task truoc khi hoan thanh task cha.');
-                error.status = 400;
-                throw error;
-            }
-        }
-    }
-
     return await sequelize.transaction(async (t) => {
         const updatedParent = await parentTask.update(data, { transaction: t });
+
+        if (data.status === 'completed') {
+            await task.update(
+                { status: 'completed' },
+                {
+                    where: { parent_id: parentTask.task_id },
+                    transaction: t,
+                }
+            );
+        }
 
         if (data.start_time || data.due_date) {
             const dateFields = {};
@@ -214,7 +212,7 @@ const updateTask = async (id, data) => {
             if (data.due_date) dateFields.due_date = data.due_date;
 
             await task.update(dateFields, {
-                where: { parent_id: id },
+                where: { parent_id: parentTask.task_id },
                 transaction: t,
             });
         }

@@ -140,6 +140,17 @@ const exportDailyReport = async (req, res) => {
     res.end();
 };
 
+const checkTodayReportExists = async (person_id) => {
+    const today = new Date().toISOString().split('T')[0];
+    const report = await daily_report.findOne({
+        where: {
+            person_id: person_id,
+            working_date: today
+        }
+    });
+    return !!report;
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -148,5 +159,6 @@ module.exports = {
     getDailyReportByPersonId,
     getAllDailyReportsInRange,
     updateDailyReportDescription,
-    exportDailyReport
+    exportDailyReport,
+    checkTodayReportExists
 };

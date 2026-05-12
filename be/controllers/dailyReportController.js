@@ -75,6 +75,16 @@ const getAllDailyReportsInRange = async (req, res) => {
     }
 };
 
+const checkTodayReportExists = async (req, res) => {
+    try {
+        const { person_id } = req.params;
+        const exists = await dailyReportService.checkTodayReportExists(person_id);
+        sendRes(res, 200, 'Check report existence successful', { exists });
+    } catch (error) {
+        sendRes(res, 400, 'Error checking report existence', null, error.message);
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -83,5 +93,6 @@ module.exports = {
     getDailyReportByPersonId,
     getAllDailyReportsInRange,
     updateDailyReportDescription,
-    exportDailyReport
+    exportDailyReport,
+    checkTodayReportExists
 };

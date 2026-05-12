@@ -6,6 +6,7 @@ router.post('/', dailyReportController.createDailyReport);
 router.put('/:id', dailyReportController.updateDailyReport);
 router.get('/person/:person_id/date/:working_date', dailyReportController.getDailyReportByPersonIdAndDate);
 router.get('/date/:working_date', dailyReportController.getDailyReportByDate);
+router.get('/person/:person_id/today', dailyReportController.checkTodayReportExists);
 router.get('/person/:person_id', dailyReportController.getDailyReportByPersonId);
 router.put('/:id/description', dailyReportController.updateDailyReportDescription);
 router.post('/export', dailyReportController.exportDailyReport);

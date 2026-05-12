@@ -34,8 +34,8 @@ export default function Dashboard() {
       try {
         const workingDate = getWorkingDate();
         const response = await apiFetch(`/daily-report/person/${user.person_id}/date/${workingDate}`);
-        if (response.success && (response.data || response.message)) {
-          const report = response.data || response.message;
+        if (response.success && response.data) {
+          const report = response.data;
           setReportId(report.report_id || report.id);
           setIsCheckedIn(true);
           
@@ -110,8 +110,8 @@ export default function Dashboard() {
         })
       });
       
-      if (response.success && (response.data || response.message)) {
-        const report = response.data || response.message;
+      if (response.success && response.data) {
+        const report = response.data;
         const now = new Date();
         setIsCheckedIn(true);
         setCheckInTime(now);
@@ -309,10 +309,10 @@ export default function Dashboard() {
                           )}
                         </td>
                         <td className="py-4 px-6">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-md ${
-                            task.priority === 'High' ? 'bg-red-50 text-red-600' :
-                            task.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
-                            'bg-green-50 text-green-600'
+                          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
+                            task.priority === 'High' ? 'bg-red-100 text-red-700 border-red-200' :
+                            task.priority === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                            'bg-emerald-100 text-emerald-700 border-emerald-200'
                           }`}>
                             {task.priority || 'Low'}
                           </span>

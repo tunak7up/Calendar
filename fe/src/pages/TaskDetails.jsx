@@ -13,6 +13,7 @@ import {
   ChatBubbleLeftRightIcon,
   PaperClipIcon,
   PaperAirplaneIcon,
+  PlusIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -20,6 +21,8 @@ import { formatDateTime } from '../utils/dateUtils';
 import { apiFetch } from '../services/api';
 import { taskService } from '../services/taskService';
 import { useAuth } from '../context/AuthContext';
+import { Menu, Transition } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
 export default function TaskDetails() {
   const { id } = useParams();
@@ -34,14 +37,6 @@ export default function TaskDetails() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [persons, setPersons] = useState({});
-
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSubTask, setSelectedSubTask] = useState(null);
-  const [productUrl, setProductUrl] = useState('');
-  const [newStatus, setNewStatus] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isParentUpdate, setIsParentUpdate] = useState(false);
 
   const fetchTaskData = async () => {
     try {
@@ -162,42 +157,7 @@ export default function TaskDetails() {
     }
   };
 
-  const handleOpenModal = (subTask, isParent = false) => {
-    setIsParentUpdate(isParent);
-    setSelectedSubTask(subTask);
-    setNewStatus(subTask.status || 'pending');
-    setProductUrl('');
-    setIsModalOpen(true);
-  };
 
-  const handleSubmitWork = async () => {
-    setIsSubmitting(true);
-    try {
-      if (newStatus !== selectedSubTask.status) {
-        const result = await taskService.updateTask(selectedSubTask.task_id, { status: newStatus });
-        if (!result.success) {
-          alert(result.message);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      if (productUrl.trim()) {
-        await taskService.createTaskAttachment({ task_id: selectedSubTask.task_id, url: productUrl.trim() });
-      }
-
-      setIsModalOpen(false);
-      setSelectedSubTask(null);
-      setProductUrl('');
-
-      fetchTaskData();
-      fetchSubTasks();
-    } catch (error) {
-      console.error('Error submitting work:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (!id) {
     return (
@@ -208,22 +168,77 @@ export default function TaskDetails() {
     );
   }
 
-  const getStatusColor = (status) => {
+  const getStatusStyle = (status) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'in progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'completed': return { bg: 'bg-emerald-500', text: 'text-white', light: 'bg-emerald-50 text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-400' };
+      case 'in progress': return { bg: 'bg-blue-500', text: 'text-white', light: 'bg-blue-50 text-blue-700', border: 'border-blue-200', dot: 'bg-blue-400' };
+      case 'pending': return { bg: 'bg-amber-500', text: 'text-white', light: 'bg-amber-50 text-amber-700', border: 'border-amber-200', dot: 'bg-amber-400' };
+      default: return { bg: 'bg-gray-500', text: 'text-white', light: 'bg-gray-50 text-gray-700', border: 'border-gray-200', dot: 'bg-gray-400' };
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-orange-600 bg-orange-50';
-      case 'low': return 'text-blue-600 bg-blue-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'high': return 'text-red-700 bg-red-100 border-red-200';
+      case 'medium': return 'text-amber-700 bg-amber-100 border-amber-200';
+      case 'low': return 'text-emerald-700 bg-emerald-100 border-emerald-200';
+      default: return 'text-gray-700 bg-gray-100 border-gray-200';
     }
+  };
+
+  const StatusDropdown = ({ currentStatus, onStatusChange, size = 'md' }) => {
+    const statuses = [
+      { id: 'pending', label: 'Pending', ...getStatusStyle('pending') },
+      { id: 'in progress', label: 'In Progress', ...getStatusStyle('in progress') },
+      { id: 'completed', label: 'Completed', ...getStatusStyle('completed') },
+    ];
+
+    const currentStyle = getStatusStyle(currentStatus);
+
+    return (
+      <Menu as="div" className="relative inline-block text-left">
+        <Menu.Button className={`
+          flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm
+          ${size === 'sm' ? 'px-3 py-1 text-[9px]' : 'px-5 py-2 text-[11px]'}
+          ${currentStyle.light} ${currentStyle.border} hover:shadow-md active:scale-95
+        `}>
+          <span className={`w-2 h-2 rounded-full ${currentStyle.bg} animate-pulse`} />
+          {currentStatus || 'Pending'}
+          <ChevronDownIcon className="w-4 h-4 opacity-50" />
+        </Menu.Button>
+
+        <Transition
+          as={React.Fragment}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
+        >
+          <Menu.Items className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div className="space-y-1">
+              {statuses.map((s) => (
+                <Menu.Item key={s.id}>
+                  {({ active }) => (
+                    <button
+                      onClick={() => onStatusChange(s.id)}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
+                        ${active ? `${s.light} scale-[1.02]` : 'text-gray-600 hover:bg-gray-50'}
+                      `}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${s.bg}`} />
+                      {s.label}
+                    </button>
+                  )}
+                </Menu.Item>
+              ))}
+            </div>
+          </Menu.Items>
+        </Transition>
+      </Menu>
+    );
   };
 
   return (
@@ -270,15 +285,16 @@ export default function TaskDetails() {
               )}
             </div>
             <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
-              <span className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${getStatusColor(fullTask.status)}`}>
-                {fullTask.status || 'Unknown'}
-              </span>
-              <button
-                onClick={() => handleOpenModal(fullTask, true)}
-                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest underline underline-offset-4"
-              >
-                Update Status
-              </button>
+              <StatusDropdown 
+                currentStatus={fullTask.status} 
+                onStatusChange={async (val) => {
+                  const res = await taskService.updateTask(fullTask.task_id, { status: val });
+                  if (res.success) {
+                    fetchTaskData();
+                    fetchSubTasks();
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
@@ -364,9 +380,16 @@ export default function TaskDetails() {
         <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
           <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
           <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">Sub-Tasks</h2>
-          <span className="ml-auto bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
+          <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
             {subTasks.length} {subTasks.length === 1 ? 'Task' : 'Tasks'}
           </span>
+          <button
+            onClick={() => navigate(`/tasks/sub-add/${id}`, { state: { parentTask: fullTask } })}
+            className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Sub-task</span>
+          </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
@@ -381,9 +404,17 @@ export default function TaskDetails() {
                       <div>
                         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
                         <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
-                          <span className={`px-3 py-1 rounded-full font-bold uppercase tracking-wider border ${getStatusColor(sub.status)}`}>
-                            {sub.status || 'pending'}
-                          </span>
+                          <StatusDropdown 
+                            currentStatus={sub.status} 
+                            size="sm"
+                            onStatusChange={async (val) => {
+                              const res = await taskService.updateTask(sub.task_id, { status: val });
+                              if (res.success) {
+                                fetchTaskData();
+                                fetchSubTasks();
+                              }
+                            }}
+                          />
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4" />
                             Created: {formatDateTime(sub.start_time || sub.create_at)}
@@ -397,17 +428,10 @@ export default function TaskDetails() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => navigate(`/tasks/${sub.task_id}`, { state: { task: sub } })}
-                          className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                          className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
                           title="View Details"
                         >
-                          <EyeIcon className="w-6 h-6" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenModal(sub)}
-                          className="p-2 bg-gray-50 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                          title="Update Status"
-                        >
-                          <CheckCircleIcon className="w-6 h-6" />
+                          <EyeIcon className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
@@ -454,65 +478,6 @@ export default function TaskDetails() {
         </div>
       </div>
 
-      {/* Update Sub-task Modal */}
-      {isModalOpen && selectedSubTask && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Update Task Status</h3>
-                <p className="text-xs text-gray-500 mt-1">{selectedSubTask.title || selectedSubTask.name}</p>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Change Status</label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <PaperClipIcon className="w-4 h-4" />
-                  Attachment (Link/URL)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://docs.google.com/..."
-                  value={productUrl}
-                  onChange={(e) => setProductUrl(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                />
-                <p className="text-xs text-gray-400 mt-2">Optional. Provide a link to your finished work or resource.</p>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={handleSubmitWork}
-                  disabled={isSubmitting}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

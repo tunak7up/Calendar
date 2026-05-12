@@ -16,26 +16,26 @@ import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 
 function StatusBadge({ status }) {
-  if (status === 'Completed') {
+  if (status?.toLowerCase() === 'completed') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#d1fae5] text-[#065f46]">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] inline-block" />
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
         Completed
       </span>
     );
   }
-  if (status === 'In Progress') {
+  if (status?.toLowerCase() === 'in progress') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eff6ff] text-[#1d4ed8]">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] inline-block" />
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
         In Progress
       </span>
     );
   }
-  if (status === 'Pending') {
+  if (status?.toLowerCase() === 'pending') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#f3f4f6] text-[#374151]">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#9ca3af] inline-block" />
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
         Pending
       </span>
     );
@@ -194,15 +194,15 @@ export default function TaskList({ isAdmin }) {
           label="Completed"
           value={employeeTasks.filter(t => t.status === 'completed').length}
           icon={<CheckCircleIcon />}
-          iconBg="bg-[#d1fae5]"
-          iconColor="text-[#10b981]"
+          iconBg="bg-emerald-100"
+          iconColor="text-emerald-600"
         />
         <StatCard
           label="Overdue"
           value={0}
           icon={<ExclamationTriangleIcon />}
-          iconBg="bg-[#fff3cd]"
-          iconColor="text-[#f59e0b]"
+          iconBg="bg-amber-100"
+          iconColor="text-amber-600"
         />
       </div>
 

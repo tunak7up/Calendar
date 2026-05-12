@@ -13,13 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
 const PERSON_COLORS = [
-  { bg: '#dbeafe', border: '#bfdbfe', text: '#1e3a8a' }, // blue
-  { bg: '#fce7f3', border: '#fbcfe8', text: '#831843' }, // pink
-  { bg: '#dcfce7', border: '#bbf7d0', text: '#14532d' }, // green
-  { bg: '#fefcbf', border: '#fef08a', text: '#713f12' }, // yellow
-  { bg: '#f3e8ff', border: '#e9d5ff', text: '#581c87' }, // purple
-  { bg: '#ffedd5', border: '#fed7aa', text: '#7c2d12' }, // orange
-  { bg: '#e0e7ff', border: '#c7d2fe', text: '#312e81' }, // indigo
+  { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' }, // blue
+  { bg: '#ec4899', border: '#db2777', text: '#ffffff' }, // pink
+  { bg: '#10b981', border: '#059669', text: '#ffffff' }, // green
+  { bg: '#f59e0b', border: '#d97706', text: '#ffffff' }, // yellow/amber
+  { bg: '#8b5cf6', border: '#7c3aed', text: '#ffffff' }, // purple
+  { bg: '#f97316', border: '#ea580c', text: '#ffffff' }, // orange
+  { bg: '#6366f1', border: '#4f46e5', text: '#ffffff' }, // indigo
 ];
 
 export default function AdminSchedule() {
@@ -503,10 +503,10 @@ export default function AdminSchedule() {
                                 <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
                                 <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
                                 <td className="py-3 px-4">
-                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
-                                    ${task.status === 'in progress' ? 'bg-blue-50 text-blue-700' : 
-                                      task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                                      'bg-gray-100 text-gray-600'}
+                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border shadow-sm
+                                    ${task.status === 'in progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
+                                      task.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                      'bg-gray-100 text-gray-700 border-gray-200'}
                                   `}>
                                     {task.status}
                                   </span>

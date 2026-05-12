@@ -8,6 +8,13 @@ import { scheduleService } from '../services/scheduleService';
 import { requestService } from '../services/requestService';
 import { useAuth } from '../context/AuthContext';
 
+// Parse datetime string từ BE (luôn là giờ VN, nhưng không có timezone suffix)
+const parseVNTime = (str) => {
+  if (!str) return null;
+  if (str.includes('+') || str.includes('Z')) return new Date(str);
+  return new Date(str.replace(' ', 'T') + '+07:00');
+};
+
 export default function RegisterLeave() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,13 +51,17 @@ export default function RegisterLeave() {
       return workSchedules.some(ws => {
         const wsDate = ws.start_time.split(/[T ]/)[0];
         if (wsDate !== date) return false;
-        
-        const startTime = ws.start_time.split(/[T ]/)[1];
-        const endTime = ws.end_time.split(/[T ]/)[1];
-        
-        if (shiftType === 'Morning') return startTime.startsWith('08:30') && endTime.startsWith('12:00');
-        if (shiftType === 'Afternoon') return startTime.startsWith('13:00') && endTime.startsWith('17:30');
-        if (shiftType === 'Full Day') return startTime.startsWith('08:30') && endTime.startsWith('17:30');
+
+        const startD = parseVNTime(ws.start_time);
+        const endD = parseVNTime(ws.end_time);
+        if (!startD || !endD) return false;
+
+        const startHHMM = `${String(startD.getHours()).padStart(2, '0')}:${String(startD.getMinutes()).padStart(2, '0')}`;
+        const endHHMM = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+
+        if (shiftType === 'Morning') return startHHMM === '08:30' && endHHMM === '12:00';
+        if (shiftType === 'Afternoon') return startHHMM === '13:00' && endHHMM === '17:30';
+        if (shiftType === 'Full Day') return startHHMM === '08:30' && endHHMM === '17:30';
         return false;
       });
     });
@@ -116,14 +127,14 @@ export default function RegisterLeave() {
     const requestDetails = schedule.map(item => {
       let startTime, endTime;
       if (item.shift === 'Morning') {
-        startTime = `${item.date} 08:30:00`;
-        endTime = `${item.date} 12:00:00`;
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T12:00:00+07:00`;
       } else if (item.shift === 'Afternoon') {
-        startTime = `${item.date} 13:00:00`;
-        endTime = `${item.date} 17:30:00`;
+        startTime = `${item.date}T13:00:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
       } else { // Full Day
-        startTime = `${item.date} 08:30:00`;
-        endTime = `${item.date} 17:30:00`;
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
       }
       return {
         date: item.date,

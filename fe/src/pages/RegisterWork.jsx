@@ -163,14 +163,14 @@ export default function RegisterWork() {
     const requestDetails = schedule.map(item => {
       let startTime, endTime;
       if (item.shift === 'Morning') {
-        startTime = `${item.date} 08:30:00`;
-        endTime = `${item.date} 12:00:00`;
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T12:00:00+07:00`;
       } else if (item.shift === 'Afternoon') {
-        startTime = `${item.date} 13:00:00`;
-        endTime = `${item.date} 17:30:00`;
+        startTime = `${item.date}T13:00:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
       } else { // Full Day
-        startTime = `${item.date} 08:30:00`;
-        endTime = `${item.date} 17:30:00`;
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
       }
       return {
         date: item.date,

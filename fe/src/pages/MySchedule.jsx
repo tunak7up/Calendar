@@ -26,6 +26,21 @@ const TASK_COLORS = [
   { bg: '#06b6d4', border: '#0891b2', text: '#ffffff' }, // cyan
 ];
 
+// Parse datetime string từ BE (luôn là giờ VN nhưng không có timezone suffix)
+// Tránh browser hiểu nhầm là UTC → thêm +07:00 nếu chưa có
+const parseVNTime = (str) => {
+  if (!str) return null;
+  if (str.includes('+') || str.includes('Z')) return new Date(str);
+  // Chuẩn hóa separator về T rồi gắn +07:00
+  return new Date(str.replace(' ', 'T') + '+07:00');
+};
+
+const formatTime = (str) => {
+  const d = parseVNTime(str);
+  if (!d) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 export default function MySchedule() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -84,7 +99,14 @@ export default function MySchedule() {
     if (user?.person_id) fetchData();
   }, [user]);
 
-  const workDays = workingHours.map(e => e.start.split(/[T ]/)[0]);
+  const workDays = workingHours.map(e => {
+    const d = parseVNTime(e.start);
+    if (!d) return e.start?.split?.(/[T ]/)?.[0] || '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  });
 
   const displayEvents = [...workingHours, ...tasks].map(e => {
     if (e.extendedProps?.isWorkHour) {
@@ -162,7 +184,14 @@ export default function MySchedule() {
     const isWorkDay = workDays.includes(clickedDate);
     
     // Find shift for this date
-    const shift = workingHours.find(h => h.start.split(/[T ]/)[0] === clickedDate);
+    const shift = workingHours.find(h => {
+      const d = parseVNTime(h.start);
+      if (!d) return false;
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}` === clickedDate;
+    });
     
     // Find tasks where due_date >= clickedDate
     const dayTasks = tasks.filter(t => {
@@ -324,7 +353,7 @@ export default function MySchedule() {
                     <div>
                       <div className="text-sm font-bold text-emerald-900">Active Work Day</div>
                       <div className="text-xs text-emerald-600">
-                        {menuConfig.shift ? `${new Date(menuConfig.shift.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(menuConfig.shift.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Standard Shift'}
+                      {menuConfig.shift ? `${formatTime(menuConfig.shift.start)} - ${formatTime(menuConfig.shift.end)}` : 'Standard Shift'}
                       </div>
                     </div>
                   </div>

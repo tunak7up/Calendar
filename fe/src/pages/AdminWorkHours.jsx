@@ -160,9 +160,14 @@ export default function AdminWorkHours() {
     const registeredHours = empSchedules.reduce((sum, s) => sum + parseTimeToHours(s.start_time, s.end_time), 0);
     const actualHours = empReports.reduce((sum, r) => {
       if (!r.check_in || !r.check_out) return sum;
-      const start = new Date(r.check_in);
-      const end = new Date(r.check_out);
-      return sum + Math.max(0, (end - start) / (1000 * 60 * 60));
+
+      const [sH, sM, sS] = r.check_in.split(':').map(Number);
+      const [eH, eM, eS] = r.check_out.split(':').map(Number);
+
+      const startSeconds = sH * 3600 + sM * 60 + sS;
+      const endSeconds = eH * 3600 + eM * 60 + eS;
+
+      return sum + Math.max(0, (endSeconds - startSeconds) / 3600);
     }, 0);
 
     return {
@@ -219,7 +224,7 @@ export default function AdminWorkHours() {
         <div className="flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4 overflow-x-auto">
           <div className="flex items-center gap-2 border-r border-gray-100 pr-4">
             <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
-            <select 
+            <select
               onChange={handleQuickMonthChange}
               className="bg-transparent border-none text-sm font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors"
               defaultValue=""
@@ -231,8 +236,8 @@ export default function AdminWorkHours() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">From</span>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
@@ -240,8 +245,8 @@ export default function AdminWorkHours() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">To</span>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
@@ -255,7 +260,7 @@ export default function AdminWorkHours() {
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
               <FunnelIcon className="w-3 h-3" /> Filter Employees
             </p>
-            <EmployeeMultiFilter 
+            <EmployeeMultiFilter
               employees={employees}
               selectedIds={selectedEmployeeIds}
               onSelectionChange={(ids) => {
@@ -319,11 +324,11 @@ export default function AdminWorkHours() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-center">
-                       {emp.actualHours >= emp.registeredHours ? (
-                         <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Full Completed</span>
-                       ) : (
-                         <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Partial</span>
-                       )}
+                      {emp.actualHours >= emp.registeredHours ? (
+                        <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Full Completed</span>
+                      ) : (
+                        <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Partial</span>
+                      )}
                     </td>
                   </tr>
                 ))

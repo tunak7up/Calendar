@@ -91,8 +91,8 @@ export default function AdminSchedule() {
   };
 
   const displayEvents = useMemo(() => {
-    const baseEvents = selectedEmployeeIds.length === 0 
-      ? schedules 
+    const baseEvents = selectedEmployeeIds.length === 0
+      ? schedules
       : schedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
 
     if (!isMobile) return baseEvents;
@@ -142,10 +142,10 @@ export default function AdminSchedule() {
       // Normalize clicked date
       const targetDate = clickedDateStr.split(/[T ]/)[0];
       const peopleWorking = schedules.filter(s => s.start === targetDate);
-      
+
       // Fetch Daily Reports for this specific date
       const reportPromise = apiFetch(`/daily-report/date/${targetDate}`);
-      
+
       // Fetch all tasks
       let tasksPromise;
       if (allTasksCache) {
@@ -156,7 +156,7 @@ export default function AdminSchedule() {
 
       const [reportRes, tasksRes] = await Promise.all([reportPromise, tasksPromise]);
       const reports = reportRes.success ? (reportRes.data || []) : [];
-      
+
       let allTasks = allTasksCache;
       if (!allTasksCache && tasksRes.success) {
         allTasks = tasksRes.data || [];
@@ -168,21 +168,26 @@ export default function AdminSchedule() {
         if (allTasks) {
           const todayStart = new Date();
           todayStart.setHours(0, 0, 0, 0);
-          
-          personTasks = allTasks.filter(t => 
+
+          personTasks = allTasks.filter(t =>
             t.participants?.some(p => p.person_id === sched.person_id) &&
             (!t.due_date || new Date(t.due_date) >= todayStart)
           );
         }
-        
+
         const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));
-        
+
         return {
           person_id: sched.person_id,
           name: sched.title,
           username: sched.extendedProps.person?.username || '',
-          shift: `${sched.extendedProps.start_time} - ${sched.extendedProps.end_time}`,
-          check_in: personReport ? personReport.check_in : null,
+          shift: `${new Date(sched.extendedProps.start_time).toLocaleTimeString('vi-VN', {
+            hour: 'numeric',
+            minute: '2-digit'
+          })} - ${new Date(sched.extendedProps.end_time).toLocaleTimeString('vi-VN', {
+            hour: 'numeric',
+            minute: '2-digit'
+          })}`, check_in: personReport ? personReport.check_in : null,
           has_reported: !!(personReport && personReport.description),
           report: personReport || null,
           tasks: personTasks
@@ -209,11 +214,11 @@ export default function AdminSchedule() {
               <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Company Schedule</h1>
               <p className="text-gray-500 mt-1 text-sm hidden sm:block">Overview of all employee work shifts</p>
             </div>
-            
+
             <div className="w-full sm:w-auto min-w-[280px]">
               <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Employees</p>
-                <EmployeeMultiFilter 
+                <EmployeeMultiFilter
                   employees={employees}
                   selectedIds={selectedEmployeeIds}
                   onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
@@ -252,10 +257,10 @@ export default function AdminSchedule() {
                 const m = String(cellDate.getMonth() + 1).padStart(2, '0');
                 const d = String(cellDate.getDate()).padStart(2, '0');
                 const dateStr = `${y}-${m}-${d}`;
-                
+
                 const classes = [];
                 if (dateStr === selectedDate) classes.push('fc-selected-day');
-                
+
                 return classes;
               }}
               eventContent={(arg) => {
@@ -311,7 +316,7 @@ export default function AdminSchedule() {
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-3">
                 {selectedModalPerson && (
-                  <button 
+                  <button
                     onClick={() => setSelectedModalPerson(null)}
                     className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500 transition-colors"
                   >
@@ -319,13 +324,13 @@ export default function AdminSchedule() {
                   </button>
                 )}
                 <h2 className="text-lg font-bold text-gray-900">
-                  {selectedModalPerson 
-                    ? `Tasks for ${selectedModalPerson.name}`
+                  {selectedModalPerson
+                    ? `Schedule for ${new Date(modalDate).toLocaleDateString()} of ${selectedModalPerson.name}`
                     : `Schedule for ${new Date(modalDate).toLocaleDateString()}`
                   }
                 </h2>
               </div>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -346,7 +351,7 @@ export default function AdminSchedule() {
                 ) : (
                   <div className="space-y-3">
                     {modalData.map(person => (
-                      <div 
+                      <div
                         key={person.person_id}
                         onClick={() => setSelectedModalPerson(person)}
                         className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
@@ -355,10 +360,17 @@ export default function AdminSchedule() {
                           <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
                             <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4" /> {person.shift}</span>
-                            <span>Check-in: {person.check_in ? new Date(person.check_in).toLocaleTimeString() : <span className="text-red-400">N/A</span>}</span>
-                            <span className="flex items-center gap-1">
-                              Report: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
+                            <span>Check-in: {person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400">N/A</span>}</span>                            <span className="flex items-center gap-1">
+
                             </span>
+                            <span>
+                              Check-out: {
+                                person.report?.check_out
+                                  ? person.report.check_out.slice(0, 5)
+                                  : <span className="text-red-400">N/A</span>
+                              }
+                            </span>
+                            Report: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -402,19 +414,19 @@ export default function AdminSchedule() {
                             }
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                             <ChevronDownIcon className="w-4 h-4" />
+                            <ChevronDownIcon className="w-4 h-4" />
                           </div>
                         </div>
 
                         {/* Status Tags */}
                         <div className="flex flex-wrap items-center gap-2 w-full sm:flex-1">
                           {taskStatusFilters.map(status => (
-                            <div 
+                            <div
                               key={status}
                               className="flex items-center gap-1.5 bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg border border-blue-100 text-[10px] font-bold shadow-sm animate-in fade-in slide-in-from-left-1"
                             >
                               <span className="capitalize">{status}</span>
-                              <button 
+                              <button
                                 onClick={() => setTaskStatusFilters(prev => prev.filter(s => s !== status))}
                                 className="hover:bg-[#0056b3] hover:text-white rounded-md p-0.5 transition-colors"
                               >
@@ -422,22 +434,22 @@ export default function AdminSchedule() {
                               </button>
                             </div>
                           ))}
-                          
-                          
+
+
                         </div>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => {
-                        navigate('/tasks/add', { 
-                          state: { 
-                            assignee: { 
-                              person_id: selectedModalPerson.person_id, 
-                              username: selectedModalPerson.username, 
-                              name: selectedModalPerson.name, 
-                              role: 'assignee' 
-                            } 
-                          } 
+                        navigate('/tasks/add', {
+                          state: {
+                            assignee: {
+                              person_id: selectedModalPerson.person_id,
+                              username: selectedModalPerson.username,
+                              name: selectedModalPerson.name,
+                              role: 'assignee'
+                            }
+                          }
                         });
                       }}
                       className="flex items-center gap-1 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/10 w-full sm:w-auto justify-center"
@@ -446,29 +458,33 @@ export default function AdminSchedule() {
                       Add Task
                     </button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-400 font-medium">
                       {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
                     </p>
                   </div>
-                  
+
                   {/* Daily Report Section */}
                   <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
                     <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
                       <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                      Daily Report
+                      Report
                     </h3>
                     {selectedModalPerson.report ? (
                       <div className="space-y-3">
                         <div className="flex gap-4 text-xs font-medium text-gray-600">
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4 text-gray-400" />
-                            Check-in: {selectedModalPerson.report.check_in ? new Date(selectedModalPerson.report.check_in).toLocaleTimeString() : 'N/A'}
+                            Check-in: {selectedModalPerson.report.check_in
+                              ? selectedModalPerson.report.check_in.slice(0, 5)
+                              : 'N/A'}
                           </div>
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4 text-gray-400" />
-                            Check-out: {selectedModalPerson.report.check_out ? new Date(selectedModalPerson.report.check_out).toLocaleTimeString() : 'N/A'}
+                            Check-out: {selectedModalPerson.report.check_out
+                              ? selectedModalPerson.report.check_out.slice(0, 5)
+                              : 'N/A'}
                           </div>
                         </div>
                         <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
@@ -480,7 +496,7 @@ export default function AdminSchedule() {
                     )}
                   </div>
 
-                  
+
                   {selectedModalPerson.tasks.filter(t => taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                       No tasks match the selected filters.
@@ -504,9 +520,9 @@ export default function AdminSchedule() {
                                 <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
                                 <td className="py-3 px-4">
                                   <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border shadow-sm
-                                    ${task.status === 'in progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
+                                    ${task.status === 'in progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
                                       task.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                      'bg-gray-100 text-gray-700 border-gray-200'}
+                                        'bg-gray-100 text-gray-700 border-gray-200'}
                                   `}>
                                     {task.status}
                                   </span>

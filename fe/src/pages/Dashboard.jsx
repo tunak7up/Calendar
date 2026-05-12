@@ -99,31 +99,6 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    const fetchCheckInStatus = async () => {
-      if (!user) return;
-      try {
-        const response = await checkTodayReportExists(user.person_id);
-        if (response?.success) {
-          setIsCheckedIn(true);
-        } else {
-          setIsCheckedIn(false);
-        }
-      } catch (error) {
-        console.error('Error fetching check-in status:', error);
-      }
-    };
-
-    fetchCheckInStatus();
-  }, [user]);
-
-  const renderCheckInButton = () => {
-    if (isCheckedIn) {
-      return <button className="btn btn-disabled">Checked In</button>;
-    }
-    return <button className="btn btn-primary">Check In</button>;
-  };
-
   const handleCheckIn = async () => {
     try {
       const workingDate = getWorkingDate();
@@ -278,7 +253,12 @@ export default function Dashboard() {
           <p className="text-gray-500 mb-8 max-w-md">
             Please check in to record your attendance and view your tasks for today.
           </p>
-          {renderCheckInButton()}
+          <button
+            onClick={handleCheckIn}
+            className="px-8 py-3 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+          >
+            Check-in Now
+          </button>
         </div>
       ) : (
         <div className="space-y-6">

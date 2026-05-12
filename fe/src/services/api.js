@@ -57,13 +57,3 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   return response.json();
 };
-
-export const checkTodayReportExists = async (personId) => {
-  try {
-    const response = await apiFetch(`/daily-report/person/${personId}/today`);
-    return response;
-  } catch (error) {
-    console.error('Error checking today report:', error);
-    return null;
-  }
-};

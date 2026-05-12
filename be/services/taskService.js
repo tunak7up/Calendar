@@ -132,7 +132,7 @@ const getAllTasksByPersonId = async (personId) => {
         }
     });
 
-   
+
 };
 
 const getTaskById = async (id) => {
@@ -229,16 +229,34 @@ const deleteTask = async (id) => {
     await targetTask.destroy();
 };
 
+const getTasksBeforeDueDate = async (personId, data) => {
+    const { pickedDate } = data;
+    return await task.findAll({
+        include: [
+            {
+                model: person,
+                as: 'participants',
+                where: { person_id: personId },
+                required: true,
+                attributes: []
+            }
+        ],
+        where: {
+            due_date: { [Op.gte]: pickedDate }
+        }
+    });
+};
+
 module.exports = {
     createTask,
     createSubTask,
     getAllTasks,
     getTaskById,
-    // getAllPendingTasksByPersonId,
     getAllTasksByPersonId,
     getChildTasksByParentId,
     getTasksByTimeRange,
     getAllTasksByParticipantsId,
+    getTasksBeforeDueDate,
     updateTask,
     deleteTask,
     createTaskAttachment,

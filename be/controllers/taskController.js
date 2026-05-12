@@ -127,6 +127,16 @@ const getAllPendingTasksByPersonId = async (req, res) => {
     }
 };
 
+const getTasksBeforeDueDate = async (req, res) => {
+    try {
+        const personId = req.params.personId;
+        const tasks = await taskService.getTasksBeforeDueDate(personId, req.body);
+        sendRes(res, 200, 'Tasks retrieved successfully', tasks);
+    } catch (error) {
+        sendRes(res, 500, 'Error retrieving tasks', null, error.message);
+    }
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -140,5 +150,6 @@ module.exports = {
     createTaskAttachment,
     getAttachmentsByTaskId,
     getAllTasksByPersonId,
-    getAllPendingTasksByPersonId
+    getAllPendingTasksByPersonId,
+    getTasksBeforeDueDate
 };

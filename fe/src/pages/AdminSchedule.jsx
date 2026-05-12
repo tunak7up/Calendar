@@ -459,11 +459,7 @@ export default function AdminSchedule() {
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400 font-medium">
-                      {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
-                    </p>
-                  </div>
+
 
                   {/* Daily Report Section */}
                   <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
@@ -496,7 +492,11 @@ export default function AdminSchedule() {
                     )}
                   </div>
 
-
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400 font-medium">
+                      {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
+                    </p>
+                  </div>
                   {selectedModalPerson.tasks.filter(t => taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                       No tasks match the selected filters.

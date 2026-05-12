@@ -1,4 +1,5 @@
 export const BASE_URL = 'https://calendar-ny17.onrender.com/api';
+// export const BASE_URL = 'http://localhost:3000/api';
 
 export const apiFetch = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;

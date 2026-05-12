@@ -6,7 +6,7 @@ const createBulkRequest = async (req, res) => {
         const requests = await requestService.createBulkRequest(req.body);
         sendRes(res, 201, 'Bulk requests created successfully', requests);
     } catch (error) {
-        sendRes(res, 400, 'Error creating bulk requests', null, error.message);
+        sendRes(res, 400, 'Ngay duoc chon da duoc request truoc do, vui long kiem tra lai', null, error.message);
     }
 };
 
@@ -62,7 +62,7 @@ const getAllRequestDetails = async (req, res) => {
         sendRes(res, 200, 'Request details retrieved successfully', requestDetails);
     } catch (error) {
         sendRes(res, 500, 'Error retrieving request details', null, error.message);
-    }   
+    }
 };
 
 module.exports = {

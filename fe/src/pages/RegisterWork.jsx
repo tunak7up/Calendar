@@ -16,7 +16,7 @@ export default function RegisterWork() {
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
-  const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : [getFullDateStr(new Date())]);
+  const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : []);
   const [selectedShift, setSelectedShift] = useState('Morning');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
@@ -51,6 +51,10 @@ export default function RegisterWork() {
       return;
     }
     const dStr = getFullDateStr(dObj);
+    if (workDays.includes(dStr)) {
+      alert(`Ngày ${dStr} đã có lịch làm việc được duyệt.`);
+      return;
+    }
     setDraftDates(prev =>
       prev.includes(dStr) ? prev.filter(s => s !== dStr) : [...prev, dStr]
     );
@@ -64,22 +68,32 @@ export default function RegisterWork() {
       alert("Bạn không thể đăng ký làm việc vào Thứ 7 và Chủ Nhật.");
       return;
     }
+    if (workDays.includes(newDateStr)) {
+      alert(`Ngày ${newDateStr} đã có lịch làm việc được duyệt.`);
+      return;
+    }
     setDraftDates(prev => prev.includes(newDateStr) ? prev : [...prev, newDateStr]);
   };
 
   const resetForm = () => {
-    const today = getFullDateStr(new Date());
-    setDraftDates([today]);
+    setDraftDates([]);
     setSelectedShift('Morning');
     setRepeatOption('none');
     setRepeatInterval(1);
     setEndOption('never');
-    setEndDate(today);
+    setEndDate(getFullDateStr(new Date()));
     setEndCount(13);
   };
 
   const handleAddToSchedule = () => {
     if (draftDates.length === 0) return;
+
+    // Kiểm tra trùng lịch đã được duyệt
+    const duplicates = draftDates.filter(d => workDays.includes(d));
+    if (duplicates.length > 0) {
+      alert(`Các ngày sau đã có lịch làm việc được duyệt, vui lòng bỏ chọn:\n${duplicates.join('\n')}`);
+      return;
+    }
 
     setSchedule(prev => {
       const newSchedule = [...prev];

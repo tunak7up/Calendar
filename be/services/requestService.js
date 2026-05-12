@@ -10,6 +10,35 @@ const createBulkRequest = async (data) => {
             if (day === 0 || day === 6) {
                 throw new Error(`Bạn không thể đăng ký làm việc vào Thứ 7 hoặc Chủ Nhật (${detail.date}).`);
             }
+
+            // Kiểm tra ngày đó đã có lịch làm việc được duyệt chưa
+            const existingSchedule = await schedule.findOne({
+                where: {
+                    person_id: data.requester_id,
+                    working_date: detail.date
+                }
+            });
+            if (existingSchedule) {
+                throw new Error(`Ngày ${detail.date} đã có lịch làm việc được duyệt. Vui lòng chọn ngày khác.`);
+            }
+
+            // Kiểm tra đã có request đang chờ duyệt cho ngày này chưa
+            const pendingDetail = await request_detail.findOne({
+                include: [{
+                    model: request,
+                    as: 'request',
+                    required: true,
+                    where: {
+                        requester_id: data.requester_id,
+                        status: 'pending',
+                        type: 'register'
+                    }
+                }],
+                where: { date: detail.date }
+            });
+            if (pendingDetail) {
+                throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký đang chờ duyệt.`);
+            }
         }
     }
 
@@ -93,16 +122,33 @@ const updateRequestStatus = async (request_id, status) => {
             console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
             
             if (data.type.toLowerCase() === 'register') {
-                const scheduleEntries = data.details.map(detail => ({
-                    person_id: data.requester_id,
-                    start_time: detail.start_time,
-                    end_time: detail.end_time,
-                    working_date: detail.date
-                }));
+                // Lọc các ngày chưa có schedule để tránh duplicate
+                const newEntries = [];
+                const duplicateDates = [];
+                for (const detail of data.details) {
+                    const existing = await schedule.findOne({
+                        where: { person_id: data.requester_id, working_date: detail.date },
+                        transaction: t
+                    });
+                    if (existing) {
+                        duplicateDates.push(detail.date);
+                    } else {
+                        newEntries.push({
+                            person_id: data.requester_id,
+                            start_time: detail.start_time,
+                            end_time: detail.end_time,
+                            working_date: detail.date
+                        });
+                    }
+                }
 
-                if (scheduleEntries.length > 0) {
-                    await schedule.bulkCreate(scheduleEntries, { transaction: t });
-                    console.log(`Successfully synced ${scheduleEntries.length} entries to schedule.`);
+                if (duplicateDates.length > 0) {
+                    console.warn(`Bỏ qua ${duplicateDates.length} ngày đã có lịch: ${duplicateDates.join(', ')}`);
+                }
+
+                if (newEntries.length > 0) {
+                    await schedule.bulkCreate(newEntries, { transaction: t });
+                    console.log(`Successfully synced ${newEntries.length} entries to schedule.`);
                 }
             } else if (data.type.toLowerCase() === 'leave') {
                 // For leave, we remove the corresponding work shifts from the schedule

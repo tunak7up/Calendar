@@ -1,4 +1,4 @@
-const { daily_report } = require('../models');
+const { daily_report, person } = require('../models');
 const sequelize = require('../config/db');
 const ExcelJS = require('exceljs');
 const { Op } = require('sequelize');
@@ -84,27 +84,31 @@ const getDailyReportByPersonId = async (person_id) => {
     });
 };
 
-const exportDailyReport = async (req, res) => {
-    const { personIds, startDate, endDate } = req.body;
-    // personIds: [1, 2, 3] ho?c single [1]
+const BREAK_MINUTES = 60;
 
+const exportDailyReport = async (personIds, startDate, endDate) => {
     const workbook = new ExcelJS.Workbook();
 
     for (const personId of personIds) {
         const reports = await daily_report.findAll({
             where: {
                 person_id: personId,
-                working_date: {
-                    [Op.between]: [startDate, endDate]
+                working_date: { [Op.between]: [startDate, endDate] }
+            },
+            include: [
+                {
+                    model: person,
+                    as: 'reporter',
+                    attributes: ['name']
                 }
-            }
+            ]
         });
 
-        // L?y t?n person cho t?n sheet (tu? ch?n)
-        const sheet = workbook.addWorksheet(`Person_${personId}`);
+        const personName = reports[0]?.reporter?.name ?? `Person_${personId}`;
+        const sheet = workbook.addWorksheet(personName);
 
         sheet.columns = [
-            { header: 'Report ID', key: 'report_id' },
+            { header: 'Person Name', key: 'person_name' },
             { header: 'Person ID', key: 'person_id' },
             { header: 'Working Date', key: 'working_date' },
             { header: 'Check In', key: 'check_in' },
@@ -117,31 +121,34 @@ const exportDailyReport = async (req, res) => {
         reports.forEach(r => {
             const checkIn = new Date(`${r.working_date} ${r.check_in}`);
             const checkOut = new Date(`${r.working_date} ${r.check_out}`);
-            const minutes = (checkOut - checkIn) / 60000 - 60; // tr? 1h ngh?
-            const hours = (minutes / 60).toFixed(2);
-            totalMinutes += minutes;
+
+            const lunchStart = new Date(`${r.working_date} 12:00:00`);
+            const lunchEnd = new Date(`${r.working_date} 13:00:00`);
+
+            const spansLunch = checkIn < lunchStart && checkOut > lunchEnd;
+            const breakDeduction = spansLunch ? BREAK_MINUTES : 0;
+
+            const rawMinutes = (checkOut - checkIn) / 60000;
+            const netMinutes = Math.max(0, rawMinutes - breakDeduction);
+            totalMinutes += netMinutes;
 
             sheet.addRow({
-                report_id: r.report_id,
+                person_name: r.reporter?.name ?? '',
                 person_id: r.person_id,
                 working_date: r.working_date,
                 check_in: r.check_in,
                 check_out: r.check_out,
-                working_hours: `${hours}h`
+                working_hours: `${(netMinutes / 60).toFixed(2)}h`
             });
         });
 
-        // H?ng t?ng cu?i m?i sheet
         sheet.addRow({
             working_date: 'TOTAL',
             working_hours: `${(totalMinutes / 60).toFixed(2)}h`
         });
     }
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=daily_report.xlsx');
-    await workbook.xlsx.write(res);
-    res.end();
+    return workbook;
 };
 
 const checkTodayReportExists = async (person_id) => {

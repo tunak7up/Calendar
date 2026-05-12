@@ -9,7 +9,7 @@ import {
   ArrowDownTrayIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
-import { apiFetch } from '../services/api';
+import { apiFetch, BASE_URL } from '../services/api';
 import { scheduleService } from '../services/scheduleService';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
@@ -30,6 +30,7 @@ export default function AdminWorkHours() {
   const [dailyReports, setDailyReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,6 +56,52 @@ export default function AdminWorkHours() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    // Chỉ export những người có ít nhất 1 daily report trong kỳ đang xem
+    const personIdsWithReports = [...new Set(dailyReports.map(r => r.person_id))];
+
+    const ids = selectedEmployeeIds.length > 0
+      ? selectedEmployeeIds.map(Number).filter(id => personIdsWithReports.includes(id))
+      : personIdsWithReports;
+
+    if (ids.length === 0) {
+      alert('Không có dữ liệu daily report nào trong khoảng thời gian này để export.');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`${BASE_URL}/daily-report/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
+        body: JSON.stringify({ personIds: ids, startDate, endDate })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Export thất bại');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `work_hours_${startDate}_${endDate}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Lỗi khi export: ' + error.message);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -150,11 +197,12 @@ export default function AdminWorkHours() {
             <span className="font-bold text-gray-700">{monthYearLabel}</span>
           </div>
           <button
-            onClick={() => alert("Export feature coming soon...")}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
-            <span>Export CSV</span>
+            <span>{exporting ? 'Exporting...' : 'Export Excel'}</span>
           </button>
           <button
             onClick={fetchData}

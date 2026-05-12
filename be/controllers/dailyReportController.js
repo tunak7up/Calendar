@@ -58,8 +58,11 @@ const updateDailyReportDescription = async (req, res) => {
 const exportDailyReport = async (req, res) => {
     try {
         const { personIds, startDate, endDate } = req.body;
-        const reports = await dailyReportService.exportDailyReport(personIds, startDate, endDate);
-        sendRes(res, 200, 'Daily reports exported successfully', reports);
+        const workbook = await dailyReportService.exportDailyReport(personIds, startDate, endDate);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=daily_report.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
     } catch (error) {
         sendRes(res, 400, 'Error exporting daily reports', null, error.message);
     }

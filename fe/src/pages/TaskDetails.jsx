@@ -14,7 +14,9 @@ import {
   PaperClipIcon,
   PaperAirplaneIcon,
   PlusIcon,
-  EyeIcon
+  EyeIcon,
+  UserGroupIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
@@ -23,6 +25,7 @@ import { taskService } from '../services/taskService';
 import { useAuth } from '../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import ParticipantManager from '../components/ParticipantManager';
 
 export default function TaskDetails() {
   const { id } = useParams();
@@ -37,6 +40,9 @@ export default function TaskDetails() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [persons, setPersons] = useState({});
+  const [allUsers, setAllUsers] = useState([]); // Matching AddTask
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [participantFormData, setParticipantFormData] = useState({ person_id: '', role: 'assignee' });
 
   const fetchTaskData = async () => {
     try {
@@ -96,9 +102,64 @@ export default function TaskDetails() {
         const pMap = {};
         res.data.forEach(p => pMap[p.person_id] = p.name || p.username);
         setPersons(pMap);
+        setAllUsers(res.data);
       }
     } catch (error) {
       console.error('Error fetching persons:', error);
+    }
+  };
+
+  const handleAddParticipant = async (personId) => {
+    try {
+      const res = await taskService.addParticipant(id, {
+        participant_id: personId,
+        role: 'assignee'
+      });
+      
+      if (res.success) {
+        fetchTaskData(); 
+      }
+    } catch (error) {
+      console.error('Error adding participant:', error);
+    }
+  };
+
+  const handleUpdateRole = async (participantId, role) => {
+    try {
+      const res = await taskService.updateParticipant(id, participantId, { role });
+      if (res.success) {
+        fetchTaskData();
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
+  };
+
+  const handleRemoveParticipant = async (participantId) => {
+    if (!window.confirm('Remove this participant?')) return;
+    try {
+      const res = await taskService.removeParticipant(id, participantId);
+      if (res.success) {
+        fetchTaskData();
+      }
+    } catch (error) {
+      console.error('Error removing participant:', error);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) return;
+    try {
+      const res = await taskService.deleteTask(id);
+      if (res.success) {
+        alert('Task deleted successfully');
+        navigate('/tasks');
+      } else {
+        alert('Error: ' + res.message);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task');
     }
   };
 
@@ -216,7 +277,7 @@ export default function TaskDetails() {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left rounded-2xl bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
             <div className="space-y-1">
               {statuses.map((s) => (
                 <Menu.Item key={s.id}>
@@ -225,7 +286,7 @@ export default function TaskDetails() {
                       onClick={() => onStatusChange(s.id)}
                       className={`
                         w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                        ${active ? `${s.light} scale-[1.02]` : 'text-gray-600 hover:bg-gray-50'}
+                        ${active ? `${s.light} translate-x-1` : 'text-gray-600 hover:bg-gray-50'}
                       `}
                     >
                       <span className={`w-2 h-2 rounded-full ${s.bg}`} />
@@ -243,13 +304,23 @@ export default function TaskDetails() {
 
   return (
     <div className="space-y-6 pb-20">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#0056b3] transition-colors mb-6"
-      >
-        <ArrowLeftIcon className="w-4 h-4" />
-        Back to list
-      </button>
+      <div className="flex items-center justify-between mb-8">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back
+        </button>
+
+        <button 
+          onClick={handleDeleteTask}
+          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm"
+        >
+          <TrashIcon className="w-4 h-4" />
+          Delete Task
+        </button>
+      </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         {/* Header */}
@@ -317,12 +388,6 @@ export default function TaskDetails() {
               <span className="text-gray-500 font-medium">Due:</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
             </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Role:</span>
-              <span className="text-gray-900 font-semibold">{fullTask.role || 'N/A'}</span>
-            </div>
           </div>
         </div>
 
@@ -338,6 +403,15 @@ export default function TaskDetails() {
             </p>
           </div>
         </div>
+
+        {/* Participants Section - Reused Component */}
+        <ParticipantManager 
+          participants={fullTask.participants}
+          allUsers={allUsers}
+          onAdd={(personId) => handleAddParticipant(personId)}
+          onUpdateRole={handleUpdateRole}
+          onRemove={handleRemoveParticipant}
+        />
 
         {/* Comments Section */}
         <div className="p-5 sm:p-8 bg-gray-50/30">

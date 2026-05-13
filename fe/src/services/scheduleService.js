@@ -11,6 +11,10 @@ export const scheduleService = {
   getSchedulesByRange: (start, end) => apiFetch(`/schedule/range?start=${start}&end=${end}`),
 
   getScheduleByPersonId: (personId) => apiFetch(`/schedule/person/${personId}`),
+  getScheduleByPersonIdWithTimeRange: (data) => apiFetch(`/schedule/person/${data.personId}/time-range`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 
   updateSchedule: (id, scheduleData) => apiFetch(`/schedule/${id}`, {
     method: 'PUT',
@@ -20,4 +24,5 @@ export const scheduleService = {
   deleteSchedule: (id) => apiFetch(`/schedule/${id}`, {
     method: 'DELETE',
   }),
+  getShiftByDate: (personId, date) => apiFetch(`/schedule/person/${personId}/date/${date}`),
 };

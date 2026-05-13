@@ -7,9 +7,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassIcon,
-  FunnelIcon
+  FunnelIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
+import { requestService } from '../services/requestService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 
@@ -25,10 +27,15 @@ export default function AdminRequests() {
   const navigate = useNavigate();
   const pageSize = 8;
 
+  // Month filter state (YYYY-MM)
+  const now = new Date();
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const [filterMonth, setFilterMonth] = useState(currentMonthStr);
+
   useEffect(() => {
     fetchRequests();
     fetchEmployees();
-  }, []);
+  }, [filterMonth]); // Re-fetch when month changes
 
   const fetchEmployees = () => {
     apiFetch('/person')
@@ -41,8 +48,16 @@ export default function AdminRequests() {
   };
 
   const fetchRequests = () => {
+    if (!filterMonth) return;
     setLoading(true);
-    apiFetch('/request')
+    
+    // Calculate start and end dates of the month
+    const [year, month] = filterMonth.split('-').map(Number);
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+
+    requestService.getRequestsByRange(startDate, endDate)
       .then(data => {
         if (data.success) {
           setRequests(data.data);
@@ -177,27 +192,36 @@ export default function AdminRequests() {
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
+
+          <div className="relative flex-1 min-w-[150px]">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <CalendarIcon className="w-4 h-4 text-gray-400" />
+            </div>
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => {
+                setFilterMonth(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+            />
+          </div>
         </div>
         <div className="flex items-center">
-          {/* Employee Multi Filter Placeholder - Will be rendered below if needed, or integrated here */}
+          <EmployeeMultiFilter 
+            employees={employees}
+            selectedIds={selectedEmployeeIds}
+            onSelectionChange={(ids) => {
+              setSelectedEmployeeIds(ids);
+              setCurrentPage(1);
+            }}
+            placeholder="Filter employees..."
+          />
         </div>
       </div>
 
-      {/* Multi-Employee Filter Section */}
-      <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-          <FunnelIcon className="w-3.5 h-3.5" />
-          Filter by specific employees
-        </p>
-        <EmployeeMultiFilter 
-          employees={employees}
-          selectedIds={selectedEmployeeIds}
-          onSelectionChange={(ids) => {
-            setSelectedEmployeeIds(ids);
-            setCurrentPage(1);
-          }}
-        />
-      </div>
+
 
       <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden flex flex-col">
         <div className="overflow-x-auto overflow-y-auto h-[500px] custom-scrollbar">

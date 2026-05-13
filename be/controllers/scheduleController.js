@@ -70,6 +70,16 @@ const getSchedulesByRange = async (req, res) => {
     }
 };
 
+const getShiftByDate = async (req, res) => {
+    try {
+        const { personId, date } = req.params;
+        const shift = await scheduleService.getShiftByDate(personId, date);
+        sendRes(res, 200, 'Get Shift Successful', shift);
+    } catch (error) {
+        sendRes(res, 400, 'Get Shift Failed', null, error.message);
+    }
+};
+
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
@@ -77,5 +87,6 @@ module.exports = {
     getSchedulesByRange,
     updateSchedule,
     deleteSchedule,
-    getScheduleByPersonIdWithTimeRange
+    getScheduleByPersonIdWithTimeRange,
+    getShiftByDate
 };

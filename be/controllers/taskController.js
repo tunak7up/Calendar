@@ -16,7 +16,7 @@ const createTask = async (req, res) => {
 const createSubTask = async (req, res) => {
     try {
         const data = { ...req.body, created_by: req.user ? req.user.person_id : req.body.created_by };
-        const task = await taskService.createSubTask(req.params.id, data);
+        const task = await taskService.createSubTask(req.params.parentId, data);
         sendRes(res, 201, 'Sub-task created successfully', task);
     } catch (error) {
         console.error('Error in createSubTask:', error);
@@ -137,6 +137,38 @@ const getTasksBeforeDueDate = async (req, res) => {
     }
 };
 
+const addParticipantToTask = async (req, res) => {
+    try {
+        const participant = await taskService.addParticipantToTask(req.params.id, req.body);
+        sendRes(res, 201, 'Participant added successfully', participant);
+    } catch (error) {
+        console.error('Error in addParticipantToTask:', error);
+        sendRes(res, 400, 'Error adding participant', null, error.message);
+    }
+};
+
+const updateParticipantRole = async (req, res) => {
+    try {
+        const { id, participantId } = req.params;
+        await taskService.updateParticipantRole(id, participantId, req.body);
+        sendRes(res, 200, 'Participant role updated successfully', null);
+    } catch (error) {
+        console.error('Error in updateParticipantRole:', error);
+        sendRes(res, 400, 'Error updating role', null, error.message);
+    }
+};
+
+const removeParticipantFromTask = async (req, res) => {
+    try {
+        const { id, participantId } = req.params;
+        await taskService.removeParticipantFromTask(id, participantId);
+        sendRes(res, 200, 'Participant removed successfully', null);
+    } catch (error) {
+        console.error('Error in removeParticipantFromTask:', error);
+        sendRes(res, 400, 'Error removing participant', null, error.message);
+    }
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -151,5 +183,8 @@ module.exports = {
     getAttachmentsByTaskId,
     getAllTasksByPersonId,
     getAllPendingTasksByPersonId,
-    getTasksBeforeDueDate
+    getTasksBeforeDueDate,
+    addParticipantToTask,
+    updateParticipantRole,
+    removeParticipantFromTask
 };

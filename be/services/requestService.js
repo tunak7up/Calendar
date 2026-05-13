@@ -1,5 +1,6 @@
 const { request, request_detail, person, schedule } = require('../models');
 const sequelize = require('../config/db');
+const { Op } = require('sequelize');
 
 const createBulkRequest = async (data) => {
     // Validation for work registration: No weekends allowed
@@ -175,6 +176,26 @@ const deleteRequest = async (request_id) => {
     await data.destroy();
 };
 
+const getRequestsByRange = async (startDate, endDate) => {
+    // Adding time to include the full end date
+    const start = `${startDate} 00:00:00`;
+    const end = `${endDate} 23:59:59`;
+    
+    return await request.findAll({
+        where: {
+            created_at: {
+                [Op.between]: [start, end]
+            }
+        },
+        include: [
+            { model: request_detail, as: 'details' },
+            { model: person, as: 'approver', attributes: ['name', 'role'] },
+            { model: person, as: 'requester', attributes: ['name', 'username'] }
+        ],
+        order: [['created_at', 'DESC']]
+    });
+};
+
 module.exports = {
     createBulkRequest,
     getRequestById,
@@ -182,5 +203,6 @@ module.exports = {
     getRequestsByRequesterId,
     getAllRequests,
     updateRequestStatus,
-    deleteRequest
+    deleteRequest,
+    getRequestsByRange
 };

@@ -55,48 +55,57 @@ export default function MySchedule() {
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay, shift, tasks }
   const [modalStatusFilter, setModalStatusFilter] = useState('all');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [scheduleRes, taskRes] = await Promise.all([
-          scheduleService.getScheduleByPersonId(user.person_id),
-          taskService.getAllTasksByParticipantId(user.person_id)
-        ]);
+  const fetchData = useCallback(async (start, end) => {
+    if (!user?.person_id) return;
+    try {
+      // Use Promise.all to fetch both schedules and tasks
+      // For now, taskService doesn't have range filter, we keep it as is or add it later if needed
+      // But scheduleService definitely uses the range
+      const [scheduleRes, taskRes] = await Promise.all([
+        scheduleService.getScheduleByPersonIdWithTimeRange({
+          personId: user.person_id,
+          startTime: start,
+          endTime: end
+        }),
+        taskService.getAllTasksByParticipantId(user.person_id)
+      ]);
 
-        if (scheduleRes.success) {
-          const mappedWorkingHours = scheduleRes.data.map(item => ({
-            id: `work_${item.schedule_id}`,
-            title: 'Lịch làm việc',
-            start: item.start_time,
-            end: item.end_time,
-            extendedProps: { isWorkHour: true }
-          }));
-          setWorkingHours(mappedWorkingHours);
-        }
-
-        if (taskRes.success) {
-          const mappedTasks = taskRes.data.map(task => {
-            const colorSet = TASK_COLORS[task.task_id % TASK_COLORS.length];
-            return {
-              id: `task_${task.task_id}`,
-              title: task.name || 'Untitled Task',
-              start: task.start_time,
-              end: task.due_date,
-              allDay: false,
-              backgroundColor: colorSet.bg,
-              borderColor: colorSet.border,
-              textColor: colorSet.text,
-              extendedProps: { isTask: true, taskData: task }
-            };
-          });
-          setTasks(mappedTasks);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      if (scheduleRes.success) {
+        const mappedWorkingHours = scheduleRes.data.map(item => ({
+          id: `work_${item.schedule_id}`,
+          title: 'Lịch làm việc',
+          start: item.start_time,
+          end: item.end_time,
+          extendedProps: { isWorkHour: true }
+        }));
+        setWorkingHours(mappedWorkingHours);
       }
-    };
 
-    if (user?.person_id) fetchData();
+      if (taskRes.success) {
+        const mappedTasks = taskRes.data.map(task => {
+          const colorSet = TASK_COLORS[task.task_id % TASK_COLORS.length];
+          return {
+            id: `task_${task.task_id}`,
+            title: task.name || 'Untitled Task',
+            start: task.start_time,
+            end: task.due_date,
+            allDay: false,
+            backgroundColor: colorSet.bg,
+            borderColor: colorSet.border,
+            textColor: colorSet.text,
+            extendedProps: { isTask: true, taskData: task }
+          };
+        });
+        setTasks(mappedTasks);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }, [user]);
+
+  // Initial fetch is now handled by datesSet
+  useEffect(() => {
+    // If we need any global initialization, do it here
   }, [user]);
 
   const workDays = workingHours.map(e => {
@@ -193,10 +202,13 @@ export default function MySchedule() {
       return `${y}-${m}-${day}` === clickedDate;
     });
     
-    // Find tasks where due_date >= clickedDate
+    // Find tasks where clickedDate is between start_time and due_date
     const dayTasks = tasks.filter(t => {
+      const taskStartDate = t.start?.split(/[T ]/)[0] || t.end?.split(/[T ]/)[0];
       const taskDueDate = t.end?.split(/[T ]/)[0];
-      return taskDueDate && taskDueDate >= clickedDate;
+      return taskStartDate && taskDueDate && 
+             clickedDate >= taskStartDate && 
+             clickedDate <= taskDueDate;
     });
 
     setMenuConfig({ 
@@ -244,6 +256,7 @@ export default function MySchedule() {
               dateClick={handleDateClick}
               datesSet={(info) => {
                 setViewDate(info.view.currentStart);
+                fetchData(info.startStr, info.endStr);
               }}
               eventClick={(info) => {
                 const dateStr = info.event.startStr.split('T')[0];

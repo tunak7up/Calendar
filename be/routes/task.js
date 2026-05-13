@@ -16,5 +16,8 @@ router.get('/:id', taskController.getTaskById);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);
 router.post('/:parentId', taskController.createSubTask);
+router.post('/:id/participant', taskController.addParticipantToTask);
+router.put('/:id/participant/:participantId', taskController.updateParticipantRole);
+router.delete('/:id/participant/:participantId', taskController.removeParticipantFromTask);
 
 module.exports = router;

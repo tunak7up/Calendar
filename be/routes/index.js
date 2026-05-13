@@ -6,13 +6,13 @@ const { verifyToken } = require('../utils/authMiddleware');
 router.use('/login', require('./login'));
 
 // Protected routes (auth required)
-router.use('/person', require('./person'));
-router.use('/task', require('./task'));
-router.use('/request', require('./request'));
-router.use('/request-detail', require('./requestDetail'));
-router.use('/schedule', require('./schedule'));
-router.use('/response', require('./response'));
-router.use('/comment', require('./comment'));
-router.use('/daily-report', require('./dailyReport'));
+router.use('/person', verifyToken, require('./person'));
+router.use('/task', verifyToken, require('./task'));
+router.use('/request', verifyToken, require('./request'));
+router.use('/request-detail', verifyToken, require('./requestDetail'));
+router.use('/schedule', verifyToken, require('./schedule'));
+router.use('/response', verifyToken, require('./response'));
+router.use('/comment', verifyToken, require('./comment'));
+router.use('/daily-report', verifyToken, require('./dailyReport'));
 
 module.exports = router;

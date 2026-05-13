@@ -136,9 +136,37 @@ const getAllTasksByPersonId = async (personId) => {
 };
 
 const getTaskById = async (id) => {
-    const targetTask = await task.findByPk(id);
+    const targetTask = await task.findByPk(id, {
+        include: [
+            {
+                model: person,
+                as: 'assigner',
+                attributes: ['name', 'person_id']
+            },
+            {
+                model: person,
+                as: 'participants',
+                attributes: ['name', 'person_id'],
+                through: { attributes: ['role'] }
+            }
+        ]
+    });
+
     if (!targetTask) throw new Error('Task not found');
-    return targetTask;
+
+    const taskJson = targetTask.toJSON();
+    const participants = taskJson.participants?.map(p => ({
+        person_id: p.person_id,
+        name: p.name,
+        role: p.task_participant?.role || 'N/A'
+    })) || [];
+
+    return {
+        ...taskJson,
+        assigner: taskJson.assigner?.name || 'N/A',
+        assigner_id: taskJson.assigner?.person_id,
+        participants: participants
+    };
 };
 
 const getChildTasksByParentId = async (parentId) => {
@@ -245,18 +273,42 @@ const getTasksBeforeDueDate = async (personId, data) => {
     });
 };
 
+const addParticipantToTask = async (taskId, { participant_id, role }) => {
+    return await task_participant.create({
+        task_id: taskId,
+        participant_id,
+        role
+    });
+};
+
+const updateParticipantRole = async (taskId, participantId, { role }) => {
+    return await task_participant.update(
+        { role },
+        { where: { task_id: taskId, participant_id: participantId } }
+    );
+};
+
+const removeParticipantFromTask = async (taskId, participantId) => {
+    return await task_participant.destroy({
+        where: { task_id: taskId, participant_id: participantId }
+    });
+};
+
 module.exports = {
     createTask,
     createSubTask,
+    createTaskAttachment,
+    getAttachmentsByTaskId,
     getAllTasks,
-    getTaskById,
     getAllTasksByPersonId,
+    getTaskById,
     getChildTasksByParentId,
     getTasksByTimeRange,
     getAllTasksByParticipantsId,
     getTasksBeforeDueDate,
     updateTask,
     deleteTask,
-    createTaskAttachment,
-    getAttachmentsByTaskId
+    addParticipantToTask,
+    updateParticipantRole,
+    removeParticipantFromTask
 };

@@ -8,12 +8,7 @@ import { scheduleService } from '../services/scheduleService';
 import { requestService } from '../services/requestService';
 import { useAuth } from '../context/AuthContext';
 
-// Parse datetime string từ BE (luôn là giờ VN, nhưng không có timezone suffix)
-const parseVNTime = (str) => {
-  if (!str) return null;
-  if (str.includes('+') || str.includes('Z')) return new Date(str);
-  return new Date(str.replace(' ', 'T') + '+07:00');
-};
+
 
 export default function RegisterLeave() {
   const location = useLocation();
@@ -22,8 +17,6 @@ export default function RegisterLeave() {
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
-  const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : [getFullDateStr(new Date())]);
-  const [selectedShift, setSelectedShift] = useState('Morning');
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
   const [workSchedules, setWorkSchedules] = useState([]);
@@ -37,6 +30,11 @@ export default function RegisterLeave() {
           setWorkSchedules(result.data);
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
           setWorkDays(days);
+
+          // If initialDate was passed, auto-add it if it's a work day
+          if (initialDate && days.includes(initialDate)) {
+            fetchShiftAndAdd(initialDate);
+          }
         }
       } catch (error) {
         console.error('Error fetching schedule:', error);
@@ -45,68 +43,38 @@ export default function RegisterLeave() {
     fetchSchedule();
   }, []);
 
-  // Helper to check if a shift is scheduled for any of the draft dates
-  const isShiftScheduled = (shiftType) => {
-    return draftDates.some(date => {
-      return workSchedules.some(ws => {
-        const wsDate = ws.start_time.split(/[T ]/)[0];
-        if (wsDate !== date) return false;
-
-        const startD = parseVNTime(ws.start_time);
-        const endD = parseVNTime(ws.end_time);
-        if (!startD || !endD) return false;
-
-        const startHHMM = `${String(startD.getHours()).padStart(2, '0')}:${String(startD.getMinutes()).padStart(2, '0')}`;
-        const endHHMM = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
-
-        if (shiftType === 'Morning') return startHHMM === '08:30' && endHHMM === '12:00';
-        if (shiftType === 'Afternoon') return startHHMM === '13:00' && endHHMM === '17:30';
-        if (shiftType === 'Full Day') return startHHMM === '08:30' && endHHMM === '17:30';
-        return false;
-      });
-    });
+  const fetchShiftAndAdd = async (dateStr) => {
+    try {
+      const res = await scheduleService.getShiftByDate(user.person_id, dateStr);
+      if (res.success && res.data) {
+        setSchedule(prev => [...prev, {
+          date: dateStr,
+          shift: res.data,
+          hours: res.data === 'Full Day' ? 8 : 4
+        }]);
+      } else {
+        alert("You don't have a work schedule on this day.");
+      }
+    } catch (error) {
+      console.error('Error fetching shift:', error);
+    }
   };
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);
-    setDraftDates(prev =>
-      prev.includes(dStr) ? prev.filter(s => s !== dStr) : [...prev, dStr]
-    );
+    if (schedule.some(item => item.date === dStr)) {
+      setSchedule(prev => prev.filter(item => item.date !== dStr));
+    } else {
+      fetchShiftAndAdd(dStr);
+    }
   };
 
   const handleCalendarPick = (newDateStr) => {
-    setDraftDates(prev => prev.includes(newDateStr) ? prev : [...prev, newDateStr]);
+    if (schedule.some(item => item.date === newDateStr)) return;
+    fetchShiftAndAdd(newDateStr);
   };
 
-  const resetDraft = () => {
-    const today = getFullDateStr(new Date());
-    setDraftDates([today]);
-    setSelectedShift('Morning');
-  };
 
-  const handleAddToSchedule = () => {
-    if (draftDates.length === 0) return;
-
-    setSchedule(prev => {
-      const newSchedule = [...prev];
-      draftDates.forEach(dateStr => {
-        const existingIndex = newSchedule.findIndex(item => item.date === dateStr);
-        const shiftData = {
-          date: dateStr,
-          shift: selectedShift,
-          hours: selectedShift === 'Full Day' ? 8 : 4
-        };
-        if (existingIndex >= 0) {
-          newSchedule[existingIndex] = shiftData;
-        } else {
-          newSchedule.push(shiftData);
-        }
-      });
-      return newSchedule;
-    });
-
-    resetDraft();
-  };
 
   const handleCancel = () => {
     if (schedule.length > 0 || reason) {
@@ -156,7 +124,6 @@ export default function RegisterLeave() {
       alert("Đã gửi yêu cầu nghỉ phép thành công!");
       setSchedule([]);
       setReason('');
-      resetDraft();
       navigate('/history');
     } catch (error) {
       console.error('Error:', error);
@@ -191,55 +158,18 @@ export default function RegisterLeave() {
 
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
           {/* Select Date */}
-          <div className="mb-10">
+          <div className="mb-6">
             <WeekDatePicker
               viewDate={viewDateObj}
               onViewChange={setViewDateObj}
-              selectedDates={draftDates}
+              selectedDates={schedule.map(item => item.date)}
               onDayClick={handleDayClick}
               onCalendarPick={handleCalendarPick}
               workDays={workDays}
             />
           </div>
 
-          {/* Choose Shift */}
-          <div className="mb-10">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Choose Shift</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {['Morning', 'Afternoon', 'Full Day'].map((shift) => {
-                const scheduled = isShiftScheduled(shift);
-                return (
-                  <button
-                    key={shift}
-                    onClick={() => setSelectedShift(shift)}
-                    className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all relative ${selectedShift === shift
-                        ? 'border-blue-500 bg-blue-50/30'
-                        : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                      }`}
-                  >
-                    {scheduled && (
-                      <span className="absolute top-3 right-3 bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        Scheduled
-                      </span>
-                    )}
-                    {shift === 'Morning' && <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === shift ? 'text-blue-500' : 'text-gray-400'}`} />}
-                    {shift === 'Afternoon' && <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === shift ? 'text-blue-500' : 'text-gray-400'}`} />}
-                    {shift === 'Full Day' && <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === shift ? 'text-blue-500' : 'text-gray-400'}`} />}
-                    <span className="font-bold text-gray-900">{shift}</span>
-                    <span className="text-xs text-gray-400 mt-1 font-medium">{getTimeRangeStr(shift)}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex justify-end mt-4">
-              <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0}>
-                <span>Add to Leave List</span>
-                {draftDates.length > 0 && (
-                  <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
-                )}
-              </Button>
-            </div>
-          </div>
+
 
           {/* Schedule Table */}
           {schedule.length > 0 && (

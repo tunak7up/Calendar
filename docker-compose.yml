@@ -1,28 +1,4 @@
-version: '3.8'
-
 services:
-  backend:
-    build:
-      context: ./be
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./be/.env
-    volumes:
-      - ./be:/usr/src/app
-    depends_on:
-      - database
-
-  frontend:
-    build:
-      context: ./fe
-    ports:
-      - "8080:80"
-    volumes:
-      - ./fe:/usr/share/nginx/html
-    depends_on:
-      - backend
-
   database:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: mssql
@@ -33,6 +9,26 @@ services:
       ACCEPT_EULA: "Y"
     volumes:
       - db_data:/var/opt/mssql
+
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./be/.env
+    depends_on:
+      - database
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:

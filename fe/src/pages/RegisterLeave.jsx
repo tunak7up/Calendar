@@ -47,11 +47,14 @@ export default function RegisterLeave() {
     try {
       const res = await scheduleService.getShiftByDate(user.person_id, dateStr);
       if (res.success && res.data) {
-        setSchedule(prev => [...prev, {
-          date: dateStr,
-          shift: res.data,
-          hours: res.data === 'Full Day' ? 8 : 4
-        }]);
+        setSchedule(prev => {
+          if (prev.some(item => item.date === dateStr)) return prev;
+          return [...prev, {
+            date: dateStr,
+            shift: res.data,
+            hours: res.data === 'Full Day' ? 8 : 4
+          }];
+        });
       } else {
         alert("You don't have a work schedule on this day.");
       }
@@ -69,169 +72,161 @@ export default function RegisterLeave() {
     }
   };
 
-  const handleCalendarPick = (newDateStr) => {
-    if (schedule.some(item => item.date === newDateStr)) return;
-    fetchShiftAndAdd(newDateStr);
-  };
-
-
-
-  const handleCancel = () => {
-    if (schedule.length > 0 || reason) {
-      if (window.confirm("Are you sure you want to discard your leave request?")) {
-        navigate(-1);
-      }
-    } else {
+const handleCancel = () => {
+  if (schedule.length > 0 || reason) {
+    if (window.confirm("Are you sure you want to discard your leave request?")) {
       navigate(-1);
     }
-  };
+  } else {
+    navigate(-1);
+  }
+};
 
-  const handleSubmit = async () => {
-    if (schedule.length === 0) {
-      alert("Please add at least one leave day to the schedule.");
-      return;
+const handleSubmit = async () => {
+  if (schedule.length === 0) {
+    alert("Please add at least one leave day to the schedule.");
+    return;
+  }
+
+  const requestDetails = schedule.map(item => {
+    let startTime, endTime;
+    if (item.shift === 'Morning') {
+      startTime = `${item.date}T08:30:00+07:00`;
+      endTime = `${item.date}T12:00:00+07:00`;
+    } else if (item.shift === 'Afternoon') {
+      startTime = `${item.date}T13:00:00+07:00`;
+      endTime = `${item.date}T17:30:00+07:00`;
+    } else { // Full Day
+      startTime = `${item.date}T08:30:00+07:00`;
+      endTime = `${item.date}T17:30:00+07:00`;
     }
-
-    const requestDetails = schedule.map(item => {
-      let startTime, endTime;
-      if (item.shift === 'Morning') {
-        startTime = `${item.date}T08:30:00+07:00`;
-        endTime = `${item.date}T12:00:00+07:00`;
-      } else if (item.shift === 'Afternoon') {
-        startTime = `${item.date}T13:00:00+07:00`;
-        endTime = `${item.date}T17:30:00+07:00`;
-      } else { // Full Day
-        startTime = `${item.date}T08:30:00+07:00`;
-        endTime = `${item.date}T17:30:00+07:00`;
-      }
-      return {
-        date: item.date,
-        start_time: startTime,
-        end_time: endTime
-      };
-    });
-
-    const payload = {
-      requester_id: user.person_id,
-      approver_id: null,
-      type: 'leave', // Important: Type is leave
-      reason: reason || 'Nghỉ phép',
-      request_details: requestDetails
+    return {
+      date: item.date,
+      start_time: startTime,
+      end_time: endTime
     };
+  });
 
-    try {
-      const result = await requestService.submitRequest(payload);
-      alert("Đã gửi yêu cầu nghỉ phép thành công!");
-      setSchedule([]);
-      setReason('');
-      navigate('/history');
-    } catch (error) {
-      console.error('Error:', error);
-      alert("Có lỗi xảy ra: " + error.message);
-    }
+  const payload = {
+    requester_id: user.person_id,
+    approver_id: null,
+    type: 'leave', // Important: Type is leave
+    reason: reason || 'Nghỉ phép',
+    request_details: requestDetails
   };
 
+  try {
+    const result = await requestService.submitRequest(payload);
+    alert("Đã gửi yêu cầu nghỉ phép thành công!");
+    setSchedule([]);
+    setReason('');
+    navigate('/history');
+  } catch (error) {
+    console.error('Error:', error);
+    alert("Có lỗi xảy ra: " + error.message);
+  }
+};
 
-  const handleRemoveFromSchedule = (dateStr) => {
-    setSchedule(prev => prev.filter(item => item.date !== dateStr));
-  };
 
-  const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
-  const getTimeRangeStr = (shift) => {
-    return shift === 'Morning' ? '08:30 - 12:00' : shift === 'Afternoon' ? '13:00 - 17:30' : '08:30 - 17:30';
-  };
+const handleRemoveFromSchedule = (dateStr) => {
+  setSchedule(prev => prev.filter(item => item.date !== dateStr));
+};
 
-  return (
-    <>
-      <div>
-        <div className="mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
-          >
-            <ArrowLeftIcon className="w-4 h-4" />
-            Back
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Register Leave</h1>
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">Select your leave dates and provide a reason for the request.</p>
+const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
+const getTimeRangeStr = (shift) => {
+  return shift === 'Morning' ? '08:30 - 12:00' : shift === 'Afternoon' ? '13:00 - 17:30' : '08:30 - 17:30';
+};
+
+return (
+  <>
+    <div>
+      <div className="mb-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back
+        </button>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Register Leave</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">Select your leave dates and provide a reason for the request.</p>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+        {/* Select Date */}
+        <div className="mb-6">
+          <WeekDatePicker
+            viewDate={viewDateObj}
+            onViewChange={setViewDateObj}
+            selectedDates={schedule.map(item => item.date)}
+            onDayClick={handleDayClick}
+            workDays={workDays}
+          />
         </div>
 
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
-          {/* Select Date */}
-          <div className="mb-6">
-            <WeekDatePicker
-              viewDate={viewDateObj}
-              onViewChange={setViewDateObj}
-              selectedDates={schedule.map(item => item.date)}
-              onDayClick={handleDayClick}
-              onCalendarPick={handleCalendarPick}
-              workDays={workDays}
-            />
-          </div>
 
 
-
-          {/* Schedule Table */}
-          {schedule.length > 0 && (
-            <div className="mb-10">
-              <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Selected Leave Dates</h2>
-              <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[300px] overflow-y-auto">
-                <table className="w-full text-sm text-left text-gray-500">
-                  <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
-                    <tr>
-                      <th className="px-6 py-3 font-semibold">Date</th>
-                      <th className="px-6 py-3 font-semibold">Shift</th>
-                      <th className="px-6 py-3 font-semibold text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {sortedSchedule.map(item => (
-                      <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.date}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{item.shift}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <Button variant="danger-icon" onClick={() => handleRemoveFromSchedule(item.date)}>
-                            <TrashIcon className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Reason */}
+        {/* Schedule Table */}
+        {schedule.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Reason</h2>
-            <textarea
-              className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
-              placeholder="Vui lòng nhập lý do nghỉ phép..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            ></textarea>
+            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Selected Leave Dates</h2>
+            <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[300px] overflow-y-auto">
+              <table className="w-full text-sm text-left text-gray-500">
+                <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-3 font-semibold">Date</th>
+                    <th className="px-6 py-3 font-semibold">Shift</th>
+                    <th className="px-6 py-3 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {sortedSchedule.map(item => (
+                    <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.date}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{item.shift}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Button variant="danger-icon" onClick={() => handleRemoveFromSchedule(item.date)}>
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+        )}
 
-          <div className="h-px bg-gray-200 w-full my-6"></div>
+        {/* Reason */}
+        <div className="mb-10">
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Reason</h2>
+          <textarea
+            className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
+            placeholder="Vui lòng nhập lý do nghỉ phép..."
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          ></textarea>
+        </div>
 
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Total Leave Days</h3>
-                <span className="text-2xl font-bold text-gray-900">{schedule.length}</span>
-              </div>
+        <div className="h-px bg-gray-200 w-full my-6"></div>
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
+            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+              <CalendarIcon className="w-5 h-5 text-orange-600" />
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-              <Button onClick={handleSubmit}>Submit Leave Request</Button>
+            <div>
+              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Total Leave Days</h3>
+              <span className="text-2xl font-bold text-gray-900">{schedule.length}</span>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+            <Button onClick={handleSubmit}>Submit Leave Request</Button>
           </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  </>
+  );
 }

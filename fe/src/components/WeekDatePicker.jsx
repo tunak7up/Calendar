@@ -1,4 +1,4 @@
-import { CalendarIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { getFullDateStr } from '../utils/dateUtils';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -35,20 +35,18 @@ export const generateWeek = (dateObj) => {
  *   onDayClick    {fn(Date)}   – called when the user clicks a day button
  *   multiSelect   {boolean}    – if false (default), clicking a selected day deselects it;
  *                                if true, multiple days stay selected (toggle behaviour)
- *   onCalendarPick {fn(string)} – optional, called with the raw "YYYY-MM-DD" when the
- *                                 hidden <input type="date"> fires (useful for multi-select
- *                                 pages that want to ADD the date from the picker)
  */
 export default function WeekDatePicker({
   viewDate,
   onViewChange,
   selectedDates = [],
   onDayClick,
-  onCalendarPick,
   workDays = [],
 }) {
   const weekDates = generateWeek(viewDate);
   const viewDateStr = getFullDateStr(viewDate);
+  const weekStartStr = weekDates[0].dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const weekEndStr = weekDates[6].dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   const handleNativeChange = (e) => {
     const val = e.target.value;
@@ -56,29 +54,63 @@ export default function WeekDatePicker({
     const [y, m, d] = val.split('-');
     const newDate = new Date(y, m - 1, d);
     onViewChange(newDate);
-    if (onCalendarPick) onCalendarPick(val);
+  };
+
+  const handlePrevWeek = () => {
+    const d = new Date(viewDate.getTime());
+    d.setDate(d.getDate() - 7);
+    onViewChange(d);
+  };
+
+  const handleNextWeek = () => {
+    const d = new Date(viewDate.getTime());
+    d.setDate(d.getDate() + 7);
+    onViewChange(d);
   };
 
   return (
     <div>
-      {/* Label row with calendar icon */}
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-xs font-bold text-gray-500 tracking-wider uppercase m-0">Select Date</h2>
-        <div className="relative w-8 h-8">
-          <input
-            type="date"
-            value={viewDateStr}
-            onChange={handleNativeChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          />
-          <div className="absolute inset-0 flex items-center justify-center rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
-            <CalendarIcon className="w-5 h-5" />
+      {/* Label row with calendar icon and navigation */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 w-full max-w-2xl mx-auto">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handlePrevWeek} 
+            className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            title="Previous Week"
+          >
+            <ChevronLeftIcon className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <span className="text-sm font-semibold text-gray-700">
+              {weekStartStr} - {weekEndStr}
+            </span>
+            <div className="relative w-6 h-6">
+              <input
+                type="date"
+                value={viewDateStr}
+                onChange={handleNativeChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                title="Select a specific date to jump to its week"
+              />
+              <div className="absolute inset-0 flex items-center justify-center rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
+                <CalendarIcon className="w-4 h-4" />
+              </div>
+            </div>
           </div>
+
+          <button 
+            onClick={handleNextWeek} 
+            className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            title="Next Week"
+          >
+            <ChevronRightIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Week strip */}
-      <div className="flex justify-between items-center max-w-2xl gap-2 overflow-x-auto pb-2">
+      <div className="flex justify-between items-center w-full max-w-2xl mx-auto gap-2 overflow-x-auto pb-2 px-1">
         {weekDates.map((d) => {
           const active = selectedDates.includes(d.fullDate);
           const hasWork = workDays.includes(d.fullDate);
@@ -90,8 +122,8 @@ export default function WeekDatePicker({
               key={d.fullDate}
               disabled={isWeekend}
               onClick={() => onDayClick(d.dateObj)}
-              className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative ${
-                active ? 'bg-[#dbeafe] shadow-sm' : (isWeekend ? 'opacity-40 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100')
+              className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative border-2 ${
+                active ? 'bg-blue-50 border-blue-400 shadow-md' : (isWeekend ? 'opacity-40 cursor-not-allowed border-transparent' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-sm')
               }`}
             >
               <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : (isWeekend ? 'text-gray-300' : 'text-gray-400')}`}>

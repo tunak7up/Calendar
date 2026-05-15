@@ -60,21 +60,6 @@ export default function RegisterWork() {
     );
   };
 
-  const handleCalendarPick = (newDateStr) => {
-    const [y, m, d] = newDateStr.split('-').map(Number);
-    const dObj = new Date(y, m - 1, d);
-    const day = dObj.getDay();
-    if (day === 0 || day === 6) {
-      alert("Bạn không thể đăng ký làm việc vào Thứ 7 và Chủ Nhật.");
-      return;
-    }
-    if (workDays.includes(newDateStr)) {
-      alert(`Ngày ${newDateStr} đã có lịch làm việc được duyệt.`);
-      return;
-    }
-    setDraftDates(prev => prev.includes(newDateStr) ? prev : [...prev, newDateStr]);
-  };
-
   const resetForm = () => {
     setDraftDates([]);
     setSelectedShift('Morning');
@@ -252,7 +237,6 @@ export default function RegisterWork() {
             onViewChange={setViewDateObj}
             selectedDates={draftDates}
             onDayClick={handleDayClick}
-            onCalendarPick={handleCalendarPick}
             workDays={workDays}
           />
         </div>

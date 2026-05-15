@@ -98,7 +98,7 @@ export default function SortableTable({
   const paginatedData = displayData.slice(startIndex, startIndex + pageSize);
 
   return (
-    <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden mb-6">
+    <div className="bg-white border border-gray-300 shadow-md rounded-3xl overflow-hidden mb-6">
       <div className={`overflow-x-auto ${containerHeight ? `overflow-y-auto ${containerHeight} custom-scrollbar` : ''}`}>
         <table className={`w-full text-left border-collapse relative ${tableClassName}`}>
           <thead className={`${stickyHeader ? 'sticky top-0 z-10' : ''} bg-gray-50/90 backdrop-blur-sm border-b border-gray-100`}>

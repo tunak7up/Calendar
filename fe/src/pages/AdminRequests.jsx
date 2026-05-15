@@ -156,7 +156,7 @@ export default function AdminRequests() {
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Approve or reject employee work/leave registrations</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 flex-1 md:flex-none justify-center">
+          <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-gray-300 flex items-center gap-2 flex-1 md:flex-none justify-center">
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-gray-400" />
             <span className="font-bold text-gray-700">{filteredRequests.length}</span>
             <span className="text-gray-500 text-sm">Total filtered</span>
@@ -178,7 +178,7 @@ export default function AdminRequests() {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md"
           />
         </div>
         <div className="flex gap-4">
@@ -193,7 +193,7 @@ export default function AdminRequests() {
                 setFilterMonth(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+              className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
             />
           </div>
         </div>

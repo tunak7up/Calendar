@@ -51,8 +51,8 @@ function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) 
     <div
       onClick={onClick}
       className={`
-        flex items-center gap-2 sm:gap-3 bg-white border rounded-xl px-3 sm:px-4 py-2 sm:py-3 shadow-sm w-full cursor-pointer transition-all
-        ${isActive ? 'ring-2 ring-blue-500 border-transparent scale-105 shadow-md' : 'border-gray-100 hover:border-blue-200'}
+        flex items-center gap-2 sm:gap-3 bg-white border rounded-xl px-3 sm:px-4 py-2 sm:py-3 shadow-md w-full cursor-pointer transition-all
+        ${isActive ? 'ring-2 ring-blue-500 border-transparent scale-105 shadow-lg' : 'border-gray-300 hover:border-blue-300'}
       `}
     >
       <div className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${iconBg}`}>
@@ -215,7 +215,7 @@ export default function TaskList({ isAdmin }) {
       </div>
 
       {isAdmin && (
-        <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-300 shadow-md">
           <EmployeeMultiFilter
             employees={employees}
             selectedIds={selectedEmployeeIds}
@@ -326,7 +326,7 @@ export default function TaskList({ isAdmin }) {
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute left-0 z-50 mt-2 w-40 origin-top-left rounded-2xl bg-white p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
+                  <Menu.Items className="absolute left-0 z-50 mt-2 w-40 origin-top-left rounded-2xl bg-white p-2 shadow-lg ring-1 ring-black/5 focus:outline-none border border-gray-300">
                     {statuses.map((s) => (
                       <Menu.Item key={s.id}>
                         {({ active }) => (

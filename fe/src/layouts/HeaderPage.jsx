@@ -16,6 +16,7 @@ const adminNavigation = [
   { name: 'Employees', path: '/admin/employees', id: 'admin_employees' },
   { name: 'Requests', path: '/admin/requests', id: 'admin_requests' },
   { name: 'Work Hours', path: '/admin/work-hours', id: 'admin_workhours' },
+  { name: 'Reports', path: '/admin/reports', id: 'admin_reports' },
   { name: 'Task', path: '/tasks', id: 'admin_task' },
 ];
 

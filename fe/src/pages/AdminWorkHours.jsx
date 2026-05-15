@@ -11,6 +11,7 @@ import { apiFetch, BASE_URL } from '../services/api';
 import { scheduleService } from '../services/scheduleService';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
 import SortableTable from '../components/SortableTable';
+import DateRangeFilter from '../components/DateRangeFilter';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -129,29 +130,6 @@ export default function AdminWorkHours() {
     return workingDate >= startDate && workingDate <= endDate;
   });
 
-  const handleQuickMonthChange = (e) => {
-    const val = e.target.value;
-    if (!val) return;
-    const [year, month] = val.split('-').map(Number);
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    setStartDate(first.toISOString().split('T')[0]);
-    setEndDate(last.toISOString().split('T')[0]);
-    setCurrentPage(1);
-  };
-
-  const getMonthOptions = () => {
-    const options = [];
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
-      const value = `${d.getFullYear()}-${d.getMonth()}`;
-      options.push(<option key={value} value={value}>{label}</option>);
-    }
-    return options;
-  };
-
   const employeeSummary = employees.map(emp => {
     const empSchedules = filteredSchedules.filter(s => s.person_id === emp.person_id);
     const empReports = dailyReports.filter(r => r.person_id === emp.person_id);
@@ -247,41 +225,17 @@ export default function AdminWorkHours() {
 
       {/* Filter Section */}
       <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        <div className="flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4 overflow-x-auto">
-          <div className="flex items-center gap-2 border-r border-gray-100 pr-4">
-            <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
-            <select
-              onChange={handleQuickMonthChange}
-              className="bg-transparent border-none text-sm font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors"
-              defaultValue=""
-            >
-              <option value="" disabled>Select Month</option>
-              {getMonthOptions()}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">From</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">To</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
-            </div>
-          </div>
-        </div>
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onRangeChange={(start, end) => {
+            setStartDate(start);
+            setEndDate(end);
+            setCurrentPage(1);
+          }}
+        />
 
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center">
+        <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-300 p-4 flex items-center">
           <div className="w-full">
             <EmployeeMultiFilter
               employees={employees}

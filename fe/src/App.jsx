@@ -22,6 +22,7 @@ import AdminWorkHours from './pages/AdminWorkHours'
 import Profile from './pages/Profile'
 import Dashboard from './pages/Dashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminReportHistory from './pages/AdminReportHistory'
 
 import './styles/App.css'
 
@@ -58,7 +59,7 @@ function App() {
     }
 
     // Admin pages with only 1 sidebar item — don't show sidebar
-    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours'];
+    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports'];
     if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
       return null;
     }
@@ -128,6 +129,7 @@ function App() {
             <Route path="/admin/requests" element={isAdmin ? <AdminRequests /> : <Navigate to="/schedule" />} />
             <Route path="/admin/schedule" element={isAdmin ? <AdminSchedule /> : <Navigate to="/schedule" />} />
             <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/reports" element={isAdmin ? <AdminReportHistory /> : <Navigate to="/schedule" />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/dashboard" : "/dashboard") : "/login"} />} />

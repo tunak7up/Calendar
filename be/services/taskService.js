@@ -267,7 +267,14 @@ const updateTaskTitleOrDescription = async (id, { title, description }) => {
 const deleteTask = async (id) => {
     const targetTask = await task.findByPk(id);
     if (!targetTask) throw new Error('Task not found');
-    await targetTask.destroy();
+    const subTasks = await task.findAll({ where: { parent_id: id } });
+
+    return await sequelize.transaction(async (t) => {
+        if (subTasks.length > 0) {
+            await task.destroy({ where: { parent_id: id }, transaction: t });
+        }
+        await targetTask.destroy({ transaction: t });        
+    });
 };
 
 const getTasksBeforeDueDate = async (personId, data) => {

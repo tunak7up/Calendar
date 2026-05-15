@@ -12,6 +12,7 @@ router.get('/participant/:participantId', taskController.getAllTasksByParticipan
 router.get('/person/:personId/pending', taskController.getAllPendingTasksByPersonId);
 router.post('/person/:personId/due-date', taskController.getTasksBeforeDueDate);
 router.get('/person/:personId', taskController.getAllTasksByPersonId);
+router.put('/update-title-description/:id', taskController.updateTaskTitleOrDescription);
 router.get('/:id', taskController.getTaskById);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);

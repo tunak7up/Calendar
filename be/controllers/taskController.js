@@ -137,6 +137,16 @@ const getTasksBeforeDueDate = async (req, res) => {
     }
 };
 
+const updateTaskTitleOrDescription = async (req, res) => {
+    try {
+        const task = await taskService.updateTaskTitleOrDescription(req.params.id, req.body);
+        sendRes(res, 200, 'Task updated successfully', task
+        );
+    } catch (error) {
+        sendRes(res, 404, 'Task not found', null, error.message);
+    }
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -151,5 +161,6 @@ module.exports = {
     getAttachmentsByTaskId,
     getAllTasksByPersonId,
     getAllPendingTasksByPersonId,
-    getTasksBeforeDueDate
+    getTasksBeforeDueDate,
+    updateTaskTitleOrDescription
 };

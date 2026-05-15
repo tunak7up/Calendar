@@ -221,6 +221,12 @@ const updateTask = async (id, data) => {
     });
 };
 
+const updateTaskTitleOrDescription = async (id, { title, description }) => {
+    const targetTask = await task.findByPk(id);
+    if (!targetTask) throw new Error('Task not found');
+    return await targetTask.update({ title, description });
+};
+
 const deleteTask = async (id) => {
     const targetTask = await task.findByPk(id);
     if (!targetTask) throw new Error('Task not found');
@@ -256,6 +262,7 @@ module.exports = {
     getAllTasksByParticipantsId,
     getTasksBeforeDueDate,
     updateTask,
+    updateTaskTitleOrDescription,
     deleteTask,
     createTaskAttachment,
     getAttachmentsByTaskId

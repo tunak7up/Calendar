@@ -3,11 +3,11 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useNavigate } from 'react-router-dom';
-import MiniCalendar from '../components/MiniCalendar';
-import { scheduleService } from '../services/scheduleService';
-import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
+import MiniCalendar from '../../components/MiniCalendar';
+import { scheduleService } from '../../services/scheduleService';
+import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
 import {
   BriefcaseIcon,
   UserMinusIcon,

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import ScheduleCalendar from '../components/ScheduleCalendar';
-import MiniCalendar from '../components/MiniCalendar';
+import ScheduleCalendar from '../../components/ScheduleCalendar';
+import MiniCalendar from '../../components/MiniCalendar';
 import { UsersIcon, XMarkIcon, ArrowLeftIcon, PlusIcon, CheckCircleIcon, ClockIcon, DocumentTextIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
-import { scheduleService } from '../services/scheduleService';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
+import { scheduleService } from '../../services/scheduleService';
 import { useNavigate } from 'react-router-dom';
-import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
+import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 
 const PERSON_COLORS = [
   { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' }, // blue
@@ -164,13 +164,13 @@ export default function AdminSchedule() {
         if (allTasks) {
           personTasks = allTasks.filter(t => {
             if (!t.participants?.some(p => p.person_id === sched.person_id)) return false;
-            
+
             const taskStartDate = t.start_time?.split(/[T ]/)[0] || t.due_date?.split(/[T ]/)[0];
             const taskDueDate = t.due_date?.split(/[T ]/)[0];
-            
-            return taskStartDate && taskDueDate && 
-                   targetDate >= taskStartDate && 
-                   targetDate <= taskDueDate;
+
+            return taskStartDate && taskDueDate &&
+              targetDate >= taskStartDate &&
+              targetDate <= taskDueDate;
           });
         }
 
@@ -210,13 +210,13 @@ export default function AdminSchedule() {
           {/* Header with title and employee filter */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
-              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Company Schedule</h1>
-              <p className="text-gray-500 mt-1 text-sm hidden sm:block">Overview of all employee work shifts</p>
+              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Lịch làm việc</h1>
+              <p className="text-gray-500 mt-1 text-sm hidden sm:block">Tổng hợp lịch làm việc của nhân viên</p>
             </div>
 
             <div className="w-full sm:w-auto min-w-[280px]">
               <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Filter Employees</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lọc nhân viên</p>
                 <EmployeeMultiFilter
                   employees={employees}
                   selectedIds={selectedEmployeeIds}
@@ -297,7 +297,7 @@ export default function AdminSchedule() {
               ) : !selectedModalPerson ? (
                 /* Day Summary View */
                 modalData.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">No employees scheduled for this date.</div>
+                  <div className="text-center py-12 text-gray-500">Không có nhân viên nào làm việc vào ngày này.</div>
                 ) : (
                   <div className="space-y-3">
                     {modalData.map(person => (
@@ -320,15 +320,15 @@ export default function AdminSchedule() {
                                   : <span className="text-red-400">N/A</span>
                               }
                             </span>
-                            Report: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
+                            Báo cáo: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
-                            {person.tasks.length} tasks
+                            {person.tasks.length} Công việc
                           </div>
                           <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            View
+                            Xem
                           </button>
                         </div>
                       </div>
@@ -340,7 +340,7 @@ export default function AdminSchedule() {
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                     <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filter by Status</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lọc theo trạng thái công việc</p>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                         {/* Select for Status */}
                         <div className="relative w-full sm:w-auto">
@@ -355,7 +355,7 @@ export default function AdminSchedule() {
                             defaultValue=""
                             className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all cursor-pointer w-full sm:min-w-[160px] appearance-none pr-8"
                           >
-                            <option value="" disabled>Add Status...</option>
+                            <option value="" disabled>Thêm trạng thái công việc...</option>
                             {['pending', 'in progress', 'completed']
                               .filter(s => !taskStatusFilters.includes(s))
                               .map(s => (
@@ -405,7 +405,7 @@ export default function AdminSchedule() {
                       className="flex items-center gap-1 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/10 w-full sm:w-auto justify-center"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      Add Task
+                      Thêm Task
                     </button>
                   </div>
 
@@ -415,7 +415,7 @@ export default function AdminSchedule() {
                   <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
                     <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
                       <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                      Report
+                      Báo cáo
                     </h3>
                     {selectedModalPerson.report ? (
                       <div className="space-y-3">
@@ -434,11 +434,11 @@ export default function AdminSchedule() {
                           </div>
                         </div>
                         <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
-                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">No description provided</span>}
+                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">Không có mô tả công việc</span>}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500 italic">No report submitted for this date.</div>
+                      <div className="text-sm text-gray-500 italic">Nhân viên chưa báo cáo công việc.</div>
                     )}
                   </div>
 
@@ -449,16 +449,16 @@ export default function AdminSchedule() {
                   </div>
                   {selectedModalPerson.tasks.filter(t => taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      No tasks match the selected filters.
+                      Không có công việc nào phù hợp.
                     </div>
                   ) : (
                     <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                       <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Task Name</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Due Date</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Status</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Tên công việc</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Ngày</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Trạng thái</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">

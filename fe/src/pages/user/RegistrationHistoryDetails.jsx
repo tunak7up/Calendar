@@ -8,8 +8,8 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
 import { useState } from 'react';
 
 export default function RegistrationHistoryDetails() {

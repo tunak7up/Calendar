@@ -9,15 +9,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import TaskStatusDropdown from '../components/TaskStatusDropdown';
+import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime } from '../utils/dateUtils';
-import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
-import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
+import { formatDateTime } from '../../utils/dateUtils';
+import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
+import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
-import SortableTable from '../components/SortableTable';
+import SortableTable from '../../components/SortableTable';
 
 function StatusBadge({ status }) {
   if (status?.toLowerCase() === 'completed') {
@@ -157,7 +157,7 @@ export default function TaskList({ isAdmin }) {
       // If priority is same, sort by due date (earliest first)
       const priorityDiff = getPriority(a) - getPriority(b);
       if (priorityDiff !== 0) return priorityDiff;
-      
+
       const dateA = new Date(a.due_date).getTime();
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
@@ -305,7 +305,7 @@ export default function TaskList({ isAdmin }) {
           <tr
             key={task.task_id}
             onClick={() => navigate(`/tasks/${task.task_id}`)}
-            className={`border-b border-gray-50 hover:bg-[#f8fafc] transition-colors cursor-pointer select-none ${task.parent_id ? 'bg-gray-50/50' : ''}`}
+            className={`border-b border-gray-200 hover:bg-blue-50/80 even:bg-gray-50/50 transition-colors cursor-pointer select-none ${task.parent_id ? 'bg-indigo-50/40' : ''}`}
           >
             <td className="px-6 py-5">
               <div className="flex items-center gap-2">
@@ -320,8 +320,8 @@ export default function TaskList({ isAdmin }) {
             <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.start_time)}</td>
             <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.due_date)}</td>
             <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
-              <TaskStatusDropdown 
-                currentStatus={task.status} 
+              <TaskStatusDropdown
+                currentStatus={task.status}
                 dueDate={task.due_date}
                 onStatusChange={(newStatus) => handleStatusChange(task.task_id, newStatus)}
                 size="sm"

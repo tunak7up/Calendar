@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  ClipboardDocumentCheckIcon, 
+import {
+  ClipboardDocumentCheckIcon,
   CheckIcon,
   XMarkIcon,
   ClockIcon,
   MagnifyingGlassIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
-import { apiFetch } from '../services/api';
-import { requestService } from '../services/requestService';
+import { apiFetch } from '../../services/api';
+import { requestService } from '../../services/requestService';
 import { useNavigate } from 'react-router-dom';
-import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
-import SortableTable from '../components/SortableTable';
+import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
+import SortableTable from '../../components/SortableTable';
 
 export default function AdminRequests() {
   const [requests, setRequests] = useState([]);
@@ -48,7 +48,7 @@ export default function AdminRequests() {
   const fetchRequests = () => {
     if (!filterMonth) return;
     setLoading(true);
-    
+
     // Calculate start and end dates of the month
     const [year, month] = filterMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -73,7 +73,7 @@ export default function AdminRequests() {
       });
       if (result.success) {
         // Update local state to reflect change immediately
-        setRequests(prev => prev.map(req => 
+        setRequests(prev => prev.map(req =>
           (req.request_id || req.id) === requestId ? { ...req, status: newStatus } : req
         ));
       }
@@ -107,11 +107,11 @@ export default function AdminRequests() {
       if (filterType !== 'all' && req.type?.toLowerCase() !== filterType) return false;
       if (selectedEmployeeIds.length > 0) {
         if (!selectedEmployeeIds.includes(req.requester_id?.toString()) &&
-            !selectedEmployeeIds.includes(req.requester?.person_id?.toString())) return false;
+          !selectedEmployeeIds.includes(req.requester?.person_id?.toString())) return false;
       }
       if (searchTerm) {
         const nameMatch = req.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+          req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
         const reasonMatch = req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
         if (!nameMatch && !reasonMatch) return false;
       }
@@ -141,10 +141,10 @@ export default function AdminRequests() {
 
   const columns = [
     { key: 'requester', label: 'Người yêu cầu', sortable: true },
-    { key: 'reason',    label: 'Lý do',    sortable: true },
+    { key: 'reason', label: 'Lý do', sortable: true },
     { key: 'created_at', label: 'Ngày gửi', sortable: true },
-    { key: 'status',   label: 'Trạng thái',    sortable: true, align: 'center' },
-    { key: 'actions',  label: 'Hành động',   sortable: false, align: 'center' },
+    { key: 'status', label: 'Trạng thái', sortable: true, align: 'center' },
+    { key: 'actions', label: 'Hành động', sortable: false, align: 'center' },
   ];
 
   return (
@@ -165,8 +165,8 @@ export default function AdminRequests() {
       </div>
 
       {/* Filters Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="relative">
+      <div className="flex flex-col md:flex-row flex-wrap items-center gap-4 mb-6">
+        <div className="relative w-full md:flex-1 min-w-[200px]">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
           </div>
@@ -181,24 +181,55 @@ export default function AdminRequests() {
             className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md"
           />
         </div>
-        <div className="flex gap-4">
-          <div className="relative flex-1 min-w-[150px]">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <CalendarIcon className="w-4 h-4 text-gray-400" />
-            </div>
-            <input
-              type="month"
-              value={filterMonth}
-              onChange={(e) => {
-                setFilterMonth(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
-            />
+        
+        <div className="relative w-full md:w-auto min-w-[140px] group">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 group-hover:text-blue-500 transition-colors z-10">
+            <CalendarIcon className="w-4 h-4" />
           </div>
+          <input
+            type="month"
+            value={filterMonth}
+            onChange={(e) => {
+              setFilterMonth(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer relative z-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:top-0"
+          />
         </div>
-        <div className="flex items-center">
-          <EmployeeMultiFilter 
+
+        <div className="w-full md:w-auto min-w-[150px]">
+          <select
+            value={filterType}
+            onChange={(e) => {
+              setFilterType(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
+          >
+            <option value="all">Tất cả loại</option>
+            <option value="register">Đăng ký lịch làm</option>
+            <option value="leave">Nghỉ phép</option>
+          </select>
+        </div>
+
+        <div className="w-full md:w-auto min-w-[150px]">
+          <select
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="pending">Đang chờ</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="rejected">Từ chối</option>
+          </select>
+        </div>
+        
+        <div className="w-full md:w-auto min-w-[200px]">
+          <EmployeeMultiFilter
             employees={employees}
             selectedIds={selectedEmployeeIds}
             onSelectionChange={(ids) => {
@@ -229,7 +260,8 @@ export default function AdminRequests() {
           <tr
             key={req.request_id || req.id}
             onClick={() => handleRowClick(req)}
-            className={`transition-colors border-b border-gray-50 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
+            className={`transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100 hover:bg-orange-300' : 'bg-blue-100 hover:bg-blue-300'}`}
+
           >
             <td className="py-4 px-6 text-sm font-semibold text-gray-900">
               {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}

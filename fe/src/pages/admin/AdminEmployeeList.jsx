@@ -6,7 +6,7 @@ import {
   PencilSquareIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
-import { apiFetch } from '../services/api';
+import { apiFetch } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminEmployeeList() {

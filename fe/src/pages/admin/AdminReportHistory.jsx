@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, Fragment } from 'react';
-import { dailyReportService } from '../services/dailyReportService';
-import { apiFetch } from '../services/api';
-import SortableTable from '../components/SortableTable';
-import DateRangeFilter from '../components/DateRangeFilter';
+import { dailyReportService } from '../../services/dailyReportService';
+import { apiFetch } from '../../services/api';
+import SortableTable from '../../components/SortableTable';
+import DateRangeFilter from '../../components/DateRangeFilter';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, DocumentTextIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
-import { formatDateTime } from '../utils/dateUtils';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export default function AdminReportHistory() {
   const [reports, setReports] = useState([]);

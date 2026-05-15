@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
-import WeekDatePicker from '../components/WeekDatePicker';
-import { getFullDateStr, getTimeRangeStr } from '../utils/dateUtils';
-import { scheduleService } from '../services/scheduleService';
-import { requestService } from '../services/requestService';
-import { useAuth } from '../context/AuthContext';
+import Button from '../../components/Button';
+import WeekDatePicker from '../../components/WeekDatePicker';
+import { getFullDateStr, getTimeRangeStr } from '../../utils/dateUtils';
+import { scheduleService } from '../../services/scheduleService';
+import { requestService } from '../../services/requestService';
+import { useAuth } from '../../context/AuthContext';
 
 
 export default function RegisterWork() {

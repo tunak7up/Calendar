@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
 import { 
   PlusIcon, 
   ArrowLeftIcon,
@@ -12,7 +12,7 @@ import {
   PaperClipIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
+import Button from '../../components/Button';
 
 export default function AddSubTask() {
   const location = useLocation();

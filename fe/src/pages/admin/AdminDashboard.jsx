@@ -9,13 +9,13 @@ import {
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch } from '../services/api';
-import { requestService } from '../services/requestService';
-import { scheduleService } from '../services/scheduleService';
-import { taskService } from '../services/taskService';
-import SortableTable from '../components/SortableTable';
-import WorkHoursChart from '../components/WorkHoursChart';
-import DateRangeFilter from '../components/DateRangeFilter';
+import { apiFetch } from '../../services/api';
+import { requestService } from '../../services/requestService';
+import { scheduleService } from '../../services/scheduleService';
+import { taskService } from '../../services/taskService';
+import SortableTable from '../../components/SortableTable';
+import WorkHoursChart from '../../components/WorkHoursChart';
+import DateRangeFilter from '../../components/DateRangeFilter';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-2.5">
                         {emp.statusType === 'done' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase">Hoàn thành</span>}
-                        {emp.statusType === 'in'   && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase animate-pulse">Đã check-in</span>}
+                        {emp.statusType === 'in' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase animate-pulse">Đã check-in</span>}
                         {emp.statusType === 'absent' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 uppercase">Chưa check-in</span>}
                       </td>
                     </tr>

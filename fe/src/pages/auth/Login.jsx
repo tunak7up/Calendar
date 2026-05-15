@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../context/AuthContext';
-import { loginApi } from '../services/authService';
+import { useAuth } from '../../context/AuthContext';
+import { loginApi } from '../../services/authService';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');

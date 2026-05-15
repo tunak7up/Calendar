@@ -8,7 +8,7 @@ import { XMarkIcon, UserIcon, FunnelIcon } from '@heroicons/react/24/outline';
  * @param {Function} onSelectionChange - Callback when selection updates
  * @param {String} placeholder - Dropdown placeholder text
  */
-const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeholder = "Filter by employee..." }) => {
+const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeholder = "Lọc theo nhân viên..." }) => {
   // Ensure selectedIds is an array
   const currentSelected = Array.isArray(selectedIds) ? selectedIds : [];
 
@@ -39,7 +39,7 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
         >
           <option value="" disabled>{placeholder}</option>
           {availableEmployees.length === 0 ? (
-            <option disabled>All employees selected</option>
+            <option disabled>Đã chọn tất cả nhân viên</option>
           ) : (
             availableEmployees.map(emp => (
               <option key={emp.person_id} value={emp.person_id}>
@@ -78,7 +78,7 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
             onClick={() => onSelectionChange([])}
             className="text-[10px] uppercase tracking-widest font-black text-gray-400 hover:text-red-500 px-2 transition-colors self-center whitespace-nowrap"
           >
-            Clear
+            Xóa
           </button>
         </div>
       )}

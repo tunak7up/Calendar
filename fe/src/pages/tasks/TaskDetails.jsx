@@ -20,14 +20,14 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { formatDateTime } from '../utils/dateUtils';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
-import { useAuth } from '../context/AuthContext';
+import { formatDateTime } from '../../utils/dateUtils';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
+import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import ParticipantManager from '../components/ParticipantManager';
-import TaskStatusDropdown from '../components/TaskStatusDropdown';
+import ParticipantManager from '../../components/ParticipantManager';
+import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 
 export default function TaskDetails() {
   const { id } = useParams();

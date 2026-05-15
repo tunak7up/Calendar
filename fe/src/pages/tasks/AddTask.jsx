@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch } from '../services/api';
+import { apiFetch } from '../../services/api';
 import {
   CloudArrowUpIcon,
   XMarkIcon,
@@ -12,11 +12,11 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { taskService } from '../services/taskService';
-import MiniCalendar from '../components/MiniCalendar';
-import SubTaskModal from '../components/SubTaskModal';
-import WheelTimePicker from '../components/WheelTimePicker';
-import ParticipantManager from '../components/ParticipantManager';
+import { taskService } from '../../services/taskService';
+import MiniCalendar from '../../components/MiniCalendar';
+import SubTaskModal from '../../components/SubTaskModal';
+import WheelTimePicker from '../../components/WheelTimePicker';
+import ParticipantManager from '../../components/ParticipantManager';
 
 export default function AddTask() {
   const location = useLocation();

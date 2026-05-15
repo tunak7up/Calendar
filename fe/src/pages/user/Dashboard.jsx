@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
-import { formatDateTime } from '../utils/dateUtils';
+import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
+import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 

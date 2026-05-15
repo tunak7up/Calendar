@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiFetch } from '../services/api';
-import { taskService } from '../services/taskService';
-import { scheduleService } from '../services/scheduleService';
-import { dailyReportService } from '../services/dailyReportService';
-import { useAuth } from '../context/AuthContext';
-import ScheduleCalendar from '../components/ScheduleCalendar';
-import ProfileWorkHoursChart from '../components/ProfileWorkHoursChart';
+import { apiFetch } from '../../services/api';
+import { taskService } from '../../services/taskService';
+import { scheduleService } from '../../services/scheduleService';
+import { dailyReportService } from '../../services/dailyReportService';
+import { useAuth } from '../../context/AuthContext';
+import ScheduleCalendar from '../../components/ScheduleCalendar';
+import ProfileWorkHoursChart from '../../components/ProfileWorkHoursChart';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -17,7 +17,7 @@ import {
   PlusIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { formatDateTime } from '../utils/dateUtils';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export default function Profile() {
   const { id } = useParams();

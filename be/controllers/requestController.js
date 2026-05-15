@@ -39,8 +39,9 @@ const getAllRequests = async (req, res) => {
 };
 
 const updateRequestStatus = async (req, res) => {
+    console.log(req.user);
     try {
-        const request = await requestService.updateRequestStatus(req.params.id, req.body.status);
+        const request = await requestService.updateRequestStatus(req.params.id, req.body.status, req.user.person_id);
         sendRes(res, 200, 'Request status updated successfully', request);
     } catch (error) {
         sendRes(res, 404, 'Request not found', null, error.message);

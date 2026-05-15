@@ -104,7 +104,7 @@ const getRequestsByRequesterId = async (requester_id) => {
     });
 };
 
-const updateRequestStatus = async (request_id, status) => {
+const updateRequestStatus = async (request_id, status, approver_id) => {
     console.log(`Updating request ${request_id} to status: ${status}`);
     return await sequelize.transaction(async (t) => {
         const data = await request.findByPk(request_id, {
@@ -115,7 +115,7 @@ const updateRequestStatus = async (request_id, status) => {
         if (!data) throw new Error('Request not found');
 
         // Update the status
-        await data.update({ status }, { transaction: t });
+        await data.update({ status, approver_id }, { transaction: t });
         console.log(`Request ${request_id} updated. Type: ${data.type}`);
 
         // If approved, sync to schedule

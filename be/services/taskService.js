@@ -95,6 +95,14 @@ const getAllTasks = async () => {
         order: [['created_at', 'DESC']]
     });
 
+    await Promise.all(
+        tasks.map(async t => {
+            if (t.due_date && t.due_date < new Date() && t.status !== 'completed') {
+                await t.update({ status: 'overdue' });
+            }
+        })
+    )
+
     return tasks.map(t => {
         const taskJson = t.toJSON();
         const participants = taskJson.participants?.map(p => ({

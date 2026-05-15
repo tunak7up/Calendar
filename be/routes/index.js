@@ -14,6 +14,6 @@ router.use('/schedule', verifyToken, require('./schedule'));
 router.use('/response', verifyToken, require('./response'));
 router.use('/comment', verifyToken, require('./comment'));
 router.use('/daily-report', verifyToken, require('./dailyReport'));
-router.use('/mail', require('./mail'));
+router.use('/mail', verifyToken, require('./mail'));
 
 module.exports = router;

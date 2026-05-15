@@ -16,8 +16,8 @@ export default function RegistrationHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All Request Types');
-  const [filterStatus, setFilterStatus] = useState('All Statuses');
+  const [filterType, setFilterType] = useState('Tất cả loại yêu cầu');
+  const [filterStatus, setFilterStatus] = useState('Tất cả trạng thái');
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export default function RegistrationHistory() {
           const mappedData = result.data.map(item => ({
             id: item.request_id,
             type: item.type,
-            name: item.type === 'register' ? 'Work Registration' : 'Leave Request',
+            name: item.type === 'register' ? 'Đăng ký làm việc' : 'Yêu cầu nghỉ phép',
             date: item.created_at,
             refId: `#REQ-${item.request_id}`,
             status: item.status === 'pending' ? 'Chờ phê duyệt' : item.status === 'approved' ? 'Đã duyệt' : 'Đã hủy',
@@ -62,8 +62,8 @@ export default function RegistrationHistory() {
       const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.approver.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchType = filterType === 'All Request Types' || item.name === filterType;
-      const matchStatus = filterStatus === 'All Statuses' || item.status === filterStatus;
+      const matchType = filterType === 'Tất cả loại yêu cầu' || item.name === filterType;
+      const matchStatus = filterStatus === 'Tất cả trạng thái' || item.status === filterStatus;
       return matchSearch && matchType && matchStatus;
     });
 
@@ -84,11 +84,11 @@ export default function RegistrationHistory() {
   };
 
   const columns = [
-    { key: 'name',     label: 'Request Name',  sortable: true },
-    { key: 'date',     label: 'Date Created',   sortable: true },
-    { key: 'refId',    label: 'Reference ID',   sortable: true },
-    { key: 'status',   label: 'Status',         sortable: true },
-    { key: 'approver', label: 'Approver',       sortable: true },
+    { key: 'name',     label: 'Tên yêu cầu',  sortable: true },
+    { key: 'date',     label: 'Ngày tạo',   sortable: true },
+    { key: 'refId',    label: 'Mã tham chiếu',   sortable: true },
+    { key: 'status',   label: 'Trạng thái',         sortable: true },
+    { key: 'approver', label: 'Người duyệt',       sortable: true },
   ];
 
   return (
@@ -96,8 +96,8 @@ export default function RegistrationHistory() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Registration History</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Review and track the status of your submitted workplace requests.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Lịch sử đăng ký</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Xem và theo dõi trạng thái các yêu cầu đã gửi.</p>
         </div>
         
         <div className="hidden sm:flex items-center gap-3">
@@ -106,14 +106,14 @@ export default function RegistrationHistory() {
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all"
           >
             <BriefcaseIcon className="w-5 h-5" />
-            Work Register
+            Đăng ký làm việc
           </button>
           <button 
             onClick={() => navigate('/register/leave')}
             className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all"
           >
             <CalendarIcon className="w-5 h-5" />
-            Leave Register
+            Đăng ký nghỉ phép
           </button>
         </div>
       </div>
@@ -131,12 +131,12 @@ export default function RegistrationHistory() {
               setCurrentPage(1);
             }}
             className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" 
-            placeholder="Search requests..." 
+            placeholder="Tìm kiếm yêu cầu..." 
           />
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1 sm:justify-end">
-          <span className="text-sm font-medium text-gray-700 hidden sm:block">Filters:</span>
+          <span className="text-sm font-medium text-gray-700 hidden sm:block">Bộ lọc:</span>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto flex-1 sm:flex-none">
             <select 
               value={filterType}
@@ -146,9 +146,9 @@ export default function RegistrationHistory() {
               }}
               className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium text-gray-600 flex-1 min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
-              <option>All Request Types</option>
-              <option>Leave Request</option>
-              <option>Work Registration</option>
+              <option>Tất cả loại yêu cầu</option>
+              <option>Yêu cầu nghỉ phép</option>
+              <option>Đăng ký làm việc</option>
             </select>
             <select 
               value={filterStatus}
@@ -158,7 +158,7 @@ export default function RegistrationHistory() {
               }}
               className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium text-gray-600 flex-1 min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
-              <option>All Statuses</option>
+              <option>Tất cả trạng thái</option>
               <option>Đã duyệt</option>
               <option>Chờ phê duyệt</option>
               <option>Đã hủy</option>
@@ -168,7 +168,7 @@ export default function RegistrationHistory() {
           <div className="relative w-full sm:w-auto sm:hidden">
             <Button className="w-full sm:w-auto justify-center whitespace-nowrap" onClick={() => setIsNewRequestOpen(!isNewRequestOpen)}>
               <PlusIcon className="w-5 h-5 flex-shrink-0" />
-              <span>New Request</span>
+              <span>Yêu cầu mới</span>
             </Button>
             
             {isNewRequestOpen && (
@@ -189,7 +189,7 @@ export default function RegistrationHistory() {
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left"
                     >
                       <BriefcaseIcon className="w-4 h-4" />
-                      Work Registration
+                      Đăng ký làm việc
                     </button>
                     <button 
                       onClick={() => {
@@ -199,7 +199,7 @@ export default function RegistrationHistory() {
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors text-left"
                     >
                       <CalendarIcon className="w-4 h-4" />
-                      Leave Request
+                      Yêu cầu nghỉ phép
                     </button>
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export default function RegistrationHistory() {
         columns={columns}
         data={filteredData}
         loading={loading}
-        emptyMessage="No requests found."
+        emptyMessage="Không tìm thấy yêu cầu nào."
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={filteredData.length}

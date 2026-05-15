@@ -29,35 +29,34 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
   };
 
   return (
-    <div className="flex-shrink-0 bg-white rounded-2xl shadow-md border border-gray-300 p-4 flex items-center gap-4 overflow-x-auto w-full lg:w-auto">
-      <div className="flex items-center gap-2 border-r border-gray-300 pr-4">
-        <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
+    <div className="flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 flex items-center gap-3 overflow-x-auto w-full lg:w-auto">
+      <div className="flex items-center gap-1.5 border-r border-gray-200 pr-3">
+        <CalendarDaysIcon className="w-4 h-4 text-blue-600" />
         <select
           onChange={handleQuickMonthChange}
-          className="bg-transparent border-none text-sm font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors"
+          className="bg-transparent border-none text-xs font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors"
           defaultValue=""
         >
-          <option value="" disabled>Select Month</option>
           {getMonthOptions()}
         </select>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">From</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Từ</span>
           <input
             type="date"
             value={startDate}
             onChange={(e) => onRangeChange(e.target.value, endDate)}
-            className="bg-white border border-gray-300 shadow-sm rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-semibold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">To</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Đến</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => onRangeChange(startDate, e.target.value)}
-            className="bg-white border border-gray-300 shadow-sm rounded-xl px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-semibold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
           />
         </div>
       </div>

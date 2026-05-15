@@ -139,11 +139,11 @@ export default function AddTask() {
 
       const result = await taskService.createTask(payload);
       if (result.success) {
-        alert('Task and sub-tasks created successfully!');
+        alert('Đã tạo công việc và các công việc con thành công!');
         handleReset();
         navigate('/tasks');
       } else {
-        alert('Error: ' + result.message);
+        alert('Lỗi: ' + result.message);
       }
     } catch (err) {
       console.error("Error creating task", err);
@@ -192,32 +192,32 @@ export default function AddTask() {
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4" />
-          Back
+          Quay lại
         </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Add New Task</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Configure parameters and assignees for the new operational objective.</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Thêm công việc mới</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">Cấu hình các tham số và người thực hiện cho mục tiêu hoạt động mới.</p>
       </div>
 
       {/* Task Definition Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-sm font-semibold text-gray-800 mb-5 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-          Task Definition
+          Định nghĩa công việc
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="md:col-span-1">
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Task Name</label>
+            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Tên công việc</label>
             <input
               type="text"
-              placeholder="e.g., Q3 Marketing Campaign Launch"
+              placeholder="ví dụ: Ra mắt chiến dịch Marketing quý 3"
               value={formData.taskName}
               onChange={(e) => setFormData({ ...formData, taskName: e.target.value })}
               className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none transition-all placeholder:text-gray-300"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Assigner (Managers)</label>
+            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Người giao (Quản lý)</label>
             <div className="relative">
               <select
                 value={formData.assigner}
@@ -227,7 +227,7 @@ export default function AddTask() {
                 {managers.map(admin => (
                   <option key={admin.person_id} value={admin.name}>{admin.name}</option>
                 ))}
-                {managers.length === 0 && <option value="">No managers found</option>}
+                {managers.length === 0 && <option value="">Không tìm thấy quản lý nào</option>}
               </select>
               <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -235,9 +235,9 @@ export default function AddTask() {
         </div>
 
         <div className="mb-8">
-          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Description</label>
+          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Mô tả</label>
           <textarea
-            placeholder="Enter task description..."
+            placeholder="Nhập mô tả công việc..."
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows="3"
@@ -248,7 +248,7 @@ export default function AddTask() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Start Date & Time */}
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Start Schedule</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Thời gian bắt đầu</label>
             <div className="grid grid-cols-5 gap-2">
               <div className="col-span-3 relative" ref={startCalRef}>
                 <div
@@ -256,7 +256,7 @@ export default function AddTask() {
                   className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all cursor-pointer hover:border-blue-200"
                 >
                   <CalendarDaysIcon className="w-5 h-5 text-blue-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <span className="font-medium">{formData.startDate || 'Select date'}</span>
+                  <span className="font-medium">{formData.startDate || 'Chọn ngày'}</span>
                 </div>
                 {isStartCalOpen && (
                   <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
@@ -275,7 +275,7 @@ export default function AddTask() {
                   onClick={() => setIsStartTimeOpen(!isStartTimeOpen)}
                   className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
                 >
-                  <span className="font-medium">{formData.startTime || 'Select time'}</span>
+                  <span className="font-medium">{formData.startTime || 'Chọn giờ'}</span>
                 </div>
                 <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -295,7 +295,7 @@ export default function AddTask() {
 
           {/* Due Date & Time */}
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Due Schedule</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Hạn chót</label>
             <div className="grid grid-cols-5 gap-2">
               <div className="col-span-3 relative" ref={dueCalRef}>
                 <div
@@ -303,7 +303,7 @@ export default function AddTask() {
                   className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all cursor-pointer hover:border-blue-200"
                 >
                   <CalendarDaysIcon className="w-5 h-5 text-red-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <span className="font-medium">{formData.dueDate || 'Select date'}</span>
+                  <span className="font-medium">{formData.dueDate || 'Chọn ngày'}</span>
                 </div>
                 {isDueCalOpen && (
                   <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
@@ -322,7 +322,7 @@ export default function AddTask() {
                   onClick={() => setIsEndTimeOpen(!isEndTimeOpen)}
                   className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
                 >
-                  <span className="font-medium">{formData.endTime || 'Select time'}</span>
+                  <span className="font-medium">{formData.endTime || 'Chọn giờ'}</span>
                 </div>
                 <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -342,7 +342,7 @@ export default function AddTask() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Priority Level</label>
+          <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Mức độ ưu tiên</label>
           <div className="grid grid-cols-4 gap-3">
             {['Low', 'Medium', 'High'].map((level) => (
               <button
@@ -353,7 +353,7 @@ export default function AddTask() {
                   : 'bg-[#f8fafc] text-gray-500 border-gray-100 hover:bg-white hover:border-gray-200'
                   }`}
               >
-                {level}
+                {level === 'High' ? 'Cao' : level === 'Medium' ? 'Trung bình' : 'Thấp'}
               </button>
             ))}
           </div>
@@ -374,7 +374,7 @@ export default function AddTask() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-            Sub-tasks Breakdown
+            Chia nhỏ công việc con
           </h2>
           <button
             type="button"
@@ -382,7 +382,7 @@ export default function AddTask() {
             className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
-            Add Sub-task
+            Thêm công việc con
           </button>
         </div>
 
@@ -394,14 +394,14 @@ export default function AddTask() {
                   <div className={`w-1 h-8 rounded-full ${st.priority === 'High' ? 'bg-red-500' : st.priority === 'Medium' ? 'bg-amber-500' : 'bg-green-500'}`}></div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">{st.title}</p>
-                    <p className="text-[11px] text-gray-400 line-clamp-1">{st.description || 'No description'}</p>
+                    <p className="text-[11px] text-gray-400 line-clamp-1">{st.description || 'Không có mô tả'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${st.priority === 'High' ? 'bg-red-50 text-red-600' :
                     st.priority === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
                     }`}>
-                    {st.priority}
+                    {st.priority === 'High' ? 'Cao' : st.priority === 'Medium' ? 'Trung bình' : 'Thấp'}
                   </span>
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, subTasks: prev.subTasks.filter((_, i) => i !== idx) }))}
@@ -414,8 +414,8 @@ export default function AddTask() {
             ))
           ) : (
             <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/30">
-              <p className="text-xs text-gray-400 font-bold">No sub-tasks added yet</p>
-              <p className="text-[10px] text-gray-300 mt-1">Click the button above to start breaking down this objective.</p>
+              <p className="text-xs text-gray-400 font-bold">Chưa có công việc con nào được thêm</p>
+              <p className="text-[10px] text-gray-300 mt-1">Nhấn nút phía trên để bắt đầu chia nhỏ mục tiêu này.</p>
             </div>
           )}
         </div>
@@ -438,14 +438,14 @@ export default function AddTask() {
           onClick={() => navigate(-1)}
           className="text-gray-400 text-sm font-bold hover:text-gray-600 transition-colors px-6 py-3 rounded-xl hover:bg-gray-50"
         >
-          Cancel
+          Hủy
         </button>
         <button
           onClick={handleSubmit}
           className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3.5 rounded-xl text-sm font-bold transition-all shadow-xl shadow-blue-100 active:scale-95 flex items-center gap-2"
         >
           <PlusIcon className="w-5 h-5" />
-          Create Task
+          Tạo công việc
         </button>
       </div>
     </div>

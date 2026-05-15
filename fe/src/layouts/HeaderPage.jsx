@@ -4,20 +4,20 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const userNavigation = [
-  { name: 'Dashboard', path: '/dashboard', id: 'dashboard' },
-  { name: 'My Schedule', path: '/schedule', id: 'schedule' },
-  { name: 'Register Work', path: '/history', id: 'work' }, // Point to history/list as entry point
-  { name: 'Task', path: '/tasks', id: 'task' },
+  { name: 'Bảng điều khiển', path: '/dashboard', id: 'dashboard' },
+  { name: 'Lịch của tôi', path: '/schedule', id: 'schedule' },
+  { name: 'Đăng ký', path: '/history', id: 'work' }, // Point to history/list as entry point
+  { name: 'Công việc', path: '/tasks', id: 'task' },
 ];
 
 const adminNavigation = [
-  { name: 'Dashboard', path: '/admin/dashboard', id: 'admin_dashboard' },
-  { name: 'Schedule', path: '/admin/schedule', id: 'admin_schedule' },
-  { name: 'Employees', path: '/admin/employees', id: 'admin_employees' },
-  { name: 'Requests', path: '/admin/requests', id: 'admin_requests' },
-  { name: 'Work Hours', path: '/admin/work-hours', id: 'admin_workhours' },
-  { name: 'Reports', path: '/admin/reports', id: 'admin_reports' },
-  { name: 'Task', path: '/tasks', id: 'admin_task' },
+  { name: 'Bảng điều khiển', path: '/admin/dashboard', id: 'admin_dashboard' },
+  { name: 'Lịch biểu', path: '/admin/schedule', id: 'admin_schedule' },
+  { name: 'Nhân viên', path: '/admin/employees', id: 'admin_employees' },
+  { name: 'Yêu cầu', path: '/admin/requests', id: 'admin_requests' },
+  { name: 'Giờ làm', path: '/admin/work-hours', id: 'admin_workhours' },
+  { name: 'Báo cáo', path: '/admin/reports', id: 'admin_reports' },
+  { name: 'Công việc', path: '/tasks', id: 'admin_task' },
 ];
 
 function classNames(...classes) {
@@ -47,7 +47,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
             {/* Mobile menu button */}
             <div className="flex items-center sm:hidden mr-2">
               <DisclosureButton className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-                <span className="sr-only">Open main menu</span>
+                <span className="sr-only">Mở menu chính</span>
                 <Bars3Icon aria-hidden="true" className="block h-6 w-6 group-data-open:hidden" />
                 <XMarkIcon aria-hidden="true" className="hidden h-6 w-6 group-data-open:block" />
               </DisclosureButton>
@@ -85,7 +85,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">
               <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">
-                <span className="sr-only">Open user menu</span>
+                <span className="sr-only">Mở menu người dùng</span>
                 <img
                   alt="User Avatar"
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.username || 'U')}&background=101c23&color=12a4d9&rounded=true&size=32`}
@@ -99,13 +99,13 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
               >
                 <MenuItem>
                   <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
-                    Your Profile
+                    Hồ sơ của bạn
                   </Link>
                 </MenuItem>
 
                 <MenuItem>
                   <button onClick={() => { logout(); navigate('/login'); }} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
-                    Sign out
+                    Đăng xuất
                   </button>
                 </MenuItem>
               </MenuItems>

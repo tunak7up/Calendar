@@ -86,11 +86,11 @@ export default function AdminRequests() {
   const getStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
       case 'approved':
-        return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">Approved</span>;
+        return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">Đã duyệt</span>;
       case 'rejected':
-        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold uppercase tracking-wider">Rejected</span>;
+        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold uppercase tracking-wider">Từ chối</span>;
       default:
-        return <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">Pending</span>;
+        return <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">Đang chờ</span>;
     }
   };
 
@@ -140,11 +140,11 @@ export default function AdminRequests() {
   }, [requests, filterStatus, filterType, selectedEmployeeIds, searchTerm, sortKey, sortDir]);
 
   const columns = [
-    { key: 'requester', label: 'Requester', sortable: true },
-    { key: 'reason',    label: 'Reason',    sortable: true },
-    { key: 'created_at', label: 'Date Submitted', sortable: true },
-    { key: 'status',   label: 'Status',    sortable: true, align: 'center' },
-    { key: 'actions',  label: 'Actions',   sortable: false, align: 'center' },
+    { key: 'requester', label: 'Người yêu cầu', sortable: true },
+    { key: 'reason',    label: 'Lý do',    sortable: true },
+    { key: 'created_at', label: 'Ngày gửi', sortable: true },
+    { key: 'status',   label: 'Trạng thái',    sortable: true, align: 'center' },
+    { key: 'actions',  label: 'Hành động',   sortable: false, align: 'center' },
   ];
 
   return (
@@ -152,14 +152,14 @@ export default function AdminRequests() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Review Requests</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Approve or reject employee work/leave registrations</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Duyệt yêu cầu</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Phê duyệt hoặc từ chối đăng ký làm việc/nghỉ phép của nhân viên</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-gray-300 flex items-center gap-2 flex-1 md:flex-none justify-center">
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-gray-400" />
             <span className="font-bold text-gray-700">{filteredRequests.length}</span>
-            <span className="text-gray-500 text-sm">Total filtered</span>
+            <span className="text-gray-500 text-sm">Tổng số lọc được</span>
           </div>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function AdminRequests() {
           </div>
           <input
             type="text"
-            placeholder="Search by name or reason..."
+            placeholder="Tìm theo tên hoặc lý do..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -205,7 +205,7 @@ export default function AdminRequests() {
               setSelectedEmployeeIds(ids);
               setCurrentPage(1);
             }}
-            placeholder="Filter employees..."
+            placeholder="Lọc nhân viên..."
           />
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function AdminRequests() {
         columns={columns}
         data={filteredRequests}
         loading={loading}
-        emptyMessage="No requests found."
+        emptyMessage="Không tìm thấy yêu cầu nào."
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={filteredRequests.length}
@@ -251,14 +251,14 @@ export default function AdminRequests() {
                 <div className="flex justify-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'approved'); }}
-                    title="Approve"
+                    title="Duyệt"
                     className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
                   >
                     <CheckIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'rejected'); }}
-                    title="Reject"
+                    title="Từ chối"
                     className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
                   >
                     <XMarkIcon className="w-5 h-5" />

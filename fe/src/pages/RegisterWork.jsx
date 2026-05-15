@@ -223,10 +223,10 @@ export default function RegisterWork() {
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4" />
-          Back
+          Quay lại
         </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Register Work Day</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Configure your upcoming session by selecting your preferred time slot.</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Đăng ký ngày làm việc</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">Cấu hình ca làm việc của bạn bằng cách chọn khung giờ phù hợp.</p>
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
@@ -243,7 +243,7 @@ export default function RegisterWork() {
 
         {/* Choose Shift */}
         <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Choose Shift</h2>
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Chọn ca làm việc</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => setSelectedShift('Morning')}
@@ -253,7 +253,7 @@ export default function RegisterWork() {
                 }`}
             >
               <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Morning</span>
+              <span className="font-bold text-gray-900">Buổi sáng</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 12:00</span>
             </button>
 
@@ -265,7 +265,7 @@ export default function RegisterWork() {
                 }`}
             >
               <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Afternoon</span>
+              <span className="font-bold text-gray-900">Buổi chiều</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:30</span>
             </button>
 
@@ -277,7 +277,7 @@ export default function RegisterWork() {
                 }`}
             >
               <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Full Day</span>
+              <span className="font-bold text-gray-900">Cả ngày</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 17:30</span>
             </button>
           </div>
@@ -390,7 +390,7 @@ export default function RegisterWork() {
           {/* Container 2: Add to Schedule button */}
           <div className="flex justify-end mt-4">
             <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0}>
-              <span>Add to Schedule</span>
+              <span>Thêm vào lịch</span>
               {draftDates.length > 0 && (
                 <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
               )}
@@ -401,15 +401,15 @@ export default function RegisterWork() {
         {/* Selected Dates Table */}
         {schedule.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Selected Schedule</h2>
+            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Lịch đã chọn</h2>
             <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[400px] overflow-y-auto">
               <table className="w-full text-sm text-left text-gray-500">
                 <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Date</th>
-                    <th className="px-6 py-3 font-semibold">Shift</th>
-                    <th className="px-6 py-3 font-semibold">Time</th>
-                    <th className="px-6 py-3 font-semibold text-right">Action</th>
+                    <th className="px-6 py-3 font-semibold">Ngày</th>
+                    <th className="px-6 py-3 font-semibold">Ca làm</th>
+                    <th className="px-6 py-3 font-semibold">Thời gian</th>
+                    <th className="px-6 py-3 font-semibold text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -433,7 +433,7 @@ export default function RegisterWork() {
                           <Button
                             variant="danger-icon"
                             onClick={() => handleRemoveFromSchedule(item.date)}
-                            title="Remove"
+                            title="Xóa"
                           >
                             <TrashIcon className="w-4 h-4" />
                           </Button>
@@ -456,7 +456,7 @@ export default function RegisterWork() {
               <ClockIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Weekly Hours</h3>
+              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Tổng giờ tuần</h3>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-gray-900">{totalWeeklyHours}</span>
                 <span className="text-sm font-medium text-gray-400">/ 40h</span>
@@ -464,8 +464,8 @@ export default function RegisterWork() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-            <Button onClick={handleSubmit}>Register Work</Button>
+            <Button variant="secondary" onClick={handleCancel}>Hủy</Button>
+            <Button onClick={handleSubmit}>Đăng ký làm việc</Button>
           </div>
         </div>
       </div>

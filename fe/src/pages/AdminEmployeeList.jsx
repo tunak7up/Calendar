@@ -117,21 +117,21 @@ export default function AdminEmployeeList() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Personnel Management</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Overview of company staff and access roles</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý nhân sự</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Tổng quan về nhân viên và vai trò truy cập</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 flex-1 md:flex-none justify-center">
             <UsersIcon className="w-5 h-5 text-gray-400" />
             <span className="font-bold text-gray-700">{employees.length}</span>
-            <span className="text-gray-500 text-sm">Total staff</span>
+            <span className="text-gray-500 text-sm">nhân sự</span>
           </div>
           <button
             onClick={() => openModal()}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
           >
             <PlusIcon className="w-5 h-5" />
-            <span>Add New User</span>
+            <span>Thêm người dùng mới</span>
           </button>
         </div>
       </div>
@@ -142,20 +142,20 @@ export default function AdminEmployeeList() {
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">ID</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee Name</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Username</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Role</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Status</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Tên nhân viên</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Tên đăng nhập</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Vai trò</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Trạng thái</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">Loading employees...</td>
+                  <td colSpan="5" className="text-center py-12 text-gray-400">Đang tải danh sách nhân viên...</td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">No employees found.</td>
+                  <td colSpan="5" className="text-center py-12 text-gray-400">Không tìm thấy nhân viên nào.</td>
                 </tr>
               ) : (
                 employees.map((emp) => (
@@ -183,8 +183,8 @@ export default function AdminEmployeeList() {
                         onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
                         className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
                       >
-                        <option value="employee">Employee</option>
-                        <option value="manager">Manager</option>
+                        <option value="employee">Nhân viên</option>
+                        <option value="manager">Quản lý</option>
                       </select>
                     </td>
                     <td className="py-4 px-6 text-center hidden sm:table-cell">
@@ -197,8 +197,8 @@ export default function AdminEmployeeList() {
                             : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
                           }`}
                       >
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Tạm khóa</option>
                       </select>
                     </td>
                   </tr>
@@ -214,7 +214,7 @@ export default function AdminEmployeeList() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900">
-                {selectedUser ? 'Edit User' : 'Add New User'}
+                {selectedUser ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <XCircleIcon className="w-6 h-6" />
@@ -222,7 +222,7 @@ export default function AdminEmployeeList() {
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Họ tên</label>
                 <input
                   type="text"
                   required
@@ -233,7 +233,7 @@ export default function AdminEmployeeList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Tên đăng nhập</label>
                 <input
                   type="text"
                   required
@@ -245,7 +245,7 @@ export default function AdminEmployeeList() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Password {selectedUser && <span className="text-gray-400 font-normal">(Leave blank to keep current)</span>}
+                  Mật khẩu {selectedUser && <span className="text-gray-400 font-normal">(Để trống nếu muốn giữ nguyên)</span>}
                 </label>
                 <input
                   type="password"
@@ -257,7 +257,7 @@ export default function AdminEmployeeList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Vai trò</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
@@ -276,7 +276,7 @@ export default function AdminEmployeeList() {
                   onChange={(e) => setFormData({ ...formData, status: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
-                <label htmlFor="status" className="text-sm font-bold text-gray-700">Active Account</label>
+                <label htmlFor="status" className="text-sm font-bold text-gray-700">Tài khoản hoạt động</label>
               </div>
               <div className="pt-4 flex gap-3 justify-end">
                 <button
@@ -284,13 +284,13 @@ export default function AdminEmployeeList() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-bold text-white bg-[#0056b3] hover:bg-[#004494] rounded-xl transition-colors shadow-md shadow-blue-500/20"
                 >
-                  Save User
+                  Lưu người dùng
                 </button>
               </div>
             </form>

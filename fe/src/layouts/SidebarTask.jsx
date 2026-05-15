@@ -37,8 +37,8 @@ export default function SidebarTask() {
                         <ClipboardDocumentCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col ml-3">
-                        <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Task</span>
-                        <span className="text-gray-500 text-[0.65rem] -mt-0.5">Manage your tasks</span>
+                        <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Công việc</span>
+                        <span className="text-gray-500 text-[0.65rem] -mt-0.5">Quản lý công việc của bạn</span>
                     </div>
                 </div>
 
@@ -50,7 +50,7 @@ export default function SidebarTask() {
                             onClick={() => setIsOpen(false)}
                         >
                             <PlusIcon className={getIconClass('/tasks/add')} />
-                            <span className="ms-4 text-sm font-medium">New Task</span>
+                            <span className="ms-4 text-sm font-medium">Thêm công việc</span>
                         </Link>
                     </li>
                     <li>
@@ -60,7 +60,7 @@ export default function SidebarTask() {
                             onClick={() => setIsOpen(false)}
                         >
                             <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
-                            <span className="ms-4 text-sm font-medium">List Task</span>
+                            <span className="ms-4 text-sm font-medium">Danh sách công việc</span>
                         </Link>
                     </li>
                 </ul>

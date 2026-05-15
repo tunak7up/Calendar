@@ -14,7 +14,7 @@ export const generateWeek = (dateObj) => {
     const d = new Date(startOfWeek.getTime());
     d.setDate(startOfWeek.getDate() + i);
     dates.push({
-      day: d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+      day: d.toLocaleDateString('vi-VN', { weekday: 'short' }).toUpperCase(),
       date: d.getDate().toString(),
       fullDate: getFullDateStr(d),
       dateObj: d,
@@ -76,7 +76,7 @@ export default function WeekDatePicker({
           <button 
             onClick={handlePrevWeek} 
             className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            title="Previous Week"
+            title="Tuần trước"
           >
             <ChevronLeftIcon className="w-5 h-5" />
           </button>
@@ -91,7 +91,7 @@ export default function WeekDatePicker({
                 value={viewDateStr}
                 onChange={handleNativeChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                title="Select a specific date to jump to its week"
+                title="Chọn ngày để nhảy tới tuần tương ứng"
               />
               <div className="absolute inset-0 flex items-center justify-center rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
                 <CalendarIcon className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function WeekDatePicker({
           <button 
             onClick={handleNextWeek} 
             className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            title="Next Week"
+            title="Tuần sau"
           >
             <ChevronRightIcon className="w-5 h-5" />
           </button>

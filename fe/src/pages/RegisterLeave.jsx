@@ -146,10 +146,10 @@ return (
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4" />
-          Back
+          Quay lại
         </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Register Leave</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Select your leave dates and provide a reason for the request.</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Đăng ký nghỉ phép</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">Chọn ngày nghỉ và cung cấp lý do cho yêu cầu.</p>
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
@@ -169,14 +169,14 @@ return (
         {/* Schedule Table */}
         {schedule.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Selected Leave Dates</h2>
+            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Các ngày nghỉ đã chọn</h2>
             <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[300px] overflow-y-auto">
               <table className="w-full text-sm text-left text-gray-500">
                 <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Date</th>
-                    <th className="px-6 py-3 font-semibold">Shift</th>
-                    <th className="px-6 py-3 font-semibold text-right">Action</th>
+                    <th className="px-6 py-3 font-semibold">Ngày</th>
+                    <th className="px-6 py-3 font-semibold">Ca làm</th>
+                    <th className="px-6 py-3 font-semibold text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -199,7 +199,7 @@ return (
 
         {/* Reason */}
         <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Reason</h2>
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Lý do</h2>
           <textarea
             className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
             placeholder="Vui lòng nhập lý do nghỉ phép..."
@@ -216,13 +216,13 @@ return (
               <CalendarIcon className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Total Leave Days</h3>
+              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Tổng ngày nghỉ</h3>
               <span className="text-2xl font-bold text-gray-900">{schedule.length}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-            <Button onClick={handleSubmit}>Submit Leave Request</Button>
+            <Button variant="secondary" onClick={handleCancel}>Hủy</Button>
+            <Button onClick={handleSubmit}>Gửi yêu cầu nghỉ phép</Button>
           </div>
         </div>
       </div>

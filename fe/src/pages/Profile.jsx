@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../services/api';
 import { taskService } from '../services/taskService';
 import { scheduleService } from '../services/scheduleService';
+import { dailyReportService } from '../services/dailyReportService';
 import { useAuth } from '../context/AuthContext';
+import ScheduleCalendar from '../components/ScheduleCalendar';
+import ProfileWorkHoursChart from '../components/ProfileWorkHoursChart';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -25,9 +28,13 @@ export default function Profile() {
   const targetId = id || user?.person_id;
 
   const [profileData, setProfileData] = useState(null);
-  const [schedules, setSchedules] = useState([]);
+  const [allSchedules, setAllSchedules] = useState([]);
+  const [dailyReports, setDailyReports] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // States for ScheduleCalendar
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     if (!targetId) return;
@@ -35,10 +42,11 @@ export default function Profile() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const [personRes, schedRes, tasksRes] = await Promise.all([
+        const [personRes, schedRes, tasksRes, repRes] = await Promise.all([
           apiFetch(`/person`), // Fetch all and find, or if there's a /person/:id endpoint, use it. Wait, apiFetch('/person') gets all.
           scheduleService.getScheduleByPersonId(targetId),
-          taskService.getAllTasksByParticipantId(targetId)
+          taskService.getAllTasksByParticipantId(targetId),
+          dailyReportService.getDailyReportByPersonId(targetId)
         ]);
 
         if (personRes.success) {
@@ -49,17 +57,15 @@ export default function Profile() {
         }
 
         if (schedRes.success) {
-          // Sort schedules by date upcoming
-          const sortedSchedules = schedRes.data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-          // Filter to only show upcoming or recent
-          const now = new Date();
-          now.setHours(0, 0, 0, 0);
-          const upcoming = sortedSchedules.filter(s => new Date(s.start_time.split(' ')[0]) >= now);
-          setSchedules(upcoming);
+          setAllSchedules(schedRes.data);
         }
 
         if (tasksRes.success) {
           setTasks(tasksRes.data);
+        }
+
+        if (repRes.success) {
+          setDailyReports(repRes.data);
         }
       } catch (error) {
         console.error('Error fetching profile data:', error);
@@ -71,22 +77,39 @@ export default function Profile() {
     fetchAllData();
   }, [targetId]);
 
+  const calendarEvents = React.useMemo(() => {
+    return allSchedules.map(item => {
+      const colorSet = { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' };
+      const dateOnly = item.working_date ? new Date(item.working_date).toISOString().split('T')[0] : null;
+      return {
+        id: `sched_${item.schedule_id}`,
+        title: `${new Date(item.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(item.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`,
+        start: dateOnly,
+        allDay: true,
+        backgroundColor: colorSet.bg,
+        borderColor: colorSet.border,
+        textColor: colorSet.text,
+        extendedProps: { ...item }
+      };
+    });
+  }, [allSchedules]);
+
   if (loading) {
     return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-gray-500 font-semibold">Loading profile...</div>
-    </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-500 font-semibold">Loading profile...</div>
+      </div>
     );
   }
 
   if (!profileData) {
     return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">User Not Found</h2>
-        <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">User Not Found</h2>
+          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
+        </div>
       </div>
-    </div>
     );
   }
 
@@ -168,63 +191,21 @@ export default function Profile() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Schedule */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-orange-50 rounded-xl text-orange-600">
-              <CalendarDaysIcon className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900">Upcoming Shifts</h2>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-2 max-h-[400px] space-y-3">
-            {schedules.length === 0 ? (
-              <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                <p className="text-sm font-semibold text-gray-400">No upcoming shifts</p>
-              </div>
-            ) : (
-              schedules.slice(0, 10).map((s, idx) => {
-                const dateObj = new Date(s.start_time.split(' ')[0]);
-                return (
-                  <div key={idx} className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 bg-[#f8fafc] hover:border-orange-200 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-50 text-center min-w-[60px]">
-                        <div className="text-[10px] font-bold text-gray-400 uppercase">{dateObj.toLocaleString('default', { month: 'short' })}</div>
-                        <div className="text-lg font-extrabold text-gray-900">{dateObj.getDate()}</div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{dateObj.toLocaleDateString('default', { weekday: 'long' })}</p>
-                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500 font-medium">
-                          <ClockIcon className="w-3.5 h-3.5" />
-                          {s.start_time.split(' ')[1].substring(0, 5)} - {s.end_time.split(' ')[1].substring(0, 5)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
-                      Shift
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
         {/* Assigned Tasks */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col h-[320px]">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-50 rounded-xl text-purple-600">
                 <CheckCircleIcon className="w-6 h-6" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900">Active Tasks</h2>
+              <h2 className="text-lg font-bold text-gray-900">Danh sách công việc</h2>
             </div>
             <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-lg">
               {tasks.length} Total
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 max-h-[400px] space-y-3">
+          <div className="flex-1 overflow-y-auto pr-2 max-h-[220px] space-y-3">
             {tasks.length === 0 ? (
               <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
                 <p className="text-sm font-semibold text-gray-400">No assigned tasks</p>
@@ -250,6 +231,40 @@ export default function Profile() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+
+        {/* Work Hours Chart */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-[320px]">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-violet-600" />
+              Thời gian làm việc theo tháng
+            </h2>
+          </div>
+          <div className="p-4 flex-1 flex flex-col justify-center">
+            <ProfileWorkHoursChart dailyReports={dailyReports} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* FullCalendar Schedule */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
+              Lịch làm việc
+            </h2>
+          </div>
+          <div className="p-4 flex-1">
+            <ScheduleCalendar
+              initialDate={selectedDate}
+              events={calendarEvents}
+              selectedDate={selectedDate}
+              onDateClick={(arg) => setSelectedDate(arg.dateStr)}
+              onDatesSet={() => { }}
+            />
           </div>
         </div>
       </div>

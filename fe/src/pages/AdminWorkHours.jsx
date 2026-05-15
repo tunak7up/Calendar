@@ -14,8 +14,8 @@ import SortableTable from '../components/SortableTable';
 import DateRangeFilter from '../components/DateRangeFilter';
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
 ];
 
 export default function AdminWorkHours() {
@@ -182,11 +182,11 @@ export default function AdminWorkHours() {
   };
 
   const columns = [
-    { key: 'name',            label: 'Employee',    sortable: true },
-    { key: 'totalDays',       label: 'Work Days',   sortable: true, align: 'center' },
-    { key: 'registeredHours', label: 'Registered',  sortable: true, align: 'center' },
-    { key: 'actualHours',     label: 'Actual',      sortable: true, align: 'center' },
-    { key: 'status',          label: 'Status',      sortable: false, align: 'center' },
+    { key: 'name',            label: 'Nhân viên',    sortable: true },
+    { key: 'totalDays',       label: 'Ngày làm',   sortable: true, align: 'center' },
+    { key: 'registeredHours', label: 'Đã đăng ký',  sortable: true, align: 'center' },
+    { key: 'actualHours',     label: 'Thực tế',      sortable: true, align: 'center' },
+    { key: 'status',          label: 'Trạng thái',      sortable: false, align: 'center' },
   ];
 
   const d = new Date(startDate);
@@ -197,8 +197,8 @@ export default function AdminWorkHours() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Work Hour Reports</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Track and verify actual vs registered working hours</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Báo cáo giờ làm việc</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Theo dõi và xác minh giờ làm việc thực tế so với đăng ký</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 flex-1 md:flex-none justify-center">
@@ -211,14 +211,14 @@ export default function AdminWorkHours() {
             className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
-            <span>{exporting ? 'Exporting...' : 'Export Excel'}</span>
+            <span>{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
           </button>
           <button
             onClick={fetchData}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm flex-1 md:flex-none justify-center"
           >
             <ArrowPathIcon className="w-5 h-5" />
-            <span className="md:hidden lg:inline">Refresh</span>
+            <span className="md:hidden lg:inline">Làm mới</span>
           </button>
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function AdminWorkHours() {
         columns={columns}
         data={sortedSummary}
         loading={loading}
-        emptyMessage="No records found for this period."
+        emptyMessage="Không tìm thấy dữ liệu trong khoảng thời gian này."
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={sortedSummary.length}
@@ -277,7 +277,7 @@ export default function AdminWorkHours() {
             </td>
             <td className="py-4 px-6 text-center">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                {emp.totalDays} days
+                {emp.totalDays} ngày
               </span>
             </td>
             <td className="py-4 px-6 text-center">
@@ -290,9 +290,9 @@ export default function AdminWorkHours() {
             </td>
             <td className="py-4 px-6 text-center">
               {emp.actualHours >= emp.registeredHours ? (
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Full Completed</span>
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Hoàn thành đầy đủ</span>
               ) : (
-                <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Partial</span>
+                <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Một phần</span>
               )}
             </td>
           </tr>

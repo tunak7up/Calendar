@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import TaskStatusDropdown from '../components/TaskStatusDropdown';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
@@ -23,7 +24,7 @@ function StatusBadge({ status }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        Completed
+        Hoàn thành
       </span>
     );
   }
@@ -31,7 +32,7 @@ function StatusBadge({ status }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-        In Progress
+        Đang thực hiện
       </span>
     );
   }
@@ -39,7 +40,7 @@ function StatusBadge({ status }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-        Pending
+        Chờ xử lý
       </span>
     );
   }
@@ -173,13 +174,13 @@ export default function TaskList({ isAdmin }) {
   }, [filteredTasks, sortKey, sortDir]);
 
   const columns = [
-    { key: 'name', label: 'Task Title', sortable: true },
-    { key: 'assigner', label: 'Assigner', sortable: true },
-    { key: 'start_time', label: 'Start Date', sortable: true },
-    { key: 'due_date', label: 'Due Date', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'extra', label: isAdmin ? 'Participants' : 'Role', sortable: false },
-    { key: 'action', label: 'Action', sortable: false, align: 'center' },
+    { key: 'name', label: 'Tên công việc', sortable: true },
+    { key: 'assigner', label: 'Người giao', sortable: true },
+    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },
+    { key: 'due_date', label: 'Hạn chót', sortable: true },
+    { key: 'status', label: 'Trạng thái', sortable: true },
+    { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
+    { key: 'action', label: 'Thao tác', sortable: false, align: 'center' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -195,7 +196,7 @@ export default function TaskList({ isAdmin }) {
 
   const handleDeleteTask = async (e, taskId) => {
     e.stopPropagation(); // Don't navigate
-    if (!window.confirm('Delete this task?')) return;
+    if (!window.confirm('Xóa công việc này?')) return;
     try {
       const res = await taskService.deleteTask(taskId);
       if (res.success) {
@@ -206,19 +207,15 @@ export default function TaskList({ isAdmin }) {
     }
   };
 
-  const statuses = [
-    { id: 'pending', label: 'Pending', bg: 'bg-gray-400', text: 'text-gray-700', light: 'bg-gray-100', dot: 'bg-gray-400' },
-    { id: 'in progress', label: 'In Progress', bg: 'bg-blue-500', text: 'text-blue-800', light: 'bg-blue-100', dot: 'bg-blue-500' },
-    { id: 'completed', label: 'Completed', bg: 'bg-emerald-500', text: 'text-emerald-800', light: 'bg-emerald-100', dot: 'bg-emerald-500' },
-  ];
+
 
   return (
     <div className="space-y-6 pb-20">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Task Registry</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage and monitor administrative chronologies</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Danh sách công việc</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Quản lý và theo dõi tiến độ công việc</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {!isAdmin && (
@@ -227,7 +224,7 @@ export default function TaskList({ isAdmin }) {
               className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
             >
               <PlusIcon className="w-5 h-5" />
-              <span>Create Task</span>
+              <span>Tạo công việc</span>
             </button>
           )}
         </div>
@@ -239,7 +236,7 @@ export default function TaskList({ isAdmin }) {
             employees={employees}
             selectedIds={selectedEmployeeIds}
             onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
-            placeholder="Select employees..."
+            placeholder="Chọn nhân viên..."
           />
         </div>
       )}
@@ -247,7 +244,7 @@ export default function TaskList({ isAdmin }) {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
-          label="Total Tasks"
+          label="Tổng công việc"
           value={employeeTasks.length}
           icon={<ClipboardDocumentListIcon />}
           iconBg="bg-gray-100"
@@ -256,7 +253,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('all')}
         />
         <StatCard
-          label="Pending"
+          label="Chờ xử lý"
           value={employeeTasks.filter(t => t.status === 'pending').length}
           icon={<ClockIcon />}
           iconBg="bg-gray-100"
@@ -265,7 +262,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('pending')}
         />
         <StatCard
-          label="In Progress"
+          label="Đang thực hiện"
           value={employeeTasks.filter(t => t.status === 'in progress').length}
           icon={<ClockIcon className="animate-spin-slow" />}
           iconBg="bg-blue-50"
@@ -274,7 +271,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('in progress')}
         />
         <StatCard
-          label="Completed"
+          label="Hoàn thành"
           value={employeeTasks.filter(t => t.status === 'completed').length}
           icon={<CheckCircleIcon />}
           iconBg="bg-emerald-100"
@@ -283,7 +280,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('completed')}
         />
         <StatCard
-          label="Overdue"
+          label="Quá hạn"
           value={employeeTasks.filter(t => isOverdue(t)).length}
           icon={<ExclamationTriangleIcon />}
           iconBg="bg-red-100"
@@ -297,7 +294,7 @@ export default function TaskList({ isAdmin }) {
         columns={columns}
         data={displayTasks}
         loading={loading}
-        emptyMessage="No tasks found."
+        emptyMessage="Không tìm thấy công việc nào."
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={displayTasks.length}
@@ -323,46 +320,12 @@ export default function TaskList({ isAdmin }) {
             <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.start_time)}</td>
             <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.due_date)}</td>
             <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
-              <Menu as="div" className="relative inline-block text-left">
-                <Menu.Button className={`
-                  flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all border shadow-sm
-                  ${isOverdue(task) ? 'bg-red-600 text-white border-red-700 shadow-red-200' :
-                    `${statuses.find(s => s.id === task.status?.toLowerCase())?.light || 'bg-gray-100'} 
-                     ${statuses.find(s => s.id === task.status?.toLowerCase())?.text || 'text-gray-700'} 
-                     ${statuses.find(s => s.id === task.status?.toLowerCase())?.light?.replace('bg-', 'border-') || 'border-gray-200'}`}
-                  hover:scale-105 active:scale-95
-                `}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isOverdue(task) ? 'bg-white animate-pulse' : (statuses.find(s => s.id === task.status?.toLowerCase())?.dot || 'bg-gray-400')} ${task.status === 'in progress' ? 'animate-pulse' : ''}`} />
-                  {isOverdue(task) ? 'Overdue' : (task.status || 'Pending')}
-                  <ChevronDownIcon className="w-3 h-3 opacity-50" />
-                </Menu.Button>
-                <Transition
-                  as={React.Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute left-0 z-50 mt-2 w-40 origin-top-left rounded-2xl bg-white p-2 shadow-lg ring-1 ring-black/5 focus:outline-none border border-gray-300">
-                    {statuses.map((s) => (
-                      <Menu.Item key={s.id}>
-                        {({ active }) => (
-                          <button
-                            onClick={() => handleStatusChange(task.task_id, s.id)}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${active ? `${s.light} ${s.text} translate-x-1` : 'text-gray-500 hover:bg-gray-50'
-                              }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                            {s.label}
-                          </button>
-                        )}
-                      </Menu.Item>
-                    ))}
-                  </Menu.Items>
-                </Transition>
-              </Menu>
+              <TaskStatusDropdown 
+                currentStatus={task.status} 
+                dueDate={task.due_date}
+                onStatusChange={(newStatus) => handleStatusChange(task.task_id, newStatus)}
+                size="sm"
+              />
             </td>
             <td className="px-4 py-5 text-gray-600 text-sm">
               {isAdmin ? (

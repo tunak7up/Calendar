@@ -42,7 +42,7 @@ export default function SidebarAdmin() {
         type="button"
         className="inline-flex items-center p-2 mt-3 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
-        <span className="sr-only">Open sidebar</span>
+        <span className="sr-only">Mở thanh bên</span>
         <svg
           className="w-6 h-6"
           aria-hidden="true"
@@ -71,8 +71,8 @@ export default function SidebarAdmin() {
               <ShieldCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col ml-3">
-              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Admin Portal</span>
-              <span className="text-gray-500 text-[0.65rem] -mt-0.5">Management & Overview</span>
+              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Cổng Quản trị</span>
+              <span className="text-gray-500 text-[0.65rem] -mt-0.5">Quản lý & Tổng quan</span>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/employees')}
                 >
                   <UsersIcon className={getIconClass('/admin/employees')} />
-                  <span className="ms-4 font-semibold text-sm">Manage Employees</span>
+                  <span className="ms-4 font-semibold text-sm">Quản lý nhân viên</span>
                 </Link>
               </li>
             )}
@@ -95,7 +95,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/requests')}
                 >
                   <ClipboardDocumentCheckIcon className={getIconClass('/admin/requests')} />
-                  <span className="ms-4 font-semibold text-sm">Review Requests</span>
+                  <span className="ms-4 font-semibold text-sm">Duyệt yêu cầu</span>
                 </Link>
               </li>
             )}
@@ -106,7 +106,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/schedule')}
                 >
                   <CalendarDaysIcon className={getIconClass('/admin/schedule')} />
-                  <span className="ms-4 font-semibold text-sm">Company Schedule</span>
+                  <span className="ms-4 font-semibold text-sm">Lịch công ty</span>
                 </Link>
               </li>
             )}
@@ -117,7 +117,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/work-hours')}
                 >
                   <ClockIcon className={getIconClass('/admin/work-hours')} />
-                  <span className="ms-4 font-semibold text-sm">Work Hours</span>
+                  <span className="ms-4 font-semibold text-sm">Giờ làm việc</span>
                 </Link>
               </li>
             )}
@@ -129,7 +129,7 @@ export default function SidebarAdmin() {
                     className={getLinkClass('/tasks')}
                   >
                     <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
-                    <span className="ms-4 font-semibold text-sm">All Tasks</span>
+                    <span className="ms-4 font-semibold text-sm">Tất cả công việc</span>
                   </Link>
                 </li>
                 <li>
@@ -138,7 +138,7 @@ export default function SidebarAdmin() {
                     className={getLinkClass('/tasks/add')}
                   >
                     <PlusIcon className={getIconClass('/tasks/add')} />
-                    <span className="ms-4 font-semibold text-sm">Create Task</span>
+                    <span className="ms-4 font-semibold text-sm">Tạo công việc</span>
                   </Link>
                 </li>
               </>

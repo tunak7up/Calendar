@@ -27,6 +27,7 @@ import { useAuth } from '../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import ParticipantManager from '../components/ParticipantManager';
+import TaskStatusDropdown from '../components/TaskStatusDropdown';
 
 export default function TaskDetails() {
   const { id } = useParams();
@@ -255,20 +256,11 @@ export default function TaskDetails() {
   if (!id) {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
-        <div className="text-gray-500 mb-4">Task ID is missing.</div>
-        <button onClick={() => navigate(-1)} className="text-blue-600 font-medium">Go back</button>
+        <div className="text-gray-500 mb-4">Không tìm thấy mã công việc.</div>
+        <button onClick={() => navigate(-1)} className="text-blue-600 font-medium">Quay lại</button>
       </div>
     );
   }
-
-  const getStatusStyle = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed': return { bg: 'bg-emerald-500', text: 'text-white', light: 'bg-emerald-50 text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-400' };
-      case 'in progress': return { bg: 'bg-blue-500', text: 'text-white', light: 'bg-blue-50 text-blue-700', border: 'border-blue-200', dot: 'bg-blue-400' };
-      case 'pending': return { bg: 'bg-amber-500', text: 'text-white', light: 'bg-amber-50 text-amber-700', border: 'border-amber-200', dot: 'bg-amber-400' };
-      default: return { bg: 'bg-gray-500', text: 'text-white', light: 'bg-gray-50 text-gray-700', border: 'border-gray-200', dot: 'bg-gray-400' };
-    }
-  };
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
@@ -279,60 +271,7 @@ export default function TaskDetails() {
     }
   };
 
-  const StatusDropdown = ({ currentStatus, onStatusChange, size = 'md' }) => {
-    const statuses = [
-      { id: 'pending', label: 'Pending', ...getStatusStyle('pending') },
-      { id: 'in progress', label: 'In Progress', ...getStatusStyle('in progress') },
-      { id: 'completed', label: 'Completed', ...getStatusStyle('completed') },
-    ];
 
-    const currentStyle = getStatusStyle(currentStatus);
-
-    return (
-      <Menu as="div" className="relative inline-block text-left">
-        <Menu.Button className={`
-          flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm
-          ${size === 'sm' ? 'px-3 py-1 text-[9px]' : 'px-5 py-2 text-[11px]'}
-          ${currentStyle.light} ${currentStyle.border} hover:shadow-md active:scale-95
-        `}>
-          <span className={`w-2 h-2 rounded-full ${currentStyle.bg} animate-pulse`} />
-          {currentStatus || 'Pending'}
-          <ChevronDownIcon className="w-4 h-4 opacity-50" />
-        </Menu.Button>
-
-        <Transition
-          as={React.Fragment}
-          enter="transition ease-out duration-100"
-          enterFrom="transform opacity-0 scale-95"
-          enterTo="transform opacity-100 scale-100"
-          leave="transition ease-in duration-75"
-          leaveFrom="transform opacity-100 scale-100"
-          leaveTo="transform opacity-0 scale-95"
-        >
-          <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left rounded-2xl bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
-            <div className="space-y-1">
-              {statuses.map((s) => (
-                <Menu.Item key={s.id}>
-                  {({ active }) => (
-                    <button
-                      onClick={() => onStatusChange(s.id)}
-                      className={`
-                        w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                        ${active ? `${s.light} translate-x-1` : 'text-gray-600 hover:bg-gray-50'}
-                      `}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${s.bg}`} />
-                      {s.label}
-                    </button>
-                  )}
-                </Menu.Item>
-              ))}
-            </div>
-          </Menu.Items>
-        </Transition>
-      </Menu>
-    );
-  };
 
   return (
     <div className="space-y-6 pb-20">
@@ -342,7 +281,7 @@ export default function TaskDetails() {
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
         >
           <ArrowLeftIcon className="w-4 h-4" />
-          Back
+          Quay lại
         </button>
 
         <button 
@@ -350,7 +289,7 @@ export default function TaskDetails() {
           className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm"
         >
           <TrashIcon className="w-4 h-4" />
-          Delete Task
+          Xóa công việc
         </button>
       </div>
 
@@ -361,10 +300,10 @@ export default function TaskDetails() {
             <div>
               <div className="flex items-center gap-3 mb-1.5">
                 <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
-                  {parentTask ? 'Sub-task' : 'Task'} ID: REQ-{fullTask.task_id}
+                  {parentTask ? 'Mã công việc con' : 'Mã công việc'}: REQ-{fullTask.task_id}
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize ${getPriorityColor(fullTask.priority)}`}>
-                  {fullTask.priority || 'Normal'} Priority
+                  Mức độ {fullTask.priority === 'High' ? 'Cao' : fullTask.priority === 'Medium' ? 'Trung bình' : fullTask.priority === 'Low' ? 'Thấp' : 'Bình thường'}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -393,7 +332,7 @@ export default function TaskDetails() {
                 ) : (
                   <div className="flex items-center gap-3 mt-2">
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                      {fullTask.title || fullTask.name || 'Untitled Task'}
+                      {fullTask.title || fullTask.name || 'Công việc không tên'}
                     </h1>
                     <button 
                       onClick={() => {
@@ -401,7 +340,7 @@ export default function TaskDetails() {
                         setIsEditingTitle(true);
                       }}
                       className="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all"
-                      title="Edit Title"
+                      title="Sửa tiêu đề"
                     >
                       <PencilSquareIcon className="w-5 h-5" />
                     </button>
@@ -414,7 +353,7 @@ export default function TaskDetails() {
                     <ListBulletIcon className="w-3 h-3" />
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">Belongs to parent task</p>
+                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">Thuộc công việc cha</p>
                     <button 
                       onClick={() => navigate(`/tasks/${parentTask.task_id}`, { state: { task: parentTask } })}
                       className="text-xs font-bold text-blue-700 hover:underline text-left"
@@ -426,8 +365,9 @@ export default function TaskDetails() {
               )}
             </div>
             <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
-              <StatusDropdown 
+              <TaskStatusDropdown 
                 currentStatus={fullTask.status} 
+                dueDate={fullTask.due_date}
                 onStatusChange={async (val) => {
                   const res = await taskService.updateTask(fullTask.task_id, { status: val });
                   if (res.success) {
@@ -445,17 +385,17 @@ export default function TaskDetails() {
           <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <UserIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Assigner:</span>
-              <span className="text-gray-900 font-semibold">{fullTask.assigner || 'Unassigned'}</span>
+              <span className="text-gray-500 font-medium">Người giao:</span>
+              <span className="text-gray-900 font-semibold">{fullTask.assigner || 'Chưa phân công'}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <ClockIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Start:</span>
+              <span className="text-gray-500 font-medium">Bắt đầu:</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.start_time)}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Due:</span>
+              <span className="text-gray-500 font-medium">Hạn chót:</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
             </div>
           </div>
@@ -466,7 +406,7 @@ export default function TaskDetails() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <DocumentTextIcon className="w-5 h-5 text-gray-400" />
-              <h2 className="text-lg font-bold text-gray-900">Description</h2>
+              <h2 className="text-lg font-bold text-gray-900">Mô tả</h2>
             </div>
             {!isEditingDescription && (
               <button 
@@ -477,7 +417,7 @@ export default function TaskDetails() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
               >
                 <PencilSquareIcon className="w-3.5 h-3.5" />
-                Edit Description
+                Sửa mô tả
               </button>
             )}
           </div>
@@ -488,7 +428,7 @@ export default function TaskDetails() {
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="w-full bg-gray-50 border border-indigo-100 rounded-2xl p-4 sm:p-6 text-sm sm:text-base text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px] resize-y"
-                placeholder="Enter task description..."
+                placeholder="Nhập mô tả công việc..."
                 autoFocus
               />
               <div className="flex justify-end gap-2">
@@ -496,21 +436,21 @@ export default function TaskDetails() {
                   onClick={() => setIsEditingDescription(false)}
                   className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button 
                   onClick={handleUpdateDescription}
                   className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                 >
                   <CheckCircleIcon className="w-4 h-4" />
-                  Save Changes
+                  Lưu thay đổi
                 </button>
               </div>
             </div>
           ) : (
             <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
-                {fullTask.description || 'No description provided.'}
+                {fullTask.description || 'Không có mô tả nào.'}
               </p>
             </div>
           )}
@@ -529,7 +469,7 @@ export default function TaskDetails() {
         <div className="p-5 sm:p-8 bg-gray-50/30">
           <div className="flex items-center gap-2 mb-4 sm:mb-6">
             <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400" />
-            <h2 className="text-lg font-bold text-gray-900">Comments</h2>
+            <h2 className="text-lg font-bold text-gray-900">Bình luận</h2>
           </div>
 
           <div className="space-y-4 mb-4 sm:mb-6">
@@ -548,7 +488,7 @@ export default function TaskDetails() {
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
+              placeholder="Viết bình luận..."
               className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-24"
             />
             <button
@@ -565,22 +505,22 @@ export default function TaskDetails() {
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
           <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
-          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">Sub-Tasks</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">Công việc con</h2>
           <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
-            {subTasks.length} {subTasks.length === 1 ? 'Task' : 'Tasks'}
+            {subTasks.length} Công việc
           </span>
           <button
             onClick={() => navigate(`/tasks/sub-add/${id}`, { state: { parentTask: fullTask } })}
             className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
           >
             <PlusIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Sub-task</span>
+            <span className="hidden sm:inline">Thêm công việc con</span>
           </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
           {subTasks.length === 0 ? (
-            <p className="text-center text-gray-400 py-8 font-semibold">No sub-tasks found.</p>
+            <p className="text-center text-gray-400 py-8 font-semibold">Không tìm thấy công việc con nào.</p>
           ) : (
             <div className="space-y-4 sm:space-y-6">
               {subTasks.map(sub => (
@@ -590,8 +530,9 @@ export default function TaskDetails() {
                       <div>
                         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
                         <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
-                          <StatusDropdown 
+                          <TaskStatusDropdown 
                             currentStatus={sub.status} 
+                            dueDate={sub.due_date}
                             size="sm"
                             onStatusChange={async (val) => {
                               const res = await taskService.updateTask(sub.task_id, { status: val });
@@ -615,7 +556,7 @@ export default function TaskDetails() {
                         <button
                           onClick={() => navigate(`/tasks/${sub.task_id}`, { state: { task: sub } })}
                           className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
-                          title="View Details"
+                          title="Xem chi tiết"
                         >
                           <EyeIcon className="w-5 h-5" />
                         </button>
@@ -626,7 +567,7 @@ export default function TaskDetails() {
                     <div className="bg-gray-50/50 rounded-2xl p-4">
                       <div className="flex items-center gap-2 mb-4 text-gray-400">
                         <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Comments</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Bình luận</span>
                       </div>
                       <div className="space-y-3 mb-4">
                         {(sub.comments || []).map(sc => (
@@ -644,7 +585,7 @@ export default function TaskDetails() {
                           type="text"
                           value={sub.newComment || ''}
                           onChange={(e) => setSubTasks(prev => prev.map(item => item.task_id === sub.task_id ? { ...item, newComment: e.target.value } : item))}
-                          placeholder="Add a comment for this sub-task..."
+                          placeholder="Thêm bình luận cho công việc con này..."
                           className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
                           onKeyPress={(e) => e.key === 'Enter' && handleAddSubTaskComment(sub.task_id)}
                         />

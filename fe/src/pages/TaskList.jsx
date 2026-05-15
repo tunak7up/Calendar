@@ -143,6 +143,25 @@ export default function TaskList({ isAdmin }) {
     // Default: group parents with their children
     const parents = filteredTasks.filter(t => !t.parent_id);
     const children = filteredTasks.filter(t => t.parent_id);
+
+    // Sort parents by status priority
+    parents.sort((a, b) => {
+      const getPriority = (task) => {
+        if (isOverdue(task)) return 1;
+        if (task.status === 'pending') return 2;
+        if (task.status === 'in progress') return 3;
+        if (task.status === 'completed') return 4;
+        return 5;
+      };
+      // If priority is same, sort by due date (earliest first)
+      const priorityDiff = getPriority(a) - getPriority(b);
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      const dateA = new Date(a.due_date).getTime();
+      const dateB = new Date(b.due_date).getTime();
+      return dateA - dateB;
+    });
+
     const sorted = [];
     parents.forEach(p => {
       sorted.push(p);

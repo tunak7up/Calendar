@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const personController = require('../controllers/personController');
+const { authorize } = require('../middleware/auth');
 
-router.post('/', personController.createPerson);
+router.post('/', authorize('manager'), personController.createPerson);
 router.get('/', personController.getAllPersons);
 router.get('/:id', personController.getPersonById);
 router.get('/role/:role', personController.getPersonByRole);

@@ -146,6 +146,37 @@ const updateTaskTitleOrDescription = async (req, res) => {
         sendRes(res, 404, 'Task not found', null, error.message);
     }
 };
+const addParticipantToTask = async (req, res) => {
+    try {
+        const participant = await taskService.addParticipantToTask(req.params.id, req.body);
+        sendRes(res, 201, 'Participant added successfully', participant);
+    } catch (error) {
+        console.error('Error in addParticipantToTask:', error);
+        sendRes(res, 400, 'Error adding participant', null, error.message);
+    }
+};
+
+const updateParticipantRole = async (req, res) => {
+    try {
+        const { id, participantId } = req.params;
+        await taskService.updateParticipantRole(id, participantId, req.body);
+        sendRes(res, 200, 'Participant role updated successfully', null);
+    } catch (error) {
+        console.error('Error in updateParticipantRole:', error);
+        sendRes(res, 400, 'Error updating role', null, error.message);
+    }
+};
+
+const removeParticipantFromTask = async (req, res) => {
+    try {
+        const { id, participantId } = req.params;
+        await taskService.removeParticipantFromTask(id, participantId);
+        sendRes(res, 200, 'Participant removed successfully', null);
+    } catch (error) {
+        console.error('Error in removeParticipantFromTask:', error);
+        sendRes(res, 400, 'Error removing participant', null, error.message);
+    }
+};
 
 module.exports = {
     createTask,
@@ -162,5 +193,8 @@ module.exports = {
     getAllTasksByPersonId,
     getAllPendingTasksByPersonId,
     getTasksBeforeDueDate,
-    updateTaskTitleOrDescription
+    updateTaskTitleOrDescription,
+    addParticipantToTask,
+    updateParticipantRole,
+    removeParticipantFromTask
 };

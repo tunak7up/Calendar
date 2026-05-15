@@ -117,7 +117,7 @@ const exportDailyReport = async (personIds, startDate, endDate) => {
         ];
 
         let totalMinutes = 0;
-
+        let netMinutes = 0;
         reports.forEach(r => {
             const checkIn = new Date(`${r.working_date} ${r.check_in}`);
             const checkOut = new Date(`${r.working_date} ${r.check_out}`);
@@ -128,9 +128,14 @@ const exportDailyReport = async (personIds, startDate, endDate) => {
             const spansLunch = checkIn < lunchStart && checkOut > lunchEnd;
             const breakDeduction = spansLunch ? BREAK_MINUTES : 0;
 
-            const rawMinutes = (checkOut - checkIn) / 60000;
-            const netMinutes = Math.max(0, rawMinutes - breakDeduction);
-            totalMinutes += netMinutes;
+            
+            if(r.check_in && r.check_out) {
+                const rawMinutes = (checkOut - checkIn) / 60000;
+                netMinutes = Math.max(0, rawMinutes - breakDeduction);
+                totalMinutes += netMinutes;
+            } else {
+                netMinutes = 0;
+            }
 
             sheet.addRow({
                 person_name: r.reporter?.name ?? '',

@@ -84,7 +84,7 @@ function App() {
   const isCalendarPage = location.pathname === '/schedule' || location.pathname === '/admin/schedule';
 
   return (
-    <div className="antialiased bg-gray-50 min-h-screen flex flex-col">
+    <div className="antialiased bg-gray-200 min-h-screen flex flex-col">
       {location.pathname !== '/login' && (
         <HeaderPage
           activeItem={location.pathname}
@@ -97,9 +97,9 @@ function App() {
       {location.pathname === '/login' ? (
         <main className="flex-1">
           <Routes>
-            <Route path="/login" element={<Login onLogin={(data) => { 
+            <Route path="/login" element={<Login onLogin={(data) => {
               const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
-              navigate(payload.role === 'manager' ? '/admin/dashboard' : '/dashboard'); 
+              navigate(payload.role === 'manager' ? '/admin/dashboard' : '/dashboard');
             }} />} />
           </Routes>
         </main>

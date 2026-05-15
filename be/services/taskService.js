@@ -317,5 +317,6 @@ module.exports = {
     deleteTask,
     addParticipantToTask,
     updateParticipantRole,
-    removeParticipantFromTask
+    removeParticipantFromTask,
+    updateTaskTitleOrDescription
 };

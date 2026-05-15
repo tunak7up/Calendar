@@ -225,8 +225,9 @@ const updateTask = async (id, data) => {
         const updatedParent = await parentTask.update(data, { transaction: t });
 
         if (data.status === 'completed') {
+            await parentTask.update({ ended_at: new Date() }, { transaction: t });
             await task.update(
-                { status: 'completed' },
+                { status: 'completed', ended_at: new Date() },
                 {
                     where: { parent_id: parentTask.task_id },
                     transaction: t,

@@ -7,19 +7,28 @@ import { BASE_URL } from './api';
  * @returns {{ accessToken, refreshToken }}
  */
 export const loginApi = async (username, password) => {
-  const response = await fetch(`${BASE_URL}/login`, {
+  const response = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    throw new Error('Đăng nhập thất bại. Server trả về nội dung không hợp lệ.');
+  }
 
-  if (!response.ok || !data.success) {
+  if (!response.ok) {
     throw new Error(data.message || 'Đăng nhập thất bại');
   }
 
-  return data.data; // { accessToken, refreshToken }
+  return {
+    accessToken: data.accessToken || data.token,
+    refreshToken: data.refreshToken || data.refresh_token,
+    user: data.user || data.data?.user,
+  };
 };
 
 /**
@@ -28,17 +37,25 @@ export const loginApi = async (username, password) => {
  * @returns {{ accessToken }}
  */
 export const refreshTokenApi = async (refreshToken) => {
-  const response = await fetch(`${BASE_URL}/login/refresh`, {
+  const response = await fetch(`${BASE_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    throw new Error('Không thể làm mới token. Server trả về nội dung không hợp lệ.');
+  }
 
-  if (!response.ok || !data.success) {
+  if (!response.ok) {
     throw new Error(data.message || 'Không thể làm mới token');
   }
 
-  return data.data; // { accessToken }
+  return {
+    accessToken: data.accessToken || data.token,
+    refreshToken: data.refreshToken || data.refresh_token,
+  };
 };

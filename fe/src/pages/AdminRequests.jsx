@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ClipboardDocumentCheckIcon, 
   CheckIcon,
   XMarkIcon,
   ClockIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../services/api';
 import { requestService } from '../services/requestService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
+import SortableTable from '../components/SortableTable';
 
 export default function AdminRequests() {
   const [requests, setRequests] = useState([]);
@@ -96,41 +94,58 @@ export default function AdminRequests() {
     }
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (filterStatus !== 'all' && req.status?.toLowerCase() !== filterStatus) return false;
-    if (filterType !== 'all' && req.type?.toLowerCase() !== filterType) return false;
-    
-    // Multi-employee filter
-    if (selectedEmployeeIds.length > 0) {
-      if (!selectedEmployeeIds.includes(req.requester_id?.toString()) && 
-          !selectedEmployeeIds.includes(req.requester?.person_id?.toString())) {
-        return false;
-      }
-    }
-
-    if (searchTerm) {
-      const nameMatch = req.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
-      const reasonMatch = req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
-      if (!nameMatch && !reasonMatch) return false;
-    }
-    return true;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredRequests.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedRequests = filteredRequests.slice(startIndex, startIndex + pageSize);
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
 
   const handleRowClick = (req) => {
     navigate(`/history/${req.request_id || req.id}`, { state: { request: req } });
   };
+
+  const filteredRequests = useMemo(() => {
+    let list = requests.filter(req => {
+      if (filterStatus !== 'all' && req.status?.toLowerCase() !== filterStatus) return false;
+      if (filterType !== 'all' && req.type?.toLowerCase() !== filterType) return false;
+      if (selectedEmployeeIds.length > 0) {
+        if (!selectedEmployeeIds.includes(req.requester_id?.toString()) &&
+            !selectedEmployeeIds.includes(req.requester?.person_id?.toString())) return false;
+      }
+      if (searchTerm) {
+        const nameMatch = req.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          req.requester?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+        const reasonMatch = req.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+        if (!nameMatch && !reasonMatch) return false;
+      }
+      return true;
+    });
+
+    if (sortKey) {
+      list = [...list].sort((a, b) => {
+        let aVal, bVal;
+        if (sortKey === 'requester') {
+          aVal = a.requester?.name || a.requester?.username || '';
+          bVal = b.requester?.name || b.requester?.username || '';
+        } else if (sortKey === 'created_at') {
+          aVal = new Date(a.created_at).getTime();
+          bVal = new Date(b.created_at).getTime();
+        } else {
+          aVal = a[sortKey] ?? '';
+          bVal = b[sortKey] ?? '';
+        }
+        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        return sortDir === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+      });
+    }
+
+    return list;
+  }, [requests, filterStatus, filterType, selectedEmployeeIds, searchTerm, sortKey, sortDir]);
+
+  const columns = [
+    { key: 'requester', label: 'Requester', sortable: true },
+    { key: 'reason',    label: 'Reason',    sortable: true },
+    { key: 'created_at', label: 'Date Submitted', sortable: true },
+    { key: 'status',   label: 'Status',    sortable: true, align: 'center' },
+    { key: 'actions',  label: 'Actions',   sortable: false, align: 'center' },
+  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -167,32 +182,6 @@ export default function AdminRequests() {
           />
         </div>
         <div className="flex gap-4">
-          <select
-            value={filterType}
-            onChange={(e) => {
-              setFilterType(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="flex-1 border border-gray-200 bg-white text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none"
-          >
-            <option value="all">All Types</option>
-            <option value="register">Work Registration</option>
-            <option value="leave">Leave Request</option>
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => {
-              setFilterStatus(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="flex-1 border border-gray-200 bg-white text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-
           <div className="relative flex-1 min-w-[150px]">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <CalendarIcon className="w-4 h-4 text-gray-400" />
@@ -223,120 +212,63 @@ export default function AdminRequests() {
 
 
 
-      <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden flex flex-col">
-        <div className="overflow-x-auto overflow-y-auto h-[500px] custom-scrollbar">
-          <table className="w-full text-left border-collapse relative min-w-[700px]">
-            <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10 shadow-sm">
-              <tr>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Requester</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Reason</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Date Submitted</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">Loading requests...</td>
-                </tr>
-              ) : paginatedRequests.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">No requests found.</td>
-                </tr>
-              ) : (
-                paginatedRequests.map((req) => (
-                  <React.Fragment key={req.request_id || req.id}>
-                    <tr 
-                      onClick={() => handleRowClick(req)}
-                      className={`transition-colors group border-b border-gray-50 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
-                    >
-                      <td className="py-4 px-6 text-sm font-semibold text-gray-900">
-                        {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? 'Đăng ký lịch làm việc' : req.reason}>
-                        {req.type === 'register' ? 'Đăng ký lịch làm việc' : (req.reason || 'N/A')}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-500 font-medium flex items-center gap-2">
-                        <ClockIcon className="w-4 h-4 text-gray-400" />
-                        {new Date(req.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        {getStatusBadge(req.status)}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        {req.status?.toLowerCase() === 'pending' && (
-                          <div className="flex justify-center gap-2">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(req.request_id || req.id, 'approved');
-                              }}
-                              title="Approve"
-                              className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
-                            >
-                              <CheckIcon className="w-5 h-5" />
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(req.request_id || req.id, 'rejected');
-                              }}
-                              title="Reject"
-                              className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
-                            >
-                              <XMarkIcon className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  </React.Fragment>
-                ))
+      <SortableTable
+        columns={columns}
+        data={filteredRequests}
+        loading={loading}
+        emptyMessage="No requests found."
+        pageSize={pageSize}
+        currentPage={currentPage}
+        totalItems={filteredRequests.length}
+        onPageChange={setCurrentPage}
+        onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+        tableClassName="min-w-[700px]"
+        stickyHeader
+        containerHeight="h-[500px]"
+        renderRow={(req) => (
+          <tr
+            key={req.request_id || req.id}
+            onClick={() => handleRowClick(req)}
+            className={`transition-colors border-b border-gray-50 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
+          >
+            <td className="py-4 px-6 text-sm font-semibold text-gray-900">
+              {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
+            </td>
+            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? 'Đăng ký lịch làm việc' : req.reason}>
+              {req.type === 'register' ? 'Đăng ký lịch làm việc' : (req.reason || 'N/A')}
+            </td>
+            <td className="py-4 px-6 text-sm text-gray-500 font-medium">
+              <span className="flex items-center gap-2">
+                <ClockIcon className="w-4 h-4 text-gray-400" />
+                {new Date(req.created_at).toLocaleDateString()}
+              </span>
+            </td>
+            <td className="py-4 px-6 text-center">
+              {getStatusBadge(req.status)}
+            </td>
+            <td className="py-4 px-6 text-center">
+              {req.status?.toLowerCase() === 'pending' && (
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'approved'); }}
+                    title="Approve"
+                    className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
+                  >
+                    <CheckIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'rejected'); }}
+                    title="Reject"
+                    className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-        
-        {filteredRequests.length > 0 && (
-          <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-gray-50/50 gap-4">
-            <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-              Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredRequests.length)}</span> of <span className="font-semibold text-gray-900">{filteredRequests.length}</span> requests
-            </span>
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronLeftIcon className="w-5 h-5" />
-              </button>
-              
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i + 1}
-                  onClick={() => goToPage(i + 1)}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                    currentPage === i + 1 
-                      ? 'text-white bg-[#0056b3]' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              
-              <button 
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+            </td>
+          </tr>
         )}
-      </div>
+      />
     </div>
   );
 }

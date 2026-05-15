@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   MagnifyingGlassIcon, 
   PlusIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   EyeIcon,
   CalendarIcon,
   BriefcaseIcon
@@ -12,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { requestService } from '../services/requestService';
 import { useAuth } from '../context/AuthContext';
+import SortableTable from '../components/SortableTable';
 
 export default function RegistrationHistory() {
   const navigate = useNavigate();
@@ -55,30 +54,42 @@ export default function RegistrationHistory() {
   }, []);
 
 
-  const filteredData = requests.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.approver.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchType = filterType === 'All Request Types' || item.name === filterType;
-    const matchStatus = filterStatus === 'All Statuses' || item.status === filterStatus;
-    
-    return matchSearch && matchType && matchStatus;
-  });
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
+  const filteredData = useMemo(() => {
+    let list = requests.filter(item => {
+      const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.approver.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchType = filterType === 'All Request Types' || item.name === filterType;
+      const matchStatus = filterStatus === 'All Statuses' || item.status === filterStatus;
+      return matchSearch && matchType && matchStatus;
+    });
 
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+    if (sortKey) {
+      list = [...list].sort((a, b) => {
+        const aVal = sortKey === 'date' ? new Date(a[sortKey]).getTime() : (a[sortKey] ?? '');
+        const bVal = sortKey === 'date' ? new Date(b[sortKey]).getTime() : (b[sortKey] ?? '');
+        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        return sortDir === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+      });
     }
-  };
+
+    return list;
+  }, [requests, searchTerm, filterType, filterStatus, sortKey, sortDir]);
 
   const handleRowClick = (item) => {
     navigate(`/history/${item.id}`, { state: { request: item } });
   };
+
+  const columns = [
+    { key: 'name',     label: 'Request Name',  sortable: true },
+    { key: 'date',     label: 'Date Created',   sortable: true },
+    { key: 'refId',    label: 'Reference ID',   sortable: true },
+    { key: 'status',   label: 'Status',         sortable: true },
+    { key: 'approver', label: 'Approver',       sortable: true },
+  ];
 
   return (
     <div className="space-y-4 pb-20">
@@ -198,122 +209,59 @@ export default function RegistrationHistory() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto overflow-y-auto h-[500px] custom-scrollbar">
-          <table className="w-full text-sm text-left text-gray-500 relative min-w-[700px]">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50/90 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10 shadow-sm">
-              <tr>
-                <th scope="col" className="px-6 py-4 font-semibold">Request Name</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Date Created</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Reference ID</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Status</th>
-                <th scope="col" className="px-6 py-4 font-semibold">Approver</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-10 text-center text-gray-400">Loading requests...</td>
-                </tr>
-              ) : paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-10 text-center text-gray-400">No requests found.</td>
-                </tr>
-              ) : (
-                paginatedData.map((item) => (
-                  <React.Fragment key={item.id}>
-                    <tr 
-                      onClick={() => handleRowClick(item)}
-                      className={`border-b border-gray-50 transition-colors cursor-pointer select-none ${item.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${item.type === 'leave' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'}`}>
-                            {item.type === 'leave' ? (
-                              <CalendarIcon className="w-5 h-5" />
-                            ) : (
-                              <BriefcaseIcon className="w-5 h-5" />
-                            )}
-                          </div>
-                          <span className="font-semibold text-gray-900">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">
-                        {item.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                        {item.refId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.status === 'Chờ phê duyệt' && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-                            {item.status}
-                          </span>
-                        )}
-                        {item.status === 'Đã duyệt' && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                            {item.status}
-                          </span>
-                        )}
-                        {item.status === 'Đã hủy' && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                            {item.status}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {item.approver}
-                      </td>
-                    </tr>
-                  </React.Fragment>
-                ))
+      <SortableTable
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        emptyMessage="No requests found."
+        pageSize={pageSize}
+        currentPage={currentPage}
+        totalItems={filteredData.length}
+        onPageChange={setCurrentPage}
+        onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+        tableClassName="min-w-[700px]"
+        stickyHeader
+        containerHeight="h-[500px]"
+        renderRow={(item) => (
+          <tr
+            key={item.id}
+            onClick={() => handleRowClick(item)}
+            className={`border-b border-gray-50 transition-colors cursor-pointer select-none ${item.type === 'leave' ? 'bg-orange-100/50 hover:bg-orange-200/60' : 'bg-blue-100/50 hover:bg-blue-200/60'}`}
+          >
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${item.type === 'leave' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'}`}>
+                  {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> : <BriefcaseIcon className="w-5 h-5" />}
+                </div>
+                <span className="font-semibold text-gray-900">{item.name}</span>
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">{item.date}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-gray-500">{item.refId}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              {item.status === 'Chờ phê duyệt' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                  {item.status}
+                </span>
               )}
-            </tbody>
-          </table>
-        </div>
-        
-        {filteredData.length > 0 && (
-          <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-[#fafafa] gap-4">
-            <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-              Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, filteredData.length)}</span> of <span className="font-semibold text-gray-900">{filteredData.length}</span> requests
-            </span>
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronLeftIcon className="w-5 h-5" />
-              </button>
-              
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i + 1}
-                  onClick={() => goToPage(i + 1)}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                    currentPage === i + 1 
-                      ? 'text-white bg-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              
-              <button 
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-1 text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+              {item.status === 'Đã duyệt' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  {item.status}
+                </span>
+              )}
+              {item.status === 'Đã hủy' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {item.status}
+                </span>
+              )}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{item.approver}</td>
+          </tr>
         )}
-      </div>
+      />
     </div>
   );
 }

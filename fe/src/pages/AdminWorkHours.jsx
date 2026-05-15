@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ClockIcon,
   CalendarDaysIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   FunnelIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
@@ -12,6 +10,7 @@ import {
 import { apiFetch, BASE_URL } from '../services/api';
 import { scheduleService } from '../services/scheduleService';
 import EmployeeMultiFilter from '../components/EmployeeMultiFilter';
+import SortableTable from '../components/SortableTable';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -181,9 +180,36 @@ export default function AdminWorkHours() {
     return selectedEmployeeIds.includes(emp.person_id.toString());
   });
 
-  const totalPages = Math.ceil(employeeSummary.length / pageSize);
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
+
+  const sortedSummary = useMemo(() => {
+    let list = [...employeeSummary];
+    if (sortKey) {
+      list.sort((a, b) => {
+        const aVal = a[sortKey] ?? '';
+        const bVal = b[sortKey] ?? '';
+        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        return sortDir === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+      });
+    }
+    return list;
+  }, [employeeSummary, sortKey, sortDir]);
+
+  const totalPages = Math.ceil(sortedSummary.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = employeeSummary.slice(startIndex, startIndex + pageSize);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const columns = [
+    { key: 'name',            label: 'Employee',    sortable: true },
+    { key: 'totalDays',       label: 'Work Days',   sortable: true, align: 'center' },
+    { key: 'registeredHours', label: 'Registered',  sortable: true, align: 'center' },
+    { key: 'actualHours',     label: 'Actual',      sortable: true, align: 'center' },
+    { key: 'status',          label: 'Status',      sortable: false, align: 'center' },
+  ];
 
   const d = new Date(startDate);
   const monthYearLabel = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
@@ -257,9 +283,6 @@ export default function AdminWorkHours() {
 
         <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center">
           <div className="w-full">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-              <FunnelIcon className="w-3 h-3" /> Filter Employees
-            </p>
             <EmployeeMultiFilter
               employees={employees}
               selectedIds={selectedEmployeeIds}
@@ -272,98 +295,55 @@ export default function AdminWorkHours() {
         </div>
       </div>
 
-      {/* Table Area */}
-      <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-gray-50/80 border-b border-gray-100">
-              <tr>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Employee</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Work Days</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Registered</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Actual</th>
-                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400 font-medium">Loading data...</td>
-                </tr>
-              ) : paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400 font-medium">No records found for this period.</td>
-                </tr>
-              ) : (
-                paginatedData.map((emp) => (
-                  <tr key={emp.person_id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name || emp.username)}&background=e0e7ff&color=4338ca&rounded=true&size=40&bold=true`}
-                          alt={emp.name}
-                          className="w-10 h-10 rounded-full border border-gray-100"
-                        />
-                        <div>
-                          <p className="text-sm font-bold text-gray-900">{emp.name || emp.username}</p>
-                          <p className="text-xs text-gray-400">ID: {emp.person_id}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                        {emp.totalDays} days
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <span className="text-sm font-extrabold text-gray-900">{emp.registeredHours}h</span>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <span className={`text-sm font-extrabold ${emp.actualHours >= emp.registeredHours ? 'text-emerald-600' : 'text-blue-600'}`}>
-                        {emp.actualHours}h
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      {emp.actualHours >= emp.registeredHours ? (
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Full Completed</span>
-                      ) : (
-                        <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Partial</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {employeeSummary.length > 0 && (
-          <div className="px-6 py-4 flex items-center justify-between border-t border-gray-100 bg-gray-50/50">
-            <span className="text-sm text-gray-500">
-              Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, employeeSummary.length)}</span> of <span className="font-semibold text-gray-900">{employeeSummary.length}</span>
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 text-gray-400 hover:text-gray-900 rounded-xl hover:bg-white hover:shadow-sm transition-all disabled:opacity-30"
-              >
-                <ChevronLeftIcon className="w-5 h-5" />
-              </button>
-              <div className="flex items-center px-4 py-1 bg-white rounded-xl border border-gray-100 text-sm font-bold text-gray-700">
-                {currentPage} / {totalPages || 1}
+      <SortableTable
+        columns={columns}
+        data={sortedSummary}
+        loading={loading}
+        emptyMessage="No records found for this period."
+        pageSize={pageSize}
+        currentPage={currentPage}
+        totalItems={sortedSummary.length}
+        onPageChange={setCurrentPage}
+        onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+        tableClassName="min-w-[800px]"
+        renderRow={(emp) => (
+          <tr key={emp.person_id} className="hover:bg-blue-50/30 transition-colors">
+            <td className="py-4 px-6">
+              <div className="flex items-center gap-3">
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name || emp.username)}&background=e0e7ff&color=4338ca&rounded=true&size=40&bold=true`}
+                  alt={emp.name}
+                  className="w-10 h-10 rounded-full border border-gray-100"
+                />
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{emp.name || emp.username}</p>
+                  <p className="text-xs text-gray-400">ID: {emp.person_id}</p>
+                </div>
               </div>
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 text-gray-400 hover:text-gray-900 rounded-xl hover:bg-white hover:shadow-sm transition-all disabled:opacity-30"
-              >
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+            </td>
+            <td className="py-4 px-6 text-center">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
+                {emp.totalDays} days
+              </span>
+            </td>
+            <td className="py-4 px-6 text-center">
+              <span className="text-sm font-extrabold text-gray-900">{emp.registeredHours}h</span>
+            </td>
+            <td className="py-4 px-6 text-center">
+              <span className={`text-sm font-extrabold ${emp.actualHours >= emp.registeredHours ? 'text-emerald-600' : 'text-blue-600'}`}>
+                {emp.actualHours}h
+              </span>
+            </td>
+            <td className="py-4 px-6 text-center">
+              {emp.actualHours >= emp.registeredHours ? (
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100">Full Completed</span>
+              ) : (
+                <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-100">Partial</span>
+              )}
+            </td>
+          </tr>
         )}
-      </div>
+      />
     </div>
   );
 }

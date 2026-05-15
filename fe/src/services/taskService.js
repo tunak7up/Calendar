@@ -50,6 +50,11 @@ export const taskService = {
     body: JSON.stringify(taskData),
   }),
 
+  updateTaskTitleOrDescription: (id, taskData) => apiFetch(`/task/update-title-description/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(taskData),
+  }),
+
   // --- Delete ---
   deleteTask: (id) => apiFetch(`/task/${id}`, {
     method: 'DELETE',

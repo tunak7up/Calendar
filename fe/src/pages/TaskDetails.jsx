@@ -16,7 +16,8 @@ import {
   PlusIcon,
   EyeIcon,
   UserGroupIcon,
-  TrashIcon
+  TrashIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
@@ -43,6 +44,12 @@ export default function TaskDetails() {
   const [allUsers, setAllUsers] = useState([]); // Matching AddTask
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [participantFormData, setParticipantFormData] = useState({ person_id: '', role: 'assignee' });
+
+  // Edit Title/Description State
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState('');
 
   const fetchTaskData = async () => {
     try {
@@ -160,6 +167,31 @@ export default function TaskDetails() {
     } catch (error) {
       console.error('Error deleting task:', error);
       alert('Failed to delete task');
+    }
+  };
+
+  const handleUpdateTitle = async () => {
+    if (!editedTitle.trim()) return;
+    try {
+      const res = await taskService.updateTaskTitleOrDescription(id, { title: editedTitle.trim() });
+      if (res.success) {
+        setFullTask(prev => ({ ...prev, title: editedTitle.trim() }));
+        setIsEditingTitle(false);
+      }
+    } catch (error) {
+      console.error('Error updating title:', error);
+    }
+  };
+
+  const handleUpdateDescription = async () => {
+    try {
+      const res = await taskService.updateTaskTitleOrDescription(id, { description: editedDescription });
+      if (res.success) {
+        setFullTask(prev => ({ ...prev, description: editedDescription }));
+        setIsEditingDescription(false);
+      }
+    } catch (error) {
+      console.error('Error updating description:', error);
     }
   };
 
@@ -335,9 +367,47 @@ export default function TaskDetails() {
                   {fullTask.priority || 'Normal'} Priority
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                {fullTask.title || fullTask.name || 'Untitled Task'}
-              </h1>
+              <div className="flex items-center gap-3">
+                {isEditingTitle ? (
+                  <div className="flex items-center gap-2 w-full mt-2">
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight bg-gray-50 border border-indigo-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none w-full"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleUpdateTitle();
+                        if (e.key === 'Escape') setIsEditingTitle(false);
+                      }}
+                    />
+                    <div className="flex gap-1">
+                      <button onClick={handleUpdateTitle} className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all">
+                        <CheckCircleIcon className="w-6 h-6" />
+                      </button>
+                      <button onClick={() => setIsEditingTitle(false)} className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-600 hover:text-white transition-all">
+                        <XMarkIcon className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 mt-2">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+                      {fullTask.title || fullTask.name || 'Untitled Task'}
+                    </h1>
+                    <button 
+                      onClick={() => {
+                        setEditedTitle(fullTask.title || fullTask.name || '');
+                        setIsEditingTitle(true);
+                      }}
+                      className="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all"
+                      title="Edit Title"
+                    >
+                      <PencilSquareIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
               {parentTask && (
                 <div className="mt-3 flex items-center gap-2 p-2 bg-blue-50/50 rounded-xl border border-blue-100 w-fit">
                   <div className="p-1 bg-blue-100 text-blue-600 rounded-md">
@@ -393,15 +463,57 @@ export default function TaskDetails() {
 
         {/* Description */}
         <div className="p-5 sm:p-8 border-b border-gray-100">
-          <div className="flex items-center gap-2 mb-4">
-            <DocumentTextIcon className="w-5 h-5 text-gray-400" />
-            <h2 className="text-lg font-bold text-gray-900">Description</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <DocumentTextIcon className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-bold text-gray-900">Description</h2>
+            </div>
+            {!isEditingDescription && (
+              <button 
+                onClick={() => {
+                  setEditedDescription(fullTask.description || '');
+                  setIsEditingDescription(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
+              >
+                <PencilSquareIcon className="w-3.5 h-3.5" />
+                Edit Description
+              </button>
+            )}
           </div>
-          <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
-              {fullTask.description || 'No description provided.'}
-            </p>
-          </div>
+          
+          {isEditingDescription ? (
+            <div className="space-y-3">
+              <textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                className="w-full bg-gray-50 border border-indigo-100 rounded-2xl p-4 sm:p-6 text-sm sm:text-base text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px] resize-y"
+                placeholder="Enter task description..."
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button 
+                  onClick={() => setIsEditingDescription(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleUpdateDescription}
+                  className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                >
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
+                {fullTask.description || 'No description provided.'}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Participants Section - Reused Component */}

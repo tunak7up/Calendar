@@ -16,7 +16,7 @@ const createTask = async (req, res) => {
 const createSubTask = async (req, res) => {
     try {
         const data = { ...req.body, created_by: req.user ? req.user.person_id : req.body.created_by };
-        const task = await taskService.createSubTask(req.params.id, data);
+        const task = await taskService.createSubTask(req.params.parentId, data);
         sendRes(res, 201, 'Sub-task created successfully', task);
     } catch (error) {
         console.error('Error in createSubTask:', error);
@@ -137,16 +137,6 @@ const getTasksBeforeDueDate = async (req, res) => {
     }
 };
 
-const updateTaskTitleOrDescription = async (req, res) => {
-    try {
-        const task = await taskService.updateTaskTitleOrDescription(req.params.id, req.body);
-        sendRes(res, 200, 'Task updated successfully', task
-        );
-    } catch (error) {
-        sendRes(res, 404, 'Task not found', null, error.message);
-    }
-};
-
 module.exports = {
     createTask,
     createSubTask,
@@ -161,6 +151,5 @@ module.exports = {
     getAttachmentsByTaskId,
     getAllTasksByPersonId,
     getAllPendingTasksByPersonId,
-    getTasksBeforeDueDate,
-    updateTaskTitleOrDescription
+    getTasksBeforeDueDate
 };

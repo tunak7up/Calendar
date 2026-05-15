@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.post('/', requestController.createBulkRequest);
 router.get('/', requestController.getAllRequests);
+router.get('/range', requestController.getRequestsByRange);
 router.get('/:id', requestController.getRequestById);
 router.get('/requester/:requesterId', requestController.getRequestsByRequesterId);
 router.put('/:id', requestController.updateRequestStatus);

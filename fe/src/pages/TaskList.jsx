@@ -6,7 +6,10 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
+import { Menu, Transition } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
@@ -43,9 +46,15 @@ function StatusBadge({ status }) {
   return null;
 }
 
-function StatCard({ icon, label, value, iconBg, iconColor }) {
+function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) {
   return (
-    <div className="flex items-center gap-2 sm:gap-3 bg-white border border-gray-100 rounded-lg px-3 sm:px-4 py-2 sm:py-3 shadow-sm w-full">
+    <div 
+      onClick={onClick}
+      className={`
+        flex items-center gap-2 sm:gap-3 bg-white border rounded-xl px-3 sm:px-4 py-2 sm:py-3 shadow-sm w-full cursor-pointer transition-all
+        ${isActive ? 'ring-2 ring-blue-500 border-transparent scale-105 shadow-md' : 'border-gray-100 hover:border-blue-200'}
+      `}
+    >
       <div className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${iconBg}`}>
         <span className={`${iconColor} [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6`}>{icon}</span>
       </div>
@@ -65,24 +74,24 @@ export default function TaskList({ isAdmin }) {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [actionTaskId, setActionTaskId] = useState(null);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const result = isAdmin
+        ? await taskService.getAllTasks()
+        : await taskService.getAllTasksByParticipantId(user.person_id);
+      if (result.success) {
+        setTasks(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const result = isAdmin
-          ? await taskService.getAllTasks()
-          : await taskService.getAllTasksByParticipantId(user.person_id);
-        if (result.success) {
-          setTasks(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTasks();
 
     if (isAdmin) {
@@ -100,9 +109,16 @@ export default function TaskList({ isAdmin }) {
     ? tasks.filter(t => t.participants && t.participants.some(p => selectedEmployeeIds.includes(p.person_id.toString())))
     : tasks;
 
-  const filteredTasks = filterStatus !== 'all'
-    ? employeeTasks.filter(t => t.status === filterStatus)
-    : employeeTasks;
+  const isOverdue = (task) => {
+    if (task.status === 'completed') return false;
+    return new Date(task.due_date) < new Date();
+  };
+
+  const filteredTasks = React.useMemo(() => {
+    if (filterStatus === 'all') return employeeTasks;
+    if (filterStatus === 'overdue') return employeeTasks.filter(t => isOverdue(t));
+    return employeeTasks.filter(t => t.status === filterStatus);
+  }, [employeeTasks, filterStatus]);
 
   // Sort tasks: parents first, then their subtasks
   const displayTasks = React.useMemo(() => {
@@ -124,9 +140,35 @@ export default function TaskList({ isAdmin }) {
     return sorted;
   }, [filteredTasks]);
 
-  const handleRowClick = (taskId) => {
-    setActionTaskId(prev => prev === taskId ? null : taskId);
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const res = await taskService.updateTask(taskId, { status: newStatus });
+      if (res.success) {
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   };
+
+  const handleDeleteTask = async (e, taskId) => {
+    e.stopPropagation(); // Don't navigate
+    if (!window.confirm('Delete this task?')) return;
+    try {
+      const res = await taskService.deleteTask(taskId);
+      if (res.success) {
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const statuses = [
+    { id: 'pending', label: 'Pending', bg: 'bg-gray-400', text: 'text-gray-700', light: 'bg-gray-100', dot: 'bg-gray-400' },
+    { id: 'in progress', label: 'In Progress', bg: 'bg-blue-500', text: 'text-blue-800', light: 'bg-blue-100', dot: 'bg-blue-500' },
+    { id: 'completed', label: 'Completed', bg: 'bg-emerald-500', text: 'text-emerald-800', light: 'bg-emerald-100', dot: 'bg-emerald-500' },
+  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -137,16 +179,27 @@ export default function TaskList({ isAdmin }) {
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage and monitor administrative chronologies</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-           <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border border-gray-200 bg-white text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none flex-1 md:flex-none"
-            >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
+            <div className="relative flex-1 md:flex-none">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className={`
+                  w-full border text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm cursor-pointer appearance-none pr-10
+                  ${filterStatus === 'all' ? 'bg-white border-gray-200 text-gray-700' : 
+                    filterStatus === 'pending' ? 'bg-gray-50 border-gray-300 text-gray-700' :
+                    filterStatus === 'in progress' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                    filterStatus === 'completed' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                    'bg-red-50 border-red-200 text-red-700'}
+                `}
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+              <ChevronDownIcon className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
             {!isAdmin && (
               <button
                 onClick={() => navigate('/tasks/add')}
@@ -182,6 +235,8 @@ export default function TaskList({ isAdmin }) {
           icon={<ClipboardDocumentListIcon />}
           iconBg="bg-gray-100"
           iconColor="text-gray-500"
+          isActive={filterStatus === 'all'}
+          onClick={() => setFilterStatus('all')}
         />
         <StatCard
           label="Pending"
@@ -189,6 +244,8 @@ export default function TaskList({ isAdmin }) {
           icon={<ClockIcon />}
           iconBg="bg-gray-100"
           iconColor="text-gray-400"
+          isActive={filterStatus === 'pending'}
+          onClick={() => setFilterStatus('pending')}
         />
         <StatCard
           label="Completed"
@@ -196,13 +253,17 @@ export default function TaskList({ isAdmin }) {
           icon={<CheckCircleIcon />}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
+          isActive={filterStatus === 'completed'}
+          onClick={() => setFilterStatus('completed')}
         />
         <StatCard
           label="Overdue"
-          value={0}
+          value={employeeTasks.filter(t => isOverdue(t)).length}
           icon={<ExclamationTriangleIcon />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
+          iconBg="bg-red-100"
+          iconColor="text-red-600"
+          isActive={filterStatus === 'overdue'}
+          onClick={() => setFilterStatus('overdue')}
         />
       </div>
 
@@ -233,6 +294,9 @@ export default function TaskList({ isAdmin }) {
                 <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {isAdmin ? 'Participants' : 'Role'}
                 </th>
+                <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 w-16">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -243,8 +307,8 @@ export default function TaskList({ isAdmin }) {
               ) : displayTasks.map((task, idx) => (
                 <React.Fragment key={task.task_id}>
                   <tr
-                    onClick={() => handleRowClick(task.task_id)}
-                    className={`border-b border-gray-50 hover:bg-[#f8fafc] transition-colors cursor-pointer select-none ${idx === displayTasks.length - 1 && actionTaskId !== task.task_id ? 'border-b-0' : ''} ${task.parent_id ? 'bg-gray-50/50' : ''}`}
+                    onClick={() => navigate(`/tasks/${task.task_id}`)}
+                    className={`border-b border-gray-50 hover:bg-[#f8fafc] transition-colors cursor-pointer select-none ${task.parent_id ? 'bg-gray-50/50' : ''}`}
                   >
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
@@ -262,8 +326,48 @@ export default function TaskList({ isAdmin }) {
                     <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">
                       {formatDateTime(task.due_date)}
                     </td>
-                    <td className="px-4 py-5">
-                      <StatusBadge status={task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'} />
+                    <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
+                      <Menu as="div" className="relative inline-block text-left">
+                        <Menu.Button className={`
+                          flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all border shadow-sm
+                          ${statuses.find(s => s.id === task.status?.toLowerCase())?.light || 'bg-gray-100'}
+                          ${statuses.find(s => s.id === task.status?.toLowerCase())?.text || 'text-gray-700'}
+                          ${statuses.find(s => s.id === task.status?.toLowerCase())?.light.replace('bg-', 'border-') || 'border-gray-200'}
+                          hover:scale-105 active:scale-95
+                        `}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statuses.find(s => s.id === task.status?.toLowerCase())?.dot || 'bg-gray-400'} ${task.status === 'in progress' ? 'animate-pulse' : ''}`} />
+                          {task.status || 'Pending'}
+                          <ChevronDownIcon className="w-3 h-3 opacity-50" />
+                        </Menu.Button>
+                        <Transition
+                          as={React.Fragment}
+                          enter="transition ease-out duration-100"
+                          enterFrom="transform opacity-0 scale-95"
+                          enterTo="transform opacity-100 scale-100"
+                          leave="transition ease-in duration-75"
+                          leaveFrom="transform opacity-100 scale-100"
+                          leaveTo="transform opacity-0 scale-95"
+                        >
+                          <Menu.Items className="absolute left-0 z-50 mt-2 w-40 origin-top-left rounded-2xl bg-white p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
+                            {statuses.map((s) => (
+                              <Menu.Item key={s.id}>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => handleStatusChange(task.task_id, s.id)}
+                                    className={`
+                                      w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all
+                                      ${active ? `${s.light} ${s.text} translate-x-1` : 'text-gray-500 hover:bg-gray-50'}
+                                    `}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                                    {s.label}
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            ))}
+                          </Menu.Items>
+                        </Transition>
+                      </Menu>
                     </td>
                     <td className="px-4 py-5 text-gray-600 text-sm">
                       {isAdmin ? (
@@ -278,27 +382,16 @@ export default function TaskList({ isAdmin }) {
                         task.role || 'N/A'
                       )}
                     </td>
+                    <td className="px-4 py-5 text-center">
+                      <button
+                        onClick={(e) => handleDeleteTask(e, task.task_id)}
+                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        title="Delete Task"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </td>
                   </tr>
-                  {actionTaskId === task.task_id && (
-                    <tr className="bg-blue-50/50 border-b border-gray-100">
-                      <td colSpan="6" className="px-6 py-3">
-                        <div className="flex items-center justify-start gap-3 pl-[28px]">
-                          <button
-                            onClick={() => navigate(`/tasks/sub-add/${task.task_id}`, { state: { parentTask: task } })}
-                            className="px-3 py-1.5 bg-[#0056b3] text-white rounded-lg hover:bg-[#004494] transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-                          >
-                            <PlusIcon className="w-4 h-4" /> Add Sub-task
-                          </button>
-                          <button
-                            onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
-                            className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-                          >
-                            <EyeIcon className="w-4 h-4" /> View Details
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </React.Fragment>
               ))}
             </tbody>
@@ -309,7 +402,7 @@ export default function TaskList({ isAdmin }) {
         {/* Pagination footer */}
         <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-[#fafafa]">
           <span className="text-xs text-gray-400">
-            Showing {displayTasks.length} tasks (Click a row to view actions)
+            Showing {displayTasks.length} tasks (Click a task for details)
           </span>
         </div>
       </div>

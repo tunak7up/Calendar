@@ -92,6 +92,27 @@ const deleteSchedule = async (schedule_id) => {
     await data.destroy();
 };
 
+const getShiftByDate = async (personId, date) => {
+    const ws = await schedule.findOne({
+        where: {
+            person_id: personId,
+            working_date: date
+        }
+    });
+    
+    if (!ws) return null;
+
+    const startTime = new Date(ws.start_time);
+    const endTime = new Date(ws.end_time);
+    
+    const startHHMM = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
+    const endHHMM = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+
+    if (startHHMM === '08:30' && endHHMM === '12:00') return 'Morning';
+    if (startHHMM === '13:00' && endHHMM === '17:30') return 'Afternoon';
+    return 'Full Day';
+};
+
 module.exports = {
     createSchedule,
     getScheduleByPersonId,
@@ -99,5 +120,6 @@ module.exports = {
     getSchedulesByRange,
     updateSchedule,
     deleteSchedule,
-    getScheduleByPersonIdWithTimeRange
+    getScheduleByPersonIdWithTimeRange,
+    getShiftByDate
 };

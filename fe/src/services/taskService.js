@@ -17,6 +17,20 @@ export const taskService = {
     body: JSON.stringify(attachmentData),
   }),
 
+  addParticipant: (taskId, participantData) => apiFetch(`/task/${taskId}/participant`, {
+    method: 'POST',
+    body: JSON.stringify(participantData),
+  }),
+
+  updateParticipant: (taskId, participantId, data) => apiFetch(`/task/${taskId}/participant/${participantId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+
+  removeParticipant: (taskId, participantId) => apiFetch(`/task/${taskId}/participant/${participantId}`, {
+    method: 'DELETE',
+  }),
+
   // --- Read ---
   getAllTasks: () => apiFetch('/task'),
 

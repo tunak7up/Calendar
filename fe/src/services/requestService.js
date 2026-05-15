@@ -12,4 +12,5 @@ export const requestService = {
     method: 'PUT',
     body: JSON.stringify({ status }),
   }),
+  getRequestsByRange: (start, end) => apiFetch(`/request/range?start=${start}&end=${end}`),
 };

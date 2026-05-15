@@ -65,6 +65,19 @@ const getAllRequestDetails = async (req, res) => {
     }
 };
 
+const getRequestsByRange = async (req, res) => {
+    try {
+        const { start, end } = req.query;
+        if (!start || !end) {
+            return sendRes(res, 400, 'Start and end dates are required');
+        }
+        const requests = await requestService.getRequestsByRange(start, end);
+        sendRes(res, 200, 'Requests retrieved by range successfully', requests);
+    } catch (error) {
+        sendRes(res, 500, 'Error retrieving requests', null, error.message);
+    }
+};
+
 module.exports = {
     createBulkRequest,
     getRequestById,
@@ -72,5 +85,6 @@ module.exports = {
     getAllRequests,
     updateRequestStatus,
     deleteRequest,
-    getAllRequestDetails
+    getAllRequestDetails,
+    getRequestsByRange
 };

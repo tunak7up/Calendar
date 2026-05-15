@@ -166,13 +166,16 @@ export default function AdminSchedule() {
       const enrichedData = peopleWorking.map(sched => {
         let personTasks = [];
         if (allTasks) {
-          const todayStart = new Date();
-          todayStart.setHours(0, 0, 0, 0);
-
-          personTasks = allTasks.filter(t =>
-            t.participants?.some(p => p.person_id === sched.person_id) &&
-            (!t.due_date || new Date(t.due_date) >= todayStart)
-          );
+          personTasks = allTasks.filter(t => {
+            if (!t.participants?.some(p => p.person_id === sched.person_id)) return false;
+            
+            const taskStartDate = t.start_time?.split(/[T ]/)[0] || t.due_date?.split(/[T ]/)[0];
+            const taskDueDate = t.due_date?.split(/[T ]/)[0];
+            
+            return taskStartDate && taskDueDate && 
+                   targetDate >= taskStartDate && 
+                   targetDate <= taskDueDate;
+          });
         }
 
         const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));

@@ -11,6 +11,7 @@ const userNavigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Dashboard', path: '/admin/dashboard', id: 'admin_dashboard' },
   { name: 'Schedule', path: '/admin/schedule', id: 'admin_schedule' },
   { name: 'Employees', path: '/admin/employees', id: 'admin_employees' },
   { name: 'Requests', path: '/admin/requests', id: 'admin_requests' },

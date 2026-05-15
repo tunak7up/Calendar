@@ -25,6 +25,10 @@ const person = sequelize.define(
     username: {
         type: DataTypes.STRING(256),
         unique: true
+    },
+    email: {
+        type: DataTypes.STRING(256),
+        unique: true
     }
   },
   {

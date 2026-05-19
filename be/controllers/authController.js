@@ -13,7 +13,7 @@ const login = async (req, res) => {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'None', // Cookie v0.7+ yêu cầu viết hoa chữ cái đầu
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -30,13 +30,13 @@ const login = async (req, res) => {
 const refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    
+
     if (!refreshToken) {
       return res.status(401).json({ message: 'Không tìm thấy refresh token' });
     }
 
     const result = await authService.refresh(refreshToken);
-    
+
     res.json({
       token: result.token,
       user: result.user
@@ -52,13 +52,13 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await authService.logout(refreshToken);
     }
-    
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
       sameSite: 'None', // Cookie v0.7+ yêu cầu viết hoa chữ cái đầu
     });
-    
+
     res.json({ message: 'Đăng xuất thành công' });
   } catch (err) {
     console.error('Logout error:', err);

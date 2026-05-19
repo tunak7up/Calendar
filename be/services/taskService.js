@@ -265,6 +265,21 @@ const updateTaskTitleOrDescription = async (id, { title, description }) => {
     return await targetTask.update({ title, description });
 };
 
+const deleteTaskRecursive = async (id, t) => {
+    const childTasks = await task.findAll({
+        where: { parent_id: id },
+        transaction: t
+    });
+
+    for (const child of childTasks) {
+        await deleteTaskRecursive(child.task_id, t);
+    }
+
+    await comment.destroy({ where: { task_id: id }, transaction: t });
+
+    await task.destroy({ where: { task_id: id }, transaction: t });
+};
+
 const deleteTask = async (id) => {
     return await sequelize.transaction(async (t) => {
         const targetTask = await task.findByPk(id, { transaction: t });
@@ -273,15 +288,7 @@ const deleteTask = async (id) => {
             throw new Error('Task not found hehe');
         }
 
-        await task.destroy({
-            where: { parent_id: id },
-            transaction: t
-        });
-
-        await task.destroy({
-            where: { task_id: id },
-            transaction: t
-        });
+        await deleteTaskRecursive(id, t);
     });
 };
 

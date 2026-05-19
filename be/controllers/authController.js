@@ -5,7 +5,7 @@ const login = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password)
-      return res.status(400).json({ message: 'Vui l?ng nh?p ??y ?? th?ng tin' });
+      return res.status(400).json({ message: 'Vui lòng nhập lại thông tin' });
 
     const result = await authService.login(username, password);
     res.json(result);

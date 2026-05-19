@@ -7,22 +7,22 @@ const authenticate = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
 
   if (!token)
-    return res.status(401).json({ message: 'Kh?ng c? token, truy c?p b? t? ch?i' });
+    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
 
   try {
     const decoded = jwt.verify(token, jwtConfig.secret);
     req.user = decoded; // { person_id, username, role }
     next();
   } catch (err) {
-    return res.status(403).json({ message: 'Token kh?ng h?p l? ho?c ?? h?t h?n' });
+    return res.status(403).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
   }
 };
 
-// Ph?n quy?n theo role
+// Phân quyền theo role
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'B?n kh?ng c? quy?n th?c hi?n h?nh ??ng n?y' });
+      return res.status(403).json({ message: 'Bạn không có quyền thực hiện hành động này' });
     }
     next();
   };

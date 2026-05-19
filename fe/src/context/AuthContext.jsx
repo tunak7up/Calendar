@@ -15,12 +15,28 @@ export function AuthProvider({ children }) {
     const savedUser = localStorage.getItem('user');
 
     if (savedToken && savedUser) {
-      setAccessToken(savedToken);
-      setRefreshToken(savedRefresh);
+      let isExpired = false;
       try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.clear();
+        const payload = JSON.parse(atob(savedToken.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          isExpired = true;
+        }
+      } catch (e) {
+        isExpired = true;
+      }
+
+      if (isExpired) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      } else {
+        setAccessToken(savedToken);
+        setRefreshToken(savedRefresh);
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch {
+          localStorage.clear();
+        }
       }
     }
     setIsLoading(false);

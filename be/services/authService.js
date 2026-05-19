@@ -4,21 +4,21 @@ const jwtConfig = require('../config/jwt');
 const Person = require('../models/person');
 
 const login = async (username, password) => {
-  // T?m user theo username
+  // Tìm user theo username
   const person = await Person.findOne({ where: { username } });
   if (!person)
-    throw new Error('T?n ??ng nh?p kh?ng t?n t?i');
+    throw new Error('Tên đăng nhập không tồn tại');
 
-  // Ki?m tra t?i kho?n c? b? kh?a kh?ng
+  // Kiểm tra tài khoản có bị khóa không
   if (!person.status)
-    throw new Error('T?i kho?n ?? b? v? hi?u h?a');
+    throw new Error('Tài khoản đã bị vô hiệu hóa');
 
   // So s?nh password
 //   const isMatch = await bcrypt.compare(password, person.password);
   const isMatch = password === person.password;
 
   if (!isMatch)
-    throw new Error('M?t kh?u kh?ng ??ng');
+    throw new Error('Mật khẩu không đúng');
 
   // T?o token
   const payload = {

@@ -61,29 +61,113 @@ export default function AdminSchedule() {
   // Collect all dates that have at least one schedule
   const scheduleDays = [...new Set(schedules.map(s => s.start?.split?.(/[T ]/)?.[0]).filter(Boolean))];
 
-  const fetchSchedulesInRange = (startStr, endStr) => {
-    scheduleService.getSchedulesByRange(startStr, endStr)
-      .then(data => {
-        if (data.success) {
-          const mappedSchedules = data.data.map(item => {
-            const colorSet = PERSON_COLORS[item.person_id % PERSON_COLORS.length];
-            // Ensure date is in YYYY-MM-DD format regardless of type (Date or String)
-            const dateOnly = item.working_date ? new Date(item.working_date).toISOString().split('T')[0] : null;
-            return {
-              id: `sched_${item.schedule_id}`,
-              title: `${item.person?.name || 'Unknown'}`,
-              start: dateOnly,
-              allDay: true,
-              person_id: item.person_id,
-              backgroundColor: colorSet.bg,
-              borderColor: colorSet.border,
-              textColor: colorSet.text,
-              extendedProps: { ...item }
-            };
+  const fetchSchedulesInRange = async (startStr, endStr) => {
+    try {
+      const [schedRes, repRes] = await Promise.all([
+        scheduleService.getSchedulesByRange(startStr, endStr),
+        apiFetch(`/daily-report/range?start=${startStr}&end=${endStr}`)
+      ]);
+
+      if (schedRes.success && repRes.success) {
+        const rawSchedules = schedRes.data || [];
+        const rawReports = repRes.data || [];
+        const eventMap = new Map(); // key: `${person_id}_${date}`
+
+        rawSchedules.forEach(sched => {
+          const dateOnly = sched.working_date ? new Date(sched.working_date).toISOString().split('T')[0] : null;
+          if (!dateOnly) return;
+          const key = `${sched.person_id}_${dateOnly}`;
+          eventMap.set(key, {
+            person_id: sched.person_id,
+            person: sched.person,
+            date: dateOnly,
+            schedule: sched,
+            report: null
           });
-          setSchedules(mappedSchedules);
-        }
-      });
+        });
+
+        rawReports.forEach(rep => {
+          const dateOnly = rep.working_date ? new Date(rep.working_date).toISOString().split('T')[0] : null;
+          if (!dateOnly) return;
+          const key = `${rep.person_id}_${dateOnly}`;
+          if (eventMap.has(key)) {
+            eventMap.get(key).report = rep;
+          } else {
+            eventMap.set(key, {
+              person_id: rep.person_id,
+              person: rep.reporter || { name: rep.person?.name || `Employee ${rep.person_id}`, username: rep.person?.username || `user_${rep.person_id}` },
+              date: dateOnly,
+              schedule: null,
+              report: rep
+            });
+          }
+        });
+
+        const mappedSchedules = Array.from(eventMap.values()).map(item => {
+          const hasSchedule = !!item.schedule;
+          const checkIn = item.report?.check_in || null;
+          const checkOut = item.report?.check_out || null;
+
+          let bg = '#ffffff';
+          let border = '#e2e8f0';
+          let text = '#1e293b';
+          if (hasSchedule) {
+            if (!checkIn) {
+              // 1. Có lịch nhưng chưa check-in (Đỏ)
+              bg = '#fee2e2';
+              border = '#fca5a5';
+              text = '#991b1b';
+            } else if (!checkOut) {
+              // 2. Có lịch và đã check-in (Xanh dương)
+              bg = '#dbeafe';
+              border = '#93c5fd';
+              text = '#1e40af';
+            } else {
+              // 3. Có lịch, đã check-in và check-out (Xanh lá)
+              bg = '#d1fae5';
+              border = '#6ee7b7';
+              text = '#065f46';
+            }
+          } else {
+            // Unscheduled
+            if (checkIn && !checkOut) {
+              // 4. Không đăng ký nhưng check-in (Vàng)
+              bg = '#fef3c7';
+              border = '#fcd34d';
+              text = '#92400e';
+            } else if (checkIn && checkOut) {
+              // 5. Không đăng ký, check-in và check-out (Tím)
+              bg = '#f3e8ff';
+              border = '#d8b4fe';
+              text = '#6b21a8';
+            }
+          }
+
+          return {
+            id: `event_${item.person_id}_${item.date}`,
+            title: `${item.person?.name || 'Unknown'}`,
+            start: item.date,
+            allDay: true,
+            person_id: item.person_id,
+            backgroundColor: bg,
+            borderColor: border,
+            textColor: text,
+            extendedProps: {
+              person: item.person,
+              schedule: item.schedule,
+              report: item.report,
+              hasSchedule,
+              checkIn,
+              checkOut
+            }
+          };
+        });
+
+        setSchedules(mappedSchedules);
+      }
+    } catch (error) {
+      console.error("Failed to load schedules and reports", error);
+    }
   };
 
   const displayEvents = useMemo(() => {
@@ -91,11 +175,27 @@ export default function AdminSchedule() {
       ? schedules
       : schedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
 
-    if (!isMobile) return baseEvents;
+    const enrichedEvents = baseEvents.map(e => {
+      if (e.extendedProps?.isSummary) return e;
+      const emp = employees.find(empItem => empItem.person_id === e.person_id);
+      if (emp) {
+        return {
+          ...e,
+          title: emp.name || emp.username,
+          extendedProps: {
+            ...e.extendedProps,
+            person: emp
+          }
+        };
+      }
+      return e;
+    });
+
+    if (!isMobile) return enrichedEvents;
 
     // Aggregate by date for mobile view
     const aggregated = {};
-    baseEvents.forEach(e => {
+    enrichedEvents.forEach(e => {
       const date = e.start;
       if (!date) return;
       if (!aggregated[date]) aggregated[date] = 0;
@@ -112,7 +212,7 @@ export default function AdminSchedule() {
       textColor: '#1e4ed8',
       extendedProps: { isSummary: true, count }
     }));
-  }, [schedules, selectedEmployeeIds, isMobile]);
+  }, [schedules, selectedEmployeeIds, isMobile, employees]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -175,21 +275,32 @@ export default function AdminSchedule() {
         }
 
         const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));
+        const schedTime = sched.extendedProps.schedule;
+        let shiftText = '—';
+        if (schedTime && schedTime.start_time && schedTime.end_time) {
+          try {
+            shiftText = `${new Date(schedTime.start_time).toLocaleTimeString('vi-VN', {
+              hour: 'numeric',
+              minute: '2-digit'
+            })} - ${new Date(schedTime.end_time).toLocaleTimeString('vi-VN', {
+              hour: 'numeric',
+              minute: '2-digit'
+            })}`;
+          } catch (e) {
+            shiftText = '—';
+          }
+        }
 
         return {
           person_id: sched.person_id,
-          name: sched.title,
+          name: sched.extendedProps.person?.name || sched.title,
           username: sched.extendedProps.person?.username || '',
-          shift: `${new Date(sched.extendedProps.start_time).toLocaleTimeString('vi-VN', {
-            hour: 'numeric',
-            minute: '2-digit'
-          })} - ${new Date(sched.extendedProps.end_time).toLocaleTimeString('vi-VN', {
-            hour: 'numeric',
-            minute: '2-digit'
-          })}`, check_in: personReport ? personReport.check_in : null,
+          shift: shiftText,
+          check_in: personReport ? personReport.check_in : null,
           has_reported: !!(personReport && personReport.description),
           report: personReport || null,
-          tasks: personTasks
+          tasks: personTasks,
+          hasSchedule: sched.extendedProps.hasSchedule
         };
       });
 
@@ -223,6 +334,30 @@ export default function AdminSchedule() {
                   onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Calendar Status Legend */}
+          <div className="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-wrap gap-4 text-xs font-bold text-gray-600">
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}></span>
+              <span className="text-red-700">Có lịch, chưa check-in</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#dbeafe', borderColor: '#93c5fd' }}></span>
+              <span className="text-blue-700">Có lịch, đã check-in</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#d1fae5', borderColor: '#6ee7b7' }}></span>
+              <span className="text-emerald-700">Có lịch, đầy đủ</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#fef3c7', borderColor: '#fcd34d' }}></span>
+              <span className="text-amber-700">Check-in ngoài lịch </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#f3e8ff', borderColor: '#d8b4fe' }}></span>
+              <span className="text-purple-700">Đầy đủ ngoài lịch</span>
             </div>
           </div>
 

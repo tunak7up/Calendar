@@ -21,6 +21,43 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
+  const getAttendanceStatus = (checkIn, checkOut) => {
+    if (!checkIn) return { label: 'Chưa check-in', colorClass: 'bg-gray-100 text-gray-500' };
+
+    const hasCheckedOut = !!checkOut;
+
+    // Parse checkIn (format HH:MM:SS or HH:MM)
+    const inParts = checkIn.split(':');
+    const inHour = parseInt(inParts[0], 10);
+    const inMinute = parseInt(inParts[1], 10);
+    const isLate = (inHour > 9) || (inHour === 9 && inMinute > 0);
+
+    if (!hasCheckedOut) {
+      if (isLate) {
+        return { label: 'Check-in muộn', colorClass: 'bg-amber-100 text-amber-700 animate-pulse font-bold' };
+      }
+      return { label: 'Đang làm việc', colorClass: 'bg-blue-100 text-blue-700 animate-pulse font-bold' };
+    }
+
+    // Parse checkOut (format HH:MM:SS or HH:MM)
+    const outParts = checkOut.split(':');
+    const outHour = parseInt(outParts[0], 10);
+    const outMinute = parseInt(outParts[1], 10);
+    const isEarly = (outHour < 17) || (outHour === 17 && outMinute < 30);
+
+    if (isLate && isEarly) {
+      return { label: 'Muộn & Về sớm', colorClass: 'bg-red-100 text-red-700 font-bold' };
+    }
+    if (isLate) {
+      return { label: 'Check-in muộn', colorClass: 'bg-amber-100 text-amber-700 font-bold' };
+    }
+    if (isEarly) {
+      return { label: 'Về sớm', colorClass: 'bg-orange-100 text-orange-700 font-bold' };
+    }
+
+    return { label: 'Hoàn thành', colorClass: 'bg-emerald-100 text-emerald-700 font-bold' };
+  };
+
   // Data states
   const [requests, setRequests] = useState([]);
   const [reports, setReports] = useState([]);
@@ -146,6 +183,8 @@ export default function AdminDashboard() {
     return rows;
   }, [schedules, reports, employees]);
 
+  const workingCount = useMemo(() => todayAttendance.filter(item => !!item.check_in).length, [todayAttendance]);
+
   const isOverdue = (task) => {
     if (task.status?.toLowerCase() === 'completed') return false;
     return task.due_date && new Date(task.due_date) < new Date();
@@ -162,14 +201,36 @@ export default function AdminDashboard() {
 
   const sortedFilteredTasks = useMemo(() => {
     let list = tasks.filter(task => {
-      if (!taskSearchTerm) return true;
-      const term = taskSearchTerm.toLowerCase();
-      if (task.name?.toLowerCase().includes(term) || task.title?.toLowerCase().includes(term)) return true;
-      if (task.participants && Array.isArray(task.participants)) {
-        return task.participants.some(p => p.name?.toLowerCase().includes(term));
+      // 1. Text search filter
+      if (taskSearchTerm) {
+        const term = taskSearchTerm.toLowerCase();
+        const matchesText = (task.name?.toLowerCase().includes(term) || task.title?.toLowerCase().includes(term)) ||
+          (task.participants && Array.isArray(task.participants) && task.participants.some(p => p.name?.toLowerCase().includes(term)));
+        if (!matchesText) return false;
       }
-      return false;
+
+      // 2. Date and status filters requested by the user:
+      // "chỉ lấy các task có due date sau ngày hôm nay, ngoại trừ các task có due_date trước ngày hôm nay nhưng làm chưa xong, bỏ đi các task đã hoàn thành và có ngày hạn trước ngày hôm nay đi"
+      const todayStr = new Date().toISOString().split('T')[0];
+      const taskDateStr = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
+      const isCompleted = task.status?.toLowerCase() === 'completed';
+
+      if (!taskDateStr) {
+        return true; // Include tasks without a due date
+      }
+
+      if (taskDateStr >= todayStr) {
+        return true; // "chỉ lấy các task có due date sau ngày hôm nay" (including today)
+      }
+
+      // taskDateStr < todayStr (in the past)
+      if (!isCompleted) {
+        return true; // "ngoại trừ các task có due_date trước ngày hôm nay nhưng làm chưa xong"
+      }
+
+      return false; // "bỏ đi các task đã hoàn thành và có ngày hạn trước ngày hôm nay đi"
     });
+
     list = [...list].sort((a, b) => {
       const diff = getTaskPriority(a) - getTaskPriority(b);
       if (diff !== 0) return diff;
@@ -267,12 +328,32 @@ export default function AdminDashboard() {
 
         {/* Attendance */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px] lg:h-full overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <ClockIcon className="w-5 h-5 text-blue-500" />
-              Điểm danh hôm nay
-            </h2>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">{todayAttendance.length}</span>
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex flex-col gap-2.5">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <ClockIcon className="w-5 h-5 text-blue-500" />
+                Điểm danh hôm nay
+              </h2>
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                Số người đi làm: {workingCount}
+              </span>
+            </div>
+
+            {/* Chú thích màu nền (Legend) */}
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold text-gray-500 bg-white p-2 rounded-xl border border-gray-100 shadow-inner">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span>
+                <span className="text-emerald-800">Có đăng ký trước & đi làm</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>
+                <span className="text-amber-800">Không đăng ký trước</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-white border border-gray-200"></span>
+                <span>Chưa check-in</span>
+              </div>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left text-sm">
@@ -286,31 +367,47 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {todayAttendance.length === 0 ? (
-                  <tr><td colSpan="4" className="px-5 py-8 text-center text-gray-400">Không có nhân viên nào có lịch hoặc điểm danh hôm nay.</td></tr>
+                  <tr>
+                    <td colSpan="4" className="px-5 py-8 text-center text-gray-400 font-medium">
+                      Không có nhân viên nào có lịch hoặc điểm danh hôm nay.
+                    </td>
+                  </tr>
                 ) : (
-                  todayAttendance.map(emp => (
-                    <tr key={emp.person_id} className={`hover:bg-gray-50/50 transition-colors ${emp.isUnscheduled ? 'bg-amber-50/30' : ''}`}>
-                      <td className="px-4 py-2.5">
-                        <span className="font-semibold text-gray-900 text-xs">{emp.name}</span>
-                        {emp.isUnscheduled && <span className="ml-1.5 text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase">Ngoài lịch</span>}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {emp.shift !== '—' ? (
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${emp.shift === 'Sáng' ? 'bg-yellow-100 text-yellow-700' : emp.shift === 'Chiều' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
-                            {emp.shift}
+                  todayAttendance.map(emp => {
+                    const status = getAttendanceStatus(emp.check_in, emp.check_out);
+                    const isWorking = !!emp.check_in;
+                    const isUnscheduled = emp.isUnscheduled;
+
+                    let rowBgClass = 'bg-white hover:bg-gray-50/80';
+                    if (isUnscheduled) {
+                      rowBgClass = 'bg-amber-50/60 hover:bg-amber-100/50';
+                    } else if (isWorking) {
+                      rowBgClass = 'bg-emerald-50/60 hover:bg-emerald-100/50';
+                    }
+
+                    return (
+                      <tr key={emp.person_id} className={`transition-colors ${rowBgClass}`}>
+                        <td className="px-4 py-2.5">
+                          <span className="font-semibold text-gray-900 text-xs">{emp.name}</span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {emp.shift !== '—' ? (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${emp.shift === 'Sáng' ? 'bg-yellow-100 text-yellow-700' : emp.shift === 'Chiều' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
+                              {emp.shift}
+                            </span>
+                          ) : <span className="text-gray-400 text-xs">—</span>}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-gray-500 font-mono">
+                          {emp.check_in ? emp.check_in.substring(0, 5) : '--:--'} – {emp.check_out ? emp.check_out.substring(0, 5) : '--:--'}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`px-2.5 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider ${status.colorClass}`}>
+                            {status.label}
                           </span>
-                        ) : <span className="text-gray-400 text-xs">—</span>}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-gray-500 font-mono">
-                        {emp.check_in ? emp.check_in.substring(0, 5) : '--:--'} – {emp.check_out ? emp.check_out.substring(0, 5) : '--:--'}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {emp.statusType === 'done' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase">Hoàn thành</span>}
-                        {emp.statusType === 'in' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase animate-pulse">Đã check-in</span>}
-                        {emp.statusType === 'absent' && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 uppercase">Chưa check-in</span>}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

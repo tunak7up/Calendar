@@ -11,13 +11,25 @@ import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
+
+// Hàm helper định dạng ngày thành kiểu "May 15, 2026"
+const formatCustomDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
+  
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
 
 function StatusBadge({ status }) {
   if (status?.toLowerCase() === 'completed') {
@@ -176,12 +188,12 @@ export default function TaskList({ isAdmin }) {
   const columns = [
     { key: 'name', label: 'Tên công việc', sortable: true },
     { key: 'assigner', label: 'Người giao', sortable: true },
-    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },    
-    { key: 'due_date', label: 'Hạn chót', sortable: true },
-    { key: 'status', label: 'Trạng thái', sortable: true },
+    { key: 'due_date', label: 'Hạn chót', sortable: true, className: 'w-[100px]' },
+    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]' },
+    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true, className: 'w-[100px]' },
+    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[90px]' },
     { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
-    { key: 'action', label: 'Thao tác', sortable: false, align: 'center' },
-    { key: 'created_at', label: 'Ngày tạo', sortable: true }
+    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' }
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -207,8 +219,6 @@ export default function TaskList({ isAdmin }) {
       console.error('Error deleting task:', error);
     }
   };
-
-
 
   return (
     <div className="space-y-6 pb-20">
@@ -301,7 +311,7 @@ export default function TaskList({ isAdmin }) {
         totalItems={displayTasks.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
-        tableClassName="min-w-[600px]"
+        tableClassName="min-w-[600px] table-auto"
         renderRow={(task) => (
           <tr
             key={task.task_id}
@@ -318,8 +328,9 @@ export default function TaskList({ isAdmin }) {
               </div>
             </td>
             <td className="px-4 py-5 text-gray-600 text-sm whitespace-nowrap">{task.assigner}</td>
-            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.start_time)}</td>
-            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.due_date)}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
             <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
               <TaskStatusDropdown
                 currentStatus={task.status}
@@ -348,7 +359,6 @@ export default function TaskList({ isAdmin }) {
                 <TrashIcon className="w-5 h-5" />
               </button>
             </td>
-            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.created_at)}</td>
           </tr>
         )}
       />

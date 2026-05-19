@@ -107,13 +107,13 @@ export default function SortableTable({
                 <th
                   key={col.key}
                   onClick={() => handleSort(col)}
-                  className={`py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap select-none
+                  className={`py-3 px-4 text-[10px] font-semibold text-gray-400 uppercase tracking-tight whitespace-nowrap select-none
                     ${getAlignClass(col.align)}
                     ${col.sortable ? 'cursor-pointer hover:text-gray-700 hover:bg-gray-100/60 transition-colors' : ''}
                     ${col.className || ''}
                   `}
                 >
-                  <span className="inline-flex items-center">
+                  <span className="inline-flex items-center truncate">
                     {col.label}
                     {col.sortable && <SortIcon colKey={col.key} />}
                   </span>

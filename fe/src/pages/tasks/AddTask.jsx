@@ -7,7 +7,6 @@ import {
   CalendarDaysIcon,
   ListBulletIcon,
   UserGroupIcon,
-  ClockIcon,
   ChevronDownIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
@@ -15,7 +14,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
 import MiniCalendar from '../../components/MiniCalendar';
 import SubTaskModal from '../../components/SubTaskModal';
-import WheelTimePicker from '../../components/WheelTimePicker';
 import ParticipantManager from '../../components/ParticipantManager';
 
 export default function AddTask() {
@@ -27,9 +25,9 @@ export default function AddTask() {
     taskName: '',
     description: '',
     startDate: initialDateFromState || new Date().toISOString().split('T')[0],
-    startTime: '08:30',
+    startTime: '00:01',
     dueDate: initialDateFromState || new Date().toISOString().split('T')[0],
-    endTime: '17:30',
+    endTime: '23:59',
     assigner: '',
     priority: 'Medium',
     subTasks: [],
@@ -45,13 +43,9 @@ export default function AddTask() {
   // Popover states
   const [isStartCalOpen, setIsStartCalOpen] = useState(false);
   const [isDueCalOpen, setIsDueCalOpen] = useState(false);
-  const [isStartTimeOpen, setIsStartTimeOpen] = useState(false);
-  const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
 
   const startCalRef = useRef(null);
   const dueCalRef = useRef(null);
-  const startTimeRef = useRef(null);
-  const endTimeRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -84,8 +78,6 @@ export default function AddTask() {
     const handleClickOutside = (event) => {
       if (startCalRef.current && !startCalRef.current.contains(event.target)) setIsStartCalOpen(false);
       if (dueCalRef.current && !dueCalRef.current.contains(event.target)) setIsDueCalOpen(false);
-      if (startTimeRef.current && !startTimeRef.current.contains(event.target)) setIsStartTimeOpen(false);
-      if (endTimeRef.current && !endTimeRef.current.contains(event.target)) setIsEndTimeOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -199,9 +191,11 @@ export default function AddTask() {
       </div>
 
       {/* Task Definition Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-sm font-semibold text-gray-800 mb-5 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+      <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/40 border border-gray-100/80 p-8 md:p-10 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/50">
+        <h2 className="text-base font-bold text-gray-800 mb-6 flex items-center gap-3">
+          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50 text-blue-600">
+            <ListBulletIcon className="w-4 h-4" />
+          </span>
           Định nghĩa công việc
         </h2>
 
@@ -213,7 +207,7 @@ export default function AddTask() {
               placeholder="ví dụ: Ra mắt chiến dịch Marketing quý 3"
               value={formData.taskName}
               onChange={(e) => setFormData({ ...formData, taskName: e.target.value })}
-              className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none transition-all placeholder:text-gray-300"
+              className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 block p-3.5 outline-none transition-all duration-300 placeholder:text-gray-300 shadow-sm"
             />
           </div>
           <div className="md:col-span-1">
@@ -222,7 +216,7 @@ export default function AddTask() {
               <select
                 value={formData.assigner}
                 onChange={(e) => setFormData({ ...formData, assigner: e.target.value })}
-                className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none appearance-none cursor-pointer transition-all"
+                className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 block p-3.5 outline-none appearance-none cursor-pointer transition-all duration-300 shadow-sm"
               >
                 {managers.map(admin => (
                   <option key={admin.person_id} value={admin.name}>{admin.name}</option>
@@ -240,122 +234,98 @@ export default function AddTask() {
             placeholder="Nhập mô tả công việc..."
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows="3"
-            className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none transition-all placeholder:text-gray-300 resize-none"
+            rows="4"
+            className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 block p-3.5 outline-none transition-all duration-300 placeholder:text-gray-300 shadow-sm resize-none"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Start Date & Time */}
+          {/* Start Date */}
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Thời gian bắt đầu</label>
-            <div className="grid grid-cols-5 gap-2">
-              <div className="col-span-3 relative" ref={startCalRef}>
-                <div
-                  onClick={() => setIsStartCalOpen(!isStartCalOpen)}
-                  className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all cursor-pointer hover:border-blue-200"
-                >
-                  <CalendarDaysIcon className="w-5 h-5 text-blue-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <span className="font-medium">{formData.startDate || 'Chọn ngày'}</span>
-                </div>
-                {isStartCalOpen && (
-                  <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
-                    <MiniCalendar
-                      selectedDate={formData.startDate}
-                      onSelectDate={(date) => {
-                        setFormData({ ...formData, startDate: date });
-                        setIsStartCalOpen(false);
-                      }}
-                    />
-                  </div>
-                )}
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày bắt đầu</label>
+            <div className="relative" ref={startCalRef}>
+              <div
+                onClick={() => setIsStartCalOpen(!isStartCalOpen)}
+                className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-white shadow-sm flex items-center h-[50px]"
+              >
+                <CalendarDaysIcon className="w-5 h-5 text-blue-500 absolute left-4 top-1/2 -translate-y-1/2" />
+                <span className="font-bold text-gray-700">{formData.startDate || 'Chọn ngày'}</span>
               </div>
-              <div className="col-span-2 relative" ref={startTimeRef}>
-                <div
-                  onClick={() => setIsStartTimeOpen(!isStartTimeOpen)}
-                  className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
-                >
-                  <span className="font-medium">{formData.startTime || 'Chọn giờ'}</span>
+              {isStartCalOpen && (
+                <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
+                  <MiniCalendar
+                    selectedDate={formData.startDate}
+                    onSelectDate={(date) => {
+                      setFormData({ ...formData, startDate: date });
+                      setIsStartCalOpen(false);
+                    }}
+                  />
                 </div>
-                <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                {isStartTimeOpen && (
-                  <div className="absolute top-full right-0 mt-2 z-[100]">
-                    <WheelTimePicker
-                      value={formData.startTime}
-                      onChange={(time) => setFormData({ ...formData, startTime: time })}
-                      onClose={() => setIsStartTimeOpen(false)}
-                      maxTime={formData.startDate === formData.dueDate ? formData.endTime : undefined}
-                    />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Due Date & Time */}
+          {/* Due Date */}
           <div className="space-y-3">
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Hạn chót</label>
-            <div className="grid grid-cols-5 gap-2">
-              <div className="col-span-3 relative" ref={dueCalRef}>
-                <div
-                  onClick={() => setIsDueCalOpen(!isDueCalOpen)}
-                  className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all cursor-pointer hover:border-blue-200"
-                >
-                  <CalendarDaysIcon className="w-5 h-5 text-red-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <span className="font-medium">{formData.dueDate || 'Chọn ngày'}</span>
-                </div>
-                {isDueCalOpen && (
-                  <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
-                    <MiniCalendar
-                      selectedDate={formData.dueDate}
-                      onSelectDate={(date) => {
-                        setFormData({ ...formData, dueDate: date });
-                        setIsDueCalOpen(false);
-                      }}
-                    />
-                  </div>
-                )}
+            <div className="relative" ref={dueCalRef}>
+              <div
+                onClick={() => setIsDueCalOpen(!isDueCalOpen)}
+                className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-white shadow-sm flex items-center h-[50px]"
+              >
+                <CalendarDaysIcon className="w-5 h-5 text-rose-500 absolute left-4 top-1/2 -translate-y-1/2" />
+                <span className="font-bold text-gray-700">{formData.dueDate || 'Chọn ngày'}</span>
               </div>
-              <div className="col-span-2 relative" ref={endTimeRef}>
-                <div
-                  onClick={() => setIsEndTimeOpen(!isEndTimeOpen)}
-                  className="w-full bg-[#f8fafc] border border-gray-100 text-gray-900 text-sm rounded-xl p-3.5 pl-11 pr-10 outline-none transition-all appearance-none cursor-pointer hover:border-blue-200 flex items-center justify-between"
-                >
-                  <span className="font-medium">{formData.endTime || 'Chọn giờ'}</span>
+              {isDueCalOpen && (
+                <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
+                  <MiniCalendar
+                    selectedDate={formData.dueDate}
+                    onSelectDate={(date) => {
+                      setFormData({ ...formData, dueDate: date });
+                      setIsDueCalOpen(false);
+                    }}
+                  />
                 </div>
-                <ClockIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                {isEndTimeOpen && (
-                  <div className="absolute top-full right-0 mt-2 z-[100]">
-                    <WheelTimePicker
-                      value={formData.endTime}
-                      onChange={(time) => setFormData({ ...formData, endTime: time })}
-                      onClose={() => setIsEndTimeOpen(false)}
-                      minTime={formData.startDate === formData.dueDate ? formData.startTime : undefined}
-                    />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Mức độ ưu tiên</label>
-          <div className="grid grid-cols-4 gap-3">
-            {['Low', 'Medium', 'High'].map((level) => (
-              <button
-                key={level}
-                onClick={() => setFormData({ ...formData, priority: level })}
-                className={`py-3 px-4 text-xs font-bold rounded-xl border transition-all ${formData.priority === level
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100'
-                  : 'bg-[#f8fafc] text-gray-500 border-gray-100 hover:bg-white hover:border-gray-200'
+        <div className="space-y-3 pt-2">
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Mức độ ưu tiên</label>
+          <div className="flex gap-4 w-full bg-[#f8fafc] p-2 rounded-2xl border border-gray-100 shadow-inner">
+            {['Low', 'Medium', 'High'].map((level) => {
+              const isActive = formData.priority === level;
+              let activeClass = '';
+              let inactiveClass = 'text-gray-400 hover:text-gray-600 bg-transparent hover:bg-white/60';
+              let icon = null;
+
+              if (level === 'Low') {
+                activeClass = 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-200/50';
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-emerald-500'}`}></span>;
+              } else if (level === 'Medium') {
+                activeClass = 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/50';
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500'}`}></span>;
+              } else {
+                activeClass = 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-200/50';
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-rose-500'}`}></span>;
+              }
+
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, priority: level })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-6 text-xs font-bold rounded-xl border border-transparent transition-all duration-300 cursor-pointer select-none transform ${isActive 
+                    ? `${activeClass} scale-[1.01]` 
+                    : `${inactiveClass}`
                   }`}
-              >
-                {level === 'High' ? 'Cao' : level === 'Medium' ? 'Trung bình' : 'Thấp'}
-              </button>
-            ))}
+                >
+                  {icon}
+                  {level === 'High' ? 'Cao' : level === 'Medium' ? 'Trung bình' : 'Thấp'}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

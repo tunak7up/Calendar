@@ -12,8 +12,8 @@ const login = async (req, res) => {
     // Set refresh token as HttpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: true, // Bắt buộc khi sameSite=none
-      sameSite: 'none', // Cho phép cross-domain (Vercel <-> Render)
+      secure: true,
+      sameSite: 'None', // Cookie v0.7+ yêu cầu viết hoa chữ cái đầu
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -55,8 +55,8 @@ const logout = async (req, res) => {
     
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: true, // Bắt buộc khi sameSite=none
-      sameSite: 'none', // Cho phép cross-domain (Vercel <-> Render)
+      secure: true,
+      sameSite: 'None', // Cookie v0.7+ yêu cầu viết hoa chữ cái đầu
     });
     
     res.json({ message: 'Đăng xuất thành công' });

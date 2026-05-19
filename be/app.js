@@ -13,6 +13,14 @@ app.use(cors());
 // Serve uploads folder as static
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', (req, res) => {
+    res.status(404).send(`
+        <div style="font-family: sans-serif; text-align: center; margin-top: 50px; padding: 20px;">
+            <h2 style="color: #e53e3e;">Lỗi: Không tìm thấy file</h2>
+            <p style="color: #4a5568; font-size: 16px;">File đính kèm này đã bị xóa hoặc không còn tồn tại trên máy chủ.</p>
+        </div>
+    `);
+});
 
 app.use('/api', router);
 

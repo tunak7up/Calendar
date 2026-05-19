@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -29,6 +29,91 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import ParticipantManager from '../../components/ParticipantManager';
 import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 
+const downloadFile = async (url, fileName) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    window.open(url, '_blank');
+  }
+};
+
+const CommentItem = ({ comment, persons }) => {
+  const [files, setFiles] = useState([]);
+  
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const commentId = comment.comment_id || comment.id;
+        const res = await apiFetch(`/file-attachment/comment/${commentId}`);
+        if (res.success) {
+          setFiles(res.data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchFiles();
+  }, [comment]);
+
+  return (
+    <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs font-bold text-indigo-600">{persons[comment.person_id] || 'Unknown User'}</span>
+        <span className="text-[10px] text-gray-400">{formatDateTime(comment.created_at || comment.time)}</span>
+      </div>
+      <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content || comment.text}</p>
+      
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
+          {files.map(f => {
+            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${f.url}`;
+            const fileName = f.file_name || 'File đính kèm';
+            return (
+              <button 
+                key={f.file_attachment_id} 
+                onClick={() => downloadFile(fullUrl, fileName)}
+                className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
+              >
+                <PaperClipIcon className="w-3 h-3" />
+                {fileName}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      
+      {comment.attachments && comment.attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
+          {comment.attachments.map(att => {
+            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+            return (
+              <button 
+                key={att.comment_attachment_id} 
+                onClick={() => downloadFile(fullUrl, 'Attachment')}
+                className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
+              >
+                <PaperClipIcon className="w-3 h-3" />
+                Attachment
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function TaskDetails() {
   const { id } = useParams();
   const location = useLocation();
@@ -45,7 +130,10 @@ export default function TaskDetails() {
   const [allUsers, setAllUsers] = useState([]); // Matching AddTask
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [participantFormData, setParticipantFormData] = useState({ person_id: '', role: 'assignee' });
-
+  const [taskAttachments, setTaskAttachments] = useState([]);
+  const [commentFiles, setCommentFiles] = useState([]);
+  const taskFileInputRef = useRef(null);
+  const commentFileInputRef = useRef(null);
   // Edit Title/Description State
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -81,6 +169,17 @@ export default function TaskDetails() {
       }
     } catch (error) {
       console.error('Error fetching comments:', error);
+    }
+  };
+
+  const fetchTaskAttachments = async () => {
+    try {
+      const res = await apiFetch(`/file-attachment/task/${id}`);
+      if (res.success) {
+        setTaskAttachments(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching task attachments:', error);
     }
   };
 
@@ -205,6 +304,7 @@ export default function TaskDetails() {
       fetchTaskData();
       fetchComments();
       fetchSubTasks();
+      fetchTaskAttachments();
     }
   }, [id]);
 
@@ -222,10 +322,79 @@ export default function TaskDetails() {
 
       if (res.success) {
         setNewComment('');
+        
+        // Upload comment files
+        if (commentFiles.length > 0) {
+          const commentId = res.data.comment_id || res.data.id;
+          for (const file of commentFiles) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('attachable_type', 'comment');
+            formData.append('attachable_id', commentId);
+            try {
+              await apiFetch('/file-attachment/upload', {
+                method: 'POST',
+                body: formData,
+              });
+            } catch (err) {
+              console.error('Error uploading comment file:', err);
+            }
+          }
+          setCommentFiles([]);
+          if (commentFileInputRef.current) commentFileInputRef.current.value = '';
+        }
+
         fetchComments();
       }
     } catch (error) {
       console.error('Error adding comment:', error);
+    }
+  };
+
+  const handleUploadTaskFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('attachable_type', 'task');
+      formData.append('attachable_id', id);
+
+      try {
+        await apiFetch('/file-attachment/upload', {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    }
+    if (taskFileInputRef.current) taskFileInputRef.current.value = '';
+    fetchTaskAttachments();
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    if (!window.confirm('Delete this file?')) return;
+    try {
+      const res = await apiFetch(`/file-attachment/${attachmentId}`, { method: 'DELETE' });
+      if (res.success) {
+        fetchTaskAttachments();
+      }
+    } catch (error) {
+      console.error('Delete attachment error:', error);
+    }
+  };
+
+  const handleDeleteAllAttachments = async () => {
+    if (!window.confirm('Delete ALL files from this task?')) return;
+    try {
+      const res = await apiFetch(`/file-attachment/task/${id}/all`, { method: 'DELETE' });
+      if (res.success) {
+        fetchTaskAttachments();
+      }
+    } catch (error) {
+      console.error('Delete all attachments error:', error);
     }
   };
 
@@ -456,6 +625,77 @@ export default function TaskDetails() {
           )}
         </div>
 
+        {/* Attachments Section */}
+        <div className="p-5 sm:p-8 border-b border-gray-100 bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <PaperClipIcon className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-bold text-gray-900">Tài liệu đính kèm</h2>
+              <span className="bg-indigo-100 text-indigo-700 py-0.5 px-2 rounded-full text-[10px] font-bold">
+                {taskAttachments.length}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                multiple
+                ref={taskFileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleUploadTaskFiles}
+              />
+              <button
+                onClick={() => taskFileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+                Thêm file
+              </button>
+              {taskAttachments.length > 0 && (
+                <button
+                  onClick={handleDeleteAllAttachments}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-600 hover:text-white transition-all uppercase tracking-wider"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  Xóa tất cả
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {taskAttachments.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {taskAttachments.map(att => {
+                const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+                const fileName = att.file_name || 'File đính kèm';
+                return (
+                  <div key={att.file_attachment_id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-indigo-50/50 transition-colors group">
+                    <button 
+                      onClick={() => downloadFile(fullUrl, fileName)} 
+                      className="flex items-center gap-2 overflow-hidden flex-1 mr-2 text-left"
+                    >
+                      <DocumentTextIcon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700 truncate hover:text-indigo-600">
+                        {fileName}
+                      </span>
+                    </button>
+                  <button
+                    onClick={() => handleDeleteAttachment(att.file_attachment_id)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    title="Xóa file"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <p className="text-sm text-gray-500">Chưa có tài liệu đính kèm.</p>
+            </div>
+          )}
+        </div>
+
         {/* Participants Section - Reused Component */}
         <ParticipantManager 
           participants={fullTask.participants}
@@ -474,13 +714,7 @@ export default function TaskDetails() {
 
           <div className="space-y-4 mb-4 sm:mb-6">
             {comments.map(c => (
-              <div key={c.comment_id || c.id} className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-bold text-indigo-600">{persons[c.person_id] || 'Unknown User'}</span>
-                  <span className="text-[10px] text-gray-400">{formatDateTime(c.created_at || c.time)}</span>
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.content || c.text}</p>
-              </div>
+              <CommentItem key={c.comment_id || c.id} comment={c} persons={persons} />
             ))}
           </div>
 
@@ -489,8 +723,29 @@ export default function TaskDetails() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Viết bình luận..."
-              className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-24"
+              className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-28"
             />
+            <div className="absolute bottom-4 left-4 flex gap-2 items-center">
+              <input
+                type="file"
+                multiple
+                ref={commentFileInputRef}
+                style={{ display: 'none' }}
+                onChange={(e) => setCommentFiles(Array.from(e.target.files))}
+              />
+              <button
+                onClick={() => commentFileInputRef.current?.click()}
+                className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-gray-50 rounded-xl"
+                title="Đính kèm file"
+              >
+                <PaperClipIcon className="w-5 h-5" />
+              </button>
+              {commentFiles.length > 0 && (
+                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
+                  {commentFiles.length} file đính kèm
+                </span>
+              )}
+            </div>
             <button
               onClick={() => handleAddComment()}
               className="absolute bottom-4 right-4 bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors"

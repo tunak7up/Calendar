@@ -11,10 +11,11 @@ const upload = multer({
         fileSize: fileService.MAX_FILE_SIZE
     },
     fileFilter: (req, file, cb) => {
-        if (fileService.ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+        const ext = require('path').extname(file.originalname).toLowerCase();
+        if (fileService.ALLOWED_MIME_TYPES.includes(file.mimetype) || (fileService.ALLOWED_EXTENSIONS && fileService.ALLOWED_EXTENSIONS.includes(ext))) {
             cb(null, true);
         } else {
-            cb(new Error(`File type ${file.mimetype} is not allowed`));
+            cb(new Error(`File type ${file.mimetype} with extension ${ext} is not allowed`));
         }
     }
 });

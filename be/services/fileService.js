@@ -17,8 +17,15 @@ const ALLOWED_MIME_TYPES = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/csv',
     'text/plain',
-    'application/zip'
+    'application/zip',
+    'application/x-zip-compressed',
+    'multipart/x-zip',
+    'application/x-rar-compressed',
+    'application/vnd.rar',
+    'application/rar',
+    'application/x-7z-compressed'
 ];
+const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpeg', '.jpg', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip', '.rar', '.7z'];
 
 // Ensure uploads directory exists
 const ensureUploadsDir = () => {
@@ -37,8 +44,9 @@ const validateFile = (file) => {
         throw new Error(`File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-        throw new Error(`File type ${file.mimetype} is not allowed`);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype) && !ALLOWED_EXTENSIONS.includes(ext)) {
+        throw new Error(`File type ${file.mimetype} with extension ${ext} is not allowed`);
     }
 
     return true;
@@ -59,18 +67,37 @@ const saveFileToDisk = (file) => {
     return {
         fileName,
         filePath,
-        url: `/uploads/${fileName}`
+        url: `/uploads/${fileName}`,
+        originalName: file.originalname
     };
 };
 
 // Create file attachment record
 const createFileAttachment = async (attachable_type, attachable_id, fileData) => {
     try {
+        let finalName = fileData.originalName;
+        
+        // Handle name collision
+        const existingAttachments = await fileAttachment.findAll({
+            where: { attachable_type, attachable_id }
+        });
+        const existingNames = existingAttachments.map(a => a.file_name);
+        
+        if (existingNames.includes(finalName)) {
+            const ext = path.extname(finalName);
+            const base = path.basename(finalName, ext);
+            let counter = 1;
+            while (existingNames.includes(`${base}(${counter})${ext}`)) {
+                counter++;
+            }
+            finalName = `${base}(${counter})${ext}`;
+        }
+
         const attachment = await fileAttachment.create({
             attachable_type,
             attachable_id,
             url: fileData.url,
-            file_name: fileData.fileName,
+            file_name: finalName,
             file_type: fileData.mimeType,
             file_size: fileData.fileSize
         });
@@ -124,7 +151,8 @@ const deleteAttachment = async (file_attachment_id) => {
         }
 
         // Delete file from disk
-        const filePath = path.join(UPLOADS_DIR, attachment.file_name);
+        const actualFileName = path.basename(attachment.url);
+        const filePath = path.join(UPLOADS_DIR, actualFileName);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
@@ -149,7 +177,8 @@ const deleteAttachmentsByEntity = async (attachable_type, attachable_id) => {
 
         // Delete files from disk
         for (const attachment of attachments) {
-            const filePath = path.join(UPLOADS_DIR, attachment.file_name);
+            const actualFileName = path.basename(attachment.url);
+            const filePath = path.join(UPLOADS_DIR, actualFileName);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }
@@ -179,5 +208,6 @@ module.exports = {
     UPLOADS_DIR,
     MAX_FILE_SIZE,
     ALLOWED_MIME_TYPES,
+    ALLOWED_EXTENSIONS,
     ensureUploadsDir
 };

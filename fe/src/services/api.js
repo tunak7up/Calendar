@@ -7,9 +7,12 @@ export const apiFetch = async (endpoint, options = {}) => {
   // Tự động gắn access token vào header
   const accessToken = localStorage.getItem('accessToken');
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }

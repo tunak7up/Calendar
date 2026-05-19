@@ -47,7 +47,7 @@ export default function SortableTable({
 
   const handleSort = (col) => {
     if (!col.sortable) return;
-    let newDir = 'asc';
+    let newDir = col.defaultSortDir || 'asc';
     if (sortKey === col.key) {
       newDir = sortDir === 'asc' ? 'desc' : 'asc';
     }

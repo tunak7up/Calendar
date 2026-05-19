@@ -19,14 +19,25 @@ import ParticipantManager from '../../components/ParticipantManager';
 export default function AddTask() {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = getLocalDateString();
   const initialDateFromState = location.state?.date;
+  const initialDate = initialDateFromState && initialDateFromState >= todayStr ? initialDateFromState : todayStr;
 
   const initialState = {
     taskName: '',
     description: '',
-    startDate: initialDateFromState || new Date().toISOString().split('T')[0],
+    startDate: initialDate,
     startTime: '00:01',
-    dueDate: initialDateFromState || new Date().toISOString().split('T')[0],
+    dueDate: initialDate,
     endTime: '23:59',
     assigner: '',
     priority: 'Medium',
@@ -255,8 +266,15 @@ export default function AddTask() {
                 <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
                   <MiniCalendar
                     selectedDate={formData.startDate}
+                    minDate={todayStr}
                     onSelectDate={(date) => {
-                      setFormData({ ...formData, startDate: date });
+                      setFormData(prev => {
+                        const nextState = { ...prev, startDate: date };
+                        if (prev.dueDate < date) {
+                          nextState.dueDate = date;
+                        }
+                        return nextState;
+                      });
                       setIsStartCalOpen(false);
                     }}
                   />
@@ -280,6 +298,7 @@ export default function AddTask() {
                 <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
                   <MiniCalendar
                     selectedDate={formData.dueDate}
+                    minDate={formData.startDate || todayStr}
                     onSelectDate={(date) => {
                       setFormData({ ...formData, dueDate: date });
                       setIsDueCalOpen(false);

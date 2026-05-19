@@ -3,7 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [], viewDate, onViewChange }) {
+export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [], viewDate, onViewChange, minDate }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(
     selectedDate ? new Date(selectedDate).getFullYear() : today.getFullYear()
@@ -120,22 +120,24 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
           const isSelected = cell.dateStr === selectedDate;
           const hasWorkHour = cell.dateStr ? workDays.includes(cell.dateStr) : false;
           const colPos = idx % 7; // 0=Sun, 6=Sat
+          const isPast = minDate && cell.dateStr && cell.dateStr < minDate;
+          const isDisabled = !cell.currentMonth || isPast;
 
           return (
             <button
               key={idx}
-              disabled={!cell.currentMonth}
+              disabled={isDisabled}
               onClick={() => cell.dateStr && onSelectDate(cell.dateStr)}
               className={`
                 relative flex items-center justify-center h-8 w-8 mx-auto rounded-full text-[0.8rem] font-medium transition-colors
-                ${!cell.currentMonth ? 'text-gray-300 cursor-default' : ''}
-                ${cell.currentMonth && !isToday && !isSelected
+                ${isDisabled ? 'text-gray-300 cursor-not-allowed opacity-40 bg-transparent' : ''}
+                ${cell.currentMonth && !isDisabled && !isToday && !isSelected
                   ? colPos === 0 || colPos === 6
                     ? 'text-blue-500 bg-gray-50 hover:bg-gray-100 cursor-pointer'
                     : 'text-gray-700 hover:bg-gray-100 cursor-pointer'
                   : ''}
-                ${isToday && !isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
-                ${isSelected ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 font-bold' : ''}
+                ${isToday && !isSelected && !isDisabled ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                ${isSelected && !isDisabled ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400 font-bold' : ''}
               `}
             >
               <span>{cell.day}</span>

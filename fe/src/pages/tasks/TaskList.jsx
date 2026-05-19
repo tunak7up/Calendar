@@ -11,25 +11,13 @@ import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 import { useNavigate } from 'react-router-dom';
+import { formatDateTime } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
-
-// Hàm helper định dạng ngày thành kiểu "May 15, 2026"
-const formatCustomDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'N/A';
-  
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-};
 
 function StatusBadge({ status }) {
   if (status?.toLowerCase() === 'completed') {
@@ -186,15 +174,13 @@ export default function TaskList({ isAdmin }) {
   }, [filteredTasks, sortKey, sortDir]);
 
   const columns = [
-    { key: 'name', label: 'Tên công việc', sortable: true, className: 'w-[28%] min-w-[220px]' },
-    { key: 'assigner', label: 'Người giao', sortable: true, className: 'w-[12%] min-w-[110px]' },
-    { key: 'due_date', label: 'Hạn chót', sortable: true, className: 'w-[100px]' },
-    
-    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true, className: 'w-[100px]' },
-    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[90px]' },
+    { key: 'name', label: 'Tên công việc', sortable: true },
+    { key: 'assigner', label: 'Người giao', sortable: true },
+    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },
+    { key: 'due_date', label: 'Hạn chót', sortable: true },
+    { key: 'status', label: 'Trạng thái', sortable: true },
     { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
-    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' },
-    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
+    { key: 'action', label: 'Thao tác', sortable: false, align: 'center' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -220,6 +206,8 @@ export default function TaskList({ isAdmin }) {
       console.error('Error deleting task:', error);
     }
   };
+
+
 
   return (
     <div className="space-y-6 pb-20">
@@ -312,27 +300,26 @@ export default function TaskList({ isAdmin }) {
         totalItems={displayTasks.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
-        tableClassName="min-w-[600px] table-auto"
+        tableClassName="min-w-[600px]"
         renderRow={(task) => (
           <tr
             key={task.task_id}
             onClick={() => navigate(`/tasks/${task.task_id}`)}
             className={`border-b border-gray-200 hover:bg-blue-50/80 even:bg-gray-50/50 transition-colors cursor-pointer select-none ${task.parent_id ? 'bg-indigo-50/40' : ''}`}
           >
-            <td className="px-6 py-5 w-[28%] min-w-[220px]">
+            <td className="px-6 py-5">
               <div className="flex items-center gap-2">
-                {task.parent_id && <div className="w-4 border-b-2 border-l-2 border-gray-300 h-4 rounded-bl-md flex-shrink-0" />}
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-gray-900 text-sm leading-snug break-words line-clamp-2" title={task.name}>{task.name}</p>
+                {task.parent_id && <div className="w-4 border-b-2 border-l-2 border-gray-300 h-4 rounded-bl-md inline-block" />}
+                <div>
+                  <p className="font-bold text-gray-900 text-sm leading-snug">{task.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">ID: REQ-{task.task_id}</p>
                 </div>
               </div>
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm truncate w-[12%] min-w-[110px]" title={task.assigner}>{task.assigner}</td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
-            
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
-            <td className="px-4 py-5 w-[120px]" onClick={(e) => e.stopPropagation()}>
+            <td className="px-4 py-5 text-gray-600 text-sm whitespace-nowrap">{task.assigner}</td>
+            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.start_time)}</td>
+            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.due_date)}</td>
+            <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
               <TaskStatusDropdown
                 currentStatus={task.status}
                 dueDate={task.due_date}
@@ -340,7 +327,7 @@ export default function TaskList({ isAdmin }) {
                 size="sm"
               />
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm w-[20%] min-w-[150px]">
+            <td className="px-4 py-5 text-gray-600 text-sm">
               {isAdmin ? (
                 <div className="flex flex-wrap gap-1">
                   {task.participants && task.participants.map(p => (
@@ -351,7 +338,7 @@ export default function TaskList({ isAdmin }) {
                 task.role || 'N/A'
               )}
             </td>
-            <td className="px-4 py-5 text-center w-[80px]">
+            <td className="px-4 py-5 text-center">
               <button
                 onClick={(e) => handleDeleteTask(e, task.task_id)}
                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
@@ -360,7 +347,6 @@ export default function TaskList({ isAdmin }) {
                 <TrashIcon className="w-5 h-5" />
               </button>
             </td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
           </tr>
         )}
       />

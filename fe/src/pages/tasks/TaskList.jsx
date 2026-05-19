@@ -11,6 +11,7 @@ import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 import { useNavigate } from 'react-router-dom';
+import { formatDateTime } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
@@ -220,6 +221,8 @@ export default function TaskList({ isAdmin }) {
     }
   };
 
+
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header Section */}
@@ -311,18 +314,18 @@ export default function TaskList({ isAdmin }) {
         totalItems={displayTasks.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
-        tableClassName="min-w-[600px] table-auto"
+        tableClassName="min-w-[600px]"
         renderRow={(task) => (
           <tr
             key={task.task_id}
             onClick={() => navigate(`/tasks/${task.task_id}`)}
             className={`border-b border-gray-200 hover:bg-blue-50/80 even:bg-gray-50/50 transition-colors cursor-pointer select-none ${task.parent_id ? 'bg-indigo-50/40' : ''}`}
           >
-            <td className="px-6 py-5 w-[28%] min-w-[220px]">
+            <td className="px-6 py-5">
               <div className="flex items-center gap-2">
-                {task.parent_id && <div className="w-4 border-b-2 border-l-2 border-gray-300 h-4 rounded-bl-md flex-shrink-0" />}
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-gray-900 text-sm leading-snug break-words line-clamp-2" title={task.name}>{task.name}</p>
+                {task.parent_id && <div className="w-4 border-b-2 border-l-2 border-gray-300 h-4 rounded-bl-md inline-block" />}
+                <div>
+                  <p className="font-bold text-gray-900 text-sm leading-snug">{task.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">ID: REQ-{task.task_id}</p>
                 </div>
               </div>
@@ -338,7 +341,7 @@ export default function TaskList({ isAdmin }) {
                 size="sm"
               />
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm w-[20%] min-w-[150px]">
+            <td className="px-4 py-5 text-gray-600 text-sm">
               {isAdmin ? (
                 <div className="flex flex-wrap gap-1">
                   {task.participants && task.participants.map(p => (

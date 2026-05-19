@@ -176,11 +176,12 @@ export default function TaskList({ isAdmin }) {
   const columns = [
     { key: 'name', label: 'Tên công việc', sortable: true },
     { key: 'assigner', label: 'Người giao', sortable: true },
-    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },
+    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },    
     { key: 'due_date', label: 'Hạn chót', sortable: true },
     { key: 'status', label: 'Trạng thái', sortable: true },
     { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
     { key: 'action', label: 'Thao tác', sortable: false, align: 'center' },
+    { key: 'created_at', label: 'Ngày tạo', sortable: true }
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -347,6 +348,7 @@ export default function TaskList({ isAdmin }) {
                 <TrashIcon className="w-5 h-5" />
               </button>
             </td>
+            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.created_at)}</td>
           </tr>
         )}
       />

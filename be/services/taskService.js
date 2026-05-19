@@ -120,7 +120,8 @@ const getAllTasks = async () => {
             status: taskJson.status || 'pending',
             priority: taskJson.priority || 'medium',
             participants: participants,
-            parent_id: taskJson.parent_id
+            parent_id: taskJson.parent_id,
+            created_at: taskJson.created_at,
         };
     });
 };
@@ -265,15 +266,22 @@ const updateTaskTitleOrDescription = async (id, { title, description }) => {
 };
 
 const deleteTask = async (id) => {
-    const targetTask = await task.findByPk(id);
-    if (!targetTask) throw new Error('Task not found');
-    const subTasks = await task.findAll({ where: { parent_id: id } });
-
     return await sequelize.transaction(async (t) => {
-        if (subTasks.length > 0) {
-            await task.destroy({ where: { parent_id: id }, transaction: t });
+        const targetTask = await task.findByPk(id, { transaction: t });
+
+        if (!targetTask) {
+            throw new Error('Task not found hehe');
         }
-        await targetTask.destroy({ transaction: t });        
+
+        await task.destroy({
+            where: { parent_id: id },
+            transaction: t
+        });
+
+        await task.destroy({
+            where: { task_id: id },
+            transaction: t
+        });
     });
 };
 

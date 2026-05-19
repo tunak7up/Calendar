@@ -349,15 +349,15 @@ export default function AdminSchedule() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#d1fae5', borderColor: '#6ee7b7' }}></span>
-              <span className="text-emerald-700">Có lịch, đầy đủ</span>
+              <span className="text-emerald-700">Có lịch, đã checkout</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#fef3c7', borderColor: '#fcd34d' }}></span>
-              <span className="text-amber-700">Check-in ngoài lịch </span>
+              <span className="text-amber-700">Check-in ngoài lịch</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#f3e8ff', borderColor: '#d8b4fe' }}></span>
-              <span className="text-purple-700">Đầy đủ ngoài lịch</span>
+              <span className="text-purple-700">Checkout ngoài lịch</span>
             </div>
           </div>
 

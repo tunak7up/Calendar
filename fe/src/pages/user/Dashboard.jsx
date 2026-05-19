@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [reportId, setReportId] = useState(null);
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState({}); // { task_id: 'status' }
   const [checkingReport, setCheckingReport] = useState(true);
+  const [reportAttachments, setReportAttachments] = useState([]);
+  const fileInputRef = useRef(null);
 
   // Get YYYY-MM-DD for local timezone
   const getWorkingDate = () => {
@@ -70,7 +72,26 @@ export default function Dashboard() {
     };
 
     checkDailyReport();
+    checkDailyReport();
   }, [user]);
+
+  const fetchReportAttachments = async () => {
+    if (!reportId) return;
+    try {
+      const res = await apiFetch(`/file-attachment/report/${reportId}`);
+      if (res.success) {
+        setReportAttachments(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching report attachments:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (reportId) {
+      fetchReportAttachments();
+    }
+  }, [reportId]);
 
   useEffect(() => {
     fetchTasks();
@@ -198,6 +219,64 @@ export default function Dashboard() {
       ...prev,
       [taskId]: e.target.value
     }));
+  };
+
+  const handleUploadReportFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    if (!reportId) {
+      alert('Vui lòng Check-in để tạo báo cáo trước khi đính kèm file.');
+      return;
+    }
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('attachable_type', 'report');
+      formData.append('attachable_id', reportId);
+
+      try {
+        await apiFetch('/file-attachment/upload', {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    fetchReportAttachments();
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    if (!window.confirm('Xóa file đính kèm này?')) return;
+    try {
+      const res = await apiFetch(`/file-attachment/${attachmentId}`, { method: 'DELETE' });
+      if (res.success) {
+        fetchReportAttachments();
+      }
+    } catch (error) {
+      console.error('Delete attachment error:', error);
+    }
+  };
+
+  const downloadFile = async (url, fileName) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      window.open(url, '_blank');
+    }
   };
 
   return (
@@ -362,6 +441,66 @@ export default function Dashboard() {
               rows={4}
               className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
             />
+            
+            {/* Attachment Section */}
+            <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <PaperClipIcon className="w-5 h-5 text-gray-500" />
+                  <span className="text-sm font-semibold text-gray-700">Tài liệu đính kèm ({reportAttachments.length})</span>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleUploadReportFiles}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!reportId) {
+                        alert('Vui lòng Check-in trước khi tải lên tài liệu!');
+                        return;
+                      }
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    Thêm file
+                  </button>
+                </div>
+              </div>
+              
+              {reportAttachments.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {reportAttachments.map(att => {
+                    const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+                    const fileName = att.file_name || 'File đính kèm';
+                    return (
+                      <div key={att.file_attachment_id} className="flex items-center gap-1 bg-white border border-gray-200 pl-3 pr-1 py-1 rounded-lg shadow-sm group">
+                        <button
+                          onClick={() => downloadFile(fullUrl, fileName)}
+                          className="text-xs font-medium text-gray-700 hover:text-blue-600 truncate max-w-[150px] text-left"
+                          title={fileName}
+                        >
+                          {fileName}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAttachment(att.file_attachment_id)}
+                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                          title="Xóa file"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={handleSaveDescription}

@@ -127,7 +127,7 @@ export default function Dashboard() {
 
   const handleSubmitReport = async () => {
     if (!reportText.trim()) {
-      alert('Vui lòng nhập báo cáo công việc trước khi check-out!');
+      alert(checkOutTime ? 'Vui lòng nhập nội dung báo cáo!' : 'Vui lòng nhập báo cáo công việc trước khi check-out!');
       return;
     }
 
@@ -148,8 +148,13 @@ export default function Dashboard() {
         
         if (response.success) {
           const now = new Date();
+          const isUpdating = !!checkOutTime;
           setCheckOutTime(now);
-          alert(`Đã gửi báo cáo và Check-out thành công lúc ${now.toLocaleTimeString()}`);
+          if (isUpdating) {
+            alert(`Đã cập nhật báo cáo thành công lúc ${now.toLocaleTimeString()}`);
+          } else {
+            alert(`Đã gửi báo cáo và Check-out thành công lúc ${now.toLocaleTimeString()}`);
+          }
           setPendingStatusUpdates({}); // clear pending updates
           fetchTasks(); // Refresh list to remove completed tasks
         }
@@ -353,27 +358,37 @@ export default function Dashboard() {
             <textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              disabled={!!checkOutTime}
               placeholder="Bạn đã hoàn thành được gì hôm nay? Có khó khăn gì không?"
               rows={4}
-              className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-4 outline-none resize-none mb-4 disabled:opacity-60"
+              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
             />
             <div className="flex justify-end gap-3">
               <button
                 onClick={handleSaveDescription}
-                disabled={!!checkOutTime}
-                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
               >
                 <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
-                Lưu
+                Lưu nháp
               </button>
               <button
                 onClick={handleSubmitReport}
-                disabled={!!checkOutTime}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
+                  ${checkOutTime 
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' 
+                    : 'bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20'
+                  }`}
               >
-                <PaperAirplaneIcon className="w-5 h-5" />
-                Gửi báo cáo & Check-out
+                {checkOutTime ? (
+                  <>
+                    <CheckCircleIcon className="w-5 h-5" />
+                    Cập nhật báo cáo
+                  </>
+                ) : (
+                  <>
+                    <PaperAirplaneIcon className="w-5 h-5" />
+                    Gửi báo cáo & Check-out
+                  </>
+                )}
               </button>
             </div>
           </div>

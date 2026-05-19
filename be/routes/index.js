@@ -16,6 +16,6 @@ router.use('/response', authenticate, require('./response'));
 router.use('/comment', authenticate, require('./comment'));
 router.use('/daily-report', authenticate, require('./dailyReport'));
 router.use('/mail', authenticate, require('./mail'));
-router.use('/file-attachment', require('./fileAttachment'));
+router.use('/file-attachment', authenticate, require('./fileAttachment'));
 
 module.exports = router;

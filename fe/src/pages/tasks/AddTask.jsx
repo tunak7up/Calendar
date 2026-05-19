@@ -8,7 +8,10 @@ import {
   ListBulletIcon,
   UserGroupIcon,
   ChevronDownIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  PaperClipIcon,
+  TrashIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
@@ -50,6 +53,7 @@ export default function AddTask() {
   const [managers, setManagers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pendingFiles, setPendingFiles] = useState([]);
 
   // Popover states
   const [isStartCalOpen, setIsStartCalOpen] = useState(false);
@@ -57,6 +61,19 @@ export default function AddTask() {
 
   const startCalRef = useRef(null);
   const dueCalRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setPendingFiles(prev => [...prev, ...files]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemovePendingFile = (index) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -142,8 +159,30 @@ export default function AddTask() {
 
       const result = await taskService.createTask(payload);
       if (result.success) {
+        const newTaskId = result.data.task_id || result.data.id;
+        
+        // Upload files
+        if (pendingFiles.length > 0 && newTaskId) {
+          for (const file of pendingFiles) {
+            const uploadData = new FormData();
+            uploadData.append('file', file);
+            uploadData.append('attachable_type', 'task');
+            uploadData.append('attachable_id', newTaskId);
+
+            try {
+              await apiFetch('/file-attachment/upload', {
+                method: 'POST',
+                body: uploadData,
+              });
+            } catch (error) {
+              console.error('Upload error:', error);
+            }
+          }
+        }
+
         alert('Đã tạo công việc và các công việc con thành công!');
         handleReset();
+        setPendingFiles([]);
         navigate('/tasks');
       } else {
         alert('Lỗi: ' + result.message);
@@ -357,6 +396,58 @@ export default function AddTask() {
         onUpdateRole={updateAssigneeRole}
         onRemove={removeAssignee}
       />
+
+      {/* Attachments Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+            <PaperClipIcon className="w-5 h-5 text-blue-500" />
+            Tài liệu đính kèm
+          </h2>
+          <div>
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+            >
+              <PlusIcon className="w-4 h-4" />
+              Thêm file
+            </button>
+          </div>
+        </div>
+        
+        {pendingFiles.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {pendingFiles.map((file, idx) => (
+              <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl shadow-sm group">
+                <DocumentTextIcon className="w-4 h-4 text-gray-500" />
+                <span className="text-xs font-medium text-gray-700 truncate max-w-[150px]" title={file.name}>
+                  {file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemovePendingFile(idx)}
+                  className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                  title="Xóa file"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
+            <p className="text-xs text-gray-400 font-bold">Chưa có tài liệu nào</p>
+          </div>
+        )}
+      </div>
 
       {/* Sub-tasks Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

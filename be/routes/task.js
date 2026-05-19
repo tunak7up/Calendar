@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskController = require('../controllers/taskController');
+const { authorize } = require('../middleware/auth');
 
 router.post('/', taskController.createTask);
 router.post('/attachment', taskController.createTaskAttachment);
@@ -17,7 +18,7 @@ router.get('/:id', taskController.getTaskById);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);
 router.post('/:parentId', taskController.createSubTask);
-router.post('/:id/participant', taskController.addParticipantToTask);
+router.post('/:id/participant', authorize('manager', 'employee'), taskController.addParticipantToTask);
 router.put('/:id/participant/:participantId', taskController.updateParticipantRole);
 router.delete('/:id/participant/:participantId', taskController.removeParticipantFromTask);
 

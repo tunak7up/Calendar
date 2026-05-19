@@ -98,8 +98,7 @@ function App() {
         <main className="flex-1">
           <Routes>
             <Route path="/login" element={<Login onLogin={(data) => {
-              const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
-              navigate(payload.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+              navigate(data.user?.role === 'manager' ? '/admin/dashboard' : '/dashboard');
             }} />} />
           </Routes>
         </main>

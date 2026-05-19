@@ -189,11 +189,12 @@ export default function TaskList({ isAdmin }) {
     { key: 'name', label: 'Tên công việc', sortable: true, className: 'w-[28%] min-w-[220px]' },
     { key: 'assigner', label: 'Người giao', sortable: true, className: 'w-[12%] min-w-[110px]' },
     { key: 'due_date', label: 'Hạn chót', sortable: true, className: 'w-[100px]' },
-    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]' },
+    
     { key: 'start_time', label: 'Ngày bắt đầu', sortable: true, className: 'w-[100px]' },
-    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[120px]' },
-    { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false, className: 'w-[20%] min-w-[150px]' },
-    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' }
+    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[90px]' },
+    { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
+    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' },
+    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -329,7 +330,7 @@ export default function TaskList({ isAdmin }) {
             </td>
             <td className="px-4 py-5 text-gray-600 text-sm truncate w-[12%] min-w-[110px]" title={task.assigner}>{task.assigner}</td>
             <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
+            
             <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
             <td className="px-4 py-5 w-[120px]" onClick={(e) => e.stopPropagation()}>
               <TaskStatusDropdown
@@ -359,6 +360,7 @@ export default function TaskList({ isAdmin }) {
                 <TrashIcon className="w-5 h-5" />
               </button>
             </td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
           </tr>
         )}
       />

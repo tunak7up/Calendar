@@ -19,6 +19,19 @@ import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
 
+// Hàm helper định dạng ngày thành kiểu "May 15, 2026"
+const formatCustomDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
 function StatusBadge({ status }) {
   if (status?.toLowerCase() === 'completed') {
     return (
@@ -174,13 +187,14 @@ export default function TaskList({ isAdmin }) {
   }, [filteredTasks, sortKey, sortDir]);
 
   const columns = [
-    { key: 'name', label: 'Tên công việc', sortable: true },
-    { key: 'assigner', label: 'Người giao', sortable: true },
-    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true },
-    { key: 'due_date', label: 'Hạn chót', sortable: true },
-    { key: 'status', label: 'Trạng thái', sortable: true },
+    { key: 'name', label: 'Tên công việc', sortable: true, className: 'w-[28%] min-w-[220px]' },
+    { key: 'assigner', label: 'Người giao', sortable: true, className: 'w-[12%] min-w-[110px]' },
+    { key: 'due_date', label: 'Hạn chót', sortable: true, className: 'w-[100px]' },
+    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true, className: 'w-[100px]' },
+    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[90px]' },
     { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
-    { key: 'action', label: 'Thao tác', sortable: false, align: 'center' },
+    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
+    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -316,10 +330,11 @@ export default function TaskList({ isAdmin }) {
                 </div>
               </div>
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm whitespace-nowrap">{task.assigner}</td>
-            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.start_time)}</td>
-            <td className="px-4 py-5 text-gray-600 text-xs whitespace-nowrap">{formatDateTime(task.due_date)}</td>
-            <td className="px-4 py-5" onClick={(e) => e.stopPropagation()}>
+            <td className="px-4 py-5 text-gray-600 text-sm truncate w-[12%] min-w-[110px]" title={task.assigner}>{task.assigner}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
+
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
+            <td className="px-4 py-5 w-[120px]" onClick={(e) => e.stopPropagation()}>
               <TaskStatusDropdown
                 currentStatus={task.status}
                 dueDate={task.due_date}
@@ -338,7 +353,9 @@ export default function TaskList({ isAdmin }) {
                 task.role || 'N/A'
               )}
             </td>
-            <td className="px-4 py-5 text-center">
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
+
+            <td className="px-4 py-5 text-center w-[80px]">
               <button
                 onClick={(e) => handleDeleteTask(e, task.task_id)}
                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"

@@ -7,7 +7,7 @@ import {
   ArrowDownTrayIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
-import { apiFetch, BASE_URL } from '../../services/api';
+import { apiFetch, BASE_URL, getAccessToken, setAccessToken } from '../../services/api';
 import { scheduleService } from '../../services/scheduleService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import SortableTable from '../../components/SortableTable';
@@ -74,15 +74,46 @@ export default function AdminWorkHours() {
 
     setExporting(true);
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch(`${BASE_URL}/daily-report/export`, {
+      let accessToken = getAccessToken();
+      let response = await fetch(`${BASE_URL}/daily-report/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
         },
+        credentials: 'include',
         body: JSON.stringify({ personIds: ids, startDate, endDate })
       });
+
+      // Auto-refresh token if expired
+      if (response.status === 403) {
+        try {
+          const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            accessToken = refreshData.token;
+            setAccessToken(accessToken);
+
+            // Retry export with new token
+            response = await fetch(`${BASE_URL}/daily-report/export`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`
+              },
+              credentials: 'include',
+              body: JSON.stringify({ personIds: ids, startDate, endDate })
+            });
+          }
+        } catch (refreshError) {
+          throw new Error('Token hết hạn, vui lòng đăng nhập lại');
+        }
+      }
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));

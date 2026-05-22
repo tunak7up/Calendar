@@ -1,5 +1,6 @@
 const { where } = require('sequelize');
 const { person, task, task_participant } = require('../models');
+const bcrypt = require('bcryptjs');
 
 const getAllPersons = async () => {
   return await person.findAll();
@@ -26,10 +27,11 @@ const createPerson = async (
   }) => {
   const existing = await person.findOne({ where: { username } });
   if (existing) throw new Error('Username already exists');
+  const hashedPassword = await bcrypt.hash(password, 10);
   return await person.create(
     {
       name,
-      password,
+      password: hashedPassword,
       status,
       role,
       username
@@ -44,9 +46,10 @@ const updatePerson = async (
     role,
     username }) => {
   const data = await person.findByPk(id);
+  const hashedPassword = await bcrypt.hash(password, 10);
   if (!data) throw new Error('Person not found');
 
-  return await data.update({ name, password, status, role, username });
+  return await data.update({ name, password: hashedPassword, status, role, username });
 };
 
 const removePerson = async (id) => {

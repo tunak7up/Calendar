@@ -5,18 +5,15 @@ const Person = require('../models/person');
 const RefreshToken = require('../models/refresh_token');
 
 const login = async (username, password) => {
-  // Tìm user theo username
   const person = await Person.findOne({ where: { username } });
   if (!person)
-    throw new Error('Tên đăng nhập không tồn tại');
+    throw new Error('Tai khoan khong ton tai');
 
-  // Kiểm tra tài khoản có bị khóa không
   if (!person.status)
-    throw new Error('Tài khoản đã bị vô hiệu hóa');
+    throw new Error('Tai khoan chua duoc kich hoat, lien lac voi manager');
 
-  // So s?nh password
-  //   const isMatch = await bcrypt.compare(password, person.password);
-  const isMatch = password === person.password;
+  const isMatch = await bcrypt.compare(password, person.password);
+  // const isMatch = password === person.password;
 
   if (!isMatch)
     throw new Error('Mật khẩu không đúng');
@@ -33,7 +30,7 @@ const login = async (username, password) => {
   const refreshPayload = { person_id: person.person_id };
   const refreshTokenString = jwt.sign(refreshPayload, jwtConfig.refreshSecret, { expiresIn: jwtConfig.refreshExpiresIn });
   const refreshTokenHash = await bcrypt.hash(refreshTokenString, 10);
-  
+
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -65,16 +62,16 @@ const hashPassword = async (plainPassword) => {
 
 const refresh = async (refreshTokenString) => {
   if (!refreshTokenString) throw new Error('Không có refresh token');
-  
+
   let decoded;
   try {
     decoded = jwt.verify(refreshTokenString, jwtConfig.refreshSecret);
   } catch (err) {
-    throw new Error('Refresh token không hợp lệ hoặc đã hết hạn');
+    throw new Error('Refresh token không hợp l�? hoặc đã hết hạn');
   }
 
   const tokens = await RefreshToken.findAll({ where: { person_id: decoded.person_id } });
-  
+
   let validTokenRecord = null;
   for (const t of tokens) {
     const isMatch = await bcrypt.compare(refreshTokenString, t.token_hash);
@@ -85,16 +82,16 @@ const refresh = async (refreshTokenString) => {
   }
 
   if (!validTokenRecord) {
-    throw new Error('Refresh token đã bị thu hồi hoặc không tồn tại');
+    throw new Error('Refresh token đã b�? thu hồi hoặc không tồn tại');
   }
 
   if (new Date() > validTokenRecord.expires_at) {
     await validTokenRecord.destroy();
-    throw new Error('Refresh token đã hết hạn trong hệ thống');
+    throw new Error('Refresh token đã hết hạn trong h�? thống');
   }
 
   const person = await Person.findByPk(decoded.person_id);
-  if (!person || !person.status) throw new Error('Tài khoản bị khoá hoặc không tồn tại');
+  if (!person || !person.status) throw new Error('T�?i khoản b�? khoá hoặc không tồn tại');
 
   const payload = { person_id: person.person_id, username: person.username, role: person.role };
   const token = jwt.sign(payload, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn });

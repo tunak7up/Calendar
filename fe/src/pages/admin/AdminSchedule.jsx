@@ -170,13 +170,8 @@ export default function AdminSchedule() {
     }
   };
 
-  const displayEvents = useMemo(() => {
-    const baseEvents = selectedEmployeeIds.length === 0
-      ? schedules
-      : schedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
-
-    const enrichedEvents = baseEvents.map(e => {
-      if (e.extendedProps?.isSummary) return e;
+  const enrichedSchedules = useMemo(() => {
+    return schedules.map(e => {
       const emp = employees.find(empItem => empItem.person_id === e.person_id);
       if (emp) {
         return {
@@ -190,12 +185,18 @@ export default function AdminSchedule() {
       }
       return e;
     });
+  }, [schedules, employees]);
 
-    if (!isMobile) return enrichedEvents;
+  const displayEvents = useMemo(() => {
+    const baseEvents = selectedEmployeeIds.length === 0
+      ? enrichedSchedules
+      : enrichedSchedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
+
+    if (!isMobile) return baseEvents;
 
     // Aggregate by date for mobile view
     const aggregated = {};
-    enrichedEvents.forEach(e => {
+    baseEvents.forEach(e => {
       const date = e.start;
       if (!date) return;
       if (!aggregated[date]) aggregated[date] = 0;
@@ -212,7 +213,7 @@ export default function AdminSchedule() {
       textColor: '#1e4ed8',
       extendedProps: { isSummary: true, count }
     }));
-  }, [schedules, selectedEmployeeIds, isMobile, employees]);
+  }, [enrichedSchedules, selectedEmployeeIds, isMobile]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -237,7 +238,10 @@ export default function AdminSchedule() {
     try {
       // Normalize clicked date
       const targetDate = clickedDateStr.split(/[T ]/)[0];
-      const peopleWorking = schedules.filter(s => s.start === targetDate);
+      let peopleWorking = enrichedSchedules.filter(s => s.start === targetDate);
+      if (selectedEmployeeIds.length > 0) {
+        peopleWorking = peopleWorking.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
+      }
 
       // Fetch Daily Reports for this specific date
       const reportPromise = apiFetch(`/daily-report/date/${targetDate}`);
@@ -337,30 +341,6 @@ export default function AdminSchedule() {
             </div>
           </div>
 
-          {/* Calendar Status Legend */}
-          <div className="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-wrap gap-4 text-xs font-bold text-gray-600">
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}></span>
-              <span className="text-red-700">Có lịch, chưa check-in</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#dbeafe', borderColor: '#93c5fd' }}></span>
-              <span className="text-blue-700">Có lịch, đã check-in</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#d1fae5', borderColor: '#6ee7b7' }}></span>
-              <span className="text-emerald-700">Có lịch, đã checkout</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#fef3c7', borderColor: '#fcd34d' }}></span>
-              <span className="text-amber-700">Check-in ngoài lịch</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded border" style={{ backgroundColor: '#f3e8ff', borderColor: '#d8b4fe' }}></span>
-              <span className="text-purple-700">Checkout ngoài lịch</span>
-            </div>
-          </div>
-
           <ScheduleCalendar
             ref={calendarRef}
             initialDate={todayStr}
@@ -376,18 +356,46 @@ export default function AdminSchedule() {
           />
         </div>
 
-        {/* Right Panel — Mini Calendar: sidebar on desktop, compact strip on mobile */}
-        <div className="lg:w-64 lg:shrink-0 bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm lg:h-fit lg:sticky lg:top-[100px]">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">Navigational View</h3>
-          <div className="flex justify-center lg:block">
-            <div className="w-full max-w-xs lg:max-w-none">
-              <MiniCalendar
-                selectedDate={selectedDate}
-                onSelectDate={handleSelectDate}
-                workDays={scheduleDays}
-                viewDate={viewDate}
-                onViewChange={handleMiniCalendarViewChange}
-              />
+        {/* Right Panel — Mini Calendar & Legend: sidebar on desktop, compact strip on mobile */}
+        <div className="lg:w-64 lg:shrink-0 bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm lg:h-fit lg:sticky lg:top-[100px] flex flex-col gap-6">
+          <div>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">Navigational View</h3>
+            <div className="flex justify-center lg:block">
+              <div className="w-full max-w-xs lg:max-w-none">
+                <MiniCalendar
+                  selectedDate={selectedDate}
+                  onSelectDate={handleSelectDate}
+                  workDays={scheduleDays}
+                  viewDate={viewDate}
+                  onViewChange={handleMiniCalendarViewChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Chú thích màu sắc</h3>
+            <div className="flex flex-col gap-3 text-xs font-bold text-gray-600">
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}></span>
+                <span className="text-red-700">Có lịch, chưa check-in</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#dbeafe', borderColor: '#93c5fd' }}></span>
+                <span className="text-blue-700">Có lịch, đã check-in</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#d1fae5', borderColor: '#6ee7b7' }}></span>
+                <span className="text-emerald-700">Có lịch, đã checkout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#fef3c7', borderColor: '#fcd34d' }}></span>
+                <span className="text-amber-700">Check-in ngoài lịch</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#f3e8ff', borderColor: '#d8b4fe' }}></span>
+                <span className="text-purple-700">Checkout ngoài lịch</span>
+              </div>
             </div>
           </div>
         </div>
@@ -582,7 +590,7 @@ export default function AdminSchedule() {
                       {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
                     </p>
                   </div>
-                  {selectedModalPerson.tasks.filter(t => taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
+                  {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                       Không có công việc nào phù hợp.
                     </div>

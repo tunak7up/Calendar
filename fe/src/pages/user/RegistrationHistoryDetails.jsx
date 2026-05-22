@@ -7,32 +7,78 @@ import {
   CalendarIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function RegistrationHistoryDetails() {
+  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
-  const rawReq = location.state?.request;
+  const [rawReq, setRawReq] = useState(location.state?.request);
+  const [loading, setLoading] = useState(!rawReq);
+  const [error, setError] = useState(null);
 
-  const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
-    rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
-      rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
-        (rawReq?.status || 'pending');
-
-  const [status, setStatus] = useState(initialStatus);
-  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+  const [status, setStatus] = useState('pending');
+  const [selectedStatus, setSelectedStatus] = useState('pending');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  if (!rawReq) return (
-    <div className="max-w-4xl mx-auto text-center py-20">
-      <h2 className="text-xl font-bold text-gray-900">Request not found</h2>
-      <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
-    </div>
-  );
+  useEffect(() => {
+    if (rawReq) {
+      const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
+        rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
+          rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
+            (rawReq?.status || 'pending');
+      setStatus(initialStatus);
+      setSelectedStatus(initialStatus);
+      return;
+    }
+
+    const fetchRequest = async () => {
+      setLoading(true);
+      try {
+        const response = await apiFetch(`/request/${id}`);
+        if (response.success && response.data) {
+          setRawReq(response.data);
+          const initialStatus = response.data?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
+            response.data?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
+              response.data?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
+                (response.data?.status || 'pending');
+          setStatus(initialStatus);
+          setSelectedStatus(initialStatus);
+        } else {
+          setError(response.message || 'Yêu cầu không tồn tại');
+        }
+      } catch (err) {
+        console.error('Error fetching request detail:', err);
+        setError('Không thể tải thông tin yêu cầu');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequest();
+  }, [id, rawReq]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-20 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p className="text-gray-600 font-medium">Đang tải thông tin yêu cầu...</p>
+      </div>
+    );
+  }
+
+  if (error || !rawReq) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-20">
+        <h2 className="text-xl font-bold text-gray-900">{error || "Request not found"}</h2>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
+      </div>
+    );
+  }
 
   // Normalize request to handle both AdminRequests and RegistrationHistory formats
   const request = {

@@ -1,6 +1,7 @@
 const { request, request_detail, person, schedule } = require('../models');
 const sequelize = require('../config/db');
 const { Op } = require('sequelize');
+const { sendMail } = require('./mailService');
 
 const createBulkRequest = async (data) => {
     // Validation for work registration: No weekends allowed
@@ -43,7 +44,7 @@ const createBulkRequest = async (data) => {
         }
     }
 
-    return await sequelize.transaction(async (t) => {
+    const newRequest = await sequelize.transaction(async (t) => {
         const newRequest = await request.create({
             type: data.type,
             requester_id: data.requester_id,
@@ -65,13 +66,75 @@ const createBulkRequest = async (data) => {
 
         return newRequest;
     });
+
+    // Send email to admins after successful creation
+    try {
+        const requester = await person.findByPk(data.requester_id);
+        const username = requester ? requester.username : 'Nhân viên';
+        const subjectSuffix = data.type === 'register' ? 'đăng ký lịch làm' : 'xin nghỉ làm';
+        const subject = `${username} ${subjectSuffix}`;
+        
+        const admins = await person.findAll({
+            where: {
+                role: 'manager'
+            }
+        });
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const typeText = data.type === 'register' ? 'Đăng ký lịch làm' : 'Xin nghỉ làm';
+        const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="background-color: #4F46E5; color: white; padding: 20px; text-align: center;">
+                <h2 style="margin: 0; font-size: 20px;">Yêu Cầu Mới Cần Duyệt</h2>
+            </div>
+            <div style="padding: 24px; color: #333333;">
+                <p>Xin chào Admin,</p>
+                <p>Hệ thống vừa nhận được một yêu cầu mới từ nhân viên <strong>${requester ? (requester.name || requester.username) : 'Nhân viên'}</strong>:</p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="${frontendUrl}/history/${newRequest.request_id || newRequest.id}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Truy Cập Trang Quản Lý</a>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold; width: 120px;">Loại yêu cầu:</td>
+                        <td style="padding: 8px 0;">${typeText}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Lý do:</td>
+                        <td style="padding: 8px 0; line-height: 1.5; color: #4b5563;">${data.reason || 'Không có lý do'}</td>
+                    </tr>
+                </table>
+                <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý lịch trình.</p>
+                <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
+            </div>
+        </div>
+        `;
+
+        for (const admin of admins) {
+            if (admin.email) {
+                try {
+                    await sendMail({
+                        to: admin.email,
+                        subject: subject,
+                        html: html
+                    });
+                } catch (mailError) {
+                    console.error(`Failed to send request email to admin ${admin.email}:`, mailError);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching requester/admins or sending request emails:', error);
+    }
+
+    return newRequest;
 };
 
 const getRequestById = async (request_id) => {
     const data = await request.findByPk(request_id, {
         include: [
             { model: request_detail, as: 'details' },
-            { model: person, as: 'approver', attributes: ['name', 'role'] }
+            { model: person, as: 'approver', attributes: ['name', 'role'] },
+            { model: person, as: 'requester', attributes: ['name', 'username', 'role'] }
         ]
     });
     if (!data) throw new Error('Request not found');

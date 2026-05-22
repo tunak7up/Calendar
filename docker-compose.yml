@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: mssql
     ports:
-      - "1436:1433"
+      - "14360:1433"
     environment:
       SA_PASSWORD: "YourStrong!Password"
       ACCEPT_EULA: "Y"
@@ -15,7 +15,7 @@ services:
       context: ./be
       dockerfile: Dockerfile
     ports:
-      - "3006:3000"
+      - "36363:3000"
     env_file:
       - ./be/.env
     depends_on:
@@ -26,7 +26,7 @@ services:
       context: ./fe
       dockerfile: Dockerfile
     ports:
-      - "8088:80"
+      - "34321:80"
     depends_on:
       - backend
 

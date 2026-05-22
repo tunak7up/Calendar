@@ -50,58 +50,61 @@ const createTask = async (data) => {
     });
 
     if (data.task_participants && data.task_participants.length > 0) {
-        try {
-            const assigner = await person.findByPk(data.assigner_id || parentTask.assigner_id);
-            const assignerName = assigner ? assigner.name : 'Người quản lý';
-            const subject = `Thông báo có task mới từ ${assignerName}`;
+        // Send emails in background to prevent blocking the response
+        (async () => {
+            try {
+                const assigner = await person.findByPk(data.assigner_id || parentTask.assigner_id);
+                const assignerName = assigner ? assigner.name : 'Người quản lý';
+                const subject = `Thông báo có task mới từ ${assignerName}`;
 
-            const participantIds = data.task_participants.map(p => p.participant_id);
-            const participants = await person.findAll({
-                where: {
-                    person_id: {
-                        [Op.in]: participantIds
+                const participantIds = data.task_participants.map(p => p.participant_id);
+                const participants = await person.findAll({
+                    where: {
+                        person_id: {
+                            [Op.in]: participantIds
+                        }
                     }
-                }
-            });
+                });
 
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-            const html = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                <div style="background-color: #0D8ABC; color: white; padding: 20px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 20px;">Thông Báo Task Mới</h2>
-                </div>
-                <div style="padding: 24px; color: #333333;">
-                    <p>Xin chào,</p>
-                    <p>Bạn vừa được giao một công việc mới từ <strong>${assignerName}</strong>:</p>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <a href="${frontendUrl}/tasks/${parentTask.task_id}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Xem Chi Tiết Công Việc</a>
+                const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const html = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="background-color: #0D8ABC; color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; font-size: 20px;">Thông Báo Task Mới</h2>
                     </div>
-                    <div style="background-color: #f9fafb; border-left: 4px solid #0D8ABC; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                        <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 18px;">${data.title}</h3>
-                        <p style="margin: 0; color: #4b5563; font-size: 14px; white-space: pre-line;">${data.description || 'Không có mô tả chi tiết cho task này.'}</p>
+                    <div style="padding: 24px; color: #333333;">
+                        <p>Xin chào,</p>
+                        <p>Bạn vừa được giao một công việc mới từ <strong>${assignerName}</strong>:</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${frontendUrl}/tasks/${parentTask.task_id}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Xem Chi Tiết Công Việc</a>
+                        </div>
+                        <div style="background-color: #f9fafb; border-left: 4px solid #0D8ABC; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 18px;">${data.title}</h3>
+                            <p style="margin: 0; color: #4b5563; font-size: 14px; white-space: pre-line;">${data.description || 'Không có mô tả chi tiết cho task này.'}</p>
+                        </div>
+                        <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý công việc.</p>
+                        <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
                     </div>
-                    <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý công việc.</p>
-                    <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
                 </div>
-            </div>
-            `;
+                `;
 
-            for (const p of participants) {
-                if (p.email) {
-                    try {
-                        await sendMail({
+                const emailPromises = participants.map(p => {
+                    if (p.email) {
+                        return sendMail({
                             to: p.email,
                             subject: subject,
                             html: html
+                        }).catch(mailError => {
+                            console.error(`Failed to send task email to ${p.email}:`, mailError);
                         });
-                    } catch (mailError) {
-                        console.error(`Failed to send task email to ${p.email}:`, mailError);
                     }
-                }
+                    return Promise.resolve();
+                });
+                await Promise.all(emailPromises);
+            } catch (error) {
+                console.error('Error fetching participants or sending task emails in background:', error);
             }
-        } catch (error) {
-            console.error('Error fetching participants or sending task emails:', error);
-        }
+        })();
     }
 
     return parentTask;

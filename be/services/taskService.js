@@ -221,7 +221,9 @@ const getAllTasksByParticipantsId = async (participantId) => {
             due_date: taskJson.due_date,
             status: taskJson.status || 'pending',
             priority: taskJson.priority || 'medium',
-            role: taskJson.task_participants?.[0]?.role || 'N/A'
+            role: taskJson.task_participants?.[0]?.role || 'N/A',
+            created_at: taskJson.created_at,
+            parent_id: taskJson.parent_id
         }
     });
 };

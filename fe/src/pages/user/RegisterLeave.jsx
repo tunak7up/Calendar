@@ -56,12 +56,34 @@ export default function RegisterLeave() {
           }];
         });
       } else {
-        alert("You don't have a work schedule on this day.");
+        alert("Bạn không có lịch làm việc được duyệt vào ngày này.");
       }
     } catch (error) {
       console.error('Error fetching shift:', error);
+      alert("Lỗi khi lấy thông tin ca làm việc.");
     }
   };
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const result = await scheduleService.getScheduleByPersonId(user.person_id);
+        if (result.success) {
+          setWorkSchedules(result.data);
+          const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
+          setWorkDays(days);
+
+          // If initialDate was passed, auto-add it if it's a work day
+          if (initialDate && days.includes(initialDate)) {
+            fetchShiftAndAdd(initialDate);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching schedule:', error);
+      }
+    };
+    fetchSchedule();
+  }, []);
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);
@@ -72,70 +94,68 @@ export default function RegisterLeave() {
     }
   };
 
-const handleCancel = () => {
-  if (schedule.length > 0 || reason) {
-    if (window.confirm("Are you sure you want to discard your leave request?")) {
+  const handleCancel = () => {
+    if (schedule.length > 0 || reason) {
+      if (window.confirm("Bạn có chắc chắn muốn hủy yêu cầu nghỉ phép này?")) {
+        navigate(-1);
+      }
+    } else {
       navigate(-1);
     }
-  } else {
-    navigate(-1);
-  }
-};
-
-const handleSubmit = async () => {
-  if (schedule.length === 0) {
-    alert("Please add at least one leave day to the schedule.");
-    return;
-  }
-
-  const requestDetails = schedule.map(item => {
-    let startTime, endTime;
-    if (item.shift === 'Morning') {
-      startTime = `${item.date}T08:30:00+07:00`;
-      endTime = `${item.date}T12:00:00+07:00`;
-    } else if (item.shift === 'Afternoon') {
-      startTime = `${item.date}T13:00:00+07:00`;
-      endTime = `${item.date}T17:30:00+07:00`;
-    } else { // Full Day
-      startTime = `${item.date}T08:30:00+07:00`;
-      endTime = `${item.date}T17:30:00+07:00`;
-    }
-    return {
-      date: item.date,
-      start_time: startTime,
-      end_time: endTime
-    };
-  });
-
-  const payload = {
-    requester_id: user.person_id,
-    approver_id: null,
-    type: 'leave', // Important: Type is leave
-    reason: reason || 'Nghỉ phép',
-    request_details: requestDetails
   };
 
-  try {
-    const result = await requestService.submitRequest(payload);
-    alert("Đã gửi yêu cầu nghỉ phép thành công!");
-    setSchedule([]);
-    setReason('');
-    navigate('/history');
-  } catch (error) {
-    console.error('Error:', error);
-    alert("Có lỗi xảy ra: " + error.message);
-  }
-};
+  const handleSubmit = async () => {
+    if (schedule.length === 0) {
+      alert("Vui lòng chọn ít nhất một ngày nghỉ phép.");
+      return;
+    }
+
+    const requestDetails = schedule.map(item => {
+      let startTime, endTime;
+      if (item.shift === 'Morning') {
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T12:00:00+07:00`;
+      } else if (item.shift === 'Afternoon') {
+        startTime = `${item.date}T13:00:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
+      } else { // Full Day
+        startTime = `${item.date}T08:30:00+07:00`;
+        endTime = `${item.date}T17:30:00+07:00`;
+      }
+      return {
+        date: item.date,
+        start_time: startTime,
+        end_time: endTime
+      };
+    });
+
+    const payload = {
+      requester_id: user.person_id,
+      approver_id: null,
+      type: 'leave', // Important: Type is leave
+      reason: reason || 'Nghỉ phép',
+      request_details: requestDetails
+    };
+
+    try {
+      const result = await requestService.submitRequest(payload);
+      alert("Đã gửi yêu cầu nghỉ phép thành công!");
+      setSchedule([]);
+      setReason('');
+      navigate('/history');
+    } catch (error) {
+      console.error('Error:', error);
+      alert("Có lỗi xảy ra: " + error.message);
+    }
+  };
 
 
-const handleRemoveFromSchedule = (dateStr) => {
-  setSchedule(prev => prev.filter(item => item.date !== dateStr));
-};
+  const handleRemoveFromSchedule = (dateStr) => {
+    setSchedule(prev => prev.filter(item => item.date !== dateStr));
+  };
 
-const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
-const getTimeRangeStr = (shift) => {
-  return shift === 'Morning' ? '08:30 - 12:00' : shift === 'Afternoon' ? '13:00 - 17:30' : '08:30 - 17:30';
-};
+  const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
+
 
 return (
   <>
@@ -183,7 +203,9 @@ return (
                   {sortedSchedule.map(item => (
                     <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{item.shift}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                        {item.shift === 'Morning' ? 'Buổi sáng' : item.shift === 'Afternoon' ? 'Buổi chiều' : 'Cả ngày'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Button variant="danger-icon" onClick={() => handleRemoveFromSchedule(item.date)}>
                           <TrashIcon className="w-4 h-4" />

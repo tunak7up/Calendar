@@ -1,6 +1,6 @@
 const { response } = require('../models');
 
-const createResponse = async ({ data, responser_id }) => {
+const createResponse = async (data, responser_id) => {
     return await response.create({
         request_id: data.request_id,
         content: data.content,

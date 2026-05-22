@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
     req.user = decoded; // { person_id, username, role }
     next();
   } catch (err) {
-    return res.status(403).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
+    return res.status(401).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
   }
 };
 

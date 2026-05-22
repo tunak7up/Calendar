@@ -34,7 +34,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   let response = await fetch(url, fetchOptions);
 
   // Auto-refresh logic when token is expired or unauthorized
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     // Only try to refresh if it's not the refresh or login endpoint failing
     if (!endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
       try {

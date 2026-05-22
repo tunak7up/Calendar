@@ -8,12 +8,12 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Vui long nhap day du thong tin' });
 
     const result = await authService.login(username, password);
-    const isProduction = process.env.NODE_ENV === 'production';
+    // const isProduction = process.env.NODE_ENV === 'production';
     // Set refresh token as HttpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: isProduction, 
-      sameSite:isProduction ? 'none' : 'lax',
+      secure: true, 
+      sameSite:'none',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -52,11 +52,11 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await authService.logout(refreshToken);
     }
-    const isProduction = process.env.NODE_ENV === 'production';
+    
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
     });
 
     res.json({ message: 'Dang xuat thanh cong' });

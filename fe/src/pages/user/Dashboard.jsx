@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { apiFetch } from '../../services/api';
+import { apiFetch, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
@@ -262,7 +262,13 @@ export default function Dashboard() {
 
   const downloadFile = async (url, fileName) => {
     try {
-      const response = await fetch(url);
+      const headers = {};
+      const accessToken = getAccessToken();
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch(url, { headers });
       if (!response.ok) throw new Error('Network response was not ok');
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);

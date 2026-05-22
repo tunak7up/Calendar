@@ -21,7 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
-import { apiFetch } from '../../services/api';
+import { apiFetch, BASE_URL, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
@@ -31,7 +31,13 @@ import TaskStatusDropdown from '../../components/TaskStatusDropdown';
 
 const downloadFile = async (url, fileName) => {
   try {
-    const response = await fetch(url);
+    const headers = {};
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(url, { headers });
     if (!response.ok) throw new Error('Network response was not ok');
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);

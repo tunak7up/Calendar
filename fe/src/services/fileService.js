@@ -1,4 +1,59 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import { getAccessToken, setAccessToken, BASE_URL } from './api';
+
+const API_BASE_URL = BASE_URL;
+
+// Helper to handle token refresh on 401/403
+const makeAuthenticatedFetch = async (url, options = {}) => {
+  let accessToken = getAccessToken();
+  
+  const headers = {
+    ...options.headers,
+  };
+
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  let fetchOptions = {
+    ...options,
+    headers,
+    credentials: 'include'
+  };
+
+  let response = await fetch(url, fetchOptions);
+
+  // Auto-refresh on 401 or 403
+  if (response.status === 401 || response.status === 403) {
+    try {
+      const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (refreshRes.ok) {
+        const refreshData = await refreshRes.json();
+        accessToken = refreshData.token;
+        setAccessToken(accessToken);
+
+        // Retry with new token
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        fetchOptions.headers = headers;
+        response = await fetch(url, fetchOptions);
+      } else {
+        setAccessToken(null);
+        window.location.href = '/login';
+        throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
+      }
+    } catch (refreshError) {
+      setAccessToken(null);
+      window.location.href = '/login';
+      throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
+    }
+  }
+
+  return response;
+};
 
 export const fileService = {
   // Upload file attachment
@@ -9,11 +64,8 @@ export const fileService = {
     formData.append('attachable_id', attachable_id);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/file-attachment/upload`, {
+      const response = await makeAuthenticatedFetch(`${API_BASE_URL}/file-attachment/upload`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
         body: formData
       });
 
@@ -32,13 +84,9 @@ export const fileService = {
   // Get attachments for entity
   getAttachments: async (attachable_type, attachable_id) => {
     try {
-      const response = await fetch(
+      const response = await makeAuthenticatedFetch(
         `${API_BASE_URL}/file-attachment/${attachable_type}/${attachable_id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        }
+        { method: 'GET' }
       );
 
       if (!response.ok) {
@@ -56,14 +104,9 @@ export const fileService = {
   // Delete single attachment
   deleteAttachment: async (file_attachment_id) => {
     try {
-      const response = await fetch(
+      const response = await makeAuthenticatedFetch(
         `${API_BASE_URL}/file-attachment/${file_attachment_id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        }
+        { method: 'DELETE' }
       );
 
       if (!response.ok) {
@@ -81,14 +124,9 @@ export const fileService = {
   // Delete all attachments for entity
   deleteAttachmentsByEntity: async (attachable_type, attachable_id) => {
     try {
-      const response = await fetch(
+      const response = await makeAuthenticatedFetch(
         `${API_BASE_URL}/file-attachment/${attachable_type}/${attachable_id}/all`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        }
+        { method: 'DELETE' }
       );
 
       if (!response.ok) {

@@ -11,6 +11,7 @@ const ScheduleCalendar = React.forwardRef(({
   events,
   selectedDate,
   onDateClick,
+  onEventClick,
   onDatesSet
 }, ref) => {
   return (
@@ -28,6 +29,11 @@ const ScheduleCalendar = React.forwardRef(({
         height="auto"
         dayMaxEvents={true}
         dateClick={onDateClick}
+        eventClick={(info) => {
+          if (onEventClick) {
+            onEventClick(info.event);
+          }
+        }}
         datesSet={onDatesSet}
         dayCellClassNames={(arg) => {
           const cellDate = arg.date;
@@ -43,9 +49,33 @@ const ScheduleCalendar = React.forwardRef(({
         }}
         eventContent={(arg) => {
           const isSummary = arg.event.extendedProps.isSummary;
+          const isGroupSummary = arg.event.extendedProps.isGroupSummary;
+
+          if (isGroupSummary) {
+            const groupType = arg.event.extendedProps.groupType;
+            return (
+              <div
+                className="flex items-center gap-1.5 truncate px-2.5 py-1 rounded-lg text-[0.7rem] font-medium border-l-4 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
+                style={{
+                  backgroundColor: arg.event.backgroundColor,
+                  color: arg.event.textColor,
+                  borderColor: arg.event.borderColor,
+                }}
+                title={arg.event.title}
+              >
+                {groupType === 'registered' ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0"></span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                )}
+                <span className="truncate">{arg.event.title}</span>
+              </div>
+            );
+          }
+
           if (isSummary) {
             return (
-              <div className="flex items-center justify-center gap-1.5 py-1 px-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[10px] font-black shadow-sm">
+              <div className="flex items-center justify-center gap-1.5 py-1 px-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[10px] font-medium shadow-sm">
                 <UsersIcon className="w-3 h-3" />
                 <span>{arg.event.extendedProps.count}</span>
               </div>
@@ -53,7 +83,7 @@ const ScheduleCalendar = React.forwardRef(({
           }
           return (
             <div
-              className="truncate px-2 py-1 rounded-md text-[0.7rem] font-bold border-l-4 w-full"
+              className="truncate px-2 py-1 rounded-md text-[0.7rem] font-medium border-l-4 w-full cursor-pointer"
               style={{
                 backgroundColor: arg.event.backgroundColor,
                 color: arg.event.textColor,

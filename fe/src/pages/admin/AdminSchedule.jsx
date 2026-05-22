@@ -39,6 +39,7 @@ export default function AdminSchedule() {
   const [modalData, setModalData] = useState([]);
   const [selectedModalPerson, setSelectedModalPerson] = useState(null);
   const [taskStatusFilters, setTaskStatusFilters] = useState(['pending', 'in progress']);
+  const [activeGroup, setActiveGroup] = useState('registered'); // 'registered' or 'unscheduled'
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -192,28 +193,64 @@ export default function AdminSchedule() {
       ? enrichedSchedules
       : enrichedSchedules.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
 
-    if (!isMobile) return baseEvents;
-
-    // Aggregate by date for mobile view
-    const aggregated = {};
+    // Aggregate by date into 2 groups: registered and unscheduled
+    const aggregated = {}; // key: date -> { registered: 0, unscheduled: 0 }
+    
     baseEvents.forEach(e => {
       const date = e.start;
       if (!date) return;
-      if (!aggregated[date]) aggregated[date] = 0;
-      aggregated[date]++;
+      if (!aggregated[date]) {
+        aggregated[date] = { registered: 0, unscheduled: 0 };
+      }
+      
+      const hasSchedule = e.extendedProps?.hasSchedule;
+      if (hasSchedule) {
+        aggregated[date].registered++;
+      } else {
+        aggregated[date].unscheduled++;
+      }
     });
 
-    return Object.entries(aggregated).map(([date, count]) => ({
-      id: `summary_${date}`,
-      title: `${count} People Working`,
-      start: date,
-      allDay: true,
-      backgroundColor: '#eff6ff',
-      borderColor: '#bfdbfe',
-      textColor: '#1e4ed8',
-      extendedProps: { isSummary: true, count }
-    }));
-  }, [enrichedSchedules, selectedEmployeeIds, isMobile]);
+    const groupEvents = [];
+    Object.entries(aggregated).forEach(([date, counts]) => {
+      if (counts.registered > 0) {
+        groupEvents.push({
+          id: `group_registered_${date}`,
+          title: `Đăng ký: ${counts.registered} người`,
+          start: date,
+          allDay: true,
+          backgroundColor: '#eff6ff', // blue-50
+          borderColor: '#bfdbfe', // blue-200
+          textColor: '#1e4ed8', // blue-700
+          extendedProps: {
+            isGroupSummary: true,
+            groupType: 'registered',
+            count: counts.registered,
+            date
+          }
+        });
+      }
+      if (counts.unscheduled > 0) {
+        groupEvents.push({
+          id: `group_unscheduled_${date}`,
+          title: `Ngoài lịch: ${counts.unscheduled} người`,
+          start: date,
+          allDay: true,
+          backgroundColor: '#fef3c7', // amber-100
+          borderColor: '#fcd34d', // amber-300
+          textColor: '#92400e', // amber-800
+          extendedProps: {
+            isGroupSummary: true,
+            groupType: 'unscheduled',
+            count: counts.unscheduled,
+            date
+          }
+        });
+      }
+    });
+
+    return groupEvents;
+  }, [enrichedSchedules, selectedEmployeeIds]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -233,6 +270,7 @@ export default function AdminSchedule() {
     setModalDate(clickedDateStr);
     setIsModalOpen(true);
     setSelectedModalPerson(null);
+    setActiveGroup('registered');
     setModalLoading(true);
 
     try {
@@ -316,6 +354,89 @@ export default function AdminSchedule() {
     }
   };
 
+  const handleEventClick = async (eventObj) => {
+    const clickedDateStr = eventObj.startStr || (eventObj.start instanceof Date ? eventObj.start.toISOString().split('T')[0] : eventObj.start?.split?.(/[T ]/)?.[0]);
+    const groupType = eventObj.extendedProps?.groupType || 'registered';
+    
+    setModalDate(clickedDateStr);
+    setIsModalOpen(true);
+    setSelectedModalPerson(null);
+    setActiveGroup(groupType);
+    setModalLoading(true);
+
+    try {
+      const targetDate = clickedDateStr.split(/[T ]/)[0];
+      let peopleWorking = enrichedSchedules.filter(s => s.start === targetDate);
+      if (selectedEmployeeIds.length > 0) {
+        peopleWorking = peopleWorking.filter(s => selectedEmployeeIds.includes(s.person_id.toString()));
+      }
+
+      const reportPromise = apiFetch(`/daily-report/date/${targetDate}`);
+      let tasksPromise;
+      if (allTasksCache) {
+        tasksPromise = Promise.resolve({ success: true, data: allTasksCache });
+      } else {
+        tasksPromise = taskService.getAllTasks();
+      }
+
+      const [reportRes, tasksRes] = await Promise.all([reportPromise, tasksPromise]);
+      const reports = reportRes.success ? (reportRes.data || []) : [];
+
+      let allTasks = allTasksCache;
+      if (!allTasksCache && tasksRes.success) {
+        allTasks = tasksRes.data || [];
+        setAllTasksCache(allTasks);
+      }
+
+      const enrichedData = peopleWorking.map(sched => {
+        let personTasks = [];
+        if (allTasks) {
+          personTasks = allTasks.filter(t => {
+            if (!t.participants?.some(p => p.person_id === sched.person_id)) return false;
+            const taskStartDate = t.start_time?.split(/[T ]/)[0] || t.due_date?.split(/[T ]/)[0];
+            const taskDueDate = t.due_date?.split(/[T ]/)[0];
+            return taskStartDate && taskDueDate && targetDate >= taskStartDate && targetDate <= taskDueDate;
+          });
+        }
+
+        const personReport = reports.find(r => Number(r.person_id) === Number(sched.person_id));
+        const schedTime = sched.extendedProps.schedule;
+        let shiftText = '—';
+        if (schedTime && schedTime.start_time && schedTime.end_time) {
+          try {
+            shiftText = `${new Date(schedTime.start_time).toLocaleTimeString('vi-VN', {
+              hour: 'numeric',
+              minute: '2-digit'
+            })} - ${new Date(schedTime.end_time).toLocaleTimeString('vi-VN', {
+              hour: 'numeric',
+              minute: '2-digit'
+            })}`;
+          } catch (e) {
+            shiftText = '—';
+          }
+        }
+
+        return {
+          person_id: sched.person_id,
+          name: sched.extendedProps.person?.name || sched.title,
+          username: sched.extendedProps.person?.username || '',
+          shift: shiftText,
+          check_in: personReport ? personReport.check_in : null,
+          has_reported: !!(personReport && personReport.description),
+          report: personReport || null,
+          tasks: personTasks,
+          hasSchedule: sched.extendedProps.hasSchedule
+        };
+      });
+
+      setModalData(enrichedData);
+    } catch (error) {
+      console.error("Failed to load date details", error);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
@@ -347,6 +468,7 @@ export default function AdminSchedule() {
             events={displayEvents}
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
+            onEventClick={handleEventClick}
             onDatesSet={(info) => {
               setViewDate(info.view.currentStart);
               const startStr = info.startStr.split('T')[0];
@@ -373,31 +495,6 @@ export default function AdminSchedule() {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Chú thích màu sắc</h3>
-            <div className="flex flex-col gap-3 text-xs font-bold text-gray-600">
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}></span>
-                <span className="text-red-700">Có lịch, chưa check-in</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#dbeafe', borderColor: '#93c5fd' }}></span>
-                <span className="text-blue-700">Có lịch, đã check-in</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#d1fae5', borderColor: '#6ee7b7' }}></span>
-                <span className="text-emerald-700">Có lịch, đã checkout</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#fef3c7', borderColor: '#fcd34d' }}></span>
-                <span className="text-amber-700">Check-in ngoài lịch</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded border shrink-0" style={{ backgroundColor: '#f3e8ff', borderColor: '#d8b4fe' }}></span>
-                <span className="text-purple-700">Checkout ngoài lịch</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -439,45 +536,112 @@ export default function AdminSchedule() {
                 </div>
               ) : !selectedModalPerson ? (
                 /* Day Summary View */
-                modalData.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">Không có nhân viên nào làm việc vào ngày này.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {modalData.map(person => (
-                      <div
-                        key={person.person_id}
-                        onClick={() => setSelectedModalPerson(person)}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
-                      >
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
-                            <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4" /> {person.shift}</span>
-                            <span>Check-in: {person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400">N/A</span>}</span>                            <span className="flex items-center gap-1">
+                (() => {
+                  const registeredList = modalData.filter(p => p.hasSchedule);
+                  const unscheduledList = modalData.filter(p => !p.hasSchedule);
+                  const registeredCount = registeredList.length;
+                  const unscheduledCount = unscheduledList.length;
+                  const currentList = activeGroup === 'registered' ? registeredList : unscheduledList;
 
+                  return (
+                    <div className="space-y-4">
+                      {/* Group selection boxes */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        {/* Box 1: Đăng ký đi làm */}
+                        <div
+                          onClick={() => setActiveGroup('registered')}
+                          className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${
+                            activeGroup === 'registered'
+                              ? 'border-blue-600 bg-blue-50/40 shadow-sm'
+                              : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-xl ${activeGroup === 'registered' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                              <UsersIcon className="w-4 h-4" />
+                            </div>
+                            <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'registered' ? 'text-blue-900' : 'text-gray-500'}`}>
+                              Đăng ký đi làm
                             </span>
-                            <span>
-                              Check-out: {
-                                person.report?.check_out
-                                  ? person.report.check_out.slice(0, 5)
-                                  : <span className="text-red-400">N/A</span>
-                              }
-                            </span>
-                            Báo cáo: {person.has_reported ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <XMarkIcon className="w-4 h-4 text-red-400" />}
+                          </div>
+                          <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
+                            {registeredCount}
+                            <span className="text-xs font-bold text-gray-400">người</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
-                            {person.tasks.length} Công việc
+
+                        {/* Box 2: Làm ngoài lịch */}
+                        <div
+                          onClick={() => setActiveGroup('unscheduled')}
+                          className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${
+                            activeGroup === 'unscheduled'
+                              ? 'border-amber-500 bg-amber-50/40 shadow-sm'
+                              : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-xl ${activeGroup === 'unscheduled' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                              <ClockIcon className="w-4 h-4" />
+                            </div>
+                            <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'unscheduled' ? 'text-amber-950' : 'text-gray-500'}`}>
+                              Làm ngoài lịch
+                            </span>
                           </div>
-                          <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            Xem
-                          </button>
+                          <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
+                            {unscheduledCount}
+                            <span className="text-xs font-bold text-gray-400">người</span>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )
+
+                      {/* List area */}
+                      {currentList.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                          {activeGroup === 'registered' 
+                            ? 'Không có nhân viên nào đăng ký đi làm vào ngày này.' 
+                            : 'Không có nhân viên nào làm việc ngoài lịch vào ngày này.'
+                          }
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {currentList.map(person => (
+                            <div
+                              key={person.person_id}
+                              onClick={() => setSelectedModalPerson(person)}
+                              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
+                            >
+                              <div className="flex-1">
+                                <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                                  <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4 text-gray-400" /> {person.shift}</span>
+                                  <span>Check-in: {person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">N/A</span>}</span>
+                                  <span>
+                                    Check-out: {
+                                      person.report?.check_out
+                                        ? person.report.check_out.slice(0, 5)
+                                        : <span className="text-red-400 font-medium">N/A</span>
+                                    }
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    Báo cáo: {person.has_reported ? <CheckCircleIcon className="w-4.5 h-4.5 text-green-500" /> : <XMarkIcon className="w-4.5 h-4.5 text-red-400" />}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
+                                  {person.tasks.length} Công việc
+                                </div>
+                                <button className="text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Xem chi tiết
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               ) : (
                 /* Person Task Detail View */
                 <div className="space-y-4">

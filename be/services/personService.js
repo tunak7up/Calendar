@@ -23,7 +23,8 @@ const createPerson = async (
     password,
     status,
     role,
-    username
+    username,
+    email
   }) => {
   const existing = await person.findOne({ where: { username } });
   if (existing) throw new Error('Username already exists');
@@ -34,7 +35,8 @@ const createPerson = async (
       password: hashedPassword,
       status,
       role,
-      username
+      username,
+      email
     });
 };
 
@@ -44,12 +46,17 @@ const updatePerson = async (
     password,
     status,
     role,
-    username }) => {
+    username,
+    email }) => {
   const data = await person.findByPk(id);
-  const hashedPassword = await bcrypt.hash(password, 10);
   if (!data) throw new Error('Person not found');
 
-  return await data.update({ name, password: hashedPassword, status, role, username });
+  const updateData = { name, status, role, username, email };
+  if (password) {
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+
+  return await data.update(updateData);
 };
 
 const removePerson = async (id) => {

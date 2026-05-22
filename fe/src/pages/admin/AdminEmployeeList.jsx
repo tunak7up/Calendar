@@ -19,6 +19,7 @@ export default function AdminEmployeeList() {
     name: '',
     username: '',
     password: '',
+    email: '',
     role: 'employee',
     status: true
   });
@@ -46,6 +47,7 @@ export default function AdminEmployeeList() {
         name: user.name,
         username: user.username,
         password: '', // Don't prefill password for security, leave blank unless changing
+        email: user.email || '',
         role: user.role || 'employee',
         status: user.status
       });
@@ -55,6 +57,7 @@ export default function AdminEmployeeList() {
         name: '',
         username: '',
         password: '',
+        email: '',
         role: 'employee',
         status: true
       });
@@ -143,19 +146,21 @@ export default function AdminEmployeeList() {
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">ID</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Tên nhân viên</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden md:table-cell">Email</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Tên đăng nhập</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Vai trò</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">Trạng thái</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">Đang tải danh sách nhân viên...</td>
+                  <td colSpan="7" className="text-center py-12 text-gray-400">Đang tải danh sách nhân viên...</td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-400">Không tìm thấy nhân viên nào.</td>
+                  <td colSpan="7" className="text-center py-12 text-gray-400">Không tìm thấy nhân viên nào.</td>
                 </tr>
               ) : (
                 employees.map((emp) => (
@@ -175,6 +180,7 @@ export default function AdminEmployeeList() {
                         <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.name}</span>
                       </div>
                     </td>
+                    <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden md:table-cell">{emp.email || <span className="text-gray-400 font-normal italic">Chưa cập nhật</span>}</td>
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
                     <td className="py-4 px-6">
                       <select
@@ -200,6 +206,18 @@ export default function AdminEmployeeList() {
                         <option value="true">Hoạt động</option>
                         <option value="false">Tạm khóa</option>
                       </select>
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(emp);
+                        }}
+                        className="p-2 hover:bg-blue-50 text-[#0056b3] rounded-lg transition-colors inline-flex items-center justify-center"
+                        title="Chỉnh sửa thông tin"
+                      >
+                        <PencilSquareIcon className="w-5 h-5" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -240,6 +258,16 @@ export default function AdminEmployeeList() {
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   placeholder="Tên đăng nhập..."
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Nhập địa chỉ email..."
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
                 />
               </div>

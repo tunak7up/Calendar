@@ -5,7 +5,7 @@ const login = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password)
-      return res.status(400).json({ message: 'Vui lòng nhập lại thông tin' });
+      return res.status(400).json({ message: 'Vui long nhap day du thong tin' });
 
     const result = await authService.login(username, password);
 
@@ -13,7 +13,7 @@ const login = async (req, res) => {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite:'none',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -32,7 +32,7 @@ const refresh = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      return res.status(401).json({ message: 'Không tìm thấy refresh token' });
+      return res.status(401).json({ message: 'Khong tim thay refresh token' });
     }
 
     const result = await authService.refresh(refreshToken);
@@ -56,13 +56,13 @@ const logout = async (req, res) => {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
-      sameSite: 'None', // Cookie v0.7+ yêu cầu viết hoa chữ cái đầu
+      sameSite:'none',
     });
 
-    res.json({ message: 'Đăng xuất thành công' });
+    res.json({ message: 'Dang xuat thanh cong' });
   } catch (err) {
     console.error('Logout error:', err);
-    res.status(500).json({ message: 'Lỗi đăng xuất' });
+    res.status(500).json({ message: 'Loi dang xuat' });
   }
 };
 

@@ -12,7 +12,7 @@ const login = async (req, res) => {
     // Set refresh token as HttpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction, 
       sameSite:isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });

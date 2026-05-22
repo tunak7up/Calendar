@@ -645,55 +645,55 @@ export default function AdminSchedule() {
               ) : (
                 /* Person Task Detail View */
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                     <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lọc theo trạng thái công việc</p>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        {/* Select for Status */}
-                        <div className="relative w-full sm:w-auto">
-                          <select
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val && !taskStatusFilters.includes(val)) {
-                                setTaskStatusFilters(prev => [...prev, val]);
-                              }
-                              e.target.value = "";
-                            }}
-                            defaultValue=""
-                            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all cursor-pointer w-full sm:min-w-[160px] appearance-none pr-8"
-                          >
-                            <option value="" disabled>Thêm trạng thái công việc...</option>
-                            {['pending', 'in progress', 'completed']
-                              .filter(s => !taskStatusFilters.includes(s))
-                              .map(s => (
-                                <option key={s} value={s} className="capitalize">{s}</option>
-                              ))
-                            }
-                          </select>
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                            <ChevronDownIcon className="w-4 h-4" />
-                          </div>
-                        </div>
-
-                        {/* Status Tags */}
-                        <div className="flex flex-wrap items-center gap-2 w-full sm:flex-1">
-                          {taskStatusFilters.map(status => (
-                            <div
-                              key={status}
-                              className="flex items-center gap-1.5 bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg border border-blue-100 text-[10px] font-bold shadow-sm animate-in fade-in slide-in-from-left-1"
-                            >
-                              <span className="capitalize">{status}</span>
-                              <button
-                                onClick={() => setTaskStatusFilters(prev => prev.filter(s => s !== status))}
-                                className="hover:bg-[#0056b3] hover:text-white rounded-md p-0.5 transition-colors"
-                              >
-                                <XMarkIcon className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ))}
-
-
-                        </div>
+                      <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Lọc theo trạng thái công việc</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTaskStatusFilters(prev =>
+                              prev.includes('pending') ? prev.filter(s => s !== 'pending') : [...prev, 'pending']
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                            taskStatusFilters.includes('pending')
+                              ? 'bg-gray-100 text-gray-700 border-gray-300 shadow-sm'
+                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          Chờ xử lý
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTaskStatusFilters(prev =>
+                              prev.includes('in progress') ? prev.filter(s => s !== 'in progress') : [...prev, 'in progress']
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                            taskStatusFilters.includes('in progress')
+                              ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm'
+                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          Đang làm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTaskStatusFilters(prev =>
+                              prev.includes('completed') ? prev.filter(s => s !== 'completed') : [...prev, 'completed']
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                            taskStatusFilters.includes('completed')
+                              ? 'bg-emerald-50 text-[#10b981] border-emerald-200 shadow-sm'
+                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          Đã hoàn thành
+                        </button>
                       </div>
                     </div>
                     <button
@@ -709,7 +709,7 @@ export default function AdminSchedule() {
                           }
                         });
                       }}
-                      className="flex items-center gap-1 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/10 w-full sm:w-auto justify-center"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/10 w-full sm:w-auto justify-center"
                     >
                       <PlusIcon className="w-4 h-4" />
                       Thêm Task
@@ -751,7 +751,7 @@ export default function AdminSchedule() {
 
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-400 font-medium">
-                      {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status)).length} tasks found
+                      Tìm thấy {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length} công việc
                     </p>
                   </div>
                   {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
@@ -770,18 +770,21 @@ export default function AdminSchedule() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {selectedModalPerson.tasks
-                            .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status))
+                            .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase()))
                             .map(task => (
                               <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
                                 <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
                                 <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
                                 <td className="py-3 px-4">
-                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border shadow-sm
-                                    ${task.status === 'in progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                      task.status === 'completed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                        'bg-gray-100 text-gray-700 border-gray-200'}
+                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm
+                                    ${task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                      task.status?.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                        'bg-gray-50 text-gray-700 border-gray-200'}
                                   `}>
-                                    {task.status}
+                                    {task.status?.toLowerCase() === 'pending' ? 'Chờ xử lý' :
+                                     task.status?.toLowerCase() === 'in progress' ? 'Đang làm' :
+                                     task.status?.toLowerCase() === 'completed' ? 'Đã hoàn thành' :
+                                     task.status}
                                   </span>
                                 </td>
                               </tr>

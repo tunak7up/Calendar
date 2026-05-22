@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ClockIcon,
   CalendarDaysIcon,
@@ -19,6 +20,7 @@ const MONTH_NAMES = [
 ];
 
 export default function AdminWorkHours() {
+  const navigate = useNavigate();
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -292,7 +294,11 @@ export default function AdminWorkHours() {
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
         tableClassName="min-w-[800px]"
         renderRow={(emp) => (
-          <tr key={emp.person_id} className="hover:bg-blue-50/30 transition-colors">
+          <tr
+            key={emp.person_id}
+            onClick={() => navigate('/admin/reports', { state: { person_id: emp.person_id } })}
+            className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+          >
             <td className="py-4 px-6">
               <div className="flex items-center gap-3">
                 <img

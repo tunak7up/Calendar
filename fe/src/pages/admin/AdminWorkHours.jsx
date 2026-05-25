@@ -180,10 +180,18 @@ export default function AdminWorkHours() {
       const [sH, sM, sS] = r.check_in.split(':').map(Number);
       const [eH, eM, eS] = r.check_out.split(':').map(Number);
 
-      const startSeconds = sH * 3600 + sM * 60 + sS;
-      const endSeconds = eH * 3600 + eM * 60 + eS;
+      const startSeconds = sH * 3600 + sM * 60 + (sS || 0);
+      const endSeconds = eH * 3600 + eM * 60 + (eS || 0);
 
-      return sum + Math.max(0, (endSeconds - startSeconds) / 3600);
+      const rawHours = Math.max(0, (endSeconds - startSeconds) / 3600);
+
+      // Trừ 1 giờ nghỉ trưa nếu ca làm việc đi qua khung giờ trưa (12:00 đến 13:00)
+      // 12:00:00 = 12 * 3600 = 43200 giây
+      // 13:00:00 = 13 * 3600 = 46800 giây
+      const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+      const breakDeduction = spansLunch ? 1.0 : 0.0;
+
+      return sum + Math.max(0, rawHours - breakDeduction);
     }, 0);
 
     return {

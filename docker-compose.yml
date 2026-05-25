@@ -1,14 +1,14 @@
 services:
-  database:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: mssql
-    ports:
-      - "14360:1433"
-    environment:
-      SA_PASSWORD: "YourStrong!Password"
-      ACCEPT_EULA: "Y"
-    volumes:
-      - db_data:/var/opt/mssql
+  # database:
+  #   image: mcr.microsoft.com/mssql/server:2019-latest
+  #   container_name: mssql
+  #   ports:
+  #     - "14360:1433"
+  #   environment:
+  #     SA_PASSWORD: "YourStrong!Password"
+  #     ACCEPT_EULA: "Y"
+  #   volumes:
+  #     - db_data:/var/opt/mssql
 
   backend:
     build:
@@ -18,8 +18,8 @@ services:
       - "36363:3000"
     env_file:
       - ./be/.env
-    depends_on:
-      - database
+    # depends_on:
+    #   - database
 
   frontend:
     build:

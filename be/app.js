@@ -55,7 +55,12 @@ async function startServer() {
     console.error('Server will still start, but DB features may not work.');
   }
 
-  app.listen(port, () => console.log(`Server running on port ${port}`));
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    // Khởi chạy scheduler gửi email cảnh báo trễ giờ / quên checkout mỗi 5 phút
+    const { startNotificationScheduler } = require('./services/attendanceNotificationService');
+    startNotificationScheduler(5 * 60 * 1000);
+  });
 }
 
 startServer();

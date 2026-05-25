@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { loginApi } from '../../services/authService';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../../components/LanguageSelector';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -11,6 +13,7 @@ export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,14 +25,23 @@ export default function Login({ onLogin }) {
       login(data); // Lưu token vào context + localStorage
       onLogin && onLogin(data);
     } catch (err) {
-      setError(err.message || 'Sai tên đăng nhập hoặc mật khẩu.');
+      const errMsg = err.message || '';
+      if (errMsg.includes('Sai tên đăng nhập') || !errMsg) {
+        setError('auth_error');
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4 relative">
+      {/* Floating Language Selector */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
 
       {/* Card */}
       <div className="w-full max-w-sm">
@@ -39,8 +51,8 @@ export default function Login({ onLogin }) {
           <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 mb-4">
             <CalendarDaysIcon className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Chào mừng trở lại</h1>
-          <p className="text-sm text-gray-400 mt-1">Đăng nhập để tiếp tục quản lý lịch của bạn</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('login.welcome')}</h1>
+          <p className="text-sm text-gray-400 mt-1 text-center">{t('login.subtitle')}</p>
         </div>
 
         {/* Form card */}
@@ -49,7 +61,7 @@ export default function Login({ onLogin }) {
           {/* Error message */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium text-center">
-              {error}
+              {error === 'auth_error' ? t('login.error_auth') : error}
             </div>
           )}
 
@@ -58,7 +70,7 @@ export default function Login({ onLogin }) {
             {/* Username */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-gray-500 tracking-wider uppercase">
-                Tên đăng nhập
+                {t('login.username')}
               </label>
               <input
                 id="login-username"
@@ -66,7 +78,7 @@ export default function Login({ onLogin }) {
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Nhập tên đăng nhập..."
+                placeholder={t('login.username_placeholder')}
                 required
                 className="w-full bg-[#f8fafc] border border-gray-200 rounded-xl px-4 py-3 text-[0.95rem] text-gray-900 placeholder:text-gray-300 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
               />
@@ -75,7 +87,7 @@ export default function Login({ onLogin }) {
             {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-gray-500 tracking-wider uppercase">
-                Mật khẩu
+                {t('login.password')}
               </label>
               <div className="relative">
                 <input
@@ -84,7 +96,7 @@ export default function Login({ onLogin }) {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu..."
+                  placeholder={t('login.password_placeholder')}
                   required
                   className="w-full bg-[#f8fafc] border border-gray-200 rounded-xl px-4 py-3 pr-11 text-[0.95rem] text-gray-900 placeholder:text-gray-300 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                 />
@@ -113,7 +125,7 @@ export default function Login({ onLogin }) {
                 />
               </div>
               <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
-                Lưu mật khẩu
+                {t('login.remember_me')}
               </span>
             </label>
 
@@ -130,10 +142,10 @@ export default function Login({ onLogin }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                   </svg>
-                  <span>Đang đăng nhập...</span>
+                  <span>{t('login.logging_in')}</span>
                 </>
               ) : (
-                <span>Đăng nhập</span>
+                <span>{t('login.login_button')}</span>
               )}
             </button>
 
@@ -142,7 +154,7 @@ export default function Login({ onLogin }) {
 
         {/* Footer note */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          Gặp sự cố? Liên hệ quản trị viên để được hỗ trợ.
+          {t('login.footer_help')}
         </p>
 
       </div>

@@ -28,6 +28,10 @@ import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import ParticipantManager from '../../components/ParticipantManager';
 import TaskStatusDropdown from '../../components/TaskStatusDropdown';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
+
 
 const downloadFile = async (url, fileName) => {
   try {
@@ -121,6 +125,7 @@ const CommentItem = ({ comment, persons }) => {
 };
 
 export default function TaskDetails() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -249,7 +254,7 @@ export default function TaskDetails() {
   };
 
   const handleRemoveParticipant = async (participantId) => {
-    if (!window.confirm('Remove this participant?')) return;
+    if (!window.confirm(t('taskdetails.confirm_remove_participant'))) return;
     try {
       const res = await taskService.removeParticipant(id, participantId);
       if (res.success) {
@@ -261,18 +266,18 @@ export default function TaskDetails() {
   };
 
   const handleDeleteTask = async () => {
-    if (!window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) return;
+    if (!window.confirm(t('taskdetails.confirm_delete'))) return;
     try {
       const res = await taskService.deleteTask(id);
       if (res.success) {
-        alert('Task deleted successfully');
+        alert(t('taskdetails.alert_deleted'));
         navigate('/tasks');
       } else {
-        alert('Error: ' + res.message);
+        alert(t('taskdetails.alert_delete_error') + res.message);
       }
     } catch (error) {
       console.error('Error deleting task:', error);
-      alert('Failed to delete task');
+      alert(t('taskdetails.alert_delete_fail'));
     }
   };
 
@@ -381,7 +386,7 @@ export default function TaskDetails() {
   };
 
   const handleDeleteAttachment = async (attachmentId) => {
-    if (!window.confirm('Delete this file?')) return;
+    if (!window.confirm(t('taskdetails.confirm_delete_file'))) return;
     try {
       const res = await apiFetch(`/file-attachment/${attachmentId}`, { method: 'DELETE' });
       if (res.success) {
@@ -393,7 +398,7 @@ export default function TaskDetails() {
   };
 
   const handleDeleteAllAttachments = async () => {
-    if (!window.confirm('Delete ALL files from this task?')) return;
+    if (!window.confirm(t('taskdetails.confirm_delete_all_files'))) return;
     try {
       const res = await apiFetch(`/file-attachment/task/${id}/all`, { method: 'DELETE' });
       if (res.success) {
@@ -431,8 +436,8 @@ export default function TaskDetails() {
   if (!id) {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
-        <div className="text-gray-500 mb-4">Không tìm thấy mã công việc.</div>
-        <button onClick={() => navigate(-1)} className="text-blue-600 font-medium">Quay lại</button>
+        <div className="text-gray-500 mb-4">{t('taskdetails.no_task_id')}</div>
+        <BackButton className="mx-auto" />
       </div>
     );
   }
@@ -451,20 +456,14 @@ export default function TaskDetails() {
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between mb-8">
-        <button 
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Quay lại
-        </button>
+        <BackButton />
 
         <button 
           onClick={handleDeleteTask}
           className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm"
         >
           <TrashIcon className="w-4 h-4" />
-          Xóa công việc
+          {t('taskdetails.delete_task')}
         </button>
       </div>
 
@@ -475,10 +474,10 @@ export default function TaskDetails() {
             <div>
               <div className="flex items-center gap-3 mb-1.5">
                 <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
-                  {parentTask ? 'Mã công việc con' : 'Mã công việc'}: REQ-{fullTask.task_id}
+                  {parentTask ? t('taskdetails.subtask_code') : t('taskdetails.task_code')}: REQ-{fullTask.task_id}
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize ${getPriorityColor(fullTask.priority)}`}>
-                  Mức độ {fullTask.priority === 'High' ? 'Cao' : fullTask.priority === 'Medium' ? 'Trung bình' : fullTask.priority === 'Low' ? 'Thấp' : 'Bình thường'}
+                  {t('taskdetails.priority_label')} {fullTask.priority === 'High' ? t('taskdetails.priority_high') : fullTask.priority === 'Medium' ? t('taskdetails.priority_medium') : fullTask.priority === 'Low' ? t('taskdetails.priority_low') : t('taskdetails.priority_normal')}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -507,7 +506,7 @@ export default function TaskDetails() {
                 ) : (
                   <div className="flex items-center gap-3 mt-2">
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                      {fullTask.title || fullTask.name || 'Công việc không tên'}
+                      {fullTask.title || fullTask.name || ''}
                     </h1>
                     <button 
                       onClick={() => {
@@ -515,7 +514,7 @@ export default function TaskDetails() {
                         setIsEditingTitle(true);
                       }}
                       className="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all"
-                      title="Sửa tiêu đề"
+                      title={t('taskdetails.edit_title_tooltip')}
                     >
                       <PencilSquareIcon className="w-5 h-5" />
                     </button>
@@ -528,7 +527,7 @@ export default function TaskDetails() {
                     <ListBulletIcon className="w-3 h-3" />
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">Thuộc công việc cha</p>
+                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">{t('taskdetails.belongs_to')}</p>
                     <button 
                       onClick={() => navigate(`/tasks/${parentTask.task_id}`, { state: { task: parentTask } })}
                       className="text-xs font-bold text-blue-700 hover:underline text-left"
@@ -560,17 +559,17 @@ export default function TaskDetails() {
           <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <UserIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Người giao:</span>
-              <span className="text-gray-900 font-semibold">{fullTask.assigner || 'Chưa phân công'}</span>
+              <span className="text-gray-500 font-medium">{t('taskdetails.assigner')}</span>
+              <span className="text-gray-900 font-semibold">{fullTask.assigner || t('taskdetails.not_assigned')}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <ClockIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Bắt đầu:</span>
+              <span className="text-gray-500 font-medium">{t('taskdetails.start')}</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.start_time)}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Hạn chót:</span>
+              <span className="text-gray-500 font-medium">{t('taskdetails.deadline')}</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
             </div>
           </div>
@@ -581,7 +580,7 @@ export default function TaskDetails() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <DocumentTextIcon className="w-5 h-5 text-gray-400" />
-              <h2 className="text-lg font-bold text-gray-900">Mô tả</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.description')}</h2>
             </div>
             {!isEditingDescription && (
               <button 
@@ -592,7 +591,7 @@ export default function TaskDetails() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
               >
                 <PencilSquareIcon className="w-3.5 h-3.5" />
-                Sửa mô tả
+                {t('taskdetails.edit_desc')}
               </button>
             )}
           </div>
@@ -603,7 +602,7 @@ export default function TaskDetails() {
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="w-full bg-gray-50 border border-indigo-100 rounded-2xl p-4 sm:p-6 text-sm sm:text-base text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px] resize-y"
-                placeholder="Nhập mô tả công việc..."
+                placeholder={t('taskdetails.desc_placeholder')}
                 autoFocus
               />
               <div className="flex justify-end gap-2">
@@ -611,21 +610,21 @@ export default function TaskDetails() {
                   onClick={() => setIsEditingDescription(false)}
                   className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  Hủy
+                  {t('taskdetails.btn_cancel')}
                 </button>
                 <button 
                   onClick={handleUpdateDescription}
                   className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                 >
                   <CheckCircleIcon className="w-4 h-4" />
-                  Lưu thay đổi
+                  {t('taskdetails.btn_save')}
                 </button>
               </div>
             </div>
           ) : (
             <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-100">
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
-                {fullTask.description || 'Không có mô tả nào.'}
+                {fullTask.description || t('taskdetails.no_description')}
               </p>
             </div>
           )}
@@ -636,7 +635,7 @@ export default function TaskDetails() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <PaperClipIcon className="w-5 h-5 text-gray-400" />
-              <h2 className="text-lg font-bold text-gray-900">Tài liệu đính kèm</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.attachments')}</h2>
               <span className="bg-indigo-100 text-indigo-700 py-0.5 px-2 rounded-full text-[10px] font-bold">
                 {taskAttachments.length}
               </span>
@@ -654,7 +653,7 @@ export default function TaskDetails() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
               >
                 <PlusIcon className="w-3.5 h-3.5" />
-                Thêm file
+                {t('taskdetails.add_file')}
               </button>
               {taskAttachments.length > 0 && (
                 <button
@@ -662,7 +661,7 @@ export default function TaskDetails() {
                   className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-600 hover:text-white transition-all uppercase tracking-wider"
                 >
                   <TrashIcon className="w-3.5 h-3.5" />
-                  Xóa tất cả
+                  {t('taskdetails.delete_all')}
                 </button>
               )}
             </div>
@@ -687,7 +686,7 @@ export default function TaskDetails() {
                   <button
                     onClick={() => handleDeleteAttachment(att.file_attachment_id)}
                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                    title="Xóa file"
+                    title={t('taskdetails.remove_file')}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -697,7 +696,7 @@ export default function TaskDetails() {
             </div>
           ) : (
             <div className="text-center py-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <p className="text-sm text-gray-500">Chưa có tài liệu đính kèm.</p>
+              <p className="text-sm text-gray-500">{t('taskdetails.no_attachments')}</p>
             </div>
           )}
         </div>
@@ -715,7 +714,7 @@ export default function TaskDetails() {
         <div className="p-5 sm:p-8 bg-gray-50/30">
           <div className="flex items-center gap-2 mb-4 sm:mb-6">
             <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400" />
-            <h2 className="text-lg font-bold text-gray-900">Bình luận</h2>
+            <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.comments')}</h2>
           </div>
 
           <div className="space-y-4 mb-4 sm:mb-6">
@@ -728,7 +727,7 @@ export default function TaskDetails() {
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Viết bình luận..."
+              placeholder={t('taskdetails.comment_placeholder')}
               className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-28"
             />
             <div className="absolute bottom-4 left-4 flex gap-2 items-center">
@@ -742,13 +741,13 @@ export default function TaskDetails() {
               <button
                 onClick={() => commentFileInputRef.current?.click()}
                 className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-gray-50 rounded-xl"
-                title="Đính kèm file"
+                title={t('taskdetails.attach_file')}
               >
                 <PaperClipIcon className="w-5 h-5" />
               </button>
               {commentFiles.length > 0 && (
                 <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
-                  {commentFiles.length} file đính kèm
+                  {t('taskdetails.files_attached', { count: commentFiles.length })}
                 </span>
               )}
             </div>
@@ -766,22 +765,22 @@ export default function TaskDetails() {
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
           <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
-          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">Công việc con</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">{t('taskdetails.subtasks')}</h2>
           <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
-            {subTasks.length} Công việc
+            {subTasks.length} {t('sidebar.tasks')}
           </span>
           <button
             onClick={() => navigate(`/tasks/sub-add/${id}`, { state: { parentTask: fullTask } })}
             className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
           >
             <PlusIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Thêm công việc con</span>
+            <span className="hidden sm:inline">{t('taskdetails.add_subtask')}</span>
           </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
           {subTasks.length === 0 ? (
-            <p className="text-center text-gray-400 py-8 font-semibold">Không tìm thấy công việc con nào.</p>
+            <p className="text-center text-gray-400 py-8 font-semibold">{t('taskdetails.no_subtasks')}</p>
           ) : (
             <div className="space-y-4 sm:space-y-6">
               {subTasks.map(sub => (
@@ -817,7 +816,7 @@ export default function TaskDetails() {
                         <button
                           onClick={() => navigate(`/tasks/${sub.task_id}`, { state: { task: sub } })}
                           className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
-                          title="Xem chi tiết"
+                          title={t('taskdetails.view_detail')}
                         >
                           <EyeIcon className="w-5 h-5" />
                         </button>
@@ -828,7 +827,7 @@ export default function TaskDetails() {
                     <div className="bg-gray-50/50 rounded-2xl p-4">
                       <div className="flex items-center gap-2 mb-4 text-gray-400">
                         <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Bình luận</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{t('taskdetails.comments')}</span>
                       </div>
                       <div className="space-y-3 mb-4">
                         {(sub.comments || []).map(sc => (
@@ -846,7 +845,7 @@ export default function TaskDetails() {
                           type="text"
                           value={sub.newComment || ''}
                           onChange={(e) => setSubTasks(prev => prev.map(item => item.task_id === sub.task_id ? { ...item, newComment: e.target.value } : item))}
-                          placeholder="Thêm bình luận cho công việc con này..."
+                          placeholder={t('taskdetails.subtask_comment_placeholder')}
                           className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
                           onKeyPress={(e) => e.key === 'Enter' && handleAddSubTaskComment(sub.task_id)}
                         />

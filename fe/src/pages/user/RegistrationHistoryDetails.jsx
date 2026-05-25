@@ -11,6 +11,9 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
 
 
 export default function RegistrationHistoryDetails() {
@@ -18,6 +21,7 @@ export default function RegistrationHistoryDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [rawReq, setRawReq] = useState(location.state?.request);
   const [loading, setLoading] = useState(!rawReq);
   const [error, setError] = useState(null);
@@ -31,10 +35,10 @@ export default function RegistrationHistoryDetails() {
 
   useEffect(() => {
     if (rawReq) {
-      const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
-        rawReq?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
-          rawReq?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
-            (rawReq?.status || 'pending');
+      const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' || rawReq?.status?.toLowerCase() === 'pending' ? 'pending' :
+        rawReq?.status?.toLowerCase() === 'đã duyệt' || rawReq?.status?.toLowerCase() === 'approved' ? 'approved' :
+        rawReq?.status?.toLowerCase() === 'đã hủy' || rawReq?.status?.toLowerCase() === 'rejected' ? 'rejected' :
+        (rawReq?.status || 'pending');
       setStatus(initialStatus);
       setSelectedStatus(initialStatus);
     }
@@ -48,18 +52,18 @@ export default function RegistrationHistoryDetails() {
         const response = await apiFetch(`/request/${id}`);
         if (response.success && response.data) {
           setRawReq(response.data);
-          const initialStatus = response.data?.status?.toLowerCase() === 'chờ phê duyệt' ? 'pending' :
-            response.data?.status?.toLowerCase() === 'đã duyệt' ? 'approved' :
-              response.data?.status?.toLowerCase() === 'đã hủy' ? 'rejected' :
-                (response.data?.status || 'pending');
+          const initialStatus = response.data?.status?.toLowerCase() === 'chờ phê duyệt' || response.data?.status?.toLowerCase() === 'pending' ? 'pending' :
+            response.data?.status?.toLowerCase() === 'đã duyệt' || response.data?.status?.toLowerCase() === 'approved' ? 'approved' :
+            response.data?.status?.toLowerCase() === 'đã hủy' || response.data?.status?.toLowerCase() === 'rejected' ? 'rejected' :
+            (response.data?.status || 'pending');
           setStatus(initialStatus);
           setSelectedStatus(initialStatus);
         } else {
-          setError(response.message || 'Yêu cầu không tồn tại');
+          setError(response.message || t('history.not_found'));
         }
       } catch (err) {
         console.error('Error fetching request detail:', err);
-        setError('Không thể tải thông tin yêu cầu');
+        setError(t('history.loading_error'));
       } finally {
         setLoading(false);
       }
@@ -68,7 +72,7 @@ export default function RegistrationHistoryDetails() {
     if (!rawReq) {
       fetchRequest();
     }
-  }, [id, rawReq]);
+  }, [id, rawReq, t]);
 
   useEffect(() => {
     const fetchResponseText = async () => {
@@ -95,7 +99,7 @@ export default function RegistrationHistoryDetails() {
     return (
       <div className="max-w-4xl mx-auto text-center py-20 flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-        <p className="text-gray-600 font-medium">Đang tải thông tin yêu cầu...</p>
+        <p className="text-gray-600 font-medium">{t('history.loading_detail')}</p>
       </div>
     );
   }
@@ -103,8 +107,8 @@ export default function RegistrationHistoryDetails() {
   if (error || !rawReq) {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
-        <h2 className="text-xl font-bold text-gray-900">{error || "Yêu cầu không tồn tại"}</h2>
-        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium font-bold hover:underline">Quay lại</button>
+        <h2 className="text-xl font-bold text-gray-900">{error || t('history.not_found')}</h2>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium font-bold hover:underline">{t('history.back')}</button>
       </div>
     );
   }
@@ -113,7 +117,7 @@ export default function RegistrationHistoryDetails() {
   const request = {
     id: rawReq.id || rawReq.request_id,
     type: rawReq.type,
-    name: rawReq.type === 'register' ? 'Đăng ký làm việc' : 'Yêu cầu nghỉ phép',
+    name: rawReq.type === 'register' ? t('history.type_register') : t('history.type_leave'),
     date: rawReq.date || new Date(rawReq.created_at).toLocaleDateString('vi-VN'),
     refId: rawReq.refId || `#REQ-${rawReq.request_id}`,
     approver: rawReq.approver?.name || (typeof rawReq.approver === 'string' ? rawReq.approver : 'N/A'),
@@ -121,7 +125,7 @@ export default function RegistrationHistoryDetails() {
     details: rawReq.details || [],
     reason: rawReq.reason || '',
     requesterName: rawReq.requester?.name || rawReq.requester?.username || user?.name || 'Nhân viên',
-    requesterRole: rawReq.requester?.role === 'manager' ? 'Người quản lý' : 'Nhân viên'
+    requesterRole: rawReq.requester?.role === 'manager' ? t('history.role_manager') : t('history.role_employee')
   };
 
   const isPending = status === 'pending';
@@ -151,13 +155,13 @@ export default function RegistrationHistoryDetails() {
         setResponseText(commentContent);
         setStatus(newStatus);
         setSelectedStatus(newStatus);
-        alert('Trạng thái đã được cập nhật thành công!');
+        alert(t('history.alert_update_success'));
       } else {
-        alert('Cập nhật trạng thái thất bại.');
+        alert(t('history.alert_update_fail'));
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Lỗi khi cập nhật trạng thái.');
+      alert(t('history.alert_update_error'));
     } finally {
       setIsUpdating(false);
     }
@@ -168,24 +172,18 @@ export default function RegistrationHistoryDetails() {
       <div>
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-              Quay lại
-            </button>
+            <BackButton />
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              {request.name} - Người gửi: {request.requesterName}
+              {request.name} - {t('history.sent_by')}: {request.requesterName}
             </h1>
 
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded-full ${status === 'approved' ? 'text-green-800 bg-green-100' :
                 status === 'pending' ? 'text-yellow-800 bg-yellow-100' : 'text-red-800 bg-red-100'
               }`}>
               {status === 'approved' ? <CheckCircleIcon className="w-4 h-4 text-green-600" /> : null}
-              {status === 'pending' ? 'Đang chờ duyệt' : status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+              {status === 'pending' ? t('history.status_pending_long') : status === 'approved' ? t('status.req_approved') : t('status.req_rejected')}
             </span>
           </div>
         </div>
@@ -196,13 +194,13 @@ export default function RegistrationHistoryDetails() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
                 <div className="flex items-center gap-2 text-blue-600">
                   <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6" />
-                  <h2 className="text-lg font-bold">Xử lý yêu cầu & Phản hồi</h2>
+                  <h2 className="text-lg font-bold">{t('history.feedback_title')}</h2>
                 </div>
                 <div>
                   <textarea
                     value={feedbackInput}
                     onChange={(e) => setFeedbackInput(e.target.value)}
-                    placeholder="Nhập ý kiến phản hồi hoặc hướng dẫn cho nhân viên (nếu có)..."
+                    placeholder={t('history.feedback_placeholder')}
                     className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px] resize-y"
                   />
                 </div>
@@ -212,14 +210,14 @@ export default function RegistrationHistoryDetails() {
                     disabled={isUpdating}
                     className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
                   >
-                    Không duyệt
+                    {t('history.feedback_reject')}
                   </button>
                   <button
                     onClick={() => handleUpdateStatus('approved')}
                     disabled={isUpdating}
                     className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-100 transition-all active:scale-95 disabled:opacity-50"
                   >
-                    Duyệt yêu cầu
+                    {t('history.feedback_approve')}
                   </button>
                 </div>
               </div>
@@ -229,54 +227,54 @@ export default function RegistrationHistoryDetails() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-2 mb-4 text-blue-600">
                   <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6" />
-                  <h2 className="text-lg font-bold">Nội dung phản hồi</h2>
+                  <h2 className="text-lg font-bold">{t('history.feedback_response_title')}</h2>
                 </div>
 
                 <div className="flex gap-4 mb-6">
                   <span className="text-4xl text-gray-200 font-serif leading-none">"</span>
                   <p className="text-gray-700 italic text-[1.05rem] leading-relaxed pt-2">
-                    {responseTextLoading ? 'Đang tải phản hồi...' : (responseText || 'Yêu cầu của bạn đã được xem xét và xử lý. Vui lòng kiểm tra lại lịch làm việc chính thức.')}
+                    {responseTextLoading ? t('history.feedback_loading') : (responseText || t('history.feedback_default'))}
                   </p>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4 flex gap-3 border border-gray-100">
                   <InformationCircleIcon className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-gray-500 leading-relaxed">
-                    Đây là phản hồi từ hệ thống quản lý lịch làm việc.
+                    {t('history.signature_system_desc')}
                   </p>
                 </div>
               </div>
             )}
 
             <div className="bg-[#f8f9fa] rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Chi tiết yêu cầu gốc</h2>
+              <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">{t('history.detail_original')}</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 mb-1">NGƯỜI GỬI YÊU CẦU</h3>
+                  <h3 className="text-xs font-bold text-gray-500 mb-1">{t('history.detail_sender')}</h3>
                   <p className="text-gray-900 font-semibold text-[0.95rem]">{request.requesterName}</p>
                   <p className="text-gray-500 text-xs font-medium uppercase mt-0.5">{request.requesterRole}</p>
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 mb-1">LOẠI YÊU CẦU</h3>
+                  <h3 className="text-xs font-bold text-gray-500 mb-1">{t('history.detail_type')}</h3>
                   <p className="text-gray-900 font-semibold text-[0.95rem]">{request.name}</p>
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 mb-1">NGÀY TẠO YÊU CẦU</h3>
+                  <h3 className="text-xs font-bold text-gray-500 mb-1">{t('history.detail_created')}</h3>
                   <p className="text-gray-900 font-semibold text-[0.95rem]">{request.date}</p>
                 </div>
               </div>
 
               <div className="mb-6">
-                <h3 className="text-xs font-bold text-gray-500 mb-1">LÝ DO</h3>
+                <h3 className="text-xs font-bold text-gray-500 mb-1">{t('history.detail_reason')}</h3>
                 <p className="text-gray-700 text-[0.95rem] leading-relaxed">
-                  {request.reason || 'Không có lý do cụ thể.'}
+                  {request.reason || t('history.detail_reason_empty')}
                 </p>
               </div>
 
               {request.details && request.details.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Danh sách ngày đăng ký</h3>
+                  <h3 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">{t('history.detail_days_list')}</h3>
                   <div className="space-y-3">
                     {request.details.map((detail, idx) => (
                       <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 flex justify-between items-center shadow-sm">
@@ -286,14 +284,14 @@ export default function RegistrationHistoryDetails() {
                           </div>
                           <div>
                             <p className="font-bold text-gray-900">{detail.date}</p>
-                            <p className="text-xs text-gray-500">Ngày đăng ký</p>
+                            <p className="text-xs text-gray-500">{t('history.detail_day_item')}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-700">
                             {detail.start_time?.split(/[T ]/)[1]?.substring(0, 5) || detail.start_time} - {detail.end_time?.split(/[T ]/)[1]?.substring(0, 5) || detail.end_time}
                           </p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Giờ làm việc</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{t('history.detail_hours')}</p>
                         </div>
                       </div>
                     ))}
@@ -315,16 +313,16 @@ export default function RegistrationHistoryDetails() {
                   <span className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></span>
                 </div>
 
-                <h3 className="text-[0.65rem] font-bold text-blue-600 tracking-wider mb-1 uppercase">Thông tin người phản hồi</h3>
+                <h3 className="text-[0.65rem] font-bold text-blue-600 tracking-wider mb-1 uppercase">{t('history.responder_info')}</h3>
                 <h2 className="text-xl font-bold text-gray-900">{request.approver}</h2>
-                <p className="text-sm text-gray-500 mb-6">{request.approverRole === 'manager' ? 'Người quản lý' : 'Nhân viên'}</p>
+                <p className="text-sm text-gray-500 mb-6">{request.approverRole === 'manager' ? t('history.role_manager') : t('history.role_employee')}</p>
 
                 <div className="w-full bg-gray-50 rounded-xl p-4 text-left border border-gray-100">
                   <div className="mb-4">
-                    <h4 className="text-[0.65rem] font-bold text-gray-500 tracking-wider mb-1.5 uppercase">Trạng thái xác thực</h4>
+                    <h4 className="text-[0.65rem] font-bold text-gray-500 tracking-wider mb-1.5 uppercase">{t('history.signature_status')}</h4>
                     <div className="flex items-center gap-2">
                       <ShieldCheckIcon className="w-4 h-4 text-green-500" />
-                      <span className="text-sm font-semibold text-gray-900">Đã ký số hệ thống</span>
+                      <span className="text-sm font-semibold text-gray-900">{t('history.signature_signed')}</span>
                     </div>
                   </div>
                 </div>
@@ -334,9 +332,9 @@ export default function RegistrationHistoryDetails() {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <InformationCircleIcon className="w-8 h-8 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-bold text-blue-900 mb-2">Đang chờ xử lý</h3>
+                <h3 className="text-lg font-bold text-blue-900 mb-2">{t('history.pending_desc_title')}</h3>
                 <p className="text-sm text-blue-700 leading-relaxed">
-                  Yêu cầu của bạn đang được gửi tới bộ phận quản lý. Bạn sẽ nhận được thông báo ngay khi có kết quả phê duyệt.
+                  {t('history.pending_desc_body')}
                 </p>
               </div>
             )}
@@ -346,10 +344,10 @@ export default function RegistrationHistoryDetails() {
 
 
         <div className="mt-16 pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-          <p>© 2023 The Precision Workspace. Tất cả thao tác được ghi lại lịch sử hệ thống.</p>
+          <p>{t('history.footer_copy')}</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-gray-900">Chính sách bảo mật</a>
-            <a href="#" className="hover:text-gray-900">Hỗ trợ hệ thống</a>
+            <a href="#" className="hover:text-gray-900">{t('history.footer_privacy')}</a>
+            <a href="#" className="hover:text-gray-900">{t('history.footer_support')}</a>
           </div>
         </div>
       </div>

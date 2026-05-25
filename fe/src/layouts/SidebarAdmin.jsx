@@ -9,8 +9,10 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function SidebarAdmin() {
+  const { t } = useTranslation();
   const location = useLocation();
   const path = location.pathname;
 
@@ -42,7 +44,7 @@ export default function SidebarAdmin() {
         type="button"
         className="inline-flex items-center p-2 mt-3 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
-        <span className="sr-only">Mở thanh bên</span>
+        <span className="sr-only">{t('sidebar.open')}</span>
         <svg
           className="w-6 h-6"
           aria-hidden="true"
@@ -71,8 +73,8 @@ export default function SidebarAdmin() {
               <ShieldCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col ml-3">
-              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Cổng Quản trị</span>
-              <span className="text-gray-500 text-[0.65rem] -mt-0.5">Quản lý & Tổng quan</span>
+              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">{t('sidebar.admin_portal')}</span>
+              <span className="text-gray-500 text-[0.65rem] -mt-0.5">{t('sidebar.admin_sub')}</span>
             </div>
           </div>
 
@@ -84,7 +86,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/employees')}
                 >
                   <UsersIcon className={getIconClass('/admin/employees')} />
-                  <span className="ms-4 font-semibold text-sm">Quản lý nhân viên</span>
+                  <span className="ms-4 font-semibold text-sm">{t('sidebar.manage_employees')}</span>
                 </Link>
               </li>
             )}
@@ -95,7 +97,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/requests')}
                 >
                   <ClipboardDocumentCheckIcon className={getIconClass('/admin/requests')} />
-                  <span className="ms-4 font-semibold text-sm">Duyệt yêu cầu</span>
+                  <span className="ms-4 font-semibold text-sm">{t('sidebar.approve_requests')}</span>
                 </Link>
               </li>
             )}
@@ -106,7 +108,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/schedule')}
                 >
                   <CalendarDaysIcon className={getIconClass('/admin/schedule')} />
-                  <span className="ms-4 font-semibold text-sm">Lịch công ty</span>
+                  <span className="ms-4 font-semibold text-sm">{t('sidebar.company_calendar')}</span>
                 </Link>
               </li>
             )}
@@ -117,7 +119,7 @@ export default function SidebarAdmin() {
                   className={getLinkClass('/admin/work-hours')}
                 >
                   <ClockIcon className={getIconClass('/admin/work-hours')} />
-                  <span className="ms-4 font-semibold text-sm">Giờ làm việc</span>
+                  <span className="ms-4 font-semibold text-sm">{t('sidebar.work_hours')}</span>
                 </Link>
               </li>
             )}
@@ -129,7 +131,7 @@ export default function SidebarAdmin() {
                     className={getLinkClass('/tasks')}
                   >
                     <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
-                    <span className="ms-4 font-semibold text-sm">Tất cả công việc</span>
+                    <span className="ms-4 font-semibold text-sm">{t('sidebar.all_tasks')}</span>
                   </Link>
                 </li>
                 <li>
@@ -138,7 +140,7 @@ export default function SidebarAdmin() {
                     className={getLinkClass('/tasks/add')}
                   >
                     <PlusIcon className={getIconClass('/tasks/add')} />
-                    <span className="ms-4 font-semibold text-sm">Tạo công việc</span>
+                    <span className="ms-4 font-semibold text-sm">{t('sidebar.create_task')}</span>
                   </Link>
                 </li>
               </>

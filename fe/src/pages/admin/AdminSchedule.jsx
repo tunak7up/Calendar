@@ -7,6 +7,7 @@ import { taskService } from '../../services/taskService';
 import { scheduleService } from '../../services/scheduleService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
+import { useTranslation } from 'react-i18next';
 
 const PERSON_COLORS = [
   { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' }, // blue
@@ -19,6 +20,7 @@ const PERSON_COLORS = [
 ];
 
 export default function AdminSchedule() {
+  const { t, i18n } = useTranslation();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -216,7 +218,9 @@ export default function AdminSchedule() {
       if (counts.registered > 0) {
         groupEvents.push({
           id: `group_registered_${date}`,
-          title: `Đăng ký: ${counts.registered} người`,
+          title: i18n.language === 'vi' 
+            ? `Đăng ký: ${counts.registered} người` 
+            : `Registered: ${counts.registered} ${counts.registered === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
           backgroundColor: '#eff6ff', // blue-50
@@ -233,7 +237,9 @@ export default function AdminSchedule() {
       if (counts.unscheduled > 0) {
         groupEvents.push({
           id: `group_unscheduled_${date}`,
-          title: `Ngoài lịch: ${counts.unscheduled} người`,
+          title: i18n.language === 'vi' 
+            ? `Ngoài lịch: ${counts.unscheduled} người` 
+            : `Unscheduled: ${counts.unscheduled} ${counts.unscheduled === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
           backgroundColor: '#fef3c7', // amber-100
@@ -446,13 +452,13 @@ export default function AdminSchedule() {
           {/* Header with title and employee filter */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
-              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Lịch làm việc</h1>
-              <p className="text-gray-500 mt-1 text-sm hidden sm:block">Tổng hợp lịch làm việc của nhân viên</p>
+              <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('adminschedule.title')}</h1>
+              <p className="text-gray-500 mt-1 text-sm hidden sm:block">{t('adminschedule.subtitle')}</p>
             </div>
 
             <div className="w-full sm:w-auto min-w-[280px]">
               <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lọc nhân viên</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('adminschedule.filter_employees')}</p>
                 <EmployeeMultiFilter
                   employees={employees}
                   selectedIds={selectedEmployeeIds}
@@ -470,7 +476,13 @@ export default function AdminSchedule() {
             onDateClick={handleDateClick}
             onEventClick={handleEventClick}
             onDatesSet={(info) => {
-              setViewDate(info.view.currentStart);
+              const newStart = info.view.currentStart;
+              setViewDate(prev => {
+                if (prev && newStart && prev.getTime() === newStart.getTime()) {
+                  return prev;
+                }
+                return newStart;
+              });
               const startStr = info.startStr.split('T')[0];
               const endStr = info.endStr.split('T')[0];
               fetchSchedulesInRange(startStr, endStr);
@@ -481,7 +493,7 @@ export default function AdminSchedule() {
         {/* Right Panel — Mini Calendar & Legend: sidebar on desktop, compact strip on mobile */}
         <div className="lg:w-64 lg:shrink-0 bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm lg:h-fit lg:sticky lg:top-[100px] flex flex-col gap-6">
           <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">Navigational View</h3>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">{t('adminschedule.nav_view')}</h3>
             <div className="flex justify-center lg:block">
               <div className="w-full max-w-xs lg:max-w-none">
                 <MiniCalendar
@@ -500,35 +512,48 @@ export default function AdminSchedule() {
 
       {/* Detail Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                {selectedModalPerson && (
+        (() => {
+          const formattedModalDate = i18n.language === 'vi'
+            ? (() => {
+                const d = new Date(modalDate);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+              })()
+            : new Date(modalDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              });
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                {/* Modal Header */}
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-3">
+                    {selectedModalPerson && (
+                      <button
+                        onClick={() => setSelectedModalPerson(null)}
+                        className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500 transition-colors"
+                      >
+                        <ArrowLeftIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {selectedModalPerson
+                        ? t('adminschedule.schedule_for_person', { date: formattedModalDate, name: selectedModalPerson.name })
+                        : t('adminschedule.schedule_for', { date: formattedModalDate })
+                      }
+                    </h2>
+                  </div>
                   <button
-                    onClick={() => setSelectedModalPerson(null)}
-                    className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-500 transition-colors"
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <ArrowLeftIcon className="w-5 h-5" />
+                    <XMarkIcon className="w-6 h-6" />
                   </button>
-                )}
-                <h2 className="text-lg font-bold text-gray-900">
-                  {selectedModalPerson
-                    ? `Schedule for ${new Date(modalDate).toLocaleDateString()} of ${selectedModalPerson.name}`
-                    : `Schedule for ${new Date(modalDate).toLocaleDateString()}`
-                  }
-                </h2>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
+                </div>
             <div className="p-6 overflow-y-auto flex-1">
               {modalLoading ? (
                 <div className="flex justify-center items-center py-12">
@@ -561,12 +586,12 @@ export default function AdminSchedule() {
                               <UsersIcon className="w-4 h-4" />
                             </div>
                             <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'registered' ? 'text-blue-900' : 'text-gray-500'}`}>
-                              Đăng ký đi làm
+                              {t('adminschedule.registered_work')}
                             </span>
                           </div>
                           <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
                             {registeredCount}
-                            <span className="text-xs font-bold text-gray-400">người</span>
+                            <span className="text-xs font-bold text-gray-400">{t('adminschedule.registered_unit')}</span>
                           </div>
                         </div>
 
@@ -584,12 +609,12 @@ export default function AdminSchedule() {
                               <ClockIcon className="w-4 h-4" />
                             </div>
                             <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'unscheduled' ? 'text-amber-950' : 'text-gray-500'}`}>
-                              Làm ngoài lịch
+                              {t('adminschedule.unscheduled_work')}
                             </span>
                           </div>
                           <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
                             {unscheduledCount}
-                            <span className="text-xs font-bold text-gray-400">người</span>
+                            <span className="text-xs font-bold text-gray-400">{t('adminschedule.unscheduled_unit')}</span>
                           </div>
                         </div>
                       </div>
@@ -598,8 +623,8 @@ export default function AdminSchedule() {
                       {currentList.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
                           {activeGroup === 'registered' 
-                            ? 'Không có nhân viên nào đăng ký đi làm vào ngày này.' 
-                            : 'Không có nhân viên nào làm việc ngoài lịch vào ngày này.'
+                            ? t('adminschedule.no_registered') 
+                            : t('adminschedule.no_unscheduled')
                           }
                         </div>
                       ) : (
@@ -614,25 +639,25 @@ export default function AdminSchedule() {
                                 <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
                                   <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4 text-gray-400" /> {person.shift}</span>
-                                  <span>Check-in: {person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">N/A</span>}</span>
+                                  <span>{t('adminschedule.check_in')}{person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>}</span>
                                   <span>
-                                    Check-out: {
+                                    {t('adminschedule.check_out')}{
                                       person.report?.check_out
                                         ? person.report.check_out.slice(0, 5)
-                                        : <span className="text-red-400 font-medium">N/A</span>
+                                        : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>
                                     }
                                   </span>
                                   <span className="flex items-center gap-1">
-                                    Báo cáo: {person.has_reported ? <CheckCircleIcon className="w-4.5 h-4.5 text-green-500" /> : <XMarkIcon className="w-4.5 h-4.5 text-red-400" />}
+                                    {t('adminschedule.report_status')}{person.has_reported ? <CheckCircleIcon className="w-4.5 h-4.5 text-green-500" /> : <XMarkIcon className="w-4.5 h-4.5 text-red-400" />}
                                   </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
-                                  {person.tasks.length} Công việc
+                                  {t('adminschedule.tasks_count', { count: person.tasks.length })}
                                 </div>
                                 <button className="text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                  Xem chi tiết
+                                  {t('adminschedule.view_details')}
                                 </button>
                               </div>
                             </div>
@@ -647,7 +672,7 @@ export default function AdminSchedule() {
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                     <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Lọc theo trạng thái công việc</p>
+                      <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{t('adminschedule.filter_by_status')}</p>
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
@@ -662,7 +687,7 @@ export default function AdminSchedule() {
                               : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          Chờ xử lý
+                          {t('adminschedule.status_pending')}
                         </button>
                         <button
                           type="button"
@@ -677,7 +702,7 @@ export default function AdminSchedule() {
                               : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          Đang làm
+                          {t('adminschedule.status_in_progress')}
                         </button>
                         <button
                           type="button"
@@ -692,7 +717,7 @@ export default function AdminSchedule() {
                               : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          Đã hoàn thành
+                          {t('adminschedule.status_completed')}
                         </button>
                       </div>
                     </div>
@@ -712,7 +737,7 @@ export default function AdminSchedule() {
                       className="flex items-center gap-1.5 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/10 w-full sm:w-auto justify-center"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      Thêm Task
+                      {t('adminschedule.add_task')}
                     </button>
                   </div>
 
@@ -722,50 +747,50 @@ export default function AdminSchedule() {
                   <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
                     <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
                       <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                      Báo cáo
+                      {t('adminschedule.report_title')}
                     </h3>
                     {selectedModalPerson.report ? (
                       <div className="space-y-3">
                         <div className="flex gap-4 text-xs font-medium text-gray-600">
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4 text-gray-400" />
-                            Check-in: {selectedModalPerson.report.check_in
+                            {t('adminschedule.check_in')}{selectedModalPerson.report.check_in
                               ? selectedModalPerson.report.check_in.slice(0, 5)
-                              : 'N/A'}
+                              : t('adminschedule.not_available')}
                           </div>
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4 text-gray-400" />
-                            Check-out: {selectedModalPerson.report.check_out
+                            {t('adminschedule.check_out')}{selectedModalPerson.report.check_out
                               ? selectedModalPerson.report.check_out.slice(0, 5)
-                              : 'N/A'}
+                              : t('adminschedule.not_available')}
                           </div>
                         </div>
                         <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
-                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">Không có mô tả công việc</span>}
+                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">{t('adminschedule.no_report_desc')}</span>}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500 italic">Nhân viên chưa báo cáo công việc.</div>
+                      <div className="text-sm text-gray-500 italic">{t('adminschedule.not_reported_yet')}</div>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-400 font-medium">
-                      Tìm thấy {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length} công việc
+                      {t('adminschedule.tasks_found', { count: selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length })}
                     </p>
                   </div>
                   {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
                     <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      Không có công việc nào phù hợp.
+                      {t('adminschedule.no_tasks_matched')}
                     </div>
                   ) : (
                     <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                       <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Tên công việc</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Ngày</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Trạng thái</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_task_name')}</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_date')}</th>
+                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_status')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -774,16 +799,16 @@ export default function AdminSchedule() {
                             .map(task => (
                               <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
                                 <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
-                                <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                                <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : t('adminschedule.not_available')}</td>
                                 <td className="py-3 px-4">
                                   <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm
                                     ${task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                       task.status?.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                         'bg-gray-50 text-gray-700 border-gray-200'}
                                   `}>
-                                    {task.status?.toLowerCase() === 'pending' ? 'Chờ xử lý' :
-                                     task.status?.toLowerCase() === 'in progress' ? 'Đang làm' :
-                                     task.status?.toLowerCase() === 'completed' ? 'Đã hoàn thành' :
+                                    {task.status?.toLowerCase() === 'pending' ? t('adminschedule.status_pending') :
+                                     task.status?.toLowerCase() === 'in progress' ? t('adminschedule.status_in_progress') :
+                                     task.status?.toLowerCase() === 'completed' ? t('adminschedule.status_completed') :
                                      task.status}
                                   </span>
                                 </td>
@@ -798,7 +823,9 @@ export default function AdminSchedule() {
             </div>
           </div>
         </div>
-      )}
+      );
+    })()
+  )}
     </div>
   );
 }

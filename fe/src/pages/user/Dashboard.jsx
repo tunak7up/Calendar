@@ -5,12 +5,14 @@ import { taskService } from '../../services/taskService';
 import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
@@ -138,17 +140,17 @@ export default function Dashboard() {
         setCheckInTime(now);
         setReportId(report.report_id || report.id);
       } else {
-        alert(`Check-in failed: ${response.message || 'Unknown server error'}`);
+        alert(t('dashboard.alert_checkin_fail', { message: response.message || t('dashboard.alert_action_fail') }));
       }
     } catch (error) {
       console.error("Check-in failed", error);
-      alert("Failed to check-in. Please try again.");
+      alert(t('dashboard.alert_checkin_fail_general'));
     }
   };
 
   const handleSubmitReport = async () => {
     if (!reportText.trim()) {
-      alert(checkOutTime ? 'Vui lòng nhập nội dung báo cáo!' : 'Vui lòng nhập báo cáo công việc trước khi check-out!');
+      alert(checkOutTime ? t('dashboard.alert_enter_report') : t('dashboard.alert_enter_report_checkout'));
       return;
     }
 
@@ -172,25 +174,25 @@ export default function Dashboard() {
           const isUpdating = !!checkOutTime;
           setCheckOutTime(now);
           if (isUpdating) {
-            alert(`Đã cập nhật báo cáo thành công lúc ${now.toLocaleTimeString()}`);
+            alert(t('dashboard.alert_update_success', { time: now.toLocaleTimeString() }));
           } else {
-            alert(`Đã gửi báo cáo và Check-out thành công lúc ${now.toLocaleTimeString()}`);
+            alert(t('dashboard.alert_checkout_success', { time: now.toLocaleTimeString() }));
           }
           setPendingStatusUpdates({}); // clear pending updates
           fetchTasks(); // Refresh list to remove completed tasks
         }
       } else {
-        alert("Report ID not found, please refresh the page.");
+        alert(t('dashboard.alert_save_fail_no_report'));
       }
     } catch (error) {
       console.error("Submit report failed", error);
-      alert("Gặp lỗi trong quá trình xử lý, vui lòng thử lại.");
+      alert(t('dashboard.alert_action_fail'));
     }
   };
 
   const handleSaveDescription = async () => {
     if (!reportText.trim()) {
-      alert('Vui lòng nhập nội dung báo cáo!');
+      alert(t('dashboard.alert_enter_report'));
       return;
     }
 
@@ -202,14 +204,14 @@ export default function Dashboard() {
         });
         
         if (response.success) {
-          alert('Đã lưu nội dung báo cáo thành công!');
+          alert(t('dashboard.alert_draft_success'));
         }
       } else {
-        alert("Không tìm thấy ID báo cáo, vui lòng Check-in trước.");
+        alert(t('dashboard.alert_save_fail_no_report'));
       }
     } catch (error) {
       console.error("Save description failed", error);
-      alert("Lưu báo cáo thất bại, vui lòng thử lại.");
+      alert(t('dashboard.alert_save_fail'));
     }
   };
 
@@ -225,7 +227,7 @@ export default function Dashboard() {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     if (!reportId) {
-      alert('Vui lòng Check-in để tạo báo cáo trước khi đính kèm file.');
+      alert(t('dashboard.alert_upload_no_id'));
       return;
     }
 
@@ -249,7 +251,7 @@ export default function Dashboard() {
   };
 
   const handleDeleteAttachment = async (attachmentId) => {
-    if (!window.confirm('Xóa file đính kèm này?')) return;
+    if (!window.confirm(t('dashboard.alert_delete_confirm'))) return;
     try {
       const res = await apiFetch(`/file-attachment/${attachmentId}`, { method: 'DELETE' });
       if (res.success) {
@@ -291,9 +293,9 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Chào mừng trở lại, {user?.name || user?.username}!
+            {t('dashboard.welcome', { name: user?.name || user?.username })}
           </h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Đây là tổng quan không gian làm việc của bạn hôm nay.</p>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('dashboard.subtitle')}</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -303,7 +305,7 @@ export default function Dashboard() {
                 <ClockIcon className="w-6 h-6 text-emerald-600" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">Đã Check-in</span>
+                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">{t('dashboard.checked_in')}</span>
                 <span className="text-sm font-bold text-gray-900">
                   {checkInTime instanceof Date && !isNaN(checkInTime) 
                     ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
@@ -318,7 +320,7 @@ export default function Dashboard() {
                 <ClockIcon className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">Đã Check-out</span>
+                <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">{t('dashboard.checked_out')}</span>
                 <span className="text-sm font-bold text-gray-900">
                   {checkOutTime instanceof Date && !isNaN(checkOutTime) 
                     ? checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
@@ -339,44 +341,44 @@ export default function Dashboard() {
           <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
             <ClockIcon className="w-10 h-10 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Sẵn sàng bắt đầu ngày mới?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('dashboard.ready_title')}</h2>
           <p className="text-gray-500 mb-8 max-w-md">
-            Vui lòng check-in để điểm danh và xem công việc của bạn hôm nay.
+            {t('dashboard.ready_subtitle')}
           </p>
           <button
             onClick={handleCheckIn}
             className="px-8 py-3 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
           >
-            Check-in ngay
+            {t('dashboard.check_in_btn')}
           </button>
         </div>
       ) : (
         <div className="space-y-6">
           <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800">Công việc đang chờ</h2>
-              <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{tasks.length} Công việc</span>
+              <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
+              <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{t('dashboard.tasks_count', { count: tasks.length })}</span>
             </div>
             
             <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar">
               <table className="w-full text-left border-collapse relative min-w-[600px]">
                 <thead className="sticky top-0 bg-white z-10 shadow-sm">
                   <tr>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tiêu đề</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ưu tiên</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hạn chót</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Trạng thái</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_title')}</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_priority')}</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_deadline')}</th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">{t('dashboard.th_status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {loading ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">Đang tải công việc...</td>
+                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">{t('dashboard.loading_tasks')}</td>
                     </tr>
                   ) : tasks.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">
-                        Bạn không có công việc nào đang chờ hôm nay. Tuyệt vời!
+                        {t('dashboard.no_tasks')}
                       </td>
                     </tr>
                   ) : (
@@ -394,7 +396,7 @@ export default function Dashboard() {
                           {task.parent_id && (
                             <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                               <div className="w-2 h-2 border-b border-l border-gray-400 inline-block"></div>
-                              Công việc con của REQ-{task.parent_id}
+                              {t('dashboard.subtask_of', { id: task.parent_id })}
                             </p>
                           )}
                         </td>
@@ -404,7 +406,7 @@ export default function Dashboard() {
                             task.priority === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
                             'bg-emerald-100 text-emerald-700 border-emerald-200'
                           }`}>
-                            {task.priority === 'High' ? 'Cao' : task.priority === 'Medium' ? 'Trung bình' : 'Thấp'}
+                            {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-600">
@@ -421,9 +423,9 @@ export default function Dashboard() {
                                 'bg-gray-50 text-gray-700 ring-gray-500/20 hover:bg-gray-100'}
                             `}
                           >
-                            <option value="pending" className="bg-white text-gray-900 font-medium">Chờ xử lý</option>
-                            <option value="in progress" className="bg-white text-gray-900 font-medium">Đang thực hiện</option>
-                            <option value="completed" className="bg-white text-gray-900 font-medium">Hoàn thành</option>
+                            <option value="pending" className="bg-white text-gray-900 font-medium">{t('dashboard.status_pending')}</option>
+                            <option value="in progress" className="bg-white text-gray-900 font-medium">{t('dashboard.status_in_progress')}</option>
+                            <option value="completed" className="bg-white text-gray-900 font-medium">{t('dashboard.status_completed')}</option>
                           </select>
                         </td>
                       </tr>
@@ -438,12 +440,12 @@ export default function Dashboard() {
           <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-gray-800">Báo cáo hàng ngày</h2>
+              <h2 className="text-lg font-bold text-gray-800">{t('dashboard.daily_report')}</h2>
             </div>
             <textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              placeholder="Bạn đã hoàn thành được gì hôm nay? Có khó khăn gì không?"
+              placeholder={t('dashboard.report_placeholder')}
               rows={4}
               className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
             />
@@ -453,7 +455,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <PaperClipIcon className="w-5 h-5 text-gray-500" />
-                  <span className="text-sm font-semibold text-gray-700">Tài liệu đính kèm ({reportAttachments.length})</span>
+                  <span className="text-sm font-semibold text-gray-700">{t('dashboard.attachments', { count: reportAttachments.length })}</span>
                 </div>
                 <div>
                   <input
@@ -466,7 +468,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       if (!reportId) {
-                        alert('Vui lòng Check-in trước khi tải lên tài liệu!');
+                        alert(t('dashboard.alert_upload_no_id_btn'));
                         return;
                       }
                       fileInputRef.current?.click();
@@ -474,7 +476,7 @@ export default function Dashboard() {
                     className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
                   >
                     <PlusIcon className="w-3.5 h-3.5" />
-                    Thêm file
+                    {t('dashboard.add_file')}
                   </button>
                 </div>
               </div>
@@ -513,7 +515,7 @@ export default function Dashboard() {
                 className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
               >
                 <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
-                Lưu nháp
+                {t('dashboard.save_draft')}
               </button>
               <button
                 onClick={handleSubmitReport}
@@ -526,12 +528,12 @@ export default function Dashboard() {
                 {checkOutTime ? (
                   <>
                     <CheckCircleIcon className="w-5 h-5" />
-                    Cập nhật báo cáo
+                    {t('dashboard.update_report')}
                   </>
                 ) : (
                   <>
                     <PaperAirplaneIcon className="w-5 h-5" />
-                    Gửi báo cáo & Check-out
+                    {t('dashboard.submit_report')}
                   </>
                 )}
               </button>

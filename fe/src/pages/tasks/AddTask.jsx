@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../services/api';
 import {
-  CloudArrowUpIcon,
-  XMarkIcon,
   PlusIcon,
+  XMarkIcon,
   CalendarDaysIcon,
   ListBulletIcon,
-  UserGroupIcon,
   ChevronDownIcon,
   ArrowLeftIcon,
   PaperClipIcon,
@@ -18,8 +16,12 @@ import { taskService } from '../../services/taskService';
 import MiniCalendar from '../../components/MiniCalendar';
 import SubTaskModal from '../../components/SubTaskModal';
 import ParticipantManager from '../../components/ParticipantManager';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
 
 export default function AddTask() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -45,7 +47,7 @@ export default function AddTask() {
     assigner: '',
     priority: 'Medium',
     subTasks: [],
-    assignees: location.state?.assignee ? [location.state.assignee] : [] // Objects: { name, role }
+    assignees: location.state?.assignee ? [location.state.assignee] : []
   };
 
   const [formData, setFormData] = useState(initialState);
@@ -55,7 +57,6 @@ export default function AddTask() {
   const [loading, setLoading] = useState(true);
   const [pendingFiles, setPendingFiles] = useState([]);
 
-  // Popover states
   const [isStartCalOpen, setIsStartCalOpen] = useState(false);
   const [isDueCalOpen, setIsDueCalOpen] = useState(false);
 
@@ -79,29 +80,24 @@ export default function AddTask() {
     const fetchUsers = async () => {
       try {
         const result = await apiFetch('/person');
-
         if (result.success && Array.isArray(result.data)) {
           const persons = result.data;
           const managersList = persons.filter(p => p.role === 'manager');
           setManagers(managersList);
           setAllUsers(persons);
-
           if (managersList.length > 0) {
             setFormData(prev => ({ ...prev, assigner: managersList[0].name }));
           }
         }
-
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
         setLoading(false);
       }
     };
-
     fetchUsers();
   }, []);
 
-  // Close popovers on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (startCalRef.current && !startCalRef.current.contains(event.target)) setIsStartCalOpen(false);
@@ -120,28 +116,23 @@ export default function AddTask() {
 
   const handleSubmit = async () => {
     try {
-      // Find assigner_id from managers list
       const assignerUser = managers.find(m => m.name === formData.assigner);
       const assigner_id = assignerUser ? assignerUser.person_id : null;
 
-      // Map participants to participant_id
       const task_participants = formData.assignees.map(a => {
         const p = allUsers.find(u => u.name === a.name);
         return {
           participant_id: p ? p.person_id : null,
-          role: a.role.charAt(0).toUpperCase() + a.role.slice(1) // Capitalize: assignee -> Assignee
+          role: a.role.charAt(0).toUpperCase() + a.role.slice(1)
         };
       }).filter(p => p.participant_id !== null);
 
-      // Prepare sub_tasks with default status
       const sub_tasks = formData.subTasks.map(st => ({
         ...st,
         status: 'pending',
         priority: st.priority.toLowerCase()
       }));
 
-      // Format times
-      // Format dates to ISO string for better compatibility
       const start_time = new Date(`${formData.startDate}T${formData.startTime}:00`).toISOString();
       const due_date = new Date(`${formData.dueDate}T${formData.endTime}:00`).toISOString();
 
@@ -161,38 +152,32 @@ export default function AddTask() {
       if (result.success) {
         const newTaskId = result.data.task_id || result.data.id;
         
-        // Upload files
         if (pendingFiles.length > 0 && newTaskId) {
           for (const file of pendingFiles) {
             const uploadData = new FormData();
             uploadData.append('file', file);
             uploadData.append('attachable_type', 'task');
             uploadData.append('attachable_id', newTaskId);
-
             try {
-              await apiFetch('/file-attachment/upload', {
-                method: 'POST',
-                body: uploadData,
-              });
+              await apiFetch('/file-attachment/upload', { method: 'POST', body: uploadData });
             } catch (error) {
               console.error('Upload error:', error);
             }
           }
         }
 
-        alert('Đã tạo công việc và các công việc con thành công!');
+        alert(t('addtask.alert_success'));
         handleReset();
         setPendingFiles([]);
         navigate('/tasks');
       } else {
-        alert('Lỗi: ' + result.message);
+        alert(t('addtask.alert_error') + result.message);
       }
     } catch (err) {
       console.error("Error creating task", err);
       alert(err.message || "An unexpected error occurred. Please try again.");
     }
   };
-
 
   const addAssignee = (personId) => {
     const user = allUsers.find(u => u.person_id.toString() === personId.toString() || u.name === personId);
@@ -224,20 +209,12 @@ export default function AddTask() {
     });
   };
 
-
-
   return (
     <div className="space-y-6 pb-20">
       <div>
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Quay lại
-        </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Thêm công việc mới</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Cấu hình các tham số và người thực hiện cho mục tiêu hoạt động mới.</p>
+        <BackButton className="mb-6" />
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('addtask.title')}</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('addtask.subtitle')}</p>
       </div>
 
       {/* Task Definition Section */}
@@ -246,22 +223,22 @@ export default function AddTask() {
           <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50 text-blue-600">
             <ListBulletIcon className="w-4 h-4" />
           </span>
-          Định nghĩa công việc
+          {t('addtask.section_definition')}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="md:col-span-1">
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Tên công việc</label>
+            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{t('addtask.label_name')}</label>
             <input
               type="text"
-              placeholder="ví dụ: Ra mắt chiến dịch Marketing quý 3"
+              placeholder={t('addtask.name_placeholder')}
               value={formData.taskName}
               onChange={(e) => setFormData({ ...formData, taskName: e.target.value })}
               className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 block p-3.5 outline-none transition-all duration-300 placeholder:text-gray-300 shadow-sm"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Người giao (Quản lý)</label>
+            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{t('addtask.label_assigner')}</label>
             <div className="relative">
               <select
                 value={formData.assigner}
@@ -271,7 +248,7 @@ export default function AddTask() {
                 {managers.map(admin => (
                   <option key={admin.person_id} value={admin.name}>{admin.name}</option>
                 ))}
-                {managers.length === 0 && <option value="">Không tìm thấy quản lý nào</option>}
+                {managers.length === 0 && <option value="">{t('addtask.no_manager')}</option>}
               </select>
               <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -279,9 +256,9 @@ export default function AddTask() {
         </div>
 
         <div className="mb-8">
-          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Mô tả</label>
+          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{t('addtask.label_description')}</label>
           <textarea
-            placeholder="Nhập mô tả công việc..."
+            placeholder={t('addtask.desc_placeholder')}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows="4"
@@ -292,14 +269,14 @@ export default function AddTask() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Start Date */}
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày bắt đầu</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{t('addtask.label_start')}</label>
             <div className="relative" ref={startCalRef}>
               <div
                 onClick={() => setIsStartCalOpen(!isStartCalOpen)}
                 className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-white shadow-sm flex items-center h-[50px]"
               >
                 <CalendarDaysIcon className="w-5 h-5 text-blue-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                <span className="font-bold text-gray-700">{formData.startDate || 'Chọn ngày'}</span>
+                <span className="font-bold text-gray-700">{formData.startDate || t('addtask.select_date')}</span>
               </div>
               {isStartCalOpen && (
                 <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
@@ -324,14 +301,14 @@ export default function AddTask() {
 
           {/* Due Date */}
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Hạn chót</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{t('addtask.label_due')}</label>
             <div className="relative" ref={dueCalRef}>
               <div
                 onClick={() => setIsDueCalOpen(!isDueCalOpen)}
                 className="w-full bg-[#f8fafc] border border-gray-200 focus:border-blue-500 text-gray-900 text-sm rounded-xl p-3.5 pl-11 outline-none transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-white shadow-sm flex items-center h-[50px]"
               >
                 <CalendarDaysIcon className="w-5 h-5 text-rose-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                <span className="font-bold text-gray-700">{formData.dueDate || 'Chọn ngày'}</span>
+                <span className="font-bold text-gray-700">{formData.dueDate || t('addtask.select_date')}</span>
               </div>
               {isDueCalOpen && (
                 <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] min-w-[280px]">
@@ -350,7 +327,7 @@ export default function AddTask() {
         </div>
 
         <div className="space-y-3 pt-2">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Mức độ ưu tiên</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{t('addtask.label_priority')}</label>
           <div className="flex gap-4 w-full bg-[#f8fafc] p-2 rounded-2xl border border-gray-100 shadow-inner">
             {['Low', 'Medium', 'High'].map((level) => {
               const isActive = formData.priority === level;
@@ -369,6 +346,8 @@ export default function AddTask() {
                 icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-rose-500'}`}></span>;
               }
 
+              const labelText = level === 'High' ? t('addtask.priority_high') : level === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low');
+
               return (
                 <button
                   key={level}
@@ -380,7 +359,7 @@ export default function AddTask() {
                   }`}
                 >
                   {icon}
-                  {level === 'High' ? 'Cao' : level === 'Medium' ? 'Trung bình' : 'Thấp'}
+                  {labelText}
                 </button>
               );
             })}
@@ -388,7 +367,7 @@ export default function AddTask() {
         </div>
       </div>
 
-      {/* Execution Details Section */}
+      {/* Participant Manager */}
       <ParticipantManager 
         participants={formData.assignees}
         allUsers={allUsers}
@@ -402,7 +381,7 @@ export default function AddTask() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
             <PaperClipIcon className="w-5 h-5 text-blue-500" />
-            Tài liệu đính kèm
+            {t('addtask.attachments')}
           </h2>
           <div>
             <input
@@ -418,7 +397,7 @@ export default function AddTask() {
               className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
             >
               <PlusIcon className="w-4 h-4" />
-              Thêm file
+              {t('addtask.add_file')}
             </button>
           </div>
         </div>
@@ -435,7 +414,7 @@ export default function AddTask() {
                   type="button"
                   onClick={() => handleRemovePendingFile(idx)}
                   className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                  title="Xóa file"
+                  title={t('addtask.remove_file')}
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -444,7 +423,7 @@ export default function AddTask() {
           </div>
         ) : (
           <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
-            <p className="text-xs text-gray-400 font-bold">Chưa có tài liệu nào</p>
+            <p className="text-xs text-gray-400 font-bold">{t('addtask.no_files')}</p>
           </div>
         )}
       </div>
@@ -454,7 +433,7 @@ export default function AddTask() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-            Chia nhỏ công việc con
+            {t('addtask.subtasks')}
           </h2>
           <button
             type="button"
@@ -462,7 +441,7 @@ export default function AddTask() {
             className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
-            Thêm công việc con
+            {t('addtask.add_subtask')}
           </button>
         </div>
 
@@ -474,14 +453,14 @@ export default function AddTask() {
                   <div className={`w-1 h-8 rounded-full ${st.priority === 'High' ? 'bg-red-500' : st.priority === 'Medium' ? 'bg-amber-500' : 'bg-green-500'}`}></div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">{st.title}</p>
-                    <p className="text-[11px] text-gray-400 line-clamp-1">{st.description || 'Không có mô tả'}</p>
+                    <p className="text-[11px] text-gray-400 line-clamp-1">{st.description || t('addtask.no_description')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${st.priority === 'High' ? 'bg-red-50 text-red-600' :
                     st.priority === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
                     }`}>
-                    {st.priority === 'High' ? 'Cao' : st.priority === 'Medium' ? 'Trung bình' : 'Thấp'}
+                    {st.priority === 'High' ? t('addtask.priority_high') : st.priority === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
                   </span>
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, subTasks: prev.subTasks.filter((_, i) => i !== idx) }))}
@@ -494,8 +473,8 @@ export default function AddTask() {
             ))
           ) : (
             <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/30">
-              <p className="text-xs text-gray-400 font-bold">Chưa có công việc con nào được thêm</p>
-              <p className="text-[10px] text-gray-300 mt-1">Nhấn nút phía trên để bắt đầu chia nhỏ mục tiêu này.</p>
+              <p className="text-xs text-gray-400 font-bold">{t('addtask.no_subtasks')}</p>
+              <p className="text-[10px] text-gray-300 mt-1">{t('addtask.no_subtasks_hint')}</p>
             </div>
           )}
         </div>
@@ -518,14 +497,14 @@ export default function AddTask() {
           onClick={() => navigate(-1)}
           className="text-gray-400 text-sm font-bold hover:text-gray-600 transition-colors px-6 py-3 rounded-xl hover:bg-gray-50"
         >
-          Hủy
+          {t('addtask.btn_cancel')}
         </button>
         <button
           onClick={handleSubmit}
           className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3.5 rounded-xl text-sm font-bold transition-all shadow-xl shadow-blue-100 active:scale-95 flex items-center gap-2"
         >
           <PlusIcon className="w-5 h-5" />
-          Tạo công việc
+          {t('addtask.btn_create')}
         </button>
       </div>
     </div>

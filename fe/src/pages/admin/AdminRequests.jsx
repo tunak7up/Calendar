@@ -12,8 +12,10 @@ import { requestService } from '../../services/requestService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import SortableTable from '../../components/SortableTable';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminRequests() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -79,18 +81,18 @@ export default function AdminRequests() {
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update status');
+      alert(t('requests.alert_update_fail'));
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
       case 'approved':
-        return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">Đã duyệt</span>;
+        return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_approved')}</span>;
       case 'rejected':
-        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold uppercase tracking-wider">Từ chối</span>;
+        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_rejected')}</span>;
       default:
-        return <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">Đang chờ</span>;
+        return <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_pending')}</span>;
     }
   };
 
@@ -140,11 +142,11 @@ export default function AdminRequests() {
   }, [requests, filterStatus, filterType, selectedEmployeeIds, searchTerm, sortKey, sortDir]);
 
   const columns = [
-    { key: 'requester', label: 'Người yêu cầu', sortable: true },
-    { key: 'reason', label: 'Lý do', sortable: true },
-    { key: 'created_at', label: 'Ngày gửi', sortable: true },
-    { key: 'status', label: 'Trạng thái', sortable: true, align: 'center' },
-    { key: 'actions', label: 'Hành động', sortable: false, align: 'center' },
+    { key: 'requester', label: t('requests.col_requester'), sortable: true },
+    { key: 'reason', label: t('requests.col_reason'), sortable: true },
+    { key: 'created_at', label: t('requests.col_sent_date'), sortable: true },
+    { key: 'status', label: t('requests.col_status'), sortable: true, align: 'center' },
+    { key: 'actions', label: t('requests.col_actions'), sortable: false, align: 'center' },
   ];
 
   return (
@@ -152,14 +154,14 @@ export default function AdminRequests() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Duyệt yêu cầu</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Phê duyệt hoặc từ chối đăng ký làm việc/nghỉ phép của nhân viên</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('requests.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('requests.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-gray-300 flex items-center gap-2 flex-1 md:flex-none justify-center">
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-gray-400" />
             <span className="font-bold text-gray-700">{filteredRequests.length}</span>
-            <span className="text-gray-500 text-sm">Tổng số lọc được</span>
+            <span className="text-gray-500 text-sm">{t('requests.total_filtered')}</span>
           </div>
         </div>
       </div>
@@ -172,7 +174,7 @@ export default function AdminRequests() {
           </div>
           <input
             type="text"
-            placeholder="Tìm theo tên hoặc lý do..."
+            placeholder={t('requests.search_placeholder')}
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -206,9 +208,9 @@ export default function AdminRequests() {
             }}
             className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
           >
-            <option value="all">Tất cả loại</option>
-            <option value="register">Đăng ký lịch làm</option>
-            <option value="leave">Nghỉ phép</option>
+            <option value="all">{t('requests.type_all')}</option>
+            <option value="register">{t('requests.type_register')}</option>
+            <option value="leave">{t('requests.type_leave')}</option>
           </select>
         </div>
 
@@ -221,10 +223,10 @@ export default function AdminRequests() {
             }}
             className="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-md cursor-pointer"
           >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="pending">Đang chờ</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Từ chối</option>
+            <option value="all">{t('requests.status_all')}</option>
+            <option value="pending">{t('status.req_pending')}</option>
+            <option value="approved">{t('status.req_approved')}</option>
+            <option value="rejected">{t('status.req_rejected')}</option>
           </select>
         </div>
         
@@ -236,7 +238,7 @@ export default function AdminRequests() {
               setSelectedEmployeeIds(ids);
               setCurrentPage(1);
             }}
-            placeholder="Lọc nhân viên..."
+            placeholder={t('requests.filter_employee')}
           />
         </div>
       </div>
@@ -247,7 +249,7 @@ export default function AdminRequests() {
         columns={columns}
         data={filteredRequests}
         loading={loading}
-        emptyMessage="Không tìm thấy yêu cầu nào."
+        emptyMessage={t('requests.empty')}
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={filteredRequests.length}
@@ -266,8 +268,8 @@ export default function AdminRequests() {
             <td className="py-4 px-6 text-sm font-semibold text-gray-900">
               {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
             </td>
-            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? 'Đăng ký lịch làm việc' : req.reason}>
-              {req.type === 'register' ? 'Đăng ký lịch làm việc' : (req.reason || 'N/A')}
+            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? t('requests.val_register_schedule') : req.reason}>
+              {req.type === 'register' ? t('requests.val_register_schedule') : (req.reason || 'N/A')}
             </td>
             <td className="py-4 px-6 text-sm text-gray-500 font-medium">
               <span className="flex items-center gap-2">
@@ -283,14 +285,14 @@ export default function AdminRequests() {
                 <div className="flex justify-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'approved'); }}
-                    title="Duyệt"
+                    title={t('requests.title_approve')}
                     className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
                   >
                     <CheckIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'rejected'); }}
-                    title="Từ chối"
+                    title={t('requests.title_reject')}
                     className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
                   >
                     <XMarkIcon className="w-5 h-5" />

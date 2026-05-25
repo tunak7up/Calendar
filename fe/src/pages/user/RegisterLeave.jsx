@@ -7,6 +7,9 @@ import { getFullDateStr, getTimeRangeStr } from '../../utils/dateUtils';
 import { scheduleService } from '../../services/scheduleService';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
 
 
 
@@ -14,6 +17,7 @@ export default function RegisterLeave() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
@@ -56,11 +60,11 @@ export default function RegisterLeave() {
           }];
         });
       } else {
-        alert("Bạn không có lịch làm việc được duyệt vào ngày này.");
+        alert(t('register.alert_leave_approved'));
       }
     } catch (error) {
       console.error('Error fetching shift:', error);
-      alert("Lỗi khi lấy thông tin ca làm việc.");
+      alert(t('register.alert_leave_fetch_error'));
     }
   };
 
@@ -96,7 +100,7 @@ export default function RegisterLeave() {
 
   const handleCancel = () => {
     if (schedule.length > 0 || reason) {
-      if (window.confirm("Bạn có chắc chắn muốn hủy yêu cầu nghỉ phép này?")) {
+      if (window.confirm(t('register.alert_leave_confirm_discard'))) {
         navigate(-1);
       }
     } else {
@@ -106,7 +110,7 @@ export default function RegisterLeave() {
 
   const handleSubmit = async () => {
     if (schedule.length === 0) {
-      alert("Vui lòng chọn ít nhất một ngày nghỉ phép.");
+      alert(t('register.alert_leave_select_at_least_one'));
       return;
     }
 
@@ -133,19 +137,19 @@ export default function RegisterLeave() {
       requester_id: user.person_id,
       approver_id: null,
       type: 'leave', // Important: Type is leave
-      reason: reason || 'Nghỉ phép',
+      reason: reason || t('register.leave_type_register'),
       request_details: requestDetails
     };
 
     try {
       const result = await requestService.submitRequest(payload);
-      alert("Đã gửi yêu cầu nghỉ phép thành công!");
+      alert(t('register.alert_leave_submit_success'));
       setSchedule([]);
       setReason('');
       navigate('/history');
     } catch (error) {
       console.error('Error:', error);
-      alert("Có lỗi xảy ra: " + error.message);
+      alert(t('register.alert_leave_submit_error') + error.message);
     }
   };
 
@@ -157,20 +161,14 @@ export default function RegisterLeave() {
   const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
 
 
-return (
-  <>
-    <div>
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Quay lại
-        </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Đăng ký nghỉ phép</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Chọn ngày nghỉ và cung cấp lý do cho yêu cầu.</p>
-      </div>
+  return (
+    <>
+      <div>
+        <div className="mb-8">
+          <BackButton className="mb-6" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('register.leave_title')}</h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('register.leave_subtitle')}</p>
+        </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
         {/* Select Date */}
@@ -189,14 +187,14 @@ return (
         {/* Schedule Table */}
         {schedule.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Các ngày nghỉ đã chọn</h2>
+            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">{t('register.selected_leaves')}</h2>
             <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[300px] overflow-y-auto">
               <table className="w-full text-sm text-left text-gray-500">
                 <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Ngày</th>
-                    <th className="px-6 py-3 font-semibold">Ca làm</th>
-                    <th className="px-6 py-3 font-semibold text-right">Thao tác</th>
+                    <th className="px-6 py-3 font-semibold">{t('register.col_date')}</th>
+                    <th className="px-6 py-3 font-semibold">{t('register.col_shift')}</th>
+                    <th className="px-6 py-3 font-semibold text-right">{t('register.col_action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -204,7 +202,7 @@ return (
                     <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.date}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                        {item.shift === 'Morning' ? 'Buổi sáng' : item.shift === 'Afternoon' ? 'Buổi chiều' : 'Cả ngày'}
+                        {item.shift === 'Morning' ? t('register.shift_morning') : item.shift === 'Afternoon' ? t('register.shift_afternoon') : t('register.shift_full')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Button variant="danger-icon" onClick={() => handleRemoveFromSchedule(item.date)}>
@@ -221,10 +219,10 @@ return (
 
         {/* Reason */}
         <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Lý do</h2>
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">{t('register.leave_reason')}</h2>
           <textarea
             className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
-            placeholder="Vui lòng nhập lý do nghỉ phép..."
+            placeholder={t('register.leave_reason_placeholder')}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           ></textarea>
@@ -238,13 +236,13 @@ return (
               <CalendarIcon className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Tổng ngày nghỉ</h3>
+              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">{t('register.total_leaves')}</h3>
               <span className="text-2xl font-bold text-gray-900">{schedule.length}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>Hủy</Button>
-            <Button onClick={handleSubmit}>Gửi yêu cầu nghỉ phép</Button>
+            <Button variant="secondary" onClick={handleCancel}>{t('register.btn_cancel')}</Button>
+            <Button onClick={handleSubmit}>{t('register.btn_submit_leave')}</Button>
           </div>
         </div>
       </div>

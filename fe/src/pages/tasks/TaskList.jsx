@@ -18,26 +18,16 @@ import { taskService } from '../../services/taskService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
+import { useTranslation } from 'react-i18next';
 
-// Hàm helper định dạng ngày thành kiểu "May 15, 2026"
-const formatCustomDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'N/A';
-
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-};
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation();
   if (status?.toLowerCase() === 'completed') {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        Hoàn thành
+        {t('status.completed')}
       </span>
     );
   }
@@ -45,7 +35,7 @@ function StatusBadge({ status }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-        Đang thực hiện
+        {t('status.in_progress')}
       </span>
     );
   }
@@ -53,7 +43,7 @@ function StatusBadge({ status }) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-        Chờ xử lý
+        {t('status.pending')}
       </span>
     );
   }
@@ -83,6 +73,7 @@ function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) 
 export default function TaskList({ isAdmin }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
@@ -92,6 +83,25 @@ export default function TaskList({ isAdmin }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const pageSize = 15;
+
+  const formatCustomDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'N/A';
+
+    if (i18n.language === 'vi') {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   const fetchTasks = async () => {
     try {
@@ -187,14 +197,14 @@ export default function TaskList({ isAdmin }) {
   }, [filteredTasks, sortKey, sortDir]);
 
   const columns = [
-    { key: 'name', label: 'Tên công việc', sortable: true, className: 'w-[28%] min-w-[220px]' },
-    { key: 'assigner', label: 'Người giao', sortable: true, className: 'w-[12%] min-w-[110px]' },
-    { key: 'start_time', label: 'Ngày bắt đầu', sortable: true, className: 'w-[100px]' },
-    { key: 'due_date', label: 'Hạn chót', sortable: true, className: 'w-[100px]' },
-    { key: 'status', label: 'Trạng thái', sortable: true, className: 'w-[90px]' },
-    { key: 'extra', label: isAdmin ? 'Người tham gia' : 'Vai trò', sortable: false },
-    { key: 'created_at', label: 'Ngày tạo', sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
-    { key: 'action', label: 'Thao tác', sortable: false, align: 'center', className: 'w-[80px]' },
+    { key: 'name', label: t('tasks.col_name'), sortable: true, className: 'w-[28%] min-w-[220px]' },
+    { key: 'assigner', label: t('tasks.col_assigner'), sortable: true, className: 'w-[12%] min-w-[110px]' },
+    { key: 'start_time', label: t('tasks.col_start'), sortable: true, className: 'w-[100px]' },
+    { key: 'due_date', label: t('tasks.col_deadline'), sortable: true, className: 'w-[100px]' },
+    { key: 'status', label: t('tasks.col_status'), sortable: true, className: 'w-[90px]' },
+    { key: 'extra', label: isAdmin ? t('tasks.col_participants') : t('tasks.col_role'), sortable: false },
+    { key: 'created_at', label: t('tasks.col_created'), sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
+    { key: 'action', label: t('tasks.col_actions'), sortable: false, align: 'center', className: 'w-[80px]' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -210,7 +220,7 @@ export default function TaskList({ isAdmin }) {
 
   const handleDeleteTask = async (e, taskId) => {
     e.stopPropagation(); // Don't navigate
-    if (!window.confirm('Xóa công việc này?')) return;
+    if (!window.confirm(t('tasks.confirm_delete'))) return;
     try {
       const res = await taskService.deleteTask(taskId);
       if (res.success) {
@@ -228,8 +238,8 @@ export default function TaskList({ isAdmin }) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Danh sách công việc</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Quản lý và theo dõi tiến độ công việc</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('tasks.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('tasks.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {!isAdmin && (
@@ -238,7 +248,7 @@ export default function TaskList({ isAdmin }) {
               className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
             >
               <PlusIcon className="w-5 h-5" />
-              <span>Tạo công việc</span>
+              <span>{t('tasks.create_btn')}</span>
             </button>
           )}
         </div>
@@ -250,7 +260,7 @@ export default function TaskList({ isAdmin }) {
             employees={employees}
             selectedIds={selectedEmployeeIds}
             onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
-            placeholder="Chọn nhân viên..."
+            placeholder={t('tasks.filter_employee')}
           />
         </div>
       )}
@@ -258,7 +268,7 @@ export default function TaskList({ isAdmin }) {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
-          label="Tổng công việc"
+          label={t('tasks.stat_total')}
           value={employeeTasks.length}
           icon={<ClipboardDocumentListIcon />}
           iconBg="bg-gray-100"
@@ -267,7 +277,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('all')}
         />
         <StatCard
-          label="Chờ xử lý"
+          label={t('tasks.stat_pending')}
           value={employeeTasks.filter(t => t.status === 'pending').length}
           icon={<ClockIcon />}
           iconBg="bg-gray-100"
@@ -276,7 +286,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('pending')}
         />
         <StatCard
-          label="Đang thực hiện"
+          label={t('tasks.stat_in_progress')}
           value={employeeTasks.filter(t => t.status === 'in progress').length}
           icon={<ClockIcon className="animate-spin-slow" />}
           iconBg="bg-blue-50"
@@ -285,7 +295,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('in progress')}
         />
         <StatCard
-          label="Hoàn thành"
+          label={t('tasks.stat_completed')}
           value={employeeTasks.filter(t => t.status === 'completed').length}
           icon={<CheckCircleIcon />}
           iconBg="bg-emerald-100"
@@ -294,7 +304,7 @@ export default function TaskList({ isAdmin }) {
           onClick={() => setFilterStatus('completed')}
         />
         <StatCard
-          label="Quá hạn"
+          label={t('tasks.stat_overdue')}
           value={employeeTasks.filter(t => isOverdue(t)).length}
           icon={<ExclamationTriangleIcon />}
           iconBg="bg-red-100"
@@ -308,7 +318,7 @@ export default function TaskList({ isAdmin }) {
         columns={columns}
         data={displayTasks}
         loading={loading}
-        emptyMessage="Không tìm thấy công việc nào."
+        emptyMessage={t('tasks.empty')}
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={displayTasks.length}
@@ -349,7 +359,13 @@ export default function TaskList({ isAdmin }) {
                   ))}
                 </div>
               ) : (
-                task.role || 'N/A'
+                task.role 
+                  ? (task.role.toLowerCase() === 'assignee' 
+                      ? t('tasks.role_assignee') 
+                      : (task.role.toLowerCase() === 'assigner' 
+                          ? t('tasks.role_assigner') 
+                          : task.role))
+                  : 'N/A'
               )}
             </td>
             <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>

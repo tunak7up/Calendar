@@ -11,13 +11,15 @@ import Button from '../../components/Button';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import SortableTable from '../../components/SortableTable';
+import { useTranslation } from 'react-i18next';
 
 export default function RegistrationHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('Tất cả loại yêu cầu');
-  const [filterStatus, setFilterStatus] = useState('Tất cả trạng thái');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +34,9 @@ export default function RegistrationHistory() {
           const mappedData = result.data.map(item => ({
             id: item.request_id,
             type: item.type,
-            name: item.type === 'register' ? 'Đăng ký làm việc' : 'Yêu cầu nghỉ phép',
             date: item.created_at,
             refId: `#REQ-${item.request_id}`,
-            status: item.status === 'pending' ? 'Chờ phê duyệt' : item.status === 'approved' ? 'Đã duyệt' : 'Đã hủy',
+            status: item.status,
             approver: item.approver ? item.approver.name : 'N/A',
             details: item.details,
             reason: item.reason,
@@ -59,11 +60,12 @@ export default function RegistrationHistory() {
 
   const filteredData = useMemo(() => {
     let list = requests.filter(item => {
-      const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const typeLabel = item.type === 'register' ? t('history.type_register') : t('history.type_leave');
+      const matchSearch = typeLabel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.approver.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchType = filterType === 'Tất cả loại yêu cầu' || item.name === filterType;
-      const matchStatus = filterStatus === 'Tất cả trạng thái' || item.status === filterStatus;
+      const matchType = filterType === 'all' || item.type === filterType;
+      const matchStatus = filterStatus === 'all' || item.status === filterStatus;
       return matchSearch && matchType && matchStatus;
     });
 
@@ -77,18 +79,18 @@ export default function RegistrationHistory() {
     }
 
     return list;
-  }, [requests, searchTerm, filterType, filterStatus, sortKey, sortDir]);
+  }, [requests, searchTerm, filterType, filterStatus, sortKey, sortDir, t]);
 
   const handleRowClick = (item) => {
     navigate(`/history/${item.id}`, { state: { request: item } });
   };
 
   const columns = [
-    { key: 'name', label: 'Tên yêu cầu', sortable: true },
-    { key: 'date', label: 'Ngày tạo', sortable: true },
-    { key: 'refId', label: 'Mã tham chiếu', sortable: true },
-    { key: 'status', label: 'Trạng thái', sortable: true },
-    { key: 'approver', label: 'Người duyệt', sortable: true },
+    { key: 'name', label: t('history.col_name'), sortable: true },
+    { key: 'date', label: t('history.col_date'), sortable: true },
+    { key: 'refId', label: t('history.col_ref'), sortable: true },
+    { key: 'status', label: t('history.col_status'), sortable: true },
+    { key: 'approver', label: t('history.col_approver'), sortable: true },
   ];
 
   return (
@@ -96,8 +98,8 @@ export default function RegistrationHistory() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Lịch sử đăng ký</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Xem và theo dõi trạng thái các yêu cầu đã gửi.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('history.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('history.subtitle')}</p>
         </div>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -106,14 +108,14 @@ export default function RegistrationHistory() {
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all"
           >
             <BriefcaseIcon className="w-5 h-5" />
-            Đăng ký làm việc
+            {t('history.btn_register_work')}
           </button>
           <button
             onClick={() => navigate('/register/leave')}
             className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all"
           >
             <CalendarIcon className="w-5 h-5" />
-            Đăng ký nghỉ phép
+            {t('history.btn_register_leave')}
           </button>
         </div>
       </div>
@@ -131,12 +133,12 @@ export default function RegistrationHistory() {
               setCurrentPage(1);
             }}
             className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
-            placeholder="Tìm kiếm yêu cầu..."
+            placeholder={t('history.search_placeholder')}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1 sm:justify-end">
-          <span className="text-sm font-medium text-gray-700 hidden sm:block">Bộ lọc:</span>
+          <span className="text-sm font-medium text-gray-700 hidden sm:block">{t('history.filter')}</span>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto flex-1 sm:flex-none">
             <select
               value={filterType}
@@ -146,9 +148,9 @@ export default function RegistrationHistory() {
               }}
               className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium text-gray-600 flex-1 min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
-              <option>Tất cả loại yêu cầu</option>
-              <option>Yêu cầu nghỉ phép</option>
-              <option>Đăng ký làm việc</option>
+              <option value="all">{t('history.type_all')}</option>
+              <option value="leave">{t('history.type_leave')}</option>
+              <option value="register">{t('history.type_register')}</option>
             </select>
             <select
               value={filterStatus}
@@ -158,17 +160,17 @@ export default function RegistrationHistory() {
               }}
               className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium text-gray-600 flex-1 min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
             >
-              <option>Tất cả trạng thái</option>
-              <option>Đã duyệt</option>
-              <option>Chờ phê duyệt</option>
-              <option>Đã hủy</option>
+              <option value="all">{t('history.status_all')}</option>
+              <option value="approved">{t('status.req_approved')}</option>
+              <option value="pending">{t('status.req_pending')}</option>
+              <option value="rejected">{t('status.req_rejected')}</option>
             </select>
           </div>
 
           <div className="relative w-full sm:w-auto sm:hidden">
             <Button className="w-full sm:w-auto justify-center whitespace-nowrap" onClick={() => setIsNewRequestOpen(!isNewRequestOpen)}>
               <PlusIcon className="w-5 h-5 flex-shrink-0" />
-              <span>Yêu cầu mới</span>
+              <span>{t('history.new_request')}</span>
             </Button>
 
             {isNewRequestOpen && (
@@ -189,7 +191,7 @@ export default function RegistrationHistory() {
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left"
                     >
                       <BriefcaseIcon className="w-4 h-4" />
-                      Đăng ký làm việc
+                      {t('history.btn_register_work')}
                     </button>
                     <button
                       onClick={() => {
@@ -199,7 +201,7 @@ export default function RegistrationHistory() {
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors text-left"
                     >
                       <CalendarIcon className="w-4 h-4" />
-                      Yêu cầu nghỉ phép
+                      {t('history.btn_register_leave')}
                     </button>
                   </div>
                 </div>
@@ -213,7 +215,7 @@ export default function RegistrationHistory() {
         columns={columns}
         data={filteredData}
         loading={loading}
-        emptyMessage="Không tìm thấy yêu cầu nào."
+        emptyMessage={t('history.empty')}
         pageSize={pageSize}
         currentPage={currentPage}
         totalItems={filteredData.length}
@@ -233,28 +235,30 @@ export default function RegistrationHistory() {
                 <div className={`p-2 rounded-lg ${item.type === 'leave' ? 'bg-orange-100 text-orange-500' : 'bg-blue-100 text-blue-500'}`}>
                   {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> : <BriefcaseIcon className="w-5 h-5" />}
                 </div>
-                <span className="font-semibold text-gray-900">{item.name}</span>
+                <span className="font-semibold text-gray-900">
+                  {item.type === 'register' ? t('history.type_register') : t('history.type_leave')}
+                </span>
               </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">{item.date}</td>
             <td className="px-6 py-4 whitespace-nowrap text-gray-500">{item.refId}</td>
             <td className="px-6 py-4 whitespace-nowrap">
-              {item.status === 'Chờ phê duyệt' && (
+              {item.status === 'pending' && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                  {item.status}
+                  {t('status.req_pending')}
                 </span>
               )}
-              {item.status === 'Đã duyệt' && (
+              {item.status === 'approved' && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  {item.status}
+                  {t('status.req_approved')}
                 </span>
               )}
-              {item.status === 'Đã hủy' && (
+              {item.status === 'rejected' && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  {item.status}
+                  {t('status.req_rejected')}
                 </span>
               )}
             </td>

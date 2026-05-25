@@ -7,14 +7,17 @@ import {
   InformationCircleIcon,
   CalendarDaysIcon,
   UserIcon,
-  FlagIcon,
   DocumentTextIcon,
   PaperClipIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
 
 export default function AddSubTask() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const parentTask = location.state?.parentTask;
@@ -28,8 +31,8 @@ export default function AddSubTask() {
 
   if (!parentTask) return (
     <div className="max-w-4xl mx-auto text-center py-20">
-      <h2 className="text-xl font-bold text-gray-900">Parent task not found</h2>
-      <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">Go back</button>
+      <h2 className="text-xl font-bold text-gray-900">{t('addsubtask.not_found')}</h2>
+      <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 font-medium">{t('addsubtask.go_back')}</button>
     </div>
   );
 
@@ -51,7 +54,6 @@ export default function AddSubTask() {
       const result = await taskService.createSubTask(parentTask.task_id, payload);
       
       if (result.success) {
-        // If there's an attachment, send it too
         if (formData.attachmentUrl.trim()) {
           const subTaskId = result.data.task_id;
           await taskService.createTaskAttachment({ 
@@ -60,14 +62,14 @@ export default function AddSubTask() {
           });
         }
         
-        alert('Sub-task created successfully!');
+        alert(t('addsubtask.alert_success'));
         navigate(-1);
       } else {
-        alert('Error: ' + result.message);
+        alert(t('addsubtask.alert_error') + result.message);
       }
     } catch (error) {
       console.error('Error creating sub-task:', error);
-      alert('Failed to connect to server');
+      alert(t('addsubtask.alert_fail'));
     }
   };
 
@@ -75,20 +77,14 @@ export default function AddSubTask() {
     <div className="space-y-6 pb-20">
       {/* Header */}
       <div className="mb-8">
-        <button 
-          onClick={() => navigate(-1)}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-4 group"
-        >
-          <ArrowLeftIcon className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Task
-        </button>
+        <BackButton className="mb-4" />
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600">
             <PlusIcon className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New Sub-task</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Define detailed steps for the parent task</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('addsubtask.title')}</h1>
+            <p className="text-gray-500 text-sm mt-0.5">{t('addsubtask.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -100,13 +96,13 @@ export default function AddSubTask() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                  Sub-task Title
+                  {t('addsubtask.label_title')}
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     required
-                    placeholder="e.g., Prepare financial statements"
+                    placeholder={t('addsubtask.title_placeholder')}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-gray-700 font-medium"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -116,11 +112,11 @@ export default function AddSubTask() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                  Description
+                  {t('addsubtask.label_description')}
                 </label>
                 <textarea
                   rows="4"
-                  placeholder="Provide details about what needs to be done..."
+                  placeholder={t('addsubtask.desc_placeholder')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-gray-700 resize-none"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -129,7 +125,7 @@ export default function AddSubTask() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                  Priority Level
+                  {t('addsubtask.label_priority')}
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {['Low', 'Medium', 'High'].map((p) => (
@@ -145,7 +141,7 @@ export default function AddSubTask() {
                           : 'border-transparent bg-gray-50 text-gray-400 hover:bg-gray-100'
                       }`}
                     >
-                      {p}
+                      {p === 'High' ? t('addtask.priority_high') : p === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
                     </button>
                   ))}
                 </div>
@@ -154,7 +150,7 @@ export default function AddSubTask() {
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1 flex items-center gap-2">
                   <PaperClipIcon className="w-4 h-4" />
-                  Attachment (Link/URL)
+                  {t('addsubtask.label_attachment')}
                 </label>
                 <input
                   type="url"
@@ -163,12 +159,12 @@ export default function AddSubTask() {
                   value={formData.attachmentUrl}
                   onChange={(e) => setFormData({ ...formData, attachmentUrl: e.target.value })}
                 />
-                <p className="text-[10px] text-gray-400 mt-2 ml-1">Optional. Add a link to related resources or instructions.</p>
+                <p className="text-[10px] text-gray-400 mt-2 ml-1">{t('addsubtask.attachment_hint')}</p>
               </div>
 
               <div className="pt-4">
                 <Button type="submit" className="w-full py-4 text-lg font-bold">
-                  Create Sub-task
+                  {t('addsubtask.btn_create')}
                 </Button>
               </div>
             </form>
@@ -183,7 +179,7 @@ export default function AddSubTask() {
             </div>
             
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6 px-1">
-              Parent Context
+              {t('addsubtask.parent_context')}
             </h3>
 
             <div className="space-y-6 relative z-10">
@@ -192,7 +188,7 @@ export default function AddSubTask() {
                   <DocumentTextIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase">Parent Task</div>
+                  <div className="text-[10px] font-bold text-gray-400 uppercase">{t('addsubtask.parent_task')}</div>
                   <div className="text-sm font-bold text-gray-900 leading-snug">{parentTask.title || parentTask.name}</div>
                 </div>
               </div>
@@ -202,7 +198,7 @@ export default function AddSubTask() {
                   <UserIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase">Assigner</div>
+                  <div className="text-[10px] font-bold text-gray-400 uppercase">{t('addsubtask.assigner')}</div>
                   <div className="text-sm font-bold text-gray-900">{parentTask.assigner || 'N/A'}</div>
                 </div>
               </div>
@@ -212,7 +208,7 @@ export default function AddSubTask() {
                   <CalendarDaysIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase">Schedule Period</div>
+                  <div className="text-[10px] font-bold text-gray-400 uppercase">{t('addsubtask.schedule')}</div>
                   <div className="text-[13px] font-bold text-gray-900 mt-1">
                     {new Date(parentTask.start_time).toLocaleDateString()} - {new Date(parentTask.due_date).toLocaleDateString()}
                   </div>
@@ -222,12 +218,12 @@ export default function AddSubTask() {
 
             <div className="mt-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
               <p className="text-[11px] text-blue-600 font-medium leading-relaxed italic">
-                Note: Sub-task schedule and assigner are synchronized with the parent task.
+                {t('addsubtask.note')}
               </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-    )
+  )
 }

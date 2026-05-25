@@ -2,22 +2,24 @@ import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuIt
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from 'react-i18next'
+import LanguageSelector from '../components/LanguageSelector'
 
 const userNavigation = [
-  { name: 'Bảng điều khiển', path: '/dashboard', id: 'dashboard' },
-  { name: 'Lịch của tôi', path: '/schedule', id: 'schedule' },
-  { name: 'Đăng ký', path: '/history', id: 'work' }, // Point to history/list as entry point
-  { name: 'Công việc', path: '/tasks', id: 'task' },
+  { key: 'dashboard', path: '/dashboard', id: 'dashboard' },
+  { key: 'schedule', path: '/schedule', id: 'schedule' },
+  { key: 'register', path: '/history', id: 'work' }, // Point to history/list as entry point
+  { key: 'tasks', path: '/tasks', id: 'task' },
 ];
 
 const adminNavigation = [
-  { name: 'Bảng điều khiển', path: '/admin/dashboard', id: 'admin_dashboard' },
-  { name: 'Lịch biểu', path: '/admin/schedule', id: 'admin_schedule' },
-  { name: 'Nhân viên', path: '/admin/employees', id: 'admin_employees' },
-  { name: 'Yêu cầu', path: '/admin/requests', id: 'admin_requests' },
-  { name: 'Giờ làm', path: '/admin/work-hours', id: 'admin_workhours' },
-  { name: 'Báo cáo', path: '/admin/reports', id: 'admin_reports' },
-  { name: 'Công việc', path: '/tasks', id: 'admin_task' },
+  { key: 'admin_dashboard', path: '/admin/dashboard', id: 'admin_dashboard' },
+  { key: 'admin_schedule', path: '/admin/schedule', id: 'admin_schedule' },
+  { key: 'admin_employees', path: '/admin/employees', id: 'admin_employees' },
+  { key: 'admin_requests', path: '/admin/requests', id: 'admin_requests' },
+  { key: 'admin_workhours', path: '/admin/work-hours', id: 'admin_workhours' },
+  { key: 'admin_reports', path: '/admin/reports', id: 'admin_reports' },
+  { key: 'tasks', path: '/tasks', id: 'admin_task' },
 ];
 
 function classNames(...classes) {
@@ -28,11 +30,13 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const isManager = user?.role === 'manager';
   const currentNav = isAdmin ? adminNavigation : userNavigation;
 
   const navigation = currentNav.map(item => ({
     ...item,
+    name: t(`nav.${item.key}`),
     current: location.pathname === item.path ||
       (item.id === 'task' && location.pathname.startsWith('/tasks')) ||
       (item.id === 'admin_task' && location.pathname.startsWith('/tasks')) ||
@@ -63,7 +67,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
               <div className="flex space-x-2">
                 {navigation.map((item) => (
                   <Link
-                    key={item.name}
+                    key={item.id}
                     to={item.path}
                     aria-current={item.current ? 'page' : undefined}
                     className={classNames(
@@ -82,6 +86,9 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
 
           {/* Right side items */}
           <div className="flex items-center space-x-3">
+            {/* Language Selector */}
+            <LanguageSelector />
+
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">
               <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">
@@ -99,13 +106,13 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
               >
                 <MenuItem>
                   <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
-                    Hồ sơ của bạn
+                    {t('nav.profile')}
                   </Link>
                 </MenuItem>
 
                 <MenuItem>
                   <button onClick={() => { logout(); navigate('/login'); }} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
-                    Đăng xuất
+                    {t('nav.logout')}
                   </button>
                 </MenuItem>
               </MenuItems>
@@ -119,7 +126,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
         <div className="space-y-1 pb-3 pt-2">
           {navigation.map((item) => (
             <DisclosureButton
-              key={item.name}
+              key={item.id}
               as={Link}
               to={item.path}
               aria-current={item.current ? 'page' : undefined}

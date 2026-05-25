@@ -16,17 +16,17 @@ import { taskService } from '../../services/taskService';
 import SortableTable from '../../components/SortableTable';
 import WorkHoursChart from '../../components/WorkHoursChart';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
 
   const getAttendanceStatus = (checkIn, checkOut) => {
-    if (!checkIn) return { label: 'Chưa check-in', colorClass: 'bg-gray-100 text-gray-500' };
+    if (!checkIn) return { label: t('admindashboard.attendance_not_checkin'), colorClass: 'bg-gray-100 text-gray-500' };
 
     const hasCheckedOut = !!checkOut;
-
-    // Parse checkIn (format HH:MM:SS or HH:MM)
     const inParts = checkIn.split(':');
     const inHour = parseInt(inParts[0], 10);
     const inMinute = parseInt(inParts[1], 10);
@@ -34,53 +34,46 @@ export default function AdminDashboard() {
 
     if (!hasCheckedOut) {
       if (isLate) {
-        return { label: 'Check-in muộn', colorClass: 'bg-amber-100 text-amber-700 animate-pulse font-bold' };
+        return { label: t('admindashboard.attendance_late'), colorClass: 'bg-amber-100 text-amber-700 animate-pulse font-bold' };
       }
-      return { label: 'Đang làm việc', colorClass: 'bg-blue-100 text-blue-700 animate-pulse font-bold' };
+      return { label: t('admindashboard.attendance_working'), colorClass: 'bg-blue-100 text-blue-700 animate-pulse font-bold' };
     }
 
-    // Parse checkOut (format HH:MM:SS or HH:MM)
     const outParts = checkOut.split(':');
     const outHour = parseInt(outParts[0], 10);
     const outMinute = parseInt(outParts[1], 10);
     const isEarly = (outHour < 17) || (outHour === 17 && outMinute < 30);
 
     if (isLate && isEarly) {
-      return { label: 'Muộn & Về sớm', colorClass: 'bg-red-100 text-red-700 font-bold' };
+      return { label: t('admindashboard.attendance_late_early'), colorClass: 'bg-red-100 text-red-700 font-bold' };
     }
     if (isLate) {
-      return { label: 'Check-in muộn', colorClass: 'bg-amber-100 text-amber-700 font-bold' };
+      return { label: t('admindashboard.attendance_late'), colorClass: 'bg-amber-100 text-amber-700 font-bold' };
     }
     if (isEarly) {
-      return { label: 'Về sớm', colorClass: 'bg-orange-100 text-orange-700 font-bold' };
+      return { label: t('admindashboard.attendance_early'), colorClass: 'bg-orange-100 text-orange-700 font-bold' };
     }
-
-    return { label: 'Hoàn thành', colorClass: 'bg-emerald-100 text-emerald-700 font-bold' };
+    return { label: t('admindashboard.attendance_done'), colorClass: 'bg-emerald-100 text-emerald-700 font-bold' };
   };
 
-  // Data states
   const [requests, setRequests] = useState([]);
   const [reports, setReports] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
 
-  // Filter / pagination for tasks
   const [taskSearchTerm, setTaskSearchTerm] = useState('');
   const [taskPage, setTaskPage] = useState(1);
   const taskPageSize = 8;
 
-  // Chart data
-  const [allSchedules, setAllSchedules] = useState([]);
-  const [allReports, setAllReports] = useState([]);
-
-  // Chart date range — default: current month
   const now = new Date();
   const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const defaultChartEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
   const [chartStartDate, setChartStartDate] = useState(defaultChartStart);
   const [chartEndDate, setChartEndDate] = useState(defaultChartEnd);
   const [chartLoading, setChartLoading] = useState(false);
+  const [allSchedules, setAllSchedules] = useState([]);
+  const [allReports, setAllReports] = useState([]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -131,8 +124,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // ---------- Processed Data ----------
-
   const pendingRequests = requests.filter(req => req.status?.toLowerCase() === 'pending');
 
   const getShiftLabel = (schedule) => {
@@ -140,9 +131,9 @@ export default function AdminDashboard() {
     const startHour = schedule.start_time ? new Date(schedule.start_time).getHours() : NaN;
     const endHour = schedule.end_time ? new Date(schedule.end_time).getHours() : NaN;
     if (!isNaN(startHour) && !isNaN(endHour)) {
-      if (startHour < 12 && endHour >= 17) return 'Cả ngày';
-      if (startHour < 12) return 'Sáng';
-      return 'Chiều';
+      if (startHour < 12 && endHour >= 17) return t('admindashboard.shift_full');
+      if (startHour < 12) return t('admindashboard.shift_morning');
+      return t('admindashboard.shift_afternoon');
     }
     const rawStart = schedule.start_time ? schedule.start_time.substring(11, 16) : '--';
     const rawEnd = schedule.end_time ? schedule.end_time.substring(11, 16) : '--';
@@ -162,7 +153,6 @@ export default function AdminDashboard() {
         shift: getShiftLabel(sched),
         check_in: report?.check_in || null,
         check_out: report?.check_out || null,
-        statusType: report?.check_out ? 'done' : report?.check_in ? 'in' : 'absent',
         isUnscheduled: false,
       });
     });
@@ -176,12 +166,11 @@ export default function AdminDashboard() {
         shift: '—',
         check_in: rep.check_in || null,
         check_out: rep.check_out || null,
-        statusType: rep.check_out ? 'done' : rep.check_in ? 'in' : 'absent',
         isUnscheduled: true,
       });
     });
     return rows;
-  }, [schedules, reports, employees]);
+  }, [schedules, reports, employees, i18n.language]);
 
   const workingCount = useMemo(() => todayAttendance.filter(item => !!item.check_in).length, [todayAttendance]);
 
@@ -201,36 +190,20 @@ export default function AdminDashboard() {
 
   const sortedFilteredTasks = useMemo(() => {
     let list = tasks.filter(task => {
-      // 1. Text search filter
       if (taskSearchTerm) {
         const term = taskSearchTerm.toLowerCase();
         const matchesText = (task.name?.toLowerCase().includes(term) || task.title?.toLowerCase().includes(term)) ||
           (task.participants && Array.isArray(task.participants) && task.participants.some(p => p.name?.toLowerCase().includes(term)));
         if (!matchesText) return false;
       }
-
-      // 2. Date and status filters requested by the user:
-      // "chỉ lấy các task có due date sau ngày hôm nay, ngoại trừ các task có due_date trước ngày hôm nay nhưng làm chưa xong, bỏ đi các task đã hoàn thành và có ngày hạn trước ngày hôm nay đi"
       const todayStr = new Date().toISOString().split('T')[0];
       const taskDateStr = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
       const isCompleted = task.status?.toLowerCase() === 'completed';
-
-      if (!taskDateStr) {
-        return true; // Include tasks without a due date
-      }
-
-      if (taskDateStr >= todayStr) {
-        return true; // "chỉ lấy các task có due date sau ngày hôm nay" (including today)
-      }
-
-      // taskDateStr < todayStr (in the past)
-      if (!isCompleted) {
-        return true; // "ngoại trừ các task có due_date trước ngày hôm nay nhưng làm chưa xong"
-      }
-
-      return false; // "bỏ đi các task đã hoàn thành và có ngày hạn trước ngày hôm nay đi"
+      if (!taskDateStr) return true;
+      if (taskDateStr >= todayStr) return true;
+      if (!isCompleted) return true;
+      return false;
     });
-
     list = [...list].sort((a, b) => {
       const diff = getTaskPriority(a) - getTaskPriority(b);
       if (diff !== 0) return diff;
@@ -240,11 +213,11 @@ export default function AdminDashboard() {
   }, [tasks, taskSearchTerm]);
 
   const getTaskStatusBadge = (task) => {
-    if (isOverdue(task)) return <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-md font-bold uppercase">Quá hạn</span>;
+    if (isOverdue(task)) return <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-md font-bold uppercase">{t('admindashboard.status_overdue')}</span>;
     switch (task.status?.toLowerCase()) {
-      case 'completed': return <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold uppercase">Hoàn thành</span>;
-      case 'in progress': return <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-bold uppercase">Đang thực hiện</span>;
-      default: return <span className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded-md font-bold uppercase">Chờ xử lý</span>;
+      case 'completed': return <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold uppercase">{t('admindashboard.status_completed')}</span>;
+      case 'in progress': return <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-bold uppercase">{t('admindashboard.status_in_progress')}</span>;
+      default: return <span className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded-md font-bold uppercase">{t('admindashboard.status_pending')}</span>;
     }
   };
 
@@ -262,18 +235,17 @@ export default function AdminDashboard() {
       {/* ── Header ── */}
       <div className="flex-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Bảng điều khiển Quản trị</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Tổng quan hoạt động hôm nay và công việc đang chờ</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('admindashboard.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('admindashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Pending requests badge button */}
           <button
             onClick={() => navigate('/admin/requests')}
             className="relative flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-amber-200 shadow-sm hover:border-amber-400 hover:shadow-md transition-all group"
-            title="Xem yêu cầu đang chờ"
+            title={t('admindashboard.pending_requests')}
           >
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-semibold text-gray-700 group-hover:text-amber-700">Yêu cầu chờ duyệt</span>
+            <span className="text-sm font-semibold text-gray-700 group-hover:text-amber-700">{t('admindashboard.pending_requests')}</span>
             {pendingRequests.length > 0 ? (
               <span className="flex items-center justify-center min-w-[1.5rem] h-6 px-1 bg-amber-500 text-white text-xs font-extrabold rounded-full shadow-sm animate-pulse">
                 {pendingRequests.length > 99 ? '99+' : pendingRequests.length}
@@ -286,7 +258,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
             <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
             <span className="font-bold text-gray-800 text-sm">
-              {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
           </div>
         </div>
@@ -297,7 +269,7 @@ export default function AdminDashboard() {
         <div className="px-5 py-3 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
             <ClockIcon className="w-5 h-5 text-violet-500" />
-            So sánh giờ đăng ký & thực tế
+            {t('admindashboard.chart_title')}
           </h2>
           <DateRangeFilter
             startDate={chartStartDate}
@@ -309,7 +281,7 @@ export default function AdminDashboard() {
           {chartLoading ? (
             <div className="flex items-center justify-center h-full gap-3 text-gray-400">
               <div className="w-5 h-5 border-2 border-gray-200 border-t-violet-500 rounded-full animate-spin" />
-              Đang tải dữ liệu...
+              {t('admindashboard.loading_chart')}
             </div>
           ) : (
             <WorkHoursChart
@@ -332,26 +304,24 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
               <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-blue-500" />
-                Điểm danh hôm nay
+                {t('admindashboard.attendance_title')}
               </h2>
               <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                Số người đi làm: {workingCount}
+                {t('admindashboard.attendance_count', { count: workingCount })}
               </span>
             </div>
-
-            {/* Chú thích màu nền (Legend) */}
             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-gray-500 bg-white p-2 rounded-xl border border-gray-100 shadow-inner">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span>
-                <span className="text-emerald-800">Có đăng ký trước & đi làm</span>
+                <span className="text-emerald-800">{t('admindashboard.legend_scheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>
-                <span className="text-amber-800">Không đăng ký trước</span>
+                <span className="text-amber-800">{t('admindashboard.legend_unscheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-white border border-gray-200"></span>
-                <span>Chưa check-in</span>
+                <span>{t('admindashboard.legend_absent')}</span>
               </div>
             </div>
           </div>
@@ -359,17 +329,17 @@ export default function AdminDashboard() {
             <table className="w-full text-left text-sm">
               <thead className="bg-white sticky top-0 border-b border-gray-100 shadow-sm z-10">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nhân viên</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ca</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vào/Ra</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_employee')}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_shift')}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_checkinout')}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {todayAttendance.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-5 py-8 text-center text-gray-400 font-medium">
-                      Không có nhân viên nào có lịch hoặc điểm danh hôm nay.
+                      {t('admindashboard.no_attendance')}
                     </td>
                   </tr>
                 ) : (
@@ -392,7 +362,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-2.5">
                           {emp.shift !== '—' ? (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${emp.shift === 'Sáng' ? 'bg-yellow-100 text-yellow-700' : emp.shift === 'Chiều' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${emp.shift === t('admindashboard.shift_morning') ? 'bg-yellow-100 text-yellow-700' : emp.shift === t('admindashboard.shift_afternoon') ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
                               {emp.shift}
                             </span>
                           ) : <span className="text-gray-400 text-xs">—</span>}
@@ -414,7 +384,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex-none px-5 py-2 border-t border-gray-100 bg-gray-50/50">
             <button onClick={() => navigate('/admin/work-hours')} className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 w-full justify-center">
-              Báo cáo công việc chi tiết <ArrowRightIcon className="w-4 h-4" />
+              {t('admindashboard.detail_report')} <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -424,7 +394,7 @@ export default function AdminDashboard() {
           <div className="px-5 py-3 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap">
               <ClipboardDocumentListIcon className="w-5 h-5 text-emerald-500" />
-              Tổng quan công việc
+              {t('admindashboard.tasks_title')}
               <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{sortedFilteredTasks.length}</span>
             </h2>
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -432,7 +402,7 @@ export default function AdminDashboard() {
                 <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Lọc..."
+                  placeholder={t('admindashboard.filter_placeholder')}
                   value={taskSearchTerm}
                   onChange={e => { setTaskSearchTerm(e.target.value); setTaskPage(1); }}
                   className="w-full pl-9 pr-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500/20 outline-none"
@@ -441,7 +411,7 @@ export default function AdminDashboard() {
               <button
                 onClick={() => navigate('/tasks/add')}
                 className="bg-[#0056b3] hover:bg-blue-700 text-white p-1 rounded-lg shadow-sm transition-colors shrink-0"
-                title="Tạo công việc nhanh"
+                title={t('admindashboard.quick_add_task')}
               >
                 <PlusIcon className="w-4 h-4" />
               </button>
@@ -451,14 +421,14 @@ export default function AdminDashboard() {
             <table className="w-full text-left text-sm">
               <thead className="bg-white sticky top-0 border-b border-gray-100 shadow-sm z-10">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Công việc</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Hạn chót</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_task')}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{t('admindashboard.col_deadline')}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('admindashboard.col_status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {sortedFilteredTasks.length === 0 ? (
-                  <tr><td colSpan="3" className="px-5 py-8 text-center text-gray-400">Không tìm thấy công việc nào.</td></tr>
+                  <tr><td colSpan="3" className="px-5 py-8 text-center text-gray-400">{t('admindashboard.no_tasks')}</td></tr>
                 ) : (
                   sortedFilteredTasks.map(task => (
                     <tr
@@ -478,7 +448,7 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                        {task.due_date ? new Date(task.due_date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }) : '—'}
+                        {task.due_date ? new Date(task.due_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' }) : '—'}
                       </td>
                       <td className="px-4 py-2.5">{getTaskStatusBadge(task)}</td>
                     </tr>
@@ -489,7 +459,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex-none px-5 py-2 border-t border-gray-100 bg-gray-50/50">
             <button onClick={() => navigate('/tasks')} className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 w-full justify-center">
-              Xem danh sách công việc <ArrowRightIcon className="w-4 h-4" />
+              {t('admindashboard.view_tasks')} <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
         </div>

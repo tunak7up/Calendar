@@ -6,8 +6,10 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function SidebarRegister() {
+  const { t } = useTranslation();
   const location = useLocation();
 
   const getLinkClass = (path) => {
@@ -31,7 +33,7 @@ export default function SidebarRegister() {
         type="button"
         className="inline-flex items-center p-2 mt-3 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
-        <span className="sr-only">Mở thanh bên</span>
+        <span className="sr-only">{t('sidebar.open')}</span>
         <svg
           className="w-6 h-6"
           aria-hidden="true"
@@ -60,7 +62,7 @@ export default function SidebarRegister() {
               <ClockIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col ml-3">
-              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">Đăng ký</span>
+              <span className="text-gray-900 font-extrabold text-[1.05rem] leading-tight tracking-tight">{t('sidebar.register')}</span>
             </div>
           </div>
 
@@ -71,7 +73,7 @@ export default function SidebarRegister() {
                 className={getLinkClass('/history')}
               >
                 <ClipboardDocumentListIcon className={getIconClass('/history')} />
-                <span className="ms-4 font-semibold text-sm">Danh sách yêu cầu</span>
+                <span className="ms-4 font-semibold text-sm">{t('sidebar.req_list')}</span>
               </Link>
             </li>
             <li>
@@ -80,7 +82,7 @@ export default function SidebarRegister() {
                 className={getLinkClass('/register/leave')}
               >
                 <CalendarDaysIcon className={getIconClass('/register/leave')} />
-                <span className="ms-4 font-semibold text-sm">Đăng ký nghỉ phép</span>
+                <span className="ms-4 font-semibold text-sm">{t('sidebar.register_leave')}</span>
               </Link>
             </li>
             <li>
@@ -89,7 +91,7 @@ export default function SidebarRegister() {
                 className={getLinkClass('/register/work')}
               >
                 <Squares2X2Icon className={getIconClass('/register/work')} />
-                <span className="ms-4 font-semibold text-sm">Đăng ký làm việc</span>
+                <span className="ms-4 font-semibold text-sm">{t('sidebar.register_work')}</span>
               </Link>
             </li>
           </ul>

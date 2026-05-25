@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
-const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const WEEKDAYS_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const WEEKDAYS_EN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+const MONTHS_EN = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 export default function MiniCalendar({ selectedDate, onSelectDate, workDays = [], viewDate, onViewChange, minDate }) {
+  const { i18n } = useTranslation();
   const today = new Date();
   const [viewYear, setViewYear] = useState(
     selectedDate ? new Date(selectedDate).getFullYear() : today.getFullYear()
@@ -11,6 +19,8 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
   const [viewMonth, setViewMonth] = useState(
     selectedDate ? new Date(selectedDate).getMonth() : today.getMonth()
   );
+
+  const WEEKDAYS = i18n.language === 'vi' ? WEEKDAYS_VI : WEEKDAYS_EN;
 
   useEffect(() => {
     if (viewDate) {
@@ -83,7 +93,10 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-base font-bold text-gray-900">
-          Tháng {viewMonth + 1}, {viewYear}
+          {i18n.language === 'vi' 
+            ? `Tháng ${viewMonth + 1}, ${viewYear}` 
+            : `${MONTHS_EN[viewMonth]} ${viewYear}`
+          }
         </span>
         <div className="flex items-center gap-1">
           <button
@@ -103,10 +116,10 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
-        {WEEKDAYS.map((wd) => (
+        {WEEKDAYS.map((wd, idx) => (
           <div
             key={wd}
-            className={`text-center text-[0.7rem] font-bold py-1 ${wd === 'CN' || wd === 'T7' ? 'text-blue-400' : 'text-gray-400'}`}
+            className={`text-center text-[0.7rem] font-bold py-1 ${idx === 0 || idx === 6 ? 'text-blue-400' : 'text-gray-400'}`}
           >
             {wd}
           </div>

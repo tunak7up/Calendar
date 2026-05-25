@@ -6,7 +6,10 @@ import { scheduleService } from '../../services/scheduleService';
 import { dailyReportService } from '../../services/dailyReportService';
 import { useAuth } from '../../context/AuthContext';
 import ScheduleCalendar from '../../components/ScheduleCalendar';
+import { useTranslation } from 'react-i18next';
 import ProfileWorkHoursChart from '../../components/ProfileWorkHoursChart';
+import BackButton from '../../components/BackButton';
+
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -20,6 +23,7 @@ import {
 import { formatDateTime } from '../../utils/dateUtils';
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
@@ -97,7 +101,7 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500 font-semibold">Loading profile...</div>
+        <div className="text-gray-500 font-semibold">{t('profile.loading')}</div>
       </div>
     );
   }
@@ -106,8 +110,8 @@ export default function Profile() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">User Not Found</h2>
-          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('profile.not_found')}</h2>
+          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">{t('history.back')}</button>
         </div>
       </div>
     );
@@ -139,13 +143,7 @@ export default function Profile() {
     <div className="space-y-6 pb-20">
       {/* Header Actions */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Back
-        </button>
+        <BackButton />
 
         {isAdmin && !isOwnProfile && (
           <button
@@ -153,7 +151,7 @@ export default function Profile() {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95"
           >
             <PlusIcon className="w-4 h-4" />
-            Assign Task
+            {t('profile.assign_task')}
           </button>
         )}
       </div>
@@ -179,11 +177,11 @@ export default function Profile() {
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100 uppercase tracking-wider">
                 <BriefcaseIcon className="w-4 h-4" />
-                {profileData.role || 'Employee'}
+                {profileData.role === 'manager' ? t('profile.role_manager') : t('profile.role_employee')}
               </span>
               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border uppercase tracking-wider ${profileData.status ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                 <ShieldCheckIcon className="w-4 h-4" />
-                {profileData.status ? 'Active' : 'Inactive'}
+                {profileData.status ? t('profile.active') : t('profile.inactive')}
               </span>
             </div>
           </div>
@@ -198,17 +196,17 @@ export default function Profile() {
               <div className="p-2 bg-purple-50 rounded-xl text-purple-600">
                 <CheckCircleIcon className="w-6 h-6" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900">Danh sách công việc</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('profile.tasks_list')}</h2>
             </div>
             <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-lg">
-              {tasks.length} Total
+              {tasks.length} {t('profile.total')}
             </span>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 max-h-[220px] space-y-3">
             {tasks.length === 0 ? (
               <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                <p className="text-sm font-semibold text-gray-400">No assigned tasks</p>
+                <p className="text-sm font-semibold text-gray-400">{t('profile.no_tasks')}</p>
               </div>
             ) : (
               tasks.map((task) => (
@@ -222,10 +220,32 @@ export default function Profile() {
                   <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
                     <div className="flex items-center gap-1">
                       <ClockIcon className="w-3.5 h-3.5" />
-                      Due: {new Date(task.due_date).toLocaleDateString()}
+                      {t('profile.due')}: {
+                        i18n.language === 'vi'
+                          ? (() => {
+                              const d = new Date(task.due_date);
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()
+                          : new Date(task.due_date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })
+                      }
                     </div>
                     <div className="flex items-center gap-1 text-purple-600">
-                      Role: {task.role || 'Assignee'}
+                      {t('profile.role')}: {
+                        task.role 
+                          ? (task.role.toLowerCase() === 'assignee' 
+                              ? t('tasks.role_assignee') 
+                              : (task.role.toLowerCase() === 'assigner' 
+                                  ? t('tasks.role_assigner') 
+                                  : task.role))
+                          : t('tasks.role_assignee')
+                      }
                     </div>
                   </div>
                 </div>
@@ -239,7 +259,7 @@ export default function Profile() {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <ClockIcon className="w-5 h-5 text-violet-600" />
-              Thời gian làm việc theo tháng
+              {t('profile.monthly_hours')}
             </h2>
           </div>
           <div className="p-4 flex-1 flex flex-col justify-center">
@@ -254,7 +274,7 @@ export default function Profile() {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
-              Lịch làm việc
+              {t('myschedule.work_title')}
             </h2>
           </div>
           <div className="p-4 flex-1">

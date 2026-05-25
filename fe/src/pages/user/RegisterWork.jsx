@@ -7,12 +7,16 @@ import { getFullDateStr, getTimeRangeStr } from '../../utils/dateUtils';
 import { scheduleService } from '../../services/scheduleService';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
+
 
 
 export default function RegisterWork() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
@@ -47,12 +51,12 @@ export default function RegisterWork() {
   const handleDayClick = (dObj) => {
     const day = dObj.getDay();
     if (day === 0 || day === 6) {
-      alert("Bạn không thể đăng ký làm việc vào Thứ 7 và Chủ Nhật.");
+      alert(t('register.alert_weekend'));
       return;
     }
     const dStr = getFullDateStr(dObj);
     if (workDays.includes(dStr)) {
-      alert(`Ngày ${dStr} đã có lịch làm việc được duyệt.`);
+      alert(t('register.alert_already_approved', { date: dStr }));
       return;
     }
     setDraftDates(prev =>
@@ -76,7 +80,7 @@ export default function RegisterWork() {
     // Kiểm tra trùng lịch đã được duyệt
     const duplicates = draftDates.filter(d => workDays.includes(d));
     if (duplicates.length > 0) {
-      alert(`Các ngày sau đã có lịch làm việc được duyệt, vui lòng bỏ chọn:\n${duplicates.join('\n')}`);
+      alert(t('register.alert_already_approved_multi', { dates: duplicates.join('\n') }));
       return;
     }
 
@@ -144,7 +148,7 @@ export default function RegisterWork() {
 
   const handleCancel = () => {
     if (schedule.length > 0) {
-      if (window.confirm("Are you sure you want to discard your draft schedule?")) {
+      if (window.confirm(t('register.alert_confirm_discard'))) {
         navigate(-1);
       }
     } else {
@@ -154,7 +158,7 @@ export default function RegisterWork() {
 
   const handleSubmit = async () => {
     if (schedule.length === 0) {
-      alert("Please select at least one work day.");
+      alert(t('register.alert_select_at_least_one'));
       return;
     }
 
@@ -182,13 +186,13 @@ export default function RegisterWork() {
       requester_id: user.person_id,
       approver_id: null,
       type: 'register',
-      reason: 'Đăng ký lịch làm việc',
+      reason: t('register.work_title'),
       request_details: requestDetails
     };
 
     try {
       const result = await requestService.submitRequest(payload);
-      alert("Đã đăng ký lịch làm việc thành công!");
+      alert(t('register.alert_submit_success'));
       console.log('Success:', result);
 
       // Clear schedule and reset form after success
@@ -197,7 +201,7 @@ export default function RegisterWork() {
       navigate('/history');
     } catch (error) {
       console.error('Error:', error);
-      alert("Có lỗi xảy ra khi đăng ký: " + error.message);
+      alert(t('register.alert_submit_error') + error.message);
     }
   };
 
@@ -218,15 +222,9 @@ export default function RegisterWork() {
   return (
     <div className="space-y-6 pb-20">
       <div className="mb-8">
-        <button 
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors mb-6"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Quay lại
-        </button>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Đăng ký ngày làm việc</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Cấu hình ca làm việc của bạn bằng cách chọn khung giờ phù hợp.</p>
+        <BackButton className="mb-6" />
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('register.work_title')}</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('register.work_subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
@@ -243,7 +241,7 @@ export default function RegisterWork() {
 
         {/* Choose Shift */}
         <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">Chọn ca làm việc</h2>
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">{t('register.choose_shift')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => setSelectedShift('Morning')}
@@ -253,7 +251,7 @@ export default function RegisterWork() {
                 }`}
             >
               <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Buổi sáng</span>
+              <span className="font-bold text-gray-900">{t('register.shift_morning')}</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 12:00</span>
             </button>
 
@@ -265,7 +263,7 @@ export default function RegisterWork() {
                 }`}
             >
               <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Buổi chiều</span>
+              <span className="font-bold text-gray-900">{t('register.shift_afternoon')}</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:30</span>
             </button>
 
@@ -277,7 +275,7 @@ export default function RegisterWork() {
                 }`}
             >
               <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">Cả ngày</span>
+              <span className="font-bold text-gray-900">{t('register.shift_full')}</span>
               <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 17:30</span>
             </button>
           </div>
@@ -292,9 +290,9 @@ export default function RegisterWork() {
                   className="flex items-center justify-between gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm text-[14px] font-semibold text-gray-900 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[155px]"
                 >
                   <span>
-                    {repeatOption === 'none' && 'Không lặp lại'}
-                    {repeatOption === 'weekly' && 'Hằng tuần'}
-                    {repeatOption === 'yearly' && 'Hằng năm'}
+                    {repeatOption === 'none' && t('register.repeat_none')}
+                    {repeatOption === 'weekly' && t('register.repeat_weekly')}
+                    {repeatOption === 'yearly' && t('register.repeat_yearly')}
                   </span>
                   <ChevronDownIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 </button>
@@ -315,9 +313,9 @@ export default function RegisterWork() {
                           }}
                           className={`w-full text-left px-5 py-2.5 text-[14px] hover:bg-blue-50/60 hover:text-blue-600 transition-colors ${repeatOption === opt ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 font-medium'}`}
                         >
-                          {opt === 'none' && 'Không lặp lại'}
-                          {opt === 'weekly' && 'Hằng tuần'}
-                          {opt === 'yearly' && 'Hằng năm'}
+                          {opt === 'none' && t('register.repeat_none')}
+                          {opt === 'weekly' && t('register.repeat_weekly')}
+                          {opt === 'yearly' && t('register.repeat_yearly')}
                         </button>
                       ))}
                     </div>
@@ -330,15 +328,15 @@ export default function RegisterWork() {
                 <>
                   <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
                   <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
-                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">Kết thúc:</span>
+                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.end_label')}</span>
                     <select
                       className="text-[14px] font-semibold text-gray-900 border-0 focus:ring-0 p-0 cursor-pointer bg-transparent"
                       value={endOption}
                       onChange={(e) => setEndOption(e.target.value)}
                     >
-                      <option value="never">Không bao giờ</option>
-                      <option value="date">Vào ngày</option>
-                      <option value="count">Sau</option>
+                      <option value="never">{t('register.end_never')}</option>
+                      <option value="date">{t('register.end_date')}</option>
+                      <option value="count">{t('register.end_count')}</option>
                     </select>
                     {endOption === 'date' && (
                       <input
@@ -357,7 +355,7 @@ export default function RegisterWork() {
                           className="text-[14px] border-none bg-transparent py-1 px-0 focus:ring-0 text-gray-700 w-10 text-center"
                           min={1}
                         />
-                        <span className="text-[13px] text-gray-500 whitespace-nowrap">lần</span>
+                        <span className="text-[13px] text-gray-500 whitespace-nowrap">{t('register.end_count_times')}</span>
                       </div>
                     )}
                   </div>
@@ -369,7 +367,7 @@ export default function RegisterWork() {
                 <>
                   <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
                   <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
-                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">Lặp lại mỗi:</span>
+                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.repeat_every')}</span>
                     <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2">
                       <input
                         type="number"
@@ -378,7 +376,7 @@ export default function RegisterWork() {
                         className="text-[14px] border-none bg-transparent py-1 px-0 focus:ring-0 text-gray-700 w-10 text-center"
                         min={1}
                       />
-                      <span className="text-[13px] text-gray-500">{repeatOption === 'weekly' ? 'tuần' : 'năm'}</span>
+                      <span className="text-[13px] text-gray-500">{repeatOption === 'weekly' ? t('register.repeat_week') : t('register.repeat_year')}</span>
                     </div>
                   </div>
                 </>
@@ -390,7 +388,7 @@ export default function RegisterWork() {
           {/* Container 2: Add to Schedule button */}
           <div className="flex justify-end mt-4">
             <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0}>
-              <span>Thêm vào lịch</span>
+              <span>{t('register.add_to_schedule')}</span>
               {draftDates.length > 0 && (
                 <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
               )}
@@ -401,15 +399,15 @@ export default function RegisterWork() {
         {/* Selected Dates Table */}
         {schedule.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">Lịch đã chọn</h2>
+            <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">{t('register.selected_schedule')}</h2>
             <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm max-h-[400px] overflow-y-auto">
               <table className="w-full text-sm text-left text-gray-500">
                 <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Ngày</th>
-                    <th className="px-6 py-3 font-semibold">Ca làm</th>
-                    <th className="px-6 py-3 font-semibold">Thời gian</th>
-                    <th className="px-6 py-3 font-semibold text-right">Thao tác</th>
+                    <th className="px-6 py-3 font-semibold">{t('register.col_date')}</th>
+                    <th className="px-6 py-3 font-semibold">{t('register.col_shift')}</th>
+                    <th className="px-6 py-3 font-semibold">{t('register.col_time')}</th>
+                    <th className="px-6 py-3 font-semibold text-right">{t('register.col_action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -424,7 +422,7 @@ export default function RegisterWork() {
                           {displayDate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
-                          {item.shift}
+                          {item.shift === 'Morning' ? t('register.shift_morning') : item.shift === 'Afternoon' ? t('register.shift_afternoon') : t('register.shift_full')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                           {getTimeRangeStr(item.shift)}
@@ -433,7 +431,7 @@ export default function RegisterWork() {
                           <Button
                             variant="danger-icon"
                             onClick={() => handleRemoveFromSchedule(item.date)}
-                            title="Xóa"
+                            title={t('register.col_action')}
                           >
                             <TrashIcon className="w-4 h-4" />
                           </Button>
@@ -456,7 +454,7 @@ export default function RegisterWork() {
               <ClockIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">Tổng giờ tuần</h3>
+              <h3 className="text-[0.65rem] font-bold text-gray-500 tracking-wider uppercase">{t('register.total_weekly_hours')}</h3>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-gray-900">{totalWeeklyHours}</span>
                 <span className="text-sm font-medium text-gray-400">/ 40h</span>
@@ -464,8 +462,8 @@ export default function RegisterWork() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>Hủy</Button>
-            <Button onClick={handleSubmit}>Đăng ký làm việc</Button>
+            <Button variant="secondary" onClick={handleCancel}>{t('register.btn_cancel')}</Button>
+            <Button onClick={handleSubmit}>{t('register.btn_submit_work')}</Button>
           </div>
         </div>
       </div>

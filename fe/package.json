@@ -22,10 +22,13 @@
     "chart.js": "^4.5.1",
     "flyonui": "^2.4.1",
     "fullcalendar": "^6.1.20",
+    "i18next": "^26.2.0",
+    "i18next-browser-languagedetector": "^8.2.1",
     "postcss": "^8.5.10",
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",
+    "react-i18next": "^17.0.8",
     "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.2.2"
   },

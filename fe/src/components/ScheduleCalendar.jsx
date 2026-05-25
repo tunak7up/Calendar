@@ -5,6 +5,15 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import { UsersIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
+import viLocale from '@fullcalendar/core/locales/vi';
+
+const PLUGINS = [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin];
+const LOCALES = [viLocale];
+const VIEWS = {
+  dayGridMonth: { displayEventTime: false },
+  timeGridWeek: { displayEventTime: false },
+};
 
 const ScheduleCalendar = React.forwardRef(({
   initialDate,
@@ -14,17 +23,18 @@ const ScheduleCalendar = React.forwardRef(({
   onEventClick,
   onDatesSet
 }, ref) => {
+  const { i18n } = useTranslation();
+
   return (
     <div className="bg-white shadow-xl shadow-blue-900/5 border border-gray-100 rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all">
       <FullCalendar
         ref={ref}
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+        plugins={PLUGINS}
         initialView="dayGridMonth"
         initialDate={initialDate}
-        views={{
-          dayGridMonth: { displayEventTime: false },
-          timeGridWeek: { displayEventTime: false },
-        }}
+        locales={LOCALES}
+        locale={i18n.language === 'vi' ? 'vi' : 'en'}
+        views={VIEWS}
         events={events}
         height="auto"
         dayMaxEvents={true}

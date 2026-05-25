@@ -2,12 +2,14 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import viLocale from '@fullcalendar/core/locales/vi';
 import { useNavigate } from 'react-router-dom';
 import MiniCalendar from '../../components/MiniCalendar';
 import { scheduleService } from '../../services/scheduleService';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
+import { useTranslation } from 'react-i18next';
 import {
   BriefcaseIcon,
   UserMinusIcon,
@@ -42,6 +44,7 @@ const formatTime = (str) => {
 };
 
 export default function MySchedule() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const today = new Date();
@@ -73,7 +76,7 @@ export default function MySchedule() {
       if (scheduleRes.success) {
         const mappedWorkingHours = scheduleRes.data.map(item => ({
           id: `work_${item.schedule_id}`,
-          title: 'Lịch làm việc',
+          title: t('myschedule.work_title'),
           start: item.start_time,
           end: item.end_time,
           extendedProps: { isWorkHour: true }
@@ -101,7 +104,7 @@ export default function MySchedule() {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  }, [user]);
+  }, [user, t]);
 
   // Initial fetch is now handled by datesSet
   useEffect(() => {
@@ -240,6 +243,8 @@ export default function MySchedule() {
               plugins={[dayGridPlugin, interactionPlugin]}
               initialView="dayGridMonth"
               initialDate={todayStr}
+              locales={[viLocale]}
+              locale={i18n.language === 'vi' ? 'vi' : 'en'}
               headerToolbar={{
                 left: 'today prev,next title',
                 right: ''
@@ -304,7 +309,7 @@ export default function MySchedule() {
 
         {/* Right Panel — Mini Calendar: sidebar on desktop, compact strip on mobile */}
         <div className="lg:w-64 lg:shrink-0 bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm lg:h-fit lg:sticky lg:top-[100px]">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">Navigational View</h3>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 lg:mb-6">{t('myschedule.nav_view')}</h3>
           {/* Mobile: show mini calendar in a compact grid layout */}
           <div className="flex justify-center lg:block">
             <div className="w-full max-w-xs lg:max-w-none">
@@ -326,8 +331,8 @@ export default function MySchedule() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Details for {menuConfig.date}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Your schedule and tasks for today</p>
+                <h3 className="text-lg font-bold text-gray-900">{t('myschedule.details_for', { date: menuConfig.date })}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{t('myschedule.details_subtitle')}</p>
               </div>
               <button 
                 onClick={() => setMenuConfig(null)}
@@ -341,20 +346,20 @@ export default function MySchedule() {
               {/* Work Shift Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Work Shift</h4>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('myschedule.work_shift')}</h4>
                   {!menuConfig.isWorkDay ? (
                     <button
                       onClick={() => navigate('/register/work', { state: { date: menuConfig.date } })}
                       className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors"
                     >
-                      Register Now
+                      {t('myschedule.register_now')}
                     </button>
                   ) : (
                     <button
                       onClick={() => navigate('/register/leave', { state: { date: menuConfig.date } })}
                       className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded-md transition-colors"
                     >
-                      Request Leave
+                      {t('myschedule.request_leave')}
                     </button>
                   )}
                 </div>
@@ -364,9 +369,9 @@ export default function MySchedule() {
                       <BriefcaseIcon className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-emerald-900">Active Work Day</div>
+                      <div className="text-sm font-bold text-emerald-900">{t('myschedule.active_work_day')}</div>
                       <div className="text-xs text-emerald-600">
-                      {menuConfig.shift ? `${formatTime(menuConfig.shift.start)} - ${formatTime(menuConfig.shift.end)}` : 'Standard Shift'}
+                      {menuConfig.shift ? `${formatTime(menuConfig.shift.start)} - ${formatTime(menuConfig.shift.end)}` : t('myschedule.standard_shift')}
                       </div>
                     </div>
                   </div>
@@ -376,8 +381,8 @@ export default function MySchedule() {
                       <UserMinusIcon className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-gray-600">No Shift Registered</div>
-                      <div className="text-xs text-gray-400">You are not scheduled to work today</div>
+                      <div className="text-sm font-bold text-gray-600">{t('myschedule.no_shift')}</div>
+                      <div className="text-xs text-gray-400">{t('myschedule.no_shift_subtitle')}</div>
                     </div>
                   </div>
                 )}
@@ -386,23 +391,23 @@ export default function MySchedule() {
               {/* Tasks Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tasks ({filteredModalTasks.length})</h4>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('myschedule.tasks', { count: filteredModalTasks.length })}</h4>
                   <div className="flex items-center gap-2">
                     <select 
                       value={modalStatusFilter}
                       onChange={(e) => setModalStatusFilter(e.target.value)}
                       className="text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 outline-none cursor-pointer hover:border-blue-300 transition-colors"
                     >
-                      <option value="all">All</option>
-                      <option value="pending">Pending</option>
-                      <option value="in progress">In Progress</option>
-                      <option value="completed">Completed</option>
+                      <option value="all">{t('myschedule.all')}</option>
+                      <option value="pending">{t('myschedule.pending')}</option>
+                      <option value="in progress">{t('myschedule.in_progress')}</option>
+                      <option value="completed">{t('myschedule.completed')}</option>
                     </select>
                     <button
                       onClick={() => navigate('/tasks/add', { state: { date: menuConfig.date } })}
                       className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
                     >
-                      <PlusCircleIcon className="w-3 h-3" /> Add
+                      <PlusCircleIcon className="w-3 h-3" /> {t('myschedule.add')}
                     </button>
                   </div>
                 </div>
@@ -428,7 +433,7 @@ export default function MySchedule() {
                             <div>
                               <div className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{task.name}</div>
                               <div className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">
-                                {task.status || 'Pending'} • {task.priority || 'Low'}
+                                {task.status === 'completed' ? t('myschedule.completed') : task.status === 'in progress' ? t('myschedule.in_progress') : t('myschedule.pending')} • {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
                               </div>
                             </div>
                           </div>
@@ -439,7 +444,7 @@ export default function MySchedule() {
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-xs text-gray-400">No tasks scheduled for this day</p>
+                    <p className="text-xs text-gray-400">{t('myschedule.no_tasks')}</p>
                   </div>
                 )}
               </div>
@@ -450,7 +455,7 @@ export default function MySchedule() {
                 onClick={() => setMenuConfig(null)}
                 className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
               >
-                Close Details
+                {t('myschedule.close')}
               </button>
             </div>
           </div>

@@ -26,6 +26,7 @@ export default function AdminSchedule() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
+  const lastFetchedRangeRef = useRef({ start: '', end: '', lang: '' });
 
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -476,6 +477,17 @@ export default function AdminSchedule() {
             onDateClick={handleDateClick}
             onEventClick={handleEventClick}
             onDatesSet={(info) => {
+              const startStr = info.startStr.split('T')[0];
+              const endStr = info.endStr.split('T')[0];
+              const lang = i18n.language;
+              if (
+                lastFetchedRangeRef.current.start === startStr &&
+                lastFetchedRangeRef.current.end === endStr &&
+                lastFetchedRangeRef.current.lang === lang
+              ) {
+                return;
+              }
+              lastFetchedRangeRef.current = { start: startStr, end: endStr, lang };
               const newStart = info.view.currentStart;
               setViewDate(prev => {
                 if (prev && newStart && prev.getTime() === newStart.getTime()) {
@@ -483,8 +495,6 @@ export default function AdminSchedule() {
                 }
                 return newStart;
               });
-              const startStr = info.startStr.split('T')[0];
-              const endStr = info.endStr.split('T')[0];
               fetchSchedulesInRange(startStr, endStr);
             }}
           />

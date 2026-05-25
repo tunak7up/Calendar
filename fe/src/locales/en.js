@@ -54,7 +54,7 @@ export const en = {
       report_placeholder: "What have you accomplished today? Any blockers?",
       attachments: "Attachments ({{count}})",
       add_file: "Add file",
-      save_draft: "Save Draft",
+      save_draft: "Save Report",
       update_report: "Update Report",
       submit_report: "Submit Report & Check-out",
       alert_enter_report: "Please enter report content!",

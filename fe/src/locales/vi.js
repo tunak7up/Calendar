@@ -1,6 +1,7 @@
 export const vi = {
   translation: {
     nav: {
+      logo: "Quản lý thực tập",
       dashboard: "Bảng điều khiển",
       schedule: "Lịch của tôi",
       register: "Đăng ký",

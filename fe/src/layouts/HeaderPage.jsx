@@ -59,7 +59,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
 
             {/* Logo */}
             <div className="flex shrink-0 items-center mr-8">
-              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">Precision Workspace</Link>
+              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">{t('nav.logo')}</Link>
             </div>
 
             {/* Desktop Nav */}

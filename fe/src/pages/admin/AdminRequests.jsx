@@ -13,11 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import SortableTable from '../../components/SortableTable';
 import { useTranslation } from 'react-i18next';
+import { useRequestsRangeQuery, useUpdateRequestStatusMutation } from '../../hooks/useRequests';
 
 export default function AdminRequests() {
   const { t } = useTranslation();
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,10 +31,23 @@ export default function AdminRequests() {
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const [filterMonth, setFilterMonth] = useState(currentMonthStr);
 
+  const { startDate, endDate } = useMemo(() => {
+    if (!filterMonth) return { startDate: '', endDate: '' };
+    const [year, month] = filterMonth.split('-').map(Number);
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const end = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+    return { startDate: start, endDate: end };
+  }, [filterMonth]);
+
+  const { data: requests = [], isLoading: requestsLoading } = useRequestsRangeQuery(startDate, endDate);
+  const updateStatusMutation = useUpdateRequestStatusMutation();
+
+  const loading = requestsLoading;
+
   useEffect(() => {
-    fetchRequests();
     fetchEmployees();
-  }, [filterMonth]); // Re-fetch when month changes
+  }, []);
 
   const fetchEmployees = () => {
     apiFetch('/person')
@@ -47,38 +59,9 @@ export default function AdminRequests() {
       .catch(error => console.error("Error fetching employees:", error));
   };
 
-  const fetchRequests = () => {
-    if (!filterMonth) return;
-    setLoading(true);
-
-    // Calculate start and end dates of the month
-    const [year, month] = filterMonth.split('-').map(Number);
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
-
-    requestService.getRequestsByRange(startDate, endDate)
-      .then(data => {
-        if (data.success) {
-          setRequests(data.data);
-        }
-      })
-      .catch(error => console.error("Error fetching requests:", error))
-      .finally(() => setLoading(false));
-  };
-
   const handleUpdateStatus = async (requestId, newStatus) => {
     try {
-      const result = await apiFetch(`/request/${requestId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (result.success) {
-        // Update local state to reflect change immediately
-        setRequests(prev => prev.map(req =>
-          (req.request_id || req.id) === requestId ? { ...req, status: newStatus } : req
-        ));
-      }
+      await updateStatusMutation.mutateAsync({ requestId, status: newStatus });
     } catch (error) {
       console.error('Error updating status:', error);
       alert(t('requests.alert_update_fail'));

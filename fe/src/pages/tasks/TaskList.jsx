@@ -19,6 +19,7 @@ import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
 import { useTranslation } from 'react-i18next';
+import { useTasksQuery, useUpdateTaskMutation, useDeleteTaskMutation } from '../../hooks/useTasks';
 
 
 function StatusBadge({ status }) {
@@ -74,15 +75,19 @@ export default function TaskList({ isAdmin }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
-  const [tasks, setTasks] = useState([]);
+  const { data: tasks = [], isLoading: tasksLoading } = useTasksQuery(isAdmin, user?.person_id);
+  const updateTaskMutation = useUpdateTaskMutation();
+  const deleteTaskMutation = useDeleteTaskMutation();
+
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const pageSize = 15;
+
+  const loading = tasksLoading;
 
   const formatCustomDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -103,25 +108,7 @@ export default function TaskList({ isAdmin }) {
     });
   };
 
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const result = isAdmin
-        ? await taskService.getAllTasks()
-        : await taskService.getAllTasksByParticipantId(user.person_id);
-      if (result.success) {
-        setTasks(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   React.useEffect(() => {
-    fetchTasks();
-
     if (isAdmin) {
       apiFetch('/person')
         .then(data => {
@@ -131,7 +118,7 @@ export default function TaskList({ isAdmin }) {
         })
         .catch(err => console.error('Error fetching employees:', err));
     }
-  }, [isAdmin, user]);
+  }, [isAdmin]);
 
   const employeeTasks = isAdmin && selectedEmployeeIds.length > 0
     ? tasks.filter(t => t.participants && t.participants.some(p => selectedEmployeeIds.includes(p.person_id.toString())))
@@ -209,10 +196,7 @@ export default function TaskList({ isAdmin }) {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      const res = await taskService.updateTask(taskId, { status: newStatus });
-      if (res.success) {
-        fetchTasks();
-      }
+      await updateTaskMutation.mutateAsync({ taskId, taskData: { status: newStatus } });
     } catch (error) {
       console.error('Error updating status:', error);
     }
@@ -222,10 +206,7 @@ export default function TaskList({ isAdmin }) {
     e.stopPropagation(); // Don't navigate
     if (!window.confirm(t('tasks.confirm_delete'))) return;
     try {
-      const res = await taskService.deleteTask(taskId);
-      if (res.success) {
-        fetchTasks();
-      }
+      await deleteTaskMutation.mutateAsync(taskId);
     } catch (error) {
       console.error('Error deleting task:', error);
     }

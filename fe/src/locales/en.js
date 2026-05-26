@@ -1,6 +1,7 @@
 export const en = {
   translation: {
     nav: {
+      logo: "Internship Management",
       dashboard: "Dashboard",
       schedule: "My Schedule",
       register: "Registration",

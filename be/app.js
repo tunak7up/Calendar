@@ -15,8 +15,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://qltt.kis-v.com',
+  'http://localhost:34321',
   process.env.FRONTEND_URL,
-].filter(Boolean); // Loại bỏ giá trị undefined nếu FRONTEND_URL chưa set
+].filter(Boolean); // Loại b�? giá tr�? undefined nếu FRONTEND_URL chưa set
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -37,7 +38,7 @@ app.use('/uploads', (req, res) => {
   res.status(404).send(`
         <div style="font-family: sans-serif; text-align: center; margin-top: 50px; padding: 20px;">
             <h2 style="color: #e53e3e;">Lỗi: Không tìm thấy file</h2>
-            <p style="color: #4a5568; font-size: 16px;">File đính kèm này đã bị xóa hoặc không còn tồn tại trên máy chủ.</p>
+            <p style="color: #4a5568; font-size: 16px;">File đính kèm n�?y đã b�? xóa hoặc không còn tồn tại trên máy chủ.</p>
         </div>
     `);
 });

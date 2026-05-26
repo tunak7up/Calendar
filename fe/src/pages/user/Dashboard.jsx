@@ -6,8 +6,6 @@ import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
-import { useTasksQuery } from '../../hooks/useTasks';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -15,25 +13,11 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const { data: rawTasks = [], isLoading: tasksLoading } = useTasksQuery(false, user?.person_id);
-
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
-  
-  const tasks = React.useMemo(() => {
-    let pendingTasks = rawTasks.filter(t => t.status?.toLowerCase() !== 'completed');
-    pendingTasks.sort((a, b) => {
-      const pA = priorityWeight[a.priority] || 0;
-      const pB = priorityWeight[b.priority] || 0;
-      if (pA !== pB) return pB - pA;
-      return new Date(a.due_date) - new Date(b.due_date);
-    });
-    return pendingTasks;
-  }, [rawTasks]);
-
-  const loading = tasksLoading;
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportId, setReportId] = useState(null);
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState({}); // { task_id: 'status' }
@@ -111,6 +95,32 @@ export default function Dashboard() {
     }
   }, [reportId]);
 
+  useEffect(() => {
+    fetchTasks();
+  }, [user]);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const response = await taskService.getAllTasksByParticipantId(user.person_id);
+      if (response.success) {
+        let pendingTasks = response.data.filter(t => t.status?.toLowerCase() !== 'completed');
+        
+        pendingTasks.sort((a, b) => {
+          const pA = priorityWeight[a.priority] || 0;
+          const pB = priorityWeight[b.priority] || 0;
+          if (pA !== pB) return pB - pA;
+          return new Date(a.due_date) - new Date(b.due_date);
+        });
+
+        setTasks(pendingTasks);
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCheckIn = async () => {
     try {
@@ -169,7 +179,7 @@ export default function Dashboard() {
             alert(t('dashboard.alert_checkout_success', { time: now.toLocaleTimeString() }));
           }
           setPendingStatusUpdates({}); // clear pending updates
-          queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Refresh list to remove completed tasks
+          fetchTasks(); // Refresh list to remove completed tasks
         }
       } else {
         alert(t('dashboard.alert_save_fail_no_report'));

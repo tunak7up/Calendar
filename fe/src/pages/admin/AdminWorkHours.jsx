@@ -68,8 +68,12 @@ export default function AdminWorkHours() {
   };
 
   const handleExport = async () => {
+    const employeeList = employees.filter(emp => emp.role !== 'manager');
+    const allowedEmployeeIds = employeeList.map(emp => emp.person_id);
+
     // Chỉ export những người có ít nhất 1 daily report trong kỳ đang xem
-    const personIdsWithReports = [...new Set(dailyReports.map(r => r.person_id))];
+    const personIdsWithReports = [...new Set(dailyReports.map(r => r.person_id))]
+      .filter(id => allowedEmployeeIds.includes(id));
 
     const ids = selectedEmployeeIds.length > 0
       ? selectedEmployeeIds.map(Number).filter(id => personIdsWithReports.includes(id))
@@ -182,7 +186,9 @@ export default function AdminWorkHours() {
     return workingDate >= startDate && workingDate <= endDate;
   });
 
-  const employeeSummary = employees.map(emp => {
+  const employeeList = employees.filter(emp => emp.role !== 'manager');
+
+  const employeeSummary = employeeList.map(emp => {
     const empSchedules = filteredSchedules.filter(s => s.person_id === emp.person_id);
     const empReports = dailyReports.filter(r => r.person_id === emp.person_id);
     const totalDays = empSchedules.length;
@@ -299,7 +305,7 @@ export default function AdminWorkHours() {
         <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-300 p-4 flex items-center">
           <div className="w-full">
             <EmployeeMultiFilter
-              employees={employees}
+              employees={employeeList}
               selectedIds={selectedEmployeeIds}
               onSelectionChange={(ids) => {
                 setSelectedEmployeeIds(ids);

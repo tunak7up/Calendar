@@ -73,7 +73,7 @@ export const apiFetch = async (endpoint, options = {}) => {
         response = await fetch(url, fetchOptions);
       } catch (refreshError) {
         setAccessToken(null);
-        window.location.href = '/login?error=session_expired';
+        window.location.href = '/login';
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       }
     }

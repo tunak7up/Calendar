@@ -3,7 +3,10 @@ const path = require('path');
 const fileAttachment = require('../models/fileAttachment');
 
 // Configuration
-const UPLOADS_DIR = path.join(__dirname, '../uploads');
+const UPLOADS_DIR = process.env.UPLOADS_DIR
+    ? path.resolve(process.env.UPLOADS_DIR)
+    : path.join(__dirname, '../uploads');
+const CDN_UPLOAD_URL = process.env.CDN_UPLOAD_URL || process.env.UPLOAD_URL_BASE || '';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_MIME_TYPES = [
     'application/pdf',
@@ -52,6 +55,13 @@ const validateFile = (file) => {
     return true;
 };
 
+// Build file URL depending on configured CDN host
+const buildFileUrl = (fileName) => {
+    const urlPath = `/uploads/${fileName}`;
+    if (!CDN_UPLOAD_URL) return urlPath;
+    return `${CDN_UPLOAD_URL.replace(/\/+$/, '')}${urlPath}`;
+};
+
 // Save file to disk
 const saveFileToDisk = (file) => {
     ensureUploadsDir();
@@ -67,7 +77,7 @@ const saveFileToDisk = (file) => {
     return {
         fileName,
         filePath,
-        url: `/uploads/${fileName}`,
+        url: buildFileUrl(fileName),
         originalName: file.originalname
     };
 };

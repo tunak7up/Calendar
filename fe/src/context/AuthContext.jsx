@@ -12,12 +12,43 @@ export function AuthProvider({ children }) {
     return !localStorage.getItem('user');
   });
 
-  // Khởi tạo từ server khi mount (sử dụng Refresh Token qua Cookie)
+  // Khởi tạo từ server khi mount (sử dụng localStorage hoặc Refresh Token qua Cookie)
   useEffect(() => {
     let isMounted = true;
     
     const initializeAuth = async () => {
       try {
+        // 1. Thử khôi phục từ localStorage trước làm fallback
+        const savedToken = localStorage.getItem('accessToken');
+        const savedUser = localStorage.getItem('user');
+
+        if (savedToken && savedUser) {
+          setAccessToken(savedToken);
+          setUser(JSON.parse(savedUser));
+          setIsLoading(false);
+
+          // Thử refresh token trong background để cập nhật token mới nếu có thể
+          try {
+            const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include'
+            });
+
+            if (refreshRes.ok) {
+              const data = await refreshRes.json();
+              setAccessToken(data.token);
+              setUser(data.user);
+              localStorage.setItem('accessToken', data.token);
+              localStorage.setItem('user', JSON.stringify(data.user));
+            }
+          } catch (bgError) {
+            console.warn('Lỗi tự động làm mới trong background:', bgError);
+          }
+          return;
+        }
+
+        // 2. Nếu không có localStorage, thử lấy từ refresh token qua Cookie như cũ
         const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -34,15 +65,11 @@ export function AuthProvider({ children }) {
         } else {
           setAccessToken(null);
           setUser(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
         }
       } catch (error) {
         if (!isMounted) return;
         setAccessToken(null);
         setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -64,7 +91,6 @@ export function AuthProvider({ children }) {
   const login = (data) => {
     setAccessToken(data.token);
     setUser(data.user);
-    localStorage.setItem('user', JSON.stringify(data.user));
   };
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -85,9 +111,9 @@ export function AuthProvider({ children }) {
       // Chỉ xóa state SAU KHI api đăng xuất hoàn thành
       setUser(null);
       setAccessToken(null);
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      setIsLoggingOut(false);
+      
+      // Chuyển hướng người dùng về trang đăng nhập
+      window.location.href = '/login';
     }
   };
 

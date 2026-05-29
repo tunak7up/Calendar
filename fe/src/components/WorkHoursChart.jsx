@@ -187,7 +187,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
       {/* Detail ranking table */}
       <div className="flex-1 lg:flex-[1] flex flex-col min-h-0 border border-gray-100 rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gray-50 px-3 py-2 border-b border-gray-100">
-          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t('requests.work_hours_ranking')}</h3>
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t('dashboard.work_hours_ranking')}</h3>
         </div>
         <div className="flex-1 overflow-y-auto bg-white">
           <table className="w-full text-sm text-left">

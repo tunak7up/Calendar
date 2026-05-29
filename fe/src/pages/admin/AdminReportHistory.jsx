@@ -19,7 +19,7 @@ export default function AdminReportHistory() {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(
     location.state?.person_id ? [location.state.person_id.toString()] : []
   );
-  
+
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
@@ -62,7 +62,7 @@ export default function AdminReportHistory() {
           repData = repRes.data;
         }
       }
-      
+
       setReports(repData);
     } catch (error) {
       console.error('Error fetching report history:', error);
@@ -91,14 +91,14 @@ export default function AdminReportHistory() {
     return [...displayData].sort((a, b) => {
       let aVal = a[sortKey] ?? '';
       let bVal = b[sortKey] ?? '';
-      
+
       if (sortKey === 'working_date') {
-         aVal = new Date(aVal).getTime();
-         bVal = new Date(bVal).getTime();
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
       }
       if (sortKey === 'check_in' || sortKey === 'check_out') {
-         aVal = aVal || (sortDir === 'asc' ? '99:99:99' : '00:00:00');
-         bVal = bVal || (sortDir === 'asc' ? '99:99:99' : '00:00:00');
+        aVal = aVal || (sortDir === 'asc' ? '99:99:99' : '00:00:00');
+        bVal = bVal || (sortDir === 'asc' ? '99:99:99' : '00:00:00');
       }
 
       if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
@@ -121,7 +121,7 @@ export default function AdminReportHistory() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('reporthistory.title')}</h1>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('reporthistory.subtitle')}</p>
         </div>
-        
+
         <div className="w-full md:w-auto">
           <DateRangeFilter
             startDate={startDate}

@@ -348,15 +348,19 @@ export default function AdminDashboard() {
                     const isWorking = !!emp.check_in;
                     const isUnscheduled = emp.isUnscheduled;
 
-                    let rowBgClass = 'bg-white hover:bg-gray-50/80';
+                    let rowBgClass = 'bg-white hover:bg-gray-50/80 cursor-pointer';
                     if (isUnscheduled) {
-                      rowBgClass = 'bg-amber-50/60 hover:bg-amber-100/50';
+                      rowBgClass = 'bg-amber-50/60 hover:bg-amber-100/50 cursor-pointer';
                     } else if (isWorking) {
-                      rowBgClass = 'bg-emerald-50/60 hover:bg-emerald-100/50';
+                      rowBgClass = 'bg-emerald-50/60 hover:bg-emerald-100/50 cursor-pointer';
                     }
 
                     return (
-                      <tr key={emp.person_id} className={`transition-colors ${rowBgClass}`}>
+                      <tr
+                        key={emp.person_id}
+                        onClick={() => navigate(`/profile/${emp.person_id}`)}
+                        className={`transition-colors ${rowBgClass}`}
+                      >
                         <td className="px-4 py-2.5">
                           <span className="font-semibold text-gray-900 text-xs">{emp.name}</span>
                         </td>

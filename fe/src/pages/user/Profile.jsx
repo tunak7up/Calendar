@@ -223,27 +223,27 @@ export default function Profile() {
                       {t('profile.due')}: {
                         i18n.language === 'vi'
                           ? (() => {
-                              const d = new Date(task.due_date);
-                              const day = String(d.getDate()).padStart(2, '0');
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const year = d.getFullYear();
-                              return `${day}/${month}/${year}`;
-                            })()
+                            const d = new Date(task.due_date);
+                            const day = String(d.getDate()).padStart(2, '0');
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const year = d.getFullYear();
+                            return `${day}/${month}/${year}`;
+                          })()
                           : new Date(task.due_date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })
                       }
                     </div>
                     <div className="flex items-center gap-1 text-purple-600">
                       {t('profile.role')}: {
-                        task.role 
-                          ? (task.role.toLowerCase() === 'assignee' 
-                              ? t('tasks.role_assignee') 
-                              : (task.role.toLowerCase() === 'assigner' 
-                                  ? t('tasks.role_assigner') 
-                                  : task.role))
+                        task.role
+                          ? (task.role.toLowerCase() === 'assignee'
+                            ? t('tasks.role_assignee')
+                            : (task.role.toLowerCase() === 'assigner'
+                              ? t('tasks.role_assigner')
+                              : task.role))
                           : t('tasks.role_assignee')
                       }
                     </div>

@@ -646,7 +646,16 @@ export default function AdminSchedule() {
                               className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
                             >
                               <div className="flex-1">
-                                <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{person.name}</h3>
+                                <h3
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/profile/${person.person_id}`);
+                                  }}
+                                  className="font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors inline-block cursor-pointer"
+                                  title={i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
+                                >
+                                  {person.name}
+                                </h3>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
                                   <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4 text-gray-400" /> {person.shift}</span>
                                   <span>{t('adminschedule.check_in')}{person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>}</span>
@@ -666,8 +675,14 @@ export default function AdminSchedule() {
                                 <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
                                   {t('adminschedule.tasks_count', { count: person.tasks.length })}
                                 </div>
-                                <button className="text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {t('adminschedule.view_details')}
+                                 <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/profile/${person.person_id}`);
+                                  }}
+                                  className="text-[#0056b3] hover:text-blue-800 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                >
+                                  {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
                                 </button>
                               </div>
                             </div>
@@ -680,6 +695,27 @@ export default function AdminSchedule() {
               ) : (
                 /* Person Task Detail View */
                 <div className="space-y-4">
+                  {/* Quick Profile Info Button Card */}
+                  <button
+                    onClick={() => navigate(`/profile/${selectedModalPerson.person_id}`)}
+                    className="flex items-center justify-between bg-indigo-50/30 hover:bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 transition-colors w-full cursor-pointer text-left group/profile shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedModalPerson.name || selectedModalPerson.username)}&background=e0e7ff&color=4338ca&rounded=true&size=40&bold=true`}
+                        alt={selectedModalPerson.name}
+                        className="w-10 h-10 rounded-full border border-gray-100"
+                      />
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900 group-hover/profile:text-indigo-600 transition-colors">{selectedModalPerson.name}</h4>
+                        <p className="text-xs text-gray-400">@{selectedModalPerson.username}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-gray-700 group-hover/profile:text-indigo-600 transition-colors flex items-center gap-1">
+                      {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'} →
+                    </span>
+                  </button>
+
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                     <div className="flex flex-col gap-2 w-full sm:w-auto">
                       <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{t('adminschedule.filter_by_status')}</p>

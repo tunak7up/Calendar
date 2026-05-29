@@ -34,6 +34,7 @@ const ScheduleCalendar = React.forwardRef(({
         initialDate={initialDate}
         locales={LOCALES}
         locale={i18n.language === 'vi' ? 'vi' : 'en'}
+        firstDay={0}
         views={VIEWS}
         events={events}
         height="auto"

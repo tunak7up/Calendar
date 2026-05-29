@@ -15,7 +15,6 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://qltt.kis-v.com',
-  'http://localhost:34321',
   process.env.FRONTEND_URL,
 ].filter(Boolean); // Loại b�? giá tr�? undefined nếu FRONTEND_URL chưa set
 
@@ -56,12 +55,7 @@ async function startServer() {
     console.error('Server will still start, but DB features may not work.');
   }
 
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-    // Khởi chạy scheduler gửi email cảnh báo trễ giờ / quên checkout mỗi 5 phút
-    const { startNotificationScheduler } = require('./services/attendanceNotificationService');
-    startNotificationScheduler(5 * 60 * 1000);
-  });
+  app.listen(port, () => console.log(`Server running on port ${port}`));
 }
 
 startServer();

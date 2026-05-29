@@ -33,10 +33,24 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
     try {
       const s = new Date(start);
       const e = new Date(end);
-      if (!isNaN(s) && !isNaN(e)) return Math.max(0, (e - s) / 3_600_000);
-      const [sH, sM] = start.split(':').map(Number);
-      const [eH, eM] = end.split(':').map(Number);
-      return Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+      let rawHours;
+      let startSeconds;
+      let endSeconds;
+      if (!isNaN(s) && !isNaN(e)) {
+        rawHours = Math.max(0, (e - s) / 3_600_000);
+        startSeconds = s.getHours() * 3600 + s.getMinutes() * 60 + s.getSeconds();
+        endSeconds = e.getHours() * 3600 + e.getMinutes() * 60 + e.getSeconds();
+      } else {
+        const [sH, sM] = start.split(':').map(Number);
+        const [eH, eM] = end.split(':').map(Number);
+        rawHours = Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+        startSeconds = sH * 3600 + sM * 60;
+        endSeconds = eH * 3600 + eM * 60;
+      }
+
+      const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+      const breakDeduction = spansLunch ? 1.0 : 0.0;
+      return Math.max(0, rawHours - breakDeduction);
     } catch { return 0; }
   };
 
@@ -45,7 +59,15 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
     try {
       const [sH, sM, sS = 0] = checkIn.split(':').map(Number);
       const [eH, eM, eS = 0] = checkOut.split(':').map(Number);
-      return Math.max(0, ((eH * 3600 + eM * 60 + eS) - (sH * 3600 + sM * 60 + sS)) / 3600);
+      const startSeconds = sH * 3600 + sM * 60 + sS;
+      const endSeconds = eH * 3600 + eM * 60 + eS;
+      const rawHours = Math.max(0, (endSeconds - startSeconds) / 3600);
+
+      // Trừ 1 giờ nghỉ trưa nếu check in trước 12:00 và check out sau 13:00
+      const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+      const breakDeduction = spansLunch ? 1.0 : 0.0;
+
+      return Math.max(0, rawHours - breakDeduction);
     } catch { return 0; }
   };
 

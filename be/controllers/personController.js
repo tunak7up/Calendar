@@ -34,7 +34,7 @@ const createPerson = async (req, res) => {
         const person = await personService.createPerson(req.body);
         sendRes(res, 201, 'Person created successfully', person);
     } catch (error) {
-        sendRes(res, 400, 'Error creating person', null, error.message);
+        sendRes(res, 400, error.message || 'Error creating person', null, error.message);
     }
 };
 
@@ -53,7 +53,7 @@ const updatePerson = async (req, res) => {
         const data = await personService.updatePerson(req.params.id, req.body);
         sendRes(res, 200, 'Person updated successfully', data);
     } catch (error) {
-        sendRes(res, 400, 'Error updating person', null, error.message);
+        sendRes(res, 400, error.message || 'Error updating person', null, error.message);
     }
 };
 

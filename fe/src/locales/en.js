@@ -311,7 +311,7 @@ export const en = {
       tasks_found: "Found {{count}} tasks",
       no_tasks_matched: "No matching tasks found.",
       col_task_name: "Task Name",
-      col_date: "Date",
+      col_date: "Deadline",
       col_status: "Status",
     },
     workhours: {

@@ -35,6 +35,28 @@ const person = sequelize.define(
   {
     //other options 
     tableName: 'person',
+    hooks: {
+      beforeValidate: (person, options) => {
+        if (person.email !== undefined && (person.email === null || person.email.trim() === '')) {
+          person.email = `__empty_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+        }
+      },
+      afterFind: (results) => {
+        if (!results) return;
+        if (Array.isArray(results)) {
+          results.forEach(r => {
+            if (r.email && r.email.startsWith('__empty_')) r.email = '';
+          });
+        } else {
+          if (results.email && results.email.startsWith('__empty_')) results.email = '';
+        }
+      },
+      afterSave: (person) => {
+        if (person.email && person.email.startsWith('__empty_')) {
+          person.email = '';
+        }
+      }
+    }
   },
 );
 

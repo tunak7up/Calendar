@@ -272,7 +272,7 @@ export const vi = {
       role_manager: "Người quản lý",
       role_employee: "Nhân viên",
       active: "Hoạt động",
-      inactive: "Không hoạt động",
+      inactive: "Tạm khóa",
       tasks_list: "Danh sách công việc",
       total: "Tổng số",
       no_tasks: "Chưa có công việc được giao",
@@ -310,7 +310,7 @@ export const vi = {
       tasks_found: "Tìm thấy {{count}} công việc",
       no_tasks_matched: "Không có công việc nào phù hợp.",
       col_task_name: "Tên công việc",
-      col_date: "Ngày",
+      col_date: "Hạn chót",
       col_status: "Trạng thái",
     },
     workhours: {

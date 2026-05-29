@@ -91,7 +91,13 @@ export default function AdminEmployeeList() {
       }
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Error saving user');
+      if (error.message && error.message.includes('Email already exists')) {
+        alert(t('employees.error_duplicate_email', { defaultValue: 'Trùng email! Vui lòng sử dụng email khác.' }));
+      } else if (error.message && error.message.includes('Username already exists')) {
+        alert(t('employees.error_duplicate_username', { defaultValue: 'Trùng tên đăng nhập! Vui lòng sử dụng tên khác.' }));
+      } else {
+        alert(t('employees.error_saving', { defaultValue: 'Error saving user' }));
+      }
     }
   };
 

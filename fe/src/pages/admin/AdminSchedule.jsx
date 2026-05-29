@@ -809,7 +809,17 @@ export default function AdminSchedule() {
                             .map(task => (
                               <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
                                 <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
-                                <td className="py-3 px-4 text-sm text-gray-500">{task.due_date ? new Date(task.due_date).toLocaleDateString() : t('adminschedule.not_available')}</td>
+                                <td className="py-3 px-4 text-sm text-gray-500">
+                                  {task.due_date 
+                                    ? (() => {
+                                        const d = new Date(task.due_date);
+                                        const day = String(d.getDate()).padStart(2, '0');
+                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                        const year = d.getFullYear();
+                                        return `${day}/${month}/${year}`;
+                                      })() 
+                                    : t('adminschedule.not_available')}
+                                </td>
                                 <td className="py-3 px-4">
                                   <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm
                                     ${task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :

@@ -26,8 +26,21 @@ const createPerson = async (
     username,
     email
   }) => {
-  const existing = await person.findOne({ where: { username } });
-  if (existing) throw new Error('Username already exists');
+  const existingUsername = await person.findOne({ where: { username } });
+  if (existingUsername) throw new Error('Username already exists');
+
+  const finalEmail = (email && email.trim() !== '') ? email.trim() : null;
+
+  if (finalEmail) {
+    const existingEmail = await person.findOne({
+      where: { email: finalEmail }
+    });
+
+    if (existingEmail) {
+      throw new Error('Email already exists');
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   return await person.create(
     {
@@ -36,7 +49,7 @@ const createPerson = async (
       status,
       role,
       username,
-      email
+      email: finalEmail
     });
 };
 
@@ -51,7 +64,19 @@ const updatePerson = async (
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
 
-  const updateData = { name, status, role, username, email };
+  if (username && username !== data.username) {
+    const existingUsername = await person.findOne({ where: { username } });
+    if (existingUsername) throw new Error('Username already exists');
+  }
+
+  const finalEmail = (email && email.trim() !== '') ? email.trim() : null;
+
+  if (finalEmail && finalEmail !== data.email) {
+    const existingEmail = await person.findOne({ where: { email: finalEmail } });
+    if (existingEmail) throw new Error('Email already exists');
+  }
+
+  const updateData = { name, status, role, username, email: finalEmail };
   if (password) {
     updateData.password = await bcrypt.hash(password, 10);
   }

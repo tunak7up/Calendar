@@ -48,8 +48,12 @@ export const apiFetch = async (endpoint, options = {}) => {
           const refreshData = await refreshRes.json();
           const newToken = refreshData.token;
 
-          // Save new token in memory
+          // Save new token in memory and localStorage
           setAccessToken(newToken);
+          localStorage.setItem('accessToken', newToken);
+          if (refreshData.user) {
+            localStorage.setItem('user', JSON.stringify(refreshData.user));
+          }
           
           // Retry original request
           headers['Authorization'] = `Bearer ${newToken}`;
@@ -59,11 +63,15 @@ export const apiFetch = async (endpoint, options = {}) => {
         } else {
           // Refresh token expired or invalid
           setAccessToken(null);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
           window.location.href = '/login';
           throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         }
       } catch (refreshError) {
         setAccessToken(null);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
         window.location.href = '/login';
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       }

@@ -10,14 +10,16 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const MONTHS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
-
 export default function ProfileWorkHoursChart({ dailyReports = [] }) {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const monthsList = t('months_short', { returnObjects: true }) || ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
 
   const parseActualHours = (checkIn, checkOut) => {
     if (!checkIn || !checkOut) return 0;
@@ -45,10 +47,10 @@ export default function ProfileWorkHoursChart({ dailyReports = [] }) {
   }, [dailyReports, selectedYear]);
 
   const chartData = {
-    labels: MONTHS,
+    labels: monthsList,
     datasets: [
       {
-        label: 'Giờ thực tế',
+        label: t('components.profileChart.actualHours'),
         data: monthlyActual,
         backgroundColor: 'rgba(16, 185, 129, 0.75)',
         borderColor: 'rgba(16, 185, 129, 1)',
@@ -71,7 +73,7 @@ export default function ProfileWorkHoursChart({ dailyReports = [] }) {
         padding: 12,
         cornerRadius: 10,
         callbacks: {
-          label: ctx => ` ${ctx.parsed.y.toFixed(1)} giờ`,
+          label: ctx => ` ${ctx.parsed.y.toFixed(1)} ${t('components.profileChart.hoursUnit')}`,
         },
       },
     },
@@ -84,7 +86,7 @@ export default function ProfileWorkHoursChart({ dailyReports = [] }) {
         beginAtZero: true,
         grid: { color: 'rgba(0,0,0,0.05)' },
         ticks: { font: { family: 'Inter, sans-serif', size: 11 }, callback: v => `${v}h` },
-        title: { display: true, text: 'Số giờ', font: { size: 11, weight: '600' }, color: '#9ca3af' },
+        title: { display: true, text: t('dashboard.hours'), font: { size: 11, weight: '600' }, color: '#9ca3af' },
       },
     },
     interaction: { mode: 'index', intersect: false },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const WheelColumn = ({ items, value, onChange, label, disabledItems = [] }) => {
   const containerRef = useRef(null);
@@ -80,6 +81,7 @@ const WheelColumn = ({ items, value, onChange, label, disabledItems = [] }) => {
 };
 
 export default function WheelTimePicker({ value, onChange, onClose, minTime, maxTime }) {
+  const { t } = useTranslation();
   // Value is expected in "HH:mm" format
   const [hourStr, minStr] = (value || "08:30").split(':');
   
@@ -136,15 +138,15 @@ export default function WheelTimePicker({ value, onChange, onClose, minTime, max
   return (
     <div className="bg-white p-5 rounded-3xl shadow-2xl shadow-blue-900/10 border border-gray-100 min-w-[260px] animate-in fade-in zoom-in-95 duration-200">
       <div className="flex gap-4 mb-6">
-        <WheelColumn items={hours} value={hourStr} onChange={handleHourChange} label="Hour" disabledItems={disabledHours} />
+        <WheelColumn items={hours} value={hourStr} onChange={handleHourChange} label={t('components.wheelTimePicker.hour')} disabledItems={disabledHours} />
         <div className="text-2xl font-bold text-gray-300 self-center pt-4">:</div>
-        <WheelColumn items={minutes} value={minStr} onChange={handleMinChange} label="Minute" disabledItems={disabledMinutes} />
+        <WheelColumn items={minutes} value={minStr} onChange={handleMinChange} label={t('components.wheelTimePicker.minute')} disabledItems={disabledMinutes} />
       </div>
       <button 
         onClick={onClose}
         className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 active:scale-[0.98]"
       >
-        Xác nhận
+        {t('components.wheelTimePicker.confirm')}
       </button>
       
       {/* Inline styles to hide scrollbar for webkit and standard browsers */}

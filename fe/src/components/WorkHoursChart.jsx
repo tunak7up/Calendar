@@ -9,6 +9,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useTranslation } from 'react-i18next';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -23,6 +24,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
  * - endDate:      string (YYYY-MM-DD)
  */
 export default function WorkHoursChart({ employees = [], schedules = [], dailyReports = [], startDate, endDate }) {
+  const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
 
   // --- helpers ---
@@ -51,18 +53,18 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
   const summary = useMemo(() => {
     const filteredSchedules = startDate && endDate
       ? schedules.filter(s => {
-          const d = (s.working_date || '').split('T')[0];
-          return d >= startDate && d <= endDate;
-        })
+        const d = (s.working_date || '').split('T')[0];
+        return d >= startDate && d <= endDate;
+      })
       : schedules;
 
     return employees
       .filter(emp => emp.role !== 'manager')
       .map(emp => {
         const empSchedules = filteredSchedules.filter(s => s.person_id === emp.person_id);
-        const empReports   = dailyReports.filter(r => r.person_id === emp.person_id);
+        const empReports = dailyReports.filter(r => r.person_id === emp.person_id);
         const registered = empSchedules.reduce((s, x) => s + parseScheduleHours(x.start_time, x.end_time), 0);
-        const actual     = empReports.reduce((s, r) => s + parseActualHours(r.check_in, r.check_out), 0);
+        const actual = empReports.reduce((s, r) => s + parseActualHours(r.check_in, r.check_out), 0);
         return {
           name: emp.name || emp.username,
           registered: Math.round(registered * 10) / 10,
@@ -79,7 +81,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
     labels: displayed.map(e => e.name),
     datasets: [
       {
-        label: 'Giờ đăng ký',
+        label: t('dashboard.registered'),
         data: displayed.map(e => e.registered),
         backgroundColor: 'rgba(59, 130, 246, 0.75)',
         borderColor: 'rgba(59, 130, 246, 1)',
@@ -88,7 +90,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
         borderSkipped: false,
       },
       {
-        label: 'Giờ thực tế',
+        label: t('dashboard.reality'),
         data: displayed.map(e => e.actual),
         backgroundColor: 'rgba(16, 185, 129, 0.75)',
         borderColor: 'rgba(16, 185, 129, 1)',
@@ -119,13 +121,13 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
         padding: 12,
         cornerRadius: 10,
         callbacks: {
-          label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} giờ`,
+          label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} `,
           afterBody: (items) => {
             const idx = items[0]?.dataIndex;
             if (idx === undefined) return [];
             const e = displayed[idx];
             const sign = e.diff >= 0 ? '+' : '';
-            return [` Chênh lệch: ${sign}${e.diff.toFixed(1)} giờ`];
+            return [` ${t('dashboard.difference')}: ${sign}${e.diff.toFixed(1)} `];
           },
         },
       },
@@ -139,7 +141,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
         beginAtZero: true,
         grid: { color: 'rgba(0,0,0,0.05)' },
         ticks: { font: { family: 'Inter, sans-serif', size: 11 }, callback: v => `${v}h` },
-        title: { display: true, text: 'Số giờ', font: { size: 11, weight: '600' }, color: '#9ca3af' },
+        title: { display: true, text: t('dashboard.hours'), font: { size: 11, weight: '600' }, color: '#9ca3af' },
       },
     },
     interaction: { mode: 'index', intersect: false },
@@ -148,7 +150,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
   if (summary.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400">
-        <p className="text-sm font-medium">Không có nhân viên nào để hiển thị.</p>
+        <p className="text-sm font-medium">{t('dashboard.empty')}</p>
       </div>
     );
   }
@@ -163,15 +165,15 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
       {/* Detail ranking table */}
       <div className="flex-1 lg:flex-[1] flex flex-col min-h-0 border border-gray-100 rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gray-50 px-3 py-2 border-b border-gray-100">
-          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Xếp hạng giờ làm</h3>
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t('requests.work_hours_ranking')}</h3>
         </div>
         <div className="flex-1 overflow-y-auto bg-white">
           <table className="w-full text-sm text-left">
             <thead className="bg-white sticky top-0 border-b border-gray-100 shadow-sm z-10">
               <tr>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nhân viên</th>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right" title="Đăng ký / Thực tế">ĐK / TT</th>
-                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Lệch</th>
+                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('dashboard.employee')}</th>
+                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right" title="Đăng ký / Thực tế">{t('dashboard.registered')} / {t('dashboard.reality')}</th>
+                <th className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">{t('dashboard.difference')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

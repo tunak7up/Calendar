@@ -1,5 +1,6 @@
 import React from 'react';
 import { XMarkIcon, UserIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Multi-Employee Filter Component
@@ -8,7 +9,8 @@ import { XMarkIcon, UserIcon, FunnelIcon } from '@heroicons/react/24/outline';
  * @param {Function} onSelectionChange - Callback when selection updates
  * @param {String} placeholder - Dropdown placeholder text
  */
-const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeholder = "Lọc theo nhân viên..." }) => {
+const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeholder }) => {
+  const { t } = useTranslation();
   // Ensure selectedIds is an array
   const currentSelected = Array.isArray(selectedIds) ? selectedIds : [];
 
@@ -26,6 +28,8 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
     onSelectionChange(currentSelected.filter(item => item !== id));
   };
 
+  const activePlaceholder = placeholder || t('components.employeeFilter.placeholder');
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       <div className="relative group min-w-[200px] sm:max-w-[240px] flex-shrink-0">
@@ -37,9 +41,9 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
           defaultValue=""
           className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-8 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all appearance-none cursor-pointer shadow-sm hover:border-gray-300 min-h-[44px]"
         >
-          <option value="" disabled>{placeholder}</option>
+          <option value="" disabled>{activePlaceholder}</option>
           {availableEmployees.length === 0 ? (
-            <option disabled>Đã chọn tất cả nhân viên</option>
+            <option disabled>{t('components.employeeFilter.allSelected')}</option>
           ) : (
             availableEmployees.map(emp => (
               <option key={emp.person_id} value={emp.person_id}>
@@ -78,7 +82,7 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
             onClick={() => onSelectionChange([])}
             className="text-[10px] uppercase tracking-widest font-black text-gray-400 hover:text-red-500 px-2 transition-colors self-center whitespace-nowrap"
           >
-            Xóa
+            {t('components.employeeFilter.clear')}
           </button>
         </div>
       )}

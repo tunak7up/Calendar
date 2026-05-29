@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserGroupIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 /**
  * ParticipantManager Component
@@ -19,19 +20,21 @@ const ParticipantManager = ({
   onRemove,
   showTitle = true 
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       {showTitle && (
         <h2 className="text-sm font-semibold text-gray-800 mb-5 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-          Personnel & Accountability
+          {t('components.participantManager.title')}
         </h2>
       )}
 
       <div>
         <div className="flex items-center gap-2 mb-4">
           <UserGroupIcon className="w-5 h-5 text-blue-600" />
-          <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Assignees</h3>
+          <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">{t('components.participantManager.assignees')}</h3>
         </div>
 
         <div className="space-y-3 mb-6">
@@ -50,7 +53,9 @@ const ParticipantManager = ({
                     </div>
                     <div>
                       <p className="text-sm font-bold text-gray-900 leading-none">{p.name}</p>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-1.5">{p.role || 'Personnel'}</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-1.5">
+                        {p.role ? t(`components.participantManager.roles.${p.role.toLowerCase()}`, p.role) : t('components.participantManager.personnel')}
+                      </p>
                     </div>
                   </div>
 
@@ -60,9 +65,9 @@ const ParticipantManager = ({
                       onChange={(e) => onUpdateRole(p.person_id || p.name, e.target.value)}
                       className="bg-gray-50 border border-gray-100 text-gray-700 text-[11px] font-bold rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer hover:bg-white transition-colors"
                     >
-                      <option value="assignee">Assignee</option>
-                      <option value="reviewer">Reviewer</option>
-                      <option value="observer">Observer</option>
+                      <option value="assignee">{t('components.participantManager.roles.assignee')}</option>
+                      <option value="reviewer">{t('components.participantManager.roles.reviewer')}</option>
+                      <option value="observer">{t('components.participantManager.roles.observer')}</option>
                     </select>
                     <button
                       onClick={() => onRemove(p.person_id || p.name)}
@@ -79,8 +84,8 @@ const ParticipantManager = ({
               <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
                 <UserGroupIcon className="w-6 h-6 text-gray-300" />
               </div>
-              <p className="text-sm text-gray-400 font-bold">No Personnel Assigned</p>
-              <p className="text-[10px] text-gray-300 mt-1">Select users from the dropdown below to start collaborating.</p>
+              <p className="text-sm text-gray-400 font-bold">{t('components.participantManager.empty')}</p>
+              <p className="text-[10px] text-gray-300 mt-1">{t('components.participantManager.emptySub')}</p>
             </div>
           )}
         </div>
@@ -95,7 +100,7 @@ const ParticipantManager = ({
             }}
             className="w-full bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-blue-500 block p-3.5 outline-none appearance-none cursor-pointer transition-all pr-12"
           >
-            <option value="">+ Assign new personnel...</option>
+            <option value="">{t('components.participantManager.placeholder')}</option>
             {allUsers
               .filter(u => !participants.some(p => (p.person_id === u.person_id) || (p.name === u.name)))
               .map(user => (

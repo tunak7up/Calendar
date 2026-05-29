@@ -71,7 +71,17 @@ export const en = {
       alert_upload_no_id: "Please Check-in to create a report before attaching files.",
       alert_upload_no_id_btn: "Please Check-in before uploading files!",
       alert_delete_confirm: "Delete this attachment?",
-      download_error: "Download error:"
+      download_error: "Download error:",
+      from: "from",
+      to: "to",
+      registered: "Registered",
+      reality: "Reality",
+      work_hours_ranking: "Work hours ranking",
+      difference: "Difference",
+      hours: "hours",
+      empty: "No employees to display.",
+      employee: "Employee",
+
     },
     status: {
       pending: "Pending",
@@ -540,6 +550,61 @@ export const en = {
       tasks_sub: "Manage your tasks",
       add_task: "Add Task",
       tasks_list: "Tasks List"
-    }
+    },
+    components: {
+      employeeFilter: {
+        placeholder: "Filter by employee...",
+        allSelected: "All employees selected",
+        clear: "Clear"
+      },
+      subtaskModal: {
+        title: "New Sub-task",
+        subtitle: "Detail definition",
+        fieldTitle: "Sub-task Title",
+        placeholderTitle: "What needs to be done?",
+        fieldPriority: "Priority Level",
+        fieldDescription: "Description (Optional)",
+        placeholderDescription: "Provide additional context or requirements...",
+        cancel: "Cancel",
+        addBtn: "Add Sub-task"
+      },
+      participantManager: {
+        title: "Personnel & Accountability",
+        assignees: "Assignees",
+        personnel: "Personnel",
+        roles: {
+          assignee: "Assignee",
+          reviewer: "Reviewer",
+          observer: "Observer"
+        },
+        empty: "No Personnel Assigned",
+        emptySub: "Select users from the dropdown below to start collaborating.",
+        placeholder: "+ Assign new personnel..."
+      },
+      profileChart: {
+        actualHours: "Actual hours",
+        hoursUnit: "hours"
+      },
+      sortableTable: {
+        loading: "Loading...",
+        empty: "No data found.",
+        showing: "Showing {{start}} to {{end}} of {{total}}"
+      },
+      weekDatePicker: {
+        prevWeek: "Previous week",
+        nextWeek: "Next week",
+        selectDate: "Select date to jump to the corresponding week"
+      },
+      wheelTimePicker: {
+        hour: "Hour",
+        minute: "Minute",
+        confirm: "Confirm"
+      }
+    },
+    months_short: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    months_long: [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
   }
 };

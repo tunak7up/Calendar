@@ -1,20 +1,22 @@
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { getFullDateStr } from '../utils/dateUtils';
+import { useTranslation } from 'react-i18next';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-export const generateWeek = (dateObj) => {
+export const generateWeek = (dateObj, lang = 'vi') => {
   const dates = [];
   const date = new Date(dateObj.getTime());
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   const startOfWeek = new Date(date.setDate(diff));
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US';
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(startOfWeek.getTime());
     d.setDate(startOfWeek.getDate() + i);
     dates.push({
-      day: d.toLocaleDateString('vi-VN', { weekday: 'short' }).toUpperCase(),
+      day: d.toLocaleDateString(locale, { weekday: 'short' }).toUpperCase(),
       date: d.getDate().toString(),
       fullDate: getFullDateStr(d),
       dateObj: d,
@@ -43,10 +45,12 @@ export default function WeekDatePicker({
   onDayClick,
   workDays = [],
 }) {
-  const weekDates = generateWeek(viewDate);
+  const { t, i18n } = useTranslation();
+  const weekDates = generateWeek(viewDate, i18n.language);
   const viewDateStr = getFullDateStr(viewDate);
-  const weekStartStr = weekDates[0].dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const weekEndStr = weekDates[6].dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-US';
+  const weekStartStr = weekDates[0].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const weekEndStr = weekDates[6].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   const handleNativeChange = (e) => {
     const val = e.target.value;
@@ -76,7 +80,7 @@ export default function WeekDatePicker({
           <button 
             onClick={handlePrevWeek} 
             className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            title="Tuần trước"
+            title={t('components.weekDatePicker.prevWeek')}
           >
             <ChevronLeftIcon className="w-5 h-5" />
           </button>
@@ -91,7 +95,7 @@ export default function WeekDatePicker({
                 value={viewDateStr}
                 onChange={handleNativeChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                title="Chọn ngày để nhảy tới tuần tương ứng"
+                title={t('components.weekDatePicker.selectDate')}
               />
               <div className="absolute inset-0 flex items-center justify-center rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
                 <CalendarIcon className="w-4 h-4" />
@@ -102,7 +106,7 @@ export default function WeekDatePicker({
           <button 
             onClick={handleNextWeek} 
             className="p-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            title="Tuần sau"
+            title={t('components.weekDatePicker.nextWeek')}
           >
             <ChevronRightIcon className="w-5 h-5" />
           </button>

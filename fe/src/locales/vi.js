@@ -71,7 +71,16 @@ export const vi = {
       alert_upload_no_id: "Vui lòng Check-in để tạo báo cáo trước khi đính kèm file.",
       alert_upload_no_id_btn: "Vui lòng Check-in trước khi tải lên tài liệu!",
       alert_delete_confirm: "Xóa file đính kèm này?",
-      download_error: "Lỗi tải file:"
+      download_error: "Lỗi tải file:",
+      from: "từ",
+      to: "đến",
+      registered: "Đã đăng ký",
+      reality: "Thực tế",
+      work_hours_ranking: "Bảng xếp hạng giờ làm việc",
+      difference: "Chênh lệch",
+      hours: "giờ",
+      empty: "Không tìm thấy nhân viên nào.",
+      employee: "Nhân viên",
     },
     status: {
       pending: "Chờ xử lý",
@@ -540,6 +549,61 @@ export const vi = {
       tasks_sub: "Quản lý công việc của bạn",
       add_task: "Thêm công việc",
       tasks_list: "Danh sách công việc"
-    }
+    },
+    components: {
+      employeeFilter: {
+        placeholder: "Lọc theo nhân viên...",
+        allSelected: "Đã chọn tất cả nhân viên",
+        clear: "Xóa"
+      },
+      subtaskModal: {
+        title: "Công việc con mới",
+        subtitle: "Định nghĩa chi tiết",
+        fieldTitle: "Tiêu đề công việc con",
+        placeholderTitle: "Cần phải làm gì?",
+        fieldPriority: "Mức độ ưu tiên",
+        fieldDescription: "Mô tả (Không bắt buộc)",
+        placeholderDescription: "Cung cấp thêm thông tin chi tiết hoặc yêu cầu...",
+        cancel: "Hủy",
+        addBtn: "Thêm công việc con"
+      },
+      participantManager: {
+        title: "Nhân sự & Trách nhiệm",
+        assignees: "Người thực hiện",
+        personnel: "Nhân viên",
+        roles: {
+          assignee: "Người thực hiện",
+          reviewer: "Người duyệt",
+          observer: "Người quan sát"
+        },
+        empty: "Chưa có nhân sự được giao",
+        emptySub: "Chọn người dùng từ danh sách dưới đây để bắt đầu cộng tác.",
+        placeholder: "+ Thêm nhân sự mới..."
+      },
+      profileChart: {
+        actualHours: "Giờ thực tế",
+        hoursUnit: "giờ"
+      },
+      sortableTable: {
+        loading: "Đang tải...",
+        empty: "Không tìm thấy dữ liệu.",
+        showing: "Hiển thị {{start}} đến {{end}} trong số {{total}}"
+      },
+      weekDatePicker: {
+        prevWeek: "Tuần trước",
+        nextWeek: "Tuần sau",
+        selectDate: "Chọn ngày để nhảy tới tuần tương ứng"
+      },
+      wheelTimePicker: {
+        hour: "Giờ",
+        minute: "Phút",
+        confirm: "Xác nhận"
+      }
+    },
+    months_short: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+    months_long: [
+      'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+      'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+    ]
   }
 };

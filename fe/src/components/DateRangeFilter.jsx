@@ -1,12 +1,15 @@
 import React from 'react';
 import { CalendarDaysIcon } from '@heroicons/react/24/outline';
-
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+import { useTranslation } from 'react-i18next';
 
 export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
+  const { t } = useTranslation();
+
+  const monthsList = t('months_long', { returnObjects: true }) || [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
   const handleQuickMonthChange = (e) => {
     const val = e.target.value;
     if (!val) return;
@@ -21,7 +24,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     const now = new Date();
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+      const label = `${monthsList[d.getMonth()]} ${d.getFullYear()}`;
       const value = `${d.getFullYear()}-${d.getMonth()}`;
       options.push(<option key={value} value={value}>{label}</option>);
     }
@@ -42,7 +45,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Từ</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.from')}</span>
           <input
             type="date"
             value={startDate}
@@ -51,7 +54,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Đến</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.to')}</span>
           <input
             type="date"
             value={endDate}

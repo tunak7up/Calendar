@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 export default function SubTaskModal({ isOpen, onClose, onAdd }) {
+  const { t } = useTranslation();
   const [newSubTask, setNewSubTask] = useState({ 
     title: '', 
     description: '', 
@@ -23,8 +25,8 @@ export default function SubTaskModal({ isOpen, onClose, onAdd }) {
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">New Sub-task</h3>
-            <p className="text-xs text-gray-400 font-medium mt-1 uppercase tracking-widest">Detail definition</p>
+            <h3 className="text-xl font-bold text-gray-900">{t('components.subtaskModal.title')}</h3>
+            <p className="text-xs text-gray-400 font-medium mt-1 uppercase tracking-widest">{t('components.subtaskModal.subtitle')}</p>
           </div>
           <button 
             onClick={onClose}
@@ -36,18 +38,18 @@ export default function SubTaskModal({ isOpen, onClose, onAdd }) {
         
         <div className="p-8 space-y-6">
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Sub-task Title</label>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{t('components.subtaskModal.fieldTitle')}</label>
             <input 
               type="text" 
               value={newSubTask.title}
               onChange={(e) => setNewSubTask({...newSubTask, title: e.target.value})}
-              placeholder="What needs to be done?"
+              placeholder={t('components.subtaskModal.placeholderTitle')}
               className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl p-4 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all font-medium"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Priority Level</label>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{t('components.subtaskModal.fieldPriority')}</label>
             <div className="grid grid-cols-3 gap-3">
               {['Low', 'Medium', 'High'].map(p => (
                 <button
@@ -60,19 +62,19 @@ export default function SubTaskModal({ isOpen, onClose, onAdd }) {
                       : 'border-transparent bg-gray-50 text-gray-400 hover:bg-gray-100'
                   }`}
                 >
-                  {p}
+                  {t(`dashboard.priority_${p.toLowerCase()}`)}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Description (Optional)</label>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{t('components.subtaskModal.fieldDescription')}</label>
             <textarea 
               rows="3"
               value={newSubTask.description}
               onChange={(e) => setNewSubTask({...newSubTask, description: e.target.value})}
-              placeholder="Provide additional context or requirements..."
+              placeholder={t('components.subtaskModal.placeholderDescription')}
               className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl p-4 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all resize-none"
             />
           </div>
@@ -84,14 +86,14 @@ export default function SubTaskModal({ isOpen, onClose, onAdd }) {
             onClick={onClose}
             className="flex-1 py-3.5 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-all"
           >
-            Cancel
+            {t('components.subtaskModal.cancel')}
           </button>
           <button 
             type="button"
             onClick={handleAdd}
             className="flex-[2] bg-blue-600 text-white py-3.5 rounded-2xl text-sm font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 active:scale-95"
           >
-            Add Sub-task
+            {t('components.subtaskModal.addBtn')}
           </button>
         </div>
       </div>

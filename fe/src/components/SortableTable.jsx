@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 /**
  * SortableTable - A reusable table component with column sorting and pagination.
@@ -27,7 +28,7 @@ export default function SortableTable({
   data = [],
   renderRow,
   loading = false,
-  emptyMessage = 'No data found.',
+  emptyMessage,
   pageSize = 10,
   currentPage,
   totalItems,
@@ -39,11 +40,14 @@ export default function SortableTable({
   stickyHeader = false,
   containerHeight = '',
 }) {
+  const { t } = useTranslation();
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDir, setSortDir] = useState(defaultSortDir);
 
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
+
+  const activeEmptyMessage = emptyMessage || t('components.sortableTable.empty');
 
   const handleSort = (col) => {
     if (!col.sortable) return;
@@ -127,14 +131,14 @@ export default function SortableTable({
                 <td colSpan={columns.length} className="text-center py-12 text-gray-400 font-medium">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-gray-300 border-t-[#0056b3] rounded-full animate-spin" />
-                    Loading...
+                    {t('components.sortableTable.loading')}
                   </div>
                 </td>
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="text-center py-12 text-gray-400 font-medium">
-                  {emptyMessage}
+                  {activeEmptyMessage}
                 </td>
               </tr>
             ) : (
@@ -147,12 +151,11 @@ export default function SortableTable({
       {totalItems > 0 && (
         <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-gray-50/50 gap-4">
           <span className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-            Showing{' '}
-            <span className="font-semibold text-gray-900">{startIndex + 1}</span>
-            {' '}to{' '}
-            <span className="font-semibold text-gray-900">{Math.min(startIndex + pageSize, totalItems)}</span>
-            {' '}of{' '}
-            <span className="font-semibold text-gray-900">{totalItems}</span>
+            {t('components.sortableTable.showing', {
+              start: startIndex + 1,
+              end: Math.min(startIndex + pageSize, totalItems),
+              total: totalItems
+            })}
           </span>
           <div className="flex items-center gap-1">
             <button

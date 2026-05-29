@@ -16,12 +16,12 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
 
 const MONTH_NAMES_VI = [
-  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+   'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12', 'Tháng 1'
 ];
 const MONTH_NAMES_EN = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December', 'January'
 ];
 
 export default function AdminWorkHours() {

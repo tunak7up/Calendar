@@ -149,16 +149,29 @@ export default function AdminWorkHours() {
     try {
       const start = new Date(startStr);
       const end = new Date(endStr);
+      let rawHours;
+      let startSeconds;
+      let endSeconds;
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         const [sH, sM] = startStr.split(':').map(Number);
         const [eH, eM] = endStr.split(':').map(Number);
         if (!isNaN(sH) && !isNaN(eH)) {
-          return Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+          rawHours = Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+          startSeconds = sH * 3600 + sM * 60;
+          endSeconds = eH * 3600 + eM * 60;
+        } else {
+          return 0;
         }
-        return 0;
+      } else {
+        const diffMs = end.getTime() - start.getTime();
+        rawHours = Math.max(0, diffMs / (1000 * 60 * 60));
+        startSeconds = start.getHours() * 3600 + start.getMinutes() * 60 + start.getSeconds();
+        endSeconds = end.getHours() * 3600 + end.getMinutes() * 60 + end.getSeconds();
       }
-      const diffMs = end.getTime() - start.getTime();
-      return Math.max(0, diffMs / (1000 * 60 * 60));
+
+      const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+      const breakDeduction = spansLunch ? 1.0 : 0.0;
+      return Math.max(0, rawHours - breakDeduction);
     } catch {
       return 0;
     }

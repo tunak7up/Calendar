@@ -18,7 +18,8 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   PlusIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { formatDateTime } from '../../utils/dateUtils';
 
@@ -39,6 +40,7 @@ export default function Profile() {
 
   // States for ScheduleCalendar
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     if (!targetId) return;
@@ -82,21 +84,95 @@ export default function Profile() {
   }, [targetId]);
 
   const calendarEvents = React.useMemo(() => {
-    return allSchedules.map(item => {
-      const colorSet = { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' };
-      const dateOnly = item.working_date ? new Date(item.working_date).toISOString().split('T')[0] : null;
+    const eventMap = new Map(); // key: date string -> { schedule, report }
+
+    allSchedules.forEach(sched => {
+      const dateOnly = sched.working_date ? sched.working_date.split(/[T ]/)[0] : null;
+      if (!dateOnly) return;
+      eventMap.set(dateOnly, {
+        date: dateOnly,
+        schedule: sched,
+        report: null
+      });
+    });
+
+    dailyReports.forEach(rep => {
+      const dateOnly = rep.working_date ? rep.working_date.split(/[T ]/)[0] : null;
+      if (!dateOnly) return;
+      if (eventMap.has(dateOnly)) {
+        eventMap.get(dateOnly).report = rep;
+      } else {
+        eventMap.set(dateOnly, {
+          date: dateOnly,
+          schedule: null,
+          report: rep
+        });
+      }
+    });
+
+    return Array.from(eventMap.values()).map(item => {
+      const hasSchedule = !!item.schedule;
+      const checkIn = item.report?.check_in || null;
+      const checkOut = item.report?.check_out || null;
+
+      // Default blue colors for "đi làm đúng lịch"
+      let bg = '#dbeafe'; // blue-100
+      let border = '#93c5fd'; // blue-300
+      let text = '#1e40af'; // blue-800
+      let title = '';
+
+      const checkInText = checkIn ? checkIn.slice(0, 5) : null;
+      const checkOutText = checkOut ? checkOut.slice(0, 5) : null;
+
+      if (hasSchedule) {
+        let shiftStr = '';
+        if (item.schedule.start_time && item.schedule.end_time) {
+          const sTime = new Date(item.schedule.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          const eTime = new Date(item.schedule.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          shiftStr = `${sTime} - ${eTime}`;
+        }
+
+        if (!checkIn) {
+          // Có lịch nhưng vắng (Đỏ)
+          bg = '#fee2e2';
+          border = '#fca5a5';
+          text = '#991b1b';
+          title = `${shiftStr} (${i18n.language === 'vi' ? 'Vắng/Chưa check-in' : 'Absent/No check-in'})`;
+        } else {
+          // Đi làm đúng lịch -> Xanh dương
+          bg = '#dbeafe';
+          border = '#93c5fd';
+          text = '#1e40af';
+          title = `${shiftStr} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
+        }
+      } else {
+        // Ngoài lịch -> Màu vàng
+        bg = '#fef3c7'; // amber-100
+        border = '#fcd34d'; // amber-300
+        text = '#92400e'; // amber-800
+        title = `${i18n.language === 'vi' ? 'Ngoài lịch' : 'Unscheduled'} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
+      }
+
       return {
-        id: `sched_${item.schedule_id}`,
-        title: `${new Date(item.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(item.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`,
-        start: dateOnly,
+        id: `event_${item.date}`,
+        title,
+        start: item.date,
         allDay: true,
-        backgroundColor: colorSet.bg,
-        borderColor: colorSet.border,
-        textColor: colorSet.text,
-        extendedProps: { ...item }
+        backgroundColor: bg,
+        borderColor: border,
+        textColor: text,
+        extendedProps: {
+          ...item
+        }
       };
     });
-  }, [allSchedules]);
+  }, [allSchedules, dailyReports, i18n.language]);
+
+  const selectedDateDetail = React.useMemo(() => {
+    const sched = allSchedules.find(s => s.working_date && s.working_date.split(/[T ]/)[0] === selectedDate);
+    const report = dailyReports.find(r => r.working_date && r.working_date.split(/[T ]/)[0] === selectedDate);
+    return { schedule: sched, report };
+  }, [selectedDate, allSchedules, dailyReports]);
 
   if (loading) {
     return (
@@ -278,16 +354,179 @@ export default function Profile() {
             </h2>
           </div>
           <div className="p-4 flex-1">
+            {/* Color Legend Bar */}
+            <div className="flex flex-wrap gap-3 mb-5 text-[10px] font-bold text-gray-500 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 shadow-inner">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span>
+                <span className="text-blue-800">{i18n.language === 'vi' ? 'Đi làm đúng lịch' : 'Worked (Scheduled)'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#fef3c7] border border-[#fcd34d]"></span>
+                <span className="text-amber-800">{i18n.language === 'vi' ? 'Đi làm ngoài lịch' : 'Unscheduled Work'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-red-100 border border-red-200"></span>
+                <span className="text-red-800">{i18n.language === 'vi' ? 'Vắng / Chưa check-in' : 'Absent / No Check-in'}</span>
+              </div>
+            </div>
+
             <ScheduleCalendar
               initialDate={selectedDate}
               events={calendarEvents}
               selectedDate={selectedDate}
-              onDateClick={(arg) => setSelectedDate(arg.dateStr)}
+              onDateClick={(arg) => {
+                setSelectedDate(arg.dateStr);
+                setIsDetailModalOpen(true);
+              }}
+              onEventClick={(event) => {
+                const dateStr = event.startStr || (event.start instanceof Date ? event.start.toISOString().split('T')[0] : event.start?.split?.(/[T ]/)?.[0]);
+                if (dateStr) {
+                  setSelectedDate(dateStr);
+                  setIsDetailModalOpen(true);
+                }
+              }}
               onDatesSet={() => { }}
             />
           </div>
         </div>
       </div>
+
+      {/* Workday Details Modal */}
+      {isDetailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                  <ClockIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    {i18n.language === 'vi' ? 'Chi tiết ngày làm việc' : 'Workday Details'}
+                  </h3>
+                  <p className="text-[10px] font-bold text-gray-400">
+                    {(() => {
+                      const [year, month, day] = selectedDate.split('-');
+                      return i18n.language === 'vi' ? `${day}/${month}/${year}` : new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    })()}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all cursor-pointer"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6">
+              {(() => {
+                const { schedule, report } = selectedDateDetail;
+                const hasSchedule = !!schedule;
+                const checkIn = report?.check_in || null;
+                const checkOut = report?.check_out || null;
+
+                if (!hasSchedule && !checkIn) {
+                  return (
+                    <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                      <p className="text-sm font-semibold text-gray-400">
+                        {i18n.language === 'vi' ? 'Không có lịch làm việc và chấm công trong ngày này' : 'No schedule or attendance on this day'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                let statusLabel = '';
+                let statusColorClass = '';
+                if (hasSchedule) {
+                  if (checkIn) {
+                    statusLabel = i18n.language === 'vi' ? 'Đi làm đúng lịch' : 'Worked (Scheduled)';
+                    statusColorClass = 'bg-blue-50 text-blue-700 border-blue-100';
+                  } else {
+                    statusLabel = i18n.language === 'vi' ? 'Vắng / Chưa check-in' : 'Absent / No Check-in';
+                    statusColorClass = 'bg-red-50 text-red-700 border-red-100';
+                  }
+                } else {
+                  statusLabel = i18n.language === 'vi' ? 'Đi làm ngoài lịch' : 'Unscheduled Work';
+                  statusColorClass = 'bg-amber-50 text-amber-700 border-amber-100';
+                }
+
+                return (
+                  <div className="space-y-5">
+                    <div className="flex justify-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold border uppercase tracking-wider ${statusColorClass} shadow-sm`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                      <div className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 block">
+                          {i18n.language === 'vi' ? 'Ca đăng ký' : 'Registered Shift'}
+                        </span>
+                        {hasSchedule ? (
+                          <span className="text-sm font-bold text-gray-800">
+                            {new Date(schedule.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(schedule.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400 italic font-semibold">
+                            {i18n.language === 'vi' ? 'Không có ca đăng ký' : 'No registered shift'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 block">
+                          {i18n.language === 'vi' ? 'Giờ điểm danh' : 'Attendance Time'}
+                        </span>
+                        {checkIn ? (
+                          <div className="flex items-center gap-3 text-sm font-bold text-gray-800">
+                            <span className="text-emerald-600">In: {checkIn.slice(0, 5)}</span>
+                            <span className="text-blue-600">Out: {checkOut ? checkOut.slice(0, 5) : '--:--'}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400 italic font-semibold">
+                            {i18n.language === 'vi' ? 'Chưa chấm công' : 'No check-in record'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {checkIn && (
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                          {i18n.language === 'vi' ? 'Nội dung báo cáo hàng ngày' : 'Daily Report Content'}
+                        </span>
+                        <div className="bg-white border border-gray-100 rounded-2xl p-4 min-h-[120px] shadow-sm text-sm text-gray-700 whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                          {report?.description || (
+                            <span className="text-gray-400 italic">
+                              {i18n.language === 'vi' ? 'Không có mô tả báo cáo' : 'No report description'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-5 py-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                {i18n.language === 'vi' ? 'Đóng' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

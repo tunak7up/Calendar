@@ -1,13 +1,41 @@
 
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
-let inMemoryToken = null;
+let inMemoryToken = localStorage.getItem('token') || null;
 
 export const setAccessToken = (token) => {
   inMemoryToken = token;
+  if (token) {
+    localStorage.setItem('token', token);
+  } else {
+    localStorage.removeItem('token');
+  }
 };
 
 export const getAccessToken = () => inMemoryToken;
+
+let refreshPromise = null;
+
+export const refreshAccessToken = () => {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${BASE_URL}/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    }).then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setAccessToken(data.token);
+        return data.token;
+      } else {
+        throw new Error('Refresh failed');
+      }
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+};
 
 export const apiFetch = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;
@@ -38,40 +66,13 @@ export const apiFetch = async (endpoint, options = {}) => {
     // Only try to refresh if it's not the refresh or login endpoint failing
     if (!endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
       try {
-        const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          const newToken = refreshData.token;
-
-          // Save new token in memory and localStorage
-          setAccessToken(newToken);
-          localStorage.setItem('accessToken', newToken);
-          if (refreshData.user) {
-            localStorage.setItem('user', JSON.stringify(refreshData.user));
-          }
-          
-          // Retry original request
-          headers['Authorization'] = `Bearer ${newToken}`;
-          fetchOptions.headers = headers;
-          
-          response = await fetch(url, fetchOptions);
-        } else {
-          // Refresh token expired or invalid
-          setAccessToken(null);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-          throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        }
+        const newToken = await refreshAccessToken();
+        // Retry original request
+        headers['Authorization'] = `Bearer ${newToken}`;
+        fetchOptions.headers = headers;
+        response = await fetch(url, fetchOptions);
       } catch (refreshError) {
         setAccessToken(null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
         window.location.href = '/login';
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       }

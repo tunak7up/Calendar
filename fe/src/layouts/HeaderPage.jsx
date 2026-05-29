@@ -111,7 +111,7 @@ export default function HeaderPage({ isAdmin, setIsAdmin }) {
                 </MenuItem>
 
                 <MenuItem>
-                  <button onClick={() => { logout(); navigate('/login'); }} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
+                  <button onClick={async () => { await logout(); }} className="w-full text-left block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100">
                     {t('nav.logout')}
                   </button>
                 </MenuItem>

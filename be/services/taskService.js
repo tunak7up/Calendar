@@ -158,7 +158,11 @@ const getAllTasks = async () => {
 
     await Promise.all(
         tasks.map(async t => {
-            if (t.due_date && t.due_date < new Date() && t.status !== 'completed') {
+            if (
+                t.due_date &&
+                new Date(t.due_date).getTime() < Date.now() &&
+                t.status !== 'completed'
+            ) {
                 await t.update({ status: 'overdue' });
             }
         })
@@ -410,10 +414,12 @@ const addParticipantToTask = async (taskId, { participant_id, role }) => {
             </div>
             `;
 
-            await sendMail({
+            sendMail({
                 to: p.email,
                 subject: subject,
                 html: html
+            }).catch(error => {
+                console.error('Error sending task email to added participant:', error);
             });
         }
     } catch (error) {

@@ -73,8 +73,8 @@ const createBulkRequest = async (data) => {
             const requester = await person.findByPk(data.requester_id);
             const username = requester ? requester.username : 'Nhân viên';
             const subjectSuffix = data.type === 'register' ? 'đăng ký lịch làm' : 'xin nghỉ làm';
-            const subject = `${username} ${subjectSuffix}`;
-            
+            const subject = `${requester.name} ${subjectSuffix}`;
+
             const admins = await person.findAll({
                 where: {
                     role: 'manager'
@@ -187,7 +187,7 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
         // If approved, sync to schedule
         if (status.toLowerCase() === 'approved') {
             console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
-            
+
             if (data.type.toLowerCase() === 'register') {
                 // Lọc các ngày chưa có schedule để tránh duplicate
                 const newEntries = [];
@@ -246,7 +246,7 @@ const getRequestsByRange = async (startDate, endDate) => {
     // Adding time to include the full end date
     const start = `${startDate} 00:00:00`;
     const end = `${endDate} 23:59:59`;
-    
+
     return await request.findAll({
         where: {
             created_at: {

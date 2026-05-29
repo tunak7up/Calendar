@@ -4,13 +4,13 @@ const { Sequelize } = require('sequelize');
 // Option 3: Passing parameters separately (other dialects)
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306,
-  dialect: process.env.DB_DIALECT || 'mysql',
+  port: process.env.DB_PORT || 1433,   // ← SQL Server dùng 1433, không phải 3306
+  dialect: process.env.DB_DIALECT || 'mssql',
   timezone: '+07:00',
   dialectOptions: {
-    dateStrings: true,
-    typeCast: true,
-    timezone: '+07:00',
+    options: {                        // ← sửa typo
+      useUTC: false
+    }
   },
   define: {
     freezeTableName: true,

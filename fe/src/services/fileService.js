@@ -1,4 +1,4 @@
-import { getAccessToken, setAccessToken, BASE_URL } from './api';
+import { getAccessToken, setAccessToken, BASE_URL, refreshAccessToken } from './api';
 
 const API_BASE_URL = BASE_URL;
 
@@ -25,30 +25,16 @@ const makeAuthenticatedFetch = async (url, options = {}) => {
   // Auto-refresh on 401 or 403
   if (response.status === 401 || response.status === 403) {
     try {
-      const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      accessToken = await refreshAccessToken();
 
-      if (refreshRes.ok) {
-        const refreshData = await refreshRes.json();
-        accessToken = refreshData.token;
-        setAccessToken(accessToken);
-
-        // Retry with new token
-        headers['Authorization'] = `Bearer ${accessToken}`;
-        fetchOptions.headers = headers;
-        response = await fetch(url, fetchOptions);
-      } else {
-        setAccessToken(null);
-        window.location.href = '/login';
-        throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
-      }
+      // Retry with new token
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      fetchOptions.headers = headers;
+      response = await fetch(url, fetchOptions);
     } catch (refreshError) {
       setAccessToken(null);
-      window.location.href = '/login';
-      throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
+      window.location.href = '/login?error=session_expired';
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
     }
   }
 

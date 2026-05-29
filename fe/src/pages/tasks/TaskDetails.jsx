@@ -770,108 +770,110 @@ export default function TaskDetails() {
       </div>
 
       {/* Sub-tasks Section */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-          <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
-          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">{t('taskdetails.subtasks')}</h2>
-          <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
-            {subTasks.length} {t('sidebar.tasks')}
-          </span>
-          <button
-            onClick={() => navigate(`/tasks/sub-add/${id}`, { state: { parentTask: fullTask } })}
-            className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
-          >
-            <PlusIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('taskdetails.add_subtask')}</span>
-          </button>
-        </div>
+      {!fullTask.parent_id && (
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+            <ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
+            <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">{t('taskdetails.subtasks')}</h2>
+            <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-[10px] sm:text-xs font-bold">
+              {subTasks.length} {t('sidebar.tasks')}
+            </span>
+            <button
+              onClick={() => navigate(`/tasks/sub-add/${id}`, { state: { parentTask: fullTask } })}
+              className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+            >
+              <PlusIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('taskdetails.add_subtask')}</span>
+            </button>
+          </div>
 
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
-          {subTasks.length === 0 ? (
-            <p className="text-center text-gray-400 py-8 font-semibold">{t('taskdetails.no_subtasks')}</p>
-          ) : (
-            <div className="space-y-4 sm:space-y-6">
-              {subTasks.map(sub => (
-                <div key={sub.task_id} className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all border-l-4 border-l-indigo-500">
-                  <div className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4 sm:mb-6">
-                      <div>
-                        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
-                        <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
-                          <TaskStatusDropdown 
-                            currentStatus={sub.status} 
-                            dueDate={sub.due_date}
-                            size="sm"
-                            onStatusChange={async (val) => {
-                              const res = await taskService.updateTask(sub.task_id, { status: val });
-                              if (res.success) {
-                                fetchTaskData();
-                                fetchSubTasks();
-                              }
-                            }}
-                          />
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="w-4 h-4" />
-                            Created: {formatDateTime(sub.start_time || sub.create_at)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <CalendarDaysIcon className="w-4 h-4" />
-                            Due: {formatDateTime(sub.due_date)}
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-8">
+            {subTasks.length === 0 ? (
+              <p className="text-center text-gray-400 py-8 font-semibold">{t('taskdetails.no_subtasks')}</p>
+            ) : (
+              <div className="space-y-4 sm:space-y-6">
+                {subTasks.map(sub => (
+                  <div key={sub.task_id} className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all border-l-4 border-l-indigo-500">
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4 sm:mb-6">
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
+                          <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
+                            <TaskStatusDropdown 
+                              currentStatus={sub.status} 
+                              dueDate={sub.due_date}
+                              size="sm"
+                              onStatusChange={async (val) => {
+                                const res = await taskService.updateTask(sub.task_id, { status: val });
+                                if (res.success) {
+                                  fetchTaskData();
+                                  fetchSubTasks();
+                                }
+                              }}
+                            />
+                            <div className="flex items-center gap-1">
+                              <ClockIcon className="w-4 h-4" />
+                              Created: {formatDateTime(sub.start_time || sub.create_at)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <CalendarDaysIcon className="w-4 h-4" />
+                              Due: {formatDateTime(sub.due_date)}
+                            </div>
                           </div>
                         </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => navigate(`/tasks/${sub.task_id}`, { state: { task: sub } })}
+                            className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
+                            title={t('taskdetails.view_detail')}
+                          >
+                            <EyeIcon className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => navigate(`/tasks/${sub.task_id}`, { state: { task: sub } })}
-                          className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
-                          title={t('taskdetails.view_detail')}
-                        >
-                          <EyeIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Sub-task Comments */}
-                    <div className="bg-gray-50/50 rounded-2xl p-4">
-                      <div className="flex items-center gap-2 mb-4 text-gray-400">
-                        <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{t('taskdetails.comments')}</span>
-                      </div>
-                      <div className="space-y-3 mb-4">
-                        {(sub.comments || []).map(sc => (
-                          <div key={sc.comment_id || sc.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 text-xs">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-indigo-600">{persons[sc.person_id] || 'Unknown User'}</span>
-                              <span className="text-[8px] text-gray-400">{formatDateTime(sc.created_at || sc.time)}</span>
+                      {/* Sub-task Comments */}
+                      <div className="bg-gray-50/50 rounded-2xl p-4">
+                        <div className="flex items-center gap-2 mb-4 text-gray-400">
+                          <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{t('taskdetails.comments')}</span>
+                        </div>
+                        <div className="space-y-3 mb-4">
+                          {(sub.comments || []).map(sc => (
+                            <div key={sc.comment_id || sc.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 text-xs">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-indigo-600">{persons[sc.person_id] || 'Unknown User'}</span>
+                                <span className="text-[8px] text-gray-400">{formatDateTime(sc.created_at || sc.time)}</span>
+                              </div>
+                              <p className="text-gray-700 whitespace-pre-wrap">{sc.content || sc.text}</p>
                             </div>
-                            <p className="text-gray-700 whitespace-pre-wrap">{sc.content || sc.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={sub.newComment || ''}
-                          onChange={(e) => setSubTasks(prev => prev.map(item => item.task_id === sub.task_id ? { ...item, newComment: e.target.value } : item))}
-                          placeholder={t('taskdetails.subtask_comment_placeholder')}
-                          className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
-                          onKeyPress={(e) => e.key === 'Enter' && handleAddSubTaskComment(sub.task_id)}
-                        />
-                        <button
-                          onClick={() => handleAddSubTaskComment(sub.task_id)}
-                          className="absolute right-2 top-1.5 p-1.5 text-indigo-500 hover:text-indigo-700"
-                        >
-                          <PaperAirplaneIcon className="w-4 h-4" />
-                        </button>
+                          ))}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={sub.newComment || ''}
+                            onChange={(e) => setSubTasks(prev => prev.map(item => item.task_id === sub.task_id ? { ...item, newComment: e.target.value } : item))}
+                            placeholder={t('taskdetails.subtask_comment_placeholder')}
+                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddSubTaskComment(sub.task_id)}
+                          />
+                          <button
+                            onClick={() => handleAddSubTaskComment(sub.task_id)}
+                            className="absolute right-2 top-1.5 p-1.5 text-indigo-500 hover:text-indigo-700"
+                          >
+                            <PaperAirplaneIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

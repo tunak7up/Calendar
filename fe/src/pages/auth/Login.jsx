@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { loginApi } from '../../services/authService';
@@ -14,6 +15,15 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const { t } = useTranslation();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'session_expired') {
+      setError(t('login.session_expired', { defaultValue: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' }));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

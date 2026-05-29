@@ -29,20 +29,25 @@ import './styles/App.css'
 import MainLayout from './layouts/MainLayout'
 
 function App() {
-  const { isLoggedIn, isAdmin, isLoading, logout } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading, isLoggingOut, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   // Redirect to login if not logged in
   useEffect(() => {
-    if (!isLoading && !isLoggedIn && location.pathname !== '/login') {
+    if (!isLoading && !isLoggingOut && !isLoggedIn && location.pathname !== '/login') {
       navigate('/login');
     }
-  }, [isLoggedIn, isLoading, location.pathname, navigate]);
+  }, [isLoggedIn, isLoading, isLoggingOut, location.pathname, navigate]);
 
-  // Hiện loading khi đang kiểm tra auth
-  if (isLoading) {
-    return null;
+  // Hiện loading khi đang kiểm tra auth hoặc đang đăng xuất
+  if (isLoading || isLoggingOut) {
+    return (
+      <div className="fixed inset-0 bg-gray-200 z-50 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056b3]"></div>
+        <p className="mt-4 text-[#0056b3] font-bold tracking-tight">Đang tải...</p>
+      </div>
+    );
   }
 
   if (!isLoggedIn && location.pathname !== '/login') {

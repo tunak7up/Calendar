@@ -4,11 +4,18 @@ import { apiFetch, setAccessToken, BASE_URL } from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    return !localStorage.getItem('user');
+  });
 
   // Khởi tạo từ server khi mount (sử dụng Refresh Token qua Cookie)
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
       try {
         const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
@@ -17,45 +24,70 @@ export function AuthProvider({ children }) {
           credentials: 'include'
         });
 
+        if (!isMounted) return;
+
         if (refreshRes.ok) {
           const data = await refreshRes.json();
           setAccessToken(data.token);
           setUser(data.user);
+          localStorage.setItem('user', JSON.stringify(data.user));
         } else {
           setAccessToken(null);
           setUser(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
         }
       } catch (error) {
+        if (!isMounted) return;
         setAccessToken(null);
         setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    initializeAuth();
+    if (!localStorage.getItem('user')) {
+      initializeAuth();
+    } else {
+      setIsLoading(false);
+    }
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = (data) => {
     setAccessToken(data.token);
     setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
   };
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const logout = async () => {
+    setIsLoggingOut(true);
     try {
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
+      // Thêm chút thời gian chờ để user kịp nhìn thấy hiệu ứng loading
+      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error) {
       console.error('Lỗi khi gọi API đăng xuất:', error);
     } finally {
+      // Chỉ xóa state SAU KHI api đăng xuất hoàn thành
       setUser(null);
       setAccessToken(null);
-      
-      // Chuyển hướng người dùng về trang đăng nhập
-      window.location.href = '/login';
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      setIsLoggingOut(false);
     }
   };
 
@@ -64,6 +96,7 @@ export function AuthProvider({ children }) {
     isLoggedIn: !!user,
     isAdmin: user?.role === 'manager',
     isLoading,
+    isLoggingOut,
     login,
     logout,
   };

@@ -265,12 +265,20 @@ export default function Dashboard() {
   const downloadFile = async (url, fileName) => {
     try {
       const headers = {};
-      const accessToken = getAccessToken();
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
+      const requestUrl = new URL(url, window.location.origin);
+      const isSameOrigin = requestUrl.origin === window.location.origin;
+
+      if (isSameOrigin) {
+        const accessToken = getAccessToken();
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
       }
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(requestUrl.toString(), {
+        headers,
+        mode: 'cors',
+      });
       if (!response.ok) throw new Error('Network response was not ok');
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);

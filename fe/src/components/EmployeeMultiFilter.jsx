@@ -1,27 +1,55 @@
-import React from 'react';
-import { XMarkIcon, UserIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { XMarkIcon, UserIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Multi-Employee Filter Component
+ * Searchable Multi-Employee Filter Component
  * @param {Array} employees - List of all employee objects {person_id, name, username}
  * @param {Array} selectedIds - List of currently selected person_id strings
  * @param {Function} onSelectionChange - Callback when selection updates
  * @param {String} placeholder - Dropdown placeholder text
  */
-const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeholder }) => {
+const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChange, placeholder }) => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef(null);
+
   // Ensure selectedIds is an array
   const currentSelected = Array.isArray(selectedIds) ? selectedIds : [];
 
-  const availableEmployees = employees.filter(emp => !currentSelected.includes(emp.person_id.toString()));
-  const selectedEmployees = employees.filter(emp => currentSelected.includes(emp.person_id.toString()));
+  const availableEmployees = useMemo(() => {
+    return employees.filter(emp => !currentSelected.includes(emp.person_id.toString()));
+  }, [employees, currentSelected]);
 
-  const handleSelect = (e) => {
-    const id = e.target.value;
-    if (!id) return;
-    onSelectionChange([...currentSelected, id]);
-    e.target.value = '';
+  const selectedEmployees = useMemo(() => {
+    return employees.filter(emp => currentSelected.includes(emp.person_id.toString()));
+  }, [employees, currentSelected]);
+
+  const filteredEmployees = useMemo(() => {
+    return availableEmployees.filter(emp => {
+      const name = emp.name || '';
+      const username = emp.username || '';
+      const term = searchTerm.toLowerCase();
+      return name.toLowerCase().includes(term) || username.toLowerCase().includes(term);
+    });
+  }, [availableEmployees, searchTerm]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (id) => {
+    onSelectionChange([...currentSelected, id.toString()]);
+    setSearchTerm('');
+    setIsOpen(false);
   };
 
   const handleRemove = (id) => {
@@ -32,31 +60,54 @@ const EmployeeMultiFilter = ({ employees, selectedIds, onSelectionChange, placeh
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
-      <div className="relative group min-w-[200px] sm:max-w-[240px] flex-shrink-0">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <FunnelIcon className="w-4 h-4 text-gray-400 group-focus-within:text-[#0056b3] transition-colors" />
+      <div ref={containerRef} className="relative group min-w-[220px] sm:max-w-[260px] flex-shrink-0">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 group-focus-within:text-[#0056b3] transition-colors" />
         </div>
-        <select
-          onChange={handleSelect}
-          defaultValue=""
-          className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-8 py-2 outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all appearance-none cursor-pointer shadow-sm hover:border-gray-300 min-h-[44px]"
-        >
-          <option value="" disabled>{activePlaceholder}</option>
-          {availableEmployees.length === 0 ? (
-            <option disabled>{t('components.employeeFilter.allSelected')}</option>
-          ) : (
-            availableEmployees.map(emp => (
-              <option key={emp.person_id} value={emp.person_id}>
-                {emp.name || emp.username}
-              </option>
-            ))
-          )}
-        </select>
-        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
+        
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsOpen(false);
+            }
+          }}
+          placeholder={activePlaceholder}
+          className="w-full bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl pl-9 pr-8 py-2.5 outline-none focus:ring-2 focus:ring-[#0056b3]/20 focus:border-[#0056b3] transition-all shadow-sm hover:border-gray-300 min-h-[44px] placeholder-gray-400"
+        />
+
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
+          <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#0056b3]' : ''}`} />
         </div>
+
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 py-1">
+            {filteredEmployees.length === 0 ? (
+              <div className="px-4 py-3 text-xs text-gray-400 font-semibold text-center">
+                {availableEmployees.length === 0
+                  ? t('components.employeeFilter.allSelected')
+                  : (t('components.employeeFilter.noResults') || 'Không tìm thấy kết quả')}
+              </div>
+            ) : (
+              filteredEmployees.map(emp => (
+                <button
+                  key={emp.person_id}
+                  type="button"
+                  onClick={() => handleSelect(emp.person_id)}
+                  className="w-full text-left px-3.5 py-2.5 text-sm text-gray-700 hover:bg-[#0056b3]/5 hover:text-[#0056b3] transition-all flex items-center gap-2.5 font-medium border-b border-gray-50 last:border-0 cursor-pointer group"
+                >
+                  <div className="w-5 h-5 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:bg-[#0056b3]/10 transition-colors">
+                    <UserIcon className="w-3 h-3 text-[#0056b3]/60 group-hover:text-[#0056b3] transition-colors" />
+                  </div>
+                  <span className="truncate">{emp.name || emp.username}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {currentSelected.length > 0 && (

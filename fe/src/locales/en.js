@@ -198,6 +198,7 @@ export const en = {
       leave_title: "Leave Request",
       leave_subtitle: "Select leave days and provide a reason for the request.",
       choose_shift: "Select Work Shift",
+      choose_start_time: "Select Start Time",
       shift_morning: "Morning",
       shift_afternoon: "Afternoon",
       shift_full: "Full Day",
@@ -219,6 +220,8 @@ export const en = {
       col_shift: "Shift",
       col_time: "Time",
       col_action: "Actions",
+      col_start: "Start",
+      col_end: "End",
       total_weekly_hours: "Total hours/week",
       total_leaves: "Total leave days",
       btn_cancel: "Cancel",
@@ -243,7 +246,30 @@ export const en = {
       alert_leave_submit_success: "Leave request submitted successfully!",
       alert_leave_submit_error: "An error occurred while submitting leave request: ",
       alert_leave_fetch_error: "Error getting shift details.",
-      leave_type_register: "Leave request"
+      leave_type_register: "Leave request",
+      // Exception registration specific
+      exception_title: "Arrive Late / Leave Early",
+      exception_subtitle: "Adjust working hours for days with already approved schedules.",
+      exception_type: "Adjustment Type",
+      exception_arrive_early: "Arrive Early",
+      exception_arrive_late: "Arrive Late",
+      exception_leave_early: "Leave Early",
+      exception_leave_late: "Leave Late",
+      exception_select_type: "Select type...",
+      exception_time: "Adjustment Time",
+      exception_reason: "Adjustment Reason",
+      exception_reason_placeholder: "Please enter the reason for adjustment...",
+      btn_submit_exception: "Submit Request",
+      alert_exception_no_schedule: "Date {{date}} does not have an approved work schedule. Please select another day.",
+      alert_exception_success: "Adjustment request submitted successfully!",
+      alert_exception_select_at_least_one: "Please select at least one work day to adjust.",
+      alert_exception_select_time: "Please select adjustment time.",
+      alert_exception_reason_required: "Please enter a reason for adjustment.",
+      alert_exception_confirm_discard: "Are you sure you want to discard this request?",
+      col_adjusted_time: "Adjusted Time",
+      adjusted_schedule: "Adjusted Schedule",
+      standard_hours: "Standard Hours",
+      adjusted_hours: "Adjusted Hours"
     },
     myschedule: {
       work_title: "Work Schedule",
@@ -264,7 +290,12 @@ export const en = {
       completed: "Completed",
       add: "Add",
       no_tasks: "No tasks scheduled for this day",
-      close: "Close Details"
+      close: "Close Details",
+      legend_scheduled: "Worked",
+      legend_unscheduled: "Unscheduled Work",
+      legend_absent: "Absent",
+      unscheduled: "Unscheduled",
+      legend_upcoming: "Upcoming"
     },
     profile: {
       loading: "Loading profile...",
@@ -546,6 +577,7 @@ export const en = {
       req_list: "Requests List",
       register_leave: "Register Leave",
       register_work: "Register Work",
+      register_exception: "Arrive Late/Leave Early",
       tasks: "Tasks",
       tasks_sub: "Manage your tasks",
       add_task: "Add Task",
@@ -555,7 +587,8 @@ export const en = {
       employeeFilter: {
         placeholder: "Filter by employee...",
         allSelected: "All employees selected",
-        clear: "Clear"
+        clear: "Clear",
+        noResults: "No results found"
       },
       subtaskModal: {
         title: "New Sub-task",

@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
     const initializeAuth = async () => {
       try {
         // 1. Thử khôi phục từ localStorage trước làm fallback
-        const savedToken = localStorage.getItem('accessToken');
+        const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
 
         if (savedToken && savedUser) {
@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
               const data = await refreshRes.json();
               setAccessToken(data.token);
               setUser(data.user);
-              localStorage.setItem('accessToken', data.token);
+              localStorage.setItem('token', data.token);
               localStorage.setItem('user', JSON.stringify(data.user));
             }
           } catch (bgError) {

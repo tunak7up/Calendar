@@ -6,6 +6,13 @@ const { sendMail } = require('./mailService');
 const createBulkRequest = async (data) => {
     // Validation for work registration: No weekends allowed
     if (data.type === 'register') {
+        const isException = data.is_exception === true || (data.reason && (
+            data.reason.toLowerCase().includes('sớm') ||
+            data.reason.toLowerCase().includes('muộn') ||
+            data.reason.toLowerCase().includes('early') ||
+            data.reason.toLowerCase().includes('late')
+        ));
+
         for (const detail of data.request_details) {
             const date = new Date(detail.date);
             const day = date.getDay();
@@ -13,33 +20,64 @@ const createBulkRequest = async (data) => {
                 throw new Error(`Bạn không thể đăng ký làm việc vào Thứ 7 hoặc Chủ Nhật (${detail.date}).`);
             }
 
-            // Kiểm tra ngày đó đã có lịch làm việc được duyệt chưa
-            const existingSchedule = await schedule.findOne({
-                where: {
-                    person_id: data.requester_id,
-                    working_date: detail.date
-                }
-            });
-            if (existingSchedule) {
-                throw new Error(`Ngày ${detail.date} đã có lịch làm việc được duyệt. Vui lòng chọn ngày khác.`);
-            }
-
-            // Kiểm tra đã có request đang chờ duyệt cho ngày này chưa
-            const pendingDetail = await request_detail.findOne({
-                include: [{
-                    model: request,
-                    as: 'request',
-                    required: true,
+            if (!isException) {
+                // Kiểm tra ngày đó đã có lịch làm việc được duyệt chưa
+                const existingSchedule = await schedule.findOne({
                     where: {
-                        requester_id: data.requester_id,
-                        status: 'pending',
-                        type: 'register'
+                        person_id: data.requester_id,
+                        working_date: detail.date
                     }
-                }],
-                where: { date: detail.date }
-            });
-            if (pendingDetail) {
-                throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký đang chờ duyệt.`);
+                });
+                if (existingSchedule) {
+                    throw new Error(`Ngày ${detail.date} đã có lịch làm việc được duyệt. Vui lòng chọn ngày khác.`);
+                }
+
+                // Kiểm tra đã có request đang chờ duyệt cho ngày này chưa
+                const pendingDetail = await request_detail.findOne({
+                    include: [{
+                        model: request,
+                        as: 'request',
+                        required: true,
+                        where: {
+                            requester_id: data.requester_id,
+                            status: 'pending',
+                            type: 'register'
+                        }
+                    }],
+                    where: { date: detail.date }
+                });
+                if (pendingDetail) {
+                    throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký đang chờ duyệt.`);
+                }
+            } else {
+                // Đối với đăng ký đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
+                const existingSchedule = await schedule.findOne({
+                    where: {
+                        person_id: data.requester_id,
+                        working_date: detail.date
+                    }
+                });
+                if (!existingSchedule) {
+                    throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể điều chỉnh lịch cho ngày đã được xếp lịch.`);
+                }
+
+                // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa
+                const pendingDetail = await request_detail.findOne({
+                    include: [{
+                        model: request,
+                        as: 'request',
+                        required: true,
+                        where: {
+                            requester_id: data.requester_id,
+                            status: 'pending',
+                            type: 'register'
+                        }
+                    }],
+                    where: { date: detail.date }
+                });
+                if (pendingDetail) {
+                    throw new Error(`Ngày ${detail.date} đã có yêu cầu điều chỉnh hoặc đăng ký đang chờ duyệt.`);
+                }
             }
         }
     }
@@ -81,7 +119,7 @@ const createBulkRequest = async (data) => {
                 }
             });
 
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const frontendUrl = process.env.FRONTEND_URL;
             const typeText = data.type === 'register' ? 'Đăng ký lịch làm' : 'Xin nghỉ làm';
             const html = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -189,16 +227,18 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
             console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
 
             if (data.type.toLowerCase() === 'register') {
-                // Lọc các ngày chưa có schedule để tránh duplicate
                 const newEntries = [];
-                const duplicateDates = [];
                 for (const detail of data.details) {
                     const existing = await schedule.findOne({
                         where: { person_id: data.requester_id, working_date: detail.date },
                         transaction: t
                     });
                     if (existing) {
-                        duplicateDates.push(detail.date);
+                        await existing.update({
+                            start_time: detail.start_time,
+                            end_time: detail.end_time
+                        }, { transaction: t });
+                        console.log(`Updated existing schedule for person ${data.requester_id} on date ${detail.date} to ${detail.start_time} - ${detail.end_time}`);
                     } else {
                         newEntries.push({
                             person_id: data.requester_id,
@@ -209,13 +249,9 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
                     }
                 }
 
-                if (duplicateDates.length > 0) {
-                    console.warn(`Bỏ qua ${duplicateDates.length} ngày đã có lịch: ${duplicateDates.join(', ')}`);
-                }
-
                 if (newEntries.length > 0) {
                     await schedule.bulkCreate(newEntries, { transaction: t });
-                    console.log(`Successfully synced ${newEntries.length} entries to schedule.`);
+                    console.log(`Successfully synced ${newEntries.length} new entries to schedule.`);
                 }
             } else if (data.type.toLowerCase() === 'leave') {
                 // For leave, we remove the corresponding work shifts from the schedule

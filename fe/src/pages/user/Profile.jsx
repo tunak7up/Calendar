@@ -133,11 +133,23 @@ export default function Profile() {
         }
 
         if (!checkIn) {
-          // Có lịch nhưng vắng (Đỏ)
-          bg = '#fee2e2';
-          border = '#fca5a5';
-          text = '#991b1b';
-          title = `${shiftStr} (${i18n.language === 'vi' ? 'Vắng/Chưa check-in' : 'Absent/No check-in'})`;
+          const todayStr = new Date().toISOString().split('T')[0];
+          const now = new Date();
+          const isFuture = item.date > todayStr || (item.date === todayStr && item.schedule.start_time && new Date(item.schedule.start_time) > now);
+
+          if (isFuture) {
+            // Lịch tương lai chưa đến giờ làm -> Màu xám
+            bg = '#f3f4f6'; // gray-100
+            border = '#d1d5db'; // gray-300
+            text = '#4b5563'; // gray-600
+            title = `${shiftStr} (${t('myschedule.legend_upcoming')})`;
+          } else {
+            // Có lịch nhưng vắng (Đỏ)
+            bg = '#fee2e2';
+            border = '#fca5a5';
+            text = '#991b1b';
+            title = `${shiftStr} (${t('myschedule.legend_absent')})`;
+          }
         } else {
           // Đi làm đúng lịch -> Xanh dương
           bg = '#dbeafe';
@@ -150,7 +162,7 @@ export default function Profile() {
         bg = '#fef3c7'; // amber-100
         border = '#fcd34d'; // amber-300
         text = '#92400e'; // amber-800
-        title = `${i18n.language === 'vi' ? 'Ngoài lịch' : 'Unscheduled'} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
+        title = `${t('myschedule.unscheduled')} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
       }
 
       return {
@@ -358,15 +370,19 @@ export default function Profile() {
             <div className="flex flex-wrap gap-3 mb-5 text-[10px] font-bold text-gray-500 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 shadow-inner">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span>
-                <span className="text-blue-800">{i18n.language === 'vi' ? 'Đi làm đúng lịch' : 'Worked (Scheduled)'}</span>
+                <span className="text-blue-800">{t('myschedule.legend_scheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-[#fef3c7] border border-[#fcd34d]"></span>
-                <span className="text-amber-800">{i18n.language === 'vi' ? 'Đi làm ngoài lịch' : 'Unscheduled Work'}</span>
+                <span className="text-amber-800">{t('myschedule.legend_unscheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-red-100 border border-red-200"></span>
-                <span className="text-red-800">{i18n.language === 'vi' ? 'Vắng / Chưa check-in' : 'Absent / No Check-in'}</span>
+                <span className="text-red-800">{t('myschedule.legend_absent')}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-gray-100 border border-gray-300"></span>
+                <span className="text-gray-600">{t('myschedule.legend_upcoming')}</span>
               </div>
             </div>
 

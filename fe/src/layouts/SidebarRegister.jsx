@@ -94,6 +94,15 @@ export default function SidebarRegister() {
                 <span className="ms-4 font-semibold text-sm">{t('sidebar.register_work')}</span>
               </Link>
             </li>
+            <li>
+              <Link
+                to="/register/exception"
+                className={getLinkClass('/register/exception')}
+              >
+                <ClockIcon className={getIconClass('/register/exception')} />
+                <span className="ms-4 font-semibold text-sm">{t('sidebar.register_exception')}</span>
+              </Link>
+            </li>
           </ul>
         </div>
       </aside>

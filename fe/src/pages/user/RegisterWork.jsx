@@ -9,8 +9,17 @@ import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
+import ShiftSelector from '../../components/ShiftSelector';
 
-
+const calculateHours = (start, end) => {
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  let diff = (endH + endM / 60) - (startH + startM / 60);
+  if (startH < 12 && endH > 13) {
+    diff -= 1; // subtract 1 hour for lunch break
+  }
+  return Math.max(0, Math.round(diff * 10) / 10);
+};
 
 export default function RegisterWork() {
   const location = useLocation();
@@ -22,8 +31,24 @@ export default function RegisterWork() {
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
   const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : []);
   const [selectedShift, setSelectedShift] = useState('Morning');
+  const [shiftStartTime, setShiftStartTime] = useState('08:30');
+  const [shiftEndTime, setShiftEndTime] = useState('18:00');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+
+  const handleShiftChange = (shift) => {
+    setSelectedShift(shift);
+    if (shift === 'Morning') {
+      setShiftStartTime('08:30');
+      setShiftEndTime('12:00');
+    } else if (shift === 'Afternoon') {
+      setShiftStartTime('13:00');
+      setShiftEndTime('17:30');
+    } else { // Full Day
+      setShiftStartTime('08:30');
+      setShiftEndTime('18:00');
+    }
+  };
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -67,6 +92,8 @@ export default function RegisterWork() {
   const resetForm = () => {
     setDraftDates([]);
     setSelectedShift('Morning');
+    setShiftStartTime('08:30');
+    setShiftEndTime('18:00');
     setRepeatOption('none');
     setRepeatInterval(1);
     setEndOption('never');
@@ -130,7 +157,9 @@ export default function RegisterWork() {
           const shiftData = {
             date: gDateStr,
             shift: selectedShift,
-            hours: selectedShift === 'Full Day' ? 8 : 4
+            hours: calculateHours(shiftStartTime, shiftEndTime),
+            startTime: shiftStartTime,
+            endTime: shiftEndTime
           };
           if (existingIndex >= 0) {
             newSchedule[existingIndex] = shiftData;
@@ -164,17 +193,12 @@ export default function RegisterWork() {
 
     // Mapping schedule items to API request_details format
     const requestDetails = schedule.map(item => {
-      let startTime, endTime;
-      if (item.shift === 'Morning') {
-        startTime = `${item.date}T08:30:00+07:00`;
-        endTime = `${item.date}T12:00:00+07:00`;
-      } else if (item.shift === 'Afternoon') {
-        startTime = `${item.date}T13:00:00+07:00`;
-        endTime = `${item.date}T17:30:00+07:00`;
-      } else { // Full Day
-        startTime = `${item.date}T08:30:00+07:00`;
-        endTime = `${item.date}T17:30:00+07:00`;
-      }
+      const start = item.startTime || '08:30';
+      const end = item.endTime || '18:00';
+      
+      const startTime = `${item.date}T${start}:00+07:00`;
+      const endTime = `${item.date}T${end}:00+07:00`;
+
       return {
         date: item.date,
         start_time: startTime,
@@ -213,10 +237,8 @@ export default function RegisterWork() {
   const sortedSchedule = [...schedule].sort((a, b) => a.date.localeCompare(b.date));
   const totalWeeklyHours = schedule.reduce((sum, item) => sum + item.hours, 0);
 
-  const getTimeRangeStr = (shift) => {
-    if (shift === 'Morning') return '08:30 - 12:00';
-    if (shift === 'Afternoon') return '13:00 - 17:30';
-    return '08:30 - 17:30';
+  const getShiftTimeRange = (item) => {
+    return `${item.startTime || '08:30'} - ${item.endTime || '18:00'}`;
   };
 
   return (
@@ -242,43 +264,16 @@ export default function RegisterWork() {
         {/* Choose Shift */}
         <div className="mb-10">
           <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">{t('register.choose_shift')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
-              onClick={() => setSelectedShift('Morning')}
-              className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Morning'
-                ? 'border-blue-500 bg-blue-50/30'
-                : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
-            >
-              <SunIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Morning' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">{t('register.shift_morning')}</span>
-              <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 12:00</span>
-            </button>
+          <ShiftSelector
+            selectedShift={selectedShift}
+            onShiftChange={handleShiftChange}
+            shiftStartTime={shiftStartTime}
+            onStartTimeChange={setShiftStartTime}
+            shiftEndTime={shiftEndTime}
+            onEndTimeChange={setShiftEndTime}
+          />
+        </div>
 
-            <button
-              onClick={() => setSelectedShift('Afternoon')}
-              className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Afternoon'
-                ? 'border-blue-500 bg-blue-50/30'
-                : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
-            >
-              <CloudIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Afternoon' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">{t('register.shift_afternoon')}</span>
-              <span className="text-xs text-gray-400 mt-1 font-medium">13:00 - 17:30</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedShift('Full Day')}
-              className={`flex flex-col items-start p-6 rounded-2xl border-2 transition-all ${selectedShift === 'Full Day'
-                ? 'border-blue-500 bg-blue-50/30'
-                : 'border-transparent bg-white hover:border-gray-200 shadow-sm'
-                }`}
-            >
-              <CalendarDaysIcon className={`w-6 h-6 mb-4 ${selectedShift === 'Full Day' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-gray-900">{t('register.shift_full')}</span>
-              <span className="text-xs text-gray-400 mt-1 font-medium">08:30 - 17:30</span>
-            </button>
-          </div>
           {/* Container 1: Repeat controls */}
           <div className="mt-6 border-t border-gray-100 pt-5">
             <div className="flex flex-row items-center gap-3 flex-nowrap">
@@ -394,7 +389,6 @@ export default function RegisterWork() {
               )}
             </Button>
           </div>
-        </div>
 
         {/* Selected Dates Table */}
         {schedule.length > 0 && (
@@ -425,7 +419,7 @@ export default function RegisterWork() {
                           {item.shift === 'Morning' ? t('register.shift_morning') : item.shift === 'Afternoon' ? t('register.shift_afternoon') : t('register.shift_full')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                          {getTimeRangeStr(item.shift)}
+                          {getShiftTimeRange(item)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <Button

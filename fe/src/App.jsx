@@ -7,6 +7,7 @@ import RegistrationHistory from './pages/user/RegistrationHistory'
 import RegistrationHistoryDetails from './pages/user/RegistrationHistoryDetails'
 import RegisterWork from './pages/user/RegisterWork'
 import RegisterLeave from './pages/user/RegisterLeave'
+import RegisterException from './pages/user/RegisterException'
 import MySchedule from './pages/user/MySchedule'
 import Login from './pages/auth/Login'
 import SidebarTask from './layouts/SidebarTask'
@@ -115,6 +116,7 @@ function App() {
             <Route path="/schedule" element={<MySchedule />} />
             <Route path="/register/work" element={<RegisterWork />} />
             <Route path="/register/leave" element={<RegisterLeave />} />
+            <Route path="/register/exception" element={<RegisterException />} />
             <Route path="/history" element={<RegistrationHistory />} />
             <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
 

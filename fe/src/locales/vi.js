@@ -197,6 +197,7 @@ export const vi = {
       leave_title: "Đăng ký nghỉ phép",
       leave_subtitle: "Chọn ngày nghỉ và cung cấp lý do cho yêu cầu.",
       choose_shift: "Chọn ca làm việc",
+      choose_start_time: "Chọn giờ bắt đầu",
       shift_morning: "Buổi sáng",
       shift_afternoon: "Buổi chiều",
       shift_full: "Cả ngày",
@@ -218,6 +219,8 @@ export const vi = {
       col_shift: "Ca làm",
       col_time: "Thời gian",
       col_action: "Thao tác",
+      col_start: "Bắt đầu",
+      col_end: "Kết thúc",
       total_weekly_hours: "Tổng giờ tuần",
       total_leaves: "Tổng ngày nghỉ",
       btn_cancel: "Hủy",
@@ -242,7 +245,30 @@ export const vi = {
       alert_leave_submit_success: "Đã gửi yêu cầu nghỉ phép thành công!",
       alert_leave_submit_error: "Có lỗi xảy ra khi gửi yêu cầu nghỉ phép: ",
       alert_leave_fetch_error: "Lỗi khi lấy thông tin ca làm việc.",
-      leave_type_register: "Đăng ký nghỉ phép"
+      leave_type_register: "Đăng ký nghỉ phép",
+      // Exception registration specific
+      exception_title: "Đăng ký đi muộn, về sớm",
+      exception_subtitle: "Điều chỉnh thời gian làm việc đối với các ngày đã có lịch được duyệt.",
+      exception_type: "Loại điều chỉnh",
+      exception_arrive_early: "Đi làm sớm",
+      exception_arrive_late: "Đi làm muộn",
+      exception_leave_early: "Về sớm",
+      exception_leave_late: "Về muộn",
+      exception_select_type: "Chọn loại điều chỉnh...",
+      exception_time: "Thời gian điều chỉnh",
+      exception_reason: "Lý do điều chỉnh",
+      exception_reason_placeholder: "Vui lòng nhập lý do điều chỉnh giờ làm...",
+      btn_submit_exception: "Gửi yêu cầu điều chỉnh",
+      alert_exception_no_schedule: "Ngày {{date}} chưa có lịch làm việc được duyệt. Vui lòng chọn ngày khác.",
+      alert_exception_success: "Gửi yêu cầu điều chỉnh thành công!",
+      alert_exception_select_at_least_one: "Vui lòng chọn ít nhất một ngày làm việc để điều chỉnh.",
+      alert_exception_select_time: "Vui lòng chọn giờ điều chỉnh.",
+      alert_exception_reason_required: "Vui lòng nhập lý do điều chỉnh.",
+      alert_exception_confirm_discard: "Bạn có chắc muốn hủy yêu cầu điều chỉnh giờ không?",
+      col_adjusted_time: "Giờ điều chỉnh",
+      adjusted_schedule: "Danh sách điều chỉnh",
+      standard_hours: "Giờ chuẩn",
+      adjusted_hours: "Giờ điều chỉnh"
     },
     myschedule: {
       work_title: "Lịch làm việc",
@@ -263,7 +289,12 @@ export const vi = {
       completed: "Đã hoàn thành",
       add: "Thêm",
       no_tasks: "Không có công việc nào được lên lịch cho ngày này",
-      close: "Đóng chi tiết"
+      close: "Đóng chi tiết",
+      legend_scheduled: "Đi làm đúng lịch",
+      legend_unscheduled: "Đi làm ngoài lịch",
+      legend_absent: "Đăng ký nhưng vắng",
+      unscheduled: "Ngoài lịch",
+      legend_upcoming: "Chưa đến giờ"
     },
     profile: {
       loading: "Đang tải hồ sơ...",
@@ -545,6 +576,7 @@ export const vi = {
       req_list: "Danh sách yêu cầu",
       register_leave: "Đăng ký nghỉ phép",
       register_work: "Đăng ký làm việc",
+      register_exception: "Đi muộn, về sớm",
       tasks: "Công việc",
       tasks_sub: "Quản lý công việc của bạn",
       add_task: "Thêm công việc",
@@ -554,7 +586,8 @@ export const vi = {
       employeeFilter: {
         placeholder: "Lọc theo nhân viên...",
         allSelected: "Đã chọn tất cả nhân viên",
-        clear: "Xóa"
+        clear: "Xóa",
+        noResults: "Không tìm thấy kết quả"
       },
       subtaskModal: {
         title: "Công việc con mới",

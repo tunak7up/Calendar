@@ -155,3 +155,9 @@
 .fc-daygrid-day:hover {
   background-color: #f8fafc;
 }
+
+/* Hide native datepicker icon globally */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none !important;
+}

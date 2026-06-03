@@ -268,8 +268,8 @@ export default function AdminRequests() {
             <td className="py-4 px-6 text-sm font-semibold text-gray-900">
               {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
             </td>
-            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.type === 'register' ? t('requests.val_register_schedule') : req.reason}>
-              {req.type === 'register' ? t('requests.val_register_schedule') : (req.reason || 'N/A')}
+            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : 'N/A')}>
+              {req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : 'N/A')}
             </td>
             <td className="py-4 px-6 text-sm text-gray-500 font-medium">
               <span className="flex items-center gap-2">

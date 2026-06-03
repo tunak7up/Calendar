@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ClockIcon, 
-  SparklesIcon, 
+import {
+  ClockIcon,
+  SparklesIcon,
   ChevronRightIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -31,12 +31,12 @@ export default function RegisterException() {
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
-  
+
   // Refined states
   const [selectedDate, setSelectedDate] = useState(null); // Single object: { date, standardStart, standardEnd, adjustedTime }
   const [exceptionType, setExceptionType] = useState(''); // 'arrive_early', 'arrive_late', 'leave_early', 'leave_late' or ''
   const [reason, setReason] = useState('');
-  
+
   const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
 
@@ -55,7 +55,7 @@ export default function RegisterException() {
             const currentSchedule = result.data.find(s => s.working_date.split(/[T ]/)[0] === initialDate);
             const standardStart = currentSchedule ? getHHMM(currentSchedule.start_time) : '08:30';
             const standardEnd = currentSchedule ? getHHMM(currentSchedule.end_time) : '18:00';
-            
+
             setSelectedDate({
               date: initialDate,
               standardStart,
@@ -79,14 +79,14 @@ export default function RegisterException() {
       alert(t('register.alert_past_date'));
       return;
     }
-    
+
     // Check if weekend
     const day = dObj.getDay();
     if (day === 0 || day === 6) {
       alert(t('register.alert_weekend'));
       return;
     }
-    
+
     // Requires an approved work schedule on this date
     if (!workDays.includes(dStr)) {
       alert(t('register.alert_exception_no_schedule', { date: dStr }));
@@ -96,7 +96,7 @@ export default function RegisterException() {
     const currentSchedule = workSchedules.find(s => s.working_date.split(/[T ]/)[0] === dStr);
     const standardStart = currentSchedule ? getHHMM(currentSchedule.start_time) : '08:30';
     const standardEnd = currentSchedule ? getHHMM(currentSchedule.end_time) : '18:00';
-    
+
     let defaultAdjusted = '';
     if (exceptionType === 'arrive_early') defaultAdjusted = '08:00';
     else if (exceptionType === 'arrive_late') {
@@ -212,7 +212,7 @@ export default function RegisterException() {
       return options.filter(t => t < standardStart);
     }
     if (type === 'arrive_late') {
-      const options = ['09:00', '09:30', '10:00', '10:30', '11:00', '13:30', '14:00', '14:30', '15:00'];
+      const options = ['09:00', '09:30', '13:30', '14:00'];
       return options.filter(t => t > standardStart && t < standardEnd);
     }
     if (type === 'leave_early') {
@@ -252,7 +252,7 @@ export default function RegisterException() {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 space-y-10">
-        
+
         {/* Step 1: Select Date (Only 1 Day) */}
         <div>
           <h2 className="text-xs font-bold text-gray-400 tracking-wider mb-5 uppercase flex items-center gap-2">
@@ -290,15 +290,13 @@ export default function RegisterException() {
                   <div
                     key={cfg.id}
                     onClick={() => handleTypeChange(cfg.id)}
-                    className={`flex flex-col justify-center items-center p-5 rounded-2xl border-2 transition-all cursor-pointer text-center relative overflow-hidden group select-none ${
-                      active
-                        ? 'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/10'
-                        : 'border-gray-100 bg-white hover:border-gray-250 hover:shadow-sm'
-                    }`}
+                    className={`flex flex-col justify-center items-center p-5 rounded-2xl border-2 transition-all cursor-pointer text-center relative overflow-hidden group select-none ${active
+                      ? 'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/10'
+                      : 'border-gray-100 bg-white hover:border-gray-250 hover:shadow-sm'
+                      }`}
                   >
-                    <span className={`text-[14px] font-extrabold tracking-tight transition-colors ${
-                      active ? 'text-blue-700 font-black' : 'text-gray-600 group-hover:text-gray-900'
-                    }`}>
+                    <span className={`text-[14px] font-extrabold tracking-tight transition-colors ${active ? 'text-blue-700 font-black' : 'text-gray-600 group-hover:text-gray-900'
+                      }`}>
                       {t(cfg.key)}
                     </span>
                     {active && (
@@ -321,9 +319,9 @@ export default function RegisterException() {
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                 {t('register.adjusted_schedule')}
               </h2>
-              
+
               <div className="bg-white border-2 border-blue-500/20 rounded-3xl p-6 shadow-sm w-full space-y-6">
-                
+
                 {/* Header Information */}
                 <div className="flex justify-between items-start border-b border-gray-100 pb-4">
                   <div>
@@ -343,7 +341,7 @@ export default function RegisterException() {
                     <label className="text-[10px] font-black text-blue-600 uppercase tracking-wider block mb-2">
                       {t('register.exception_time')}
                     </label>
-                    
+
                     {getTimeOptions(exceptionType, selectedDate.standardStart, selectedDate.standardEnd).length > 0 ? (
                       <select
                         value={selectedDate.adjustedTime}
@@ -401,20 +399,13 @@ export default function RegisterException() {
             <div className="h-px bg-gray-100 w-full my-6"></div>
 
             {/* Submit & Cancel Actions */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4 bg-gray-50/50 rounded-2xl px-5 py-3 shadow-sm border border-gray-100">
-                <CheckCircleIcon className="w-5 h-5 text-blue-500" />
-                <div>
-                  <h3 className="text-[9px] font-bold text-gray-400 tracking-wider uppercase">Lịch điều chỉnh</h3>
-                  <span className="text-xl font-black text-gray-800">1 {t('workhours.days_unit')}</span>
-                </div>
-              </div>
+            <div className="flex justify-end items-center">
               <div className="flex items-center gap-3">
                 <Button variant="secondary" onClick={handleCancel}>
                   {t('register.btn_cancel')}
                 </Button>
-                <Button 
-                  onClick={handleSubmit} 
+                <Button
+                  onClick={handleSubmit}
                   disabled={!selectedDate || !exceptionType || !reason.trim()}
                 >
                   {t('register.btn_submit_exception')}

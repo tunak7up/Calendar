@@ -268,7 +268,8 @@ export const vi = {
       col_adjusted_time: "Giờ điều chỉnh",
       adjusted_schedule: "Danh sách điều chỉnh",
       standard_hours: "Giờ chuẩn",
-      adjusted_hours: "Giờ điều chỉnh"
+      adjusted_hours: "Giờ điều chỉnh",
+      alert_past_date: "Bạn không thể đăng ký lịch cho ngày đã qua."
     },
     myschedule: {
       work_title: "Lịch làm việc",
@@ -576,7 +577,7 @@ export const vi = {
       req_list: "Danh sách yêu cầu",
       register_leave: "Đăng ký nghỉ phép",
       register_work: "Đăng ký làm việc",
-      register_exception: "Đi muộn, về sớm",
+      register_exception: "Đi sớm, về muộn",
       tasks: "Công việc",
       tasks_sub: "Quản lý công việc của bạn",
       add_task: "Thêm công việc",

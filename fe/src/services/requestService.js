@@ -5,6 +5,10 @@ export const requestService = {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
+  submitExceptionRequest: (payload) => apiFetch('/request/exception', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
   getAllRequests: () => apiFetch('/request/'),
   getRequestsByRequester: (requesterId) => apiFetch(`/request/requester/${requesterId}`),
   getRequestById: (id) => apiFetch(`/request/${id}`),

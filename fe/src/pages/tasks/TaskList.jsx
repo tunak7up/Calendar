@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import TaskStatusDropdown from '../../components/TaskStatusDropdown';
+import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -201,8 +201,8 @@ export default function TaskList({ isAdmin }) {
     { key: 'assigner', label: t('tasks.col_assigner'), sortable: true, className: 'w-[12%] min-w-[110px]' },
     { key: 'start_time', label: t('tasks.col_start'), sortable: true, className: 'w-[100px]' },
     { key: 'due_date', label: t('tasks.col_deadline'), sortable: true, className: 'w-[100px]' },
-    { key: 'status', label: t('tasks.col_status'), sortable: true, className: 'w-[90px]' },
-    { key: 'extra', label: isAdmin ? t('tasks.col_participants') : t('tasks.col_role'), sortable: false },
+    { key: 'status', label: t('tasks.col_status'), sortable: true, className: 'w-[140px]' },
+    { key: 'extra', label: isAdmin ? t('tasks.col_participants') : t('tasks.col_role'), sortable: false, className: 'w-[120px]' },
     { key: 'created_at', label: t('tasks.col_created'), sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
     { key: 'action', label: t('tasks.col_actions'), sortable: false, align: 'center', className: 'w-[80px]' },
   ];
@@ -343,15 +343,15 @@ export default function TaskList({ isAdmin }) {
             <td className="px-4 py-5 text-gray-600 text-sm truncate w-[12%] min-w-[110px]" title={task.assigner}>{task.assigner}</td>
             <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
             <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
-            <td className="px-4 py-5 w-[120px]" onClick={(e) => e.stopPropagation()}>
-              <TaskStatusDropdown
+            <td className="px-4 py-5 w-[140px]" onClick={(e) => e.stopPropagation()}>
+              <TaskStatusSelect
                 currentStatus={task.status}
                 dueDate={task.due_date}
                 onStatusChange={(newStatus) => handleStatusChange(task.task_id, newStatus)}
                 size="sm"
               />
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm">
+            <td className="px-4 py-5 text-gray-600 text-sm w-[120px] truncate">
               {isAdmin ? (
                 <div className="flex flex-wrap gap-1">
                   {task.participants && task.participants.map(p => (

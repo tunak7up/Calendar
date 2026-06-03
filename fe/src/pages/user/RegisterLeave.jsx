@@ -91,6 +91,11 @@ export default function RegisterLeave() {
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);
+    const todayStr = getFullDateStr(new Date());
+    if (dStr < todayStr) {
+      alert(t('register.alert_past_date'));
+      return;
+    }
     if (schedule.some(item => item.date === dStr)) {
       setSchedule(prev => prev.filter(item => item.date !== dStr));
     } else {

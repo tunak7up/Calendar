@@ -77,11 +77,7 @@ export function AuthProvider({ children }) {
       }
     };
 
-    if (!localStorage.getItem('user')) {
-      initializeAuth();
-    } else {
-      setIsLoading(false);
-    }
+    initializeAuth();
     
     return () => {
       isMounted = false;
@@ -91,6 +87,7 @@ export function AuthProvider({ children }) {
   const login = (data) => {
     setAccessToken(data.token);
     setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
   };
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -111,6 +108,7 @@ export function AuthProvider({ children }) {
       // Chỉ xóa state SAU KHI api đăng xuất hoàn thành
       setUser(null);
       setAccessToken(null);
+      localStorage.removeItem('user');
       
       // Chuyển hướng người dùng về trang đăng nhập
       window.location.href = '/login';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { getFullDateStr } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
@@ -25,19 +26,7 @@ export const generateWeek = (dateObj, lang = 'vi') => {
   return dates;
 };
 
-
 // ── Component ─────────────────────────────────────────────────────────────────
-/**
- * WeekDatePicker
- *
- * Props:
- *   viewDate      {Date}       – the date used to determine which week is shown
- *   onViewChange  {fn(Date)}   – called when the calendar picker changes the view week
- *   selectedDates {string[]}   – array of "YYYY-MM-DD" strings that are highlighted
- *   onDayClick    {fn(Date)}   – called when the user clicks a day button
- *   multiSelect   {boolean}    – if false (default), clicking a selected day deselects it;
- *                                if true, multiple days stay selected (toggle behaviour)
- */
 export default function WeekDatePicker({
   viewDate,
   onViewChange,
@@ -48,6 +37,7 @@ export default function WeekDatePicker({
   const { t, i18n } = useTranslation();
   const weekDates = generateWeek(viewDate, i18n.language);
   const viewDateStr = getFullDateStr(viewDate);
+  const todayStr = getFullDateStr(new Date());
   const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-US';
   const weekStartStr = weekDates[0].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   const weekEndStr = weekDates[6].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -120,20 +110,22 @@ export default function WeekDatePicker({
           const hasWork = workDays.includes(d.fullDate);
           const colPos = d.dateObj.getDay();
           const isWeekend = colPos === 0 || colPos === 6;
+          const isPast = d.fullDate < todayStr;
+          const isDisabled = isWeekend || isPast;
 
           return (
             <button
               key={d.fullDate}
-              disabled={isWeekend}
+              disabled={isDisabled}
               onClick={() => onDayClick(d.dateObj)}
               className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative border-2 ${
-                active ? 'bg-blue-50 border-blue-400 shadow-md' : (isWeekend ? 'opacity-40 cursor-not-allowed border-transparent' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-sm')
+                active ? 'bg-blue-50 border-blue-400 shadow-md' : (isDisabled ? 'opacity-40 cursor-not-allowed border-transparent bg-gray-50/50' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-sm')
               }`}
             >
-              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : (isWeekend ? 'text-gray-300' : 'text-gray-400')}`}>
+              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : (isDisabled ? 'text-gray-350' : 'text-gray-400')}`}>
                 {d.day}
               </span>
-              <span className={`text-xl font-bold ${active ? 'text-blue-700' : (isWeekend ? 'text-gray-300' : 'text-gray-900')}`}>
+              <span className={`text-xl font-bold ${active ? 'text-blue-700' : (isDisabled ? 'text-gray-300' : 'text-gray-900')}`}>
                 {d.date}
               </span>
               {hasWork && (

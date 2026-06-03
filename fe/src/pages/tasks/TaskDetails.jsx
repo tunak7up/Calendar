@@ -27,7 +27,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import ParticipantManager from '../../components/ParticipantManager';
-import TaskStatusDropdown from '../../components/TaskStatusDropdown';
+import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
 
@@ -68,7 +68,7 @@ const downloadFile = async (url, fileName) => {
 
 const CommentItem = ({ comment, persons }) => {
   const [files, setFiles] = useState([]);
-  
+
   useEffect(() => {
     const fetchFiles = async () => {
       try {
@@ -91,15 +91,15 @@ const CommentItem = ({ comment, persons }) => {
         <span className="text-[10px] text-gray-400">{formatDateTime(comment.created_at || comment.time)}</span>
       </div>
       <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content || comment.text}</p>
-      
+
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
           {files.map(f => {
             const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${f.url}`;
             const fileName = f.file_name || 'File đính kèm';
             return (
-              <button 
-                key={f.file_attachment_id} 
+              <button
+                key={f.file_attachment_id}
                 onClick={() => downloadFile(fullUrl, fileName)}
                 className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
               >
@@ -110,14 +110,14 @@ const CommentItem = ({ comment, persons }) => {
           })}
         </div>
       )}
-      
+
       {comment.attachments && comment.attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
           {comment.attachments.map(att => {
             const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
             return (
-              <button 
-                key={att.comment_attachment_id} 
+              <button
+                key={att.comment_attachment_id}
                 onClick={() => downloadFile(fullUrl, 'Attachment')}
                 className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
               >
@@ -164,7 +164,7 @@ export default function TaskDetails() {
       const data = await taskService.getTaskById(id);
       if (data.success) {
         setFullTask(data.data);
-        
+
         // If it's a sub-task, fetch parent info
         if (data.data.parent_id) {
           const pData = await taskService.getTaskById(data.data.parent_id);
@@ -241,9 +241,9 @@ export default function TaskDetails() {
         participant_id: personId,
         role: 'assignee'
       });
-      
+
       if (res.success) {
-        fetchTaskData(); 
+        fetchTaskData();
       }
     } catch (error) {
       console.error('Error adding participant:', error);
@@ -341,7 +341,7 @@ export default function TaskDetails() {
 
       if (res.success) {
         setNewComment('');
-        
+
         // Upload comment files
         if (commentFiles.length > 0) {
           const commentId = res.data.comment_id || res.data.id;
@@ -466,7 +466,7 @@ export default function TaskDetails() {
       <div className="flex items-center justify-between mb-8">
         <BackButton />
 
-        <button 
+        <button
           onClick={handleDeleteTask}
           className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm"
         >
@@ -513,10 +513,10 @@ export default function TaskDetails() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 mt-2">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 leading-tight">
                       {fullTask.title || fullTask.name || ''}
                     </h1>
-                    <button 
+                    <button
                       onClick={() => {
                         setEditedTitle(fullTask.title || fullTask.name || '');
                         setIsEditingTitle(true);
@@ -536,7 +536,7 @@ export default function TaskDetails() {
                   </div>
                   <div>
                     <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tight">{t('taskdetails.belongs_to')}</p>
-                    <button 
+                    <button
                       onClick={() => navigate(`/tasks/${parentTask.task_id}`, { state: { task: parentTask } })}
                       className="text-xs font-bold text-blue-700 hover:underline text-left"
                     >
@@ -547,8 +547,8 @@ export default function TaskDetails() {
               )}
             </div>
             <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
-              <TaskStatusDropdown 
-                currentStatus={fullTask.status} 
+              <TaskStatusSelect
+                currentStatus={fullTask.status}
                 dueDate={fullTask.due_date}
                 onStatusChange={async (val) => {
                   const res = await taskService.updateTask(fullTask.task_id, { status: val });
@@ -591,7 +591,7 @@ export default function TaskDetails() {
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.description')}</h2>
             </div>
             {!isEditingDescription && (
-              <button 
+              <button
                 onClick={() => {
                   setEditedDescription(fullTask.description || '');
                   setIsEditingDescription(true);
@@ -603,7 +603,7 @@ export default function TaskDetails() {
               </button>
             )}
           </div>
-          
+
           {isEditingDescription ? (
             <div className="space-y-3">
               <textarea
@@ -614,13 +614,13 @@ export default function TaskDetails() {
                 autoFocus
               />
               <div className="flex justify-end gap-2">
-                <button 
+                <button
                   onClick={() => setIsEditingDescription(false)}
                   className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   {t('taskdetails.btn_cancel')}
                 </button>
-                <button 
+                <button
                   onClick={handleUpdateDescription}
                   className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                 >
@@ -674,7 +674,7 @@ export default function TaskDetails() {
               )}
             </div>
           </div>
-          
+
           {taskAttachments.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {taskAttachments.map(att => {
@@ -682,8 +682,8 @@ export default function TaskDetails() {
                 const fileName = att.file_name || 'File đính kèm';
                 return (
                   <div key={att.file_attachment_id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-indigo-50/50 transition-colors group">
-                    <button 
-                      onClick={() => downloadFile(fullUrl, fileName)} 
+                    <button
+                      onClick={() => downloadFile(fullUrl, fileName)}
                       className="flex items-center gap-2 overflow-hidden flex-1 mr-2 text-left"
                     >
                       <DocumentTextIcon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
@@ -691,14 +691,14 @@ export default function TaskDetails() {
                         {fileName}
                       </span>
                     </button>
-                  <button
-                    onClick={() => handleDeleteAttachment(att.file_attachment_id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                    title={t('taskdetails.remove_file')}
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
-                </div>
+                    <button
+                      onClick={() => handleDeleteAttachment(att.file_attachment_id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                      title={t('taskdetails.remove_file')}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -710,7 +710,7 @@ export default function TaskDetails() {
         </div>
 
         {/* Participants Section - Reused Component */}
-        <ParticipantManager 
+        <ParticipantManager
           participants={fullTask.participants}
           allUsers={allUsers}
           onAdd={(personId) => handleAddParticipant(personId)}
@@ -799,8 +799,8 @@ export default function TaskDetails() {
                         <div>
                           <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{sub.title || sub.name || 'Untitled Sub-task'}</h3>
                           <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
-                            <TaskStatusDropdown 
-                              currentStatus={sub.status} 
+                            <TaskStatusSelect
+                              currentStatus={sub.status}
                               dueDate={sub.due_date}
                               size="sm"
                               onStatusChange={async (val) => {

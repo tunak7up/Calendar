@@ -6,6 +6,7 @@ import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
+import TaskStatusSelect from '../../components/TaskStatusSelect';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -215,11 +216,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleStatusChange = (e, taskId) => {
-    e.stopPropagation(); // Ngăn click vào row
+  const handleStatusChange = (newStatus, taskId) => {
     setPendingStatusUpdates(prev => ({
       ...prev,
-      [taskId]: e.target.value
+      [taskId]: newStatus
     }));
   };
 
@@ -421,20 +421,13 @@ export default function Dashboard() {
                           {formatDateTime(task.due_date)}
                         </td>
                         <td className="py-4 px-6 text-center" onClick={e => e.stopPropagation()}>
-                          <select 
-                            value={currentStatus}
-                            onChange={(e) => handleStatusChange(e, task.task_id)}
+                          <TaskStatusSelect 
+                            currentStatus={currentStatus}
+                            onStatusChange={(newStatus) => handleStatusChange(newStatus, task.task_id)}
                             disabled={!!checkOutTime}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border-0 outline-none ring-1 ring-inset cursor-pointer
-                              ${currentStatus === 'completed' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' :
-                                currentStatus === 'in progress' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 hover:bg-blue-100' :
-                                'bg-gray-50 text-gray-700 ring-gray-500/20 hover:bg-gray-100'}
-                            `}
-                          >
-                            <option value="pending" className="bg-white text-gray-900 font-medium">{t('dashboard.status_pending')}</option>
-                            <option value="in progress" className="bg-white text-gray-900 font-medium">{t('dashboard.status_in_progress')}</option>
-                            <option value="completed" className="bg-white text-gray-900 font-medium">{t('dashboard.status_completed')}</option>
-                          </select>
+                            dueDate={task.due_date}
+                            size="sm"
+                          />
                         </td>
                       </tr>
                     );

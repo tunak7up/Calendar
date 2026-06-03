@@ -80,6 +80,11 @@ export default function RegisterWork() {
       return;
     }
     const dStr = getFullDateStr(dObj);
+    const todayStr = getFullDateStr(new Date());
+    if (dStr < todayStr) {
+      alert(t('register.alert_past_date'));
+      return;
+    }
     if (workDays.includes(dStr)) {
       alert(t('register.alert_already_approved', { date: dStr }));
       return;

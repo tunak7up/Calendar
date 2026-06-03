@@ -10,6 +10,15 @@ const createBulkRequest = async (req, res) => {
     }
 };
 
+const createExceptionRequest = async (req, res) => {
+    try {
+        const request = await requestService.createExceptionRequest(req.body);
+        sendRes(res, 201, 'Exception request created successfully', request);
+    } catch (error) {
+        sendRes(res, 400, error.message, null, error.message);
+    }
+};
+
 const getRequestById = async (req, res) => {
     try {
         const request = await requestService.getRequestById(req.params.id);
@@ -81,6 +90,7 @@ const getRequestsByRange = async (req, res) => {
 
 module.exports = {
     createBulkRequest,
+    createExceptionRequest,
     getRequestById,
     getRequestsByRequesterId,
     getAllRequests,

@@ -9,9 +9,9 @@ const statuses = (t) => [
   { id: 'completed', label: t('status.completed'), bg: 'bg-emerald-500', text: 'text-emerald-800', light: 'bg-emerald-100', dot: 'bg-emerald-500', border: 'border-emerald-200' },
 ];
 
-export default function TaskStatusDropdown({ currentStatus, onStatusChange, dueDate, size = 'md' }) {
+export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDate, size = 'md', disabled = false }) {
   const { t } = useTranslation();
-  
+
   const isOverdue = (status, date) => {
     if (status?.toLowerCase() === 'completed') return false;
     if (!date) return false;
@@ -24,15 +24,18 @@ export default function TaskStatusDropdown({ currentStatus, onStatusChange, dueD
 
   return (
     <Menu as="div" className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
-      <Menu.Button className={`
-        flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm
-        ${size === 'sm' ? 'px-3 py-1 text-[9px]' : 'px-5 py-2 text-[11px]'}
-        ${overdue ? 'bg-red-600 text-white border-red-700 shadow-red-200' : `${statusInfo.light} ${statusInfo.text} ${statusInfo.border}`}
-        hover:scale-105 active:scale-95 hover:shadow-md
-      `}>
-        <span className={`w-1.5 h-1.5 rounded-full ${overdue ? 'bg-white animate-pulse' : statusInfo.dot} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`} />
+      <Menu.Button
+        disabled={disabled}
+        className={`
+          flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm
+          ${size === 'sm' ? 'px-2.5 py-0.5 text-[8.5px]' : 'px-4 py-1.5 text-[10px]'}
+          ${overdue ? 'bg-gray-100 text-red-700 border-gray-200 shadow-sm' : `${statusInfo.light} ${statusInfo.text} ${statusInfo.border}`}
+          ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105 active:scale-95 hover:shadow-md'}
+        `}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${overdue ? 'bg-red-500 animate-pulse' : statusInfo.dot} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`} />
         {overdue ? t('status.overdue') : statusInfo.label}
-        <ChevronDownIcon className={`w-3 h-3 opacity-50 ${overdue ? 'text-white' : ''}`} />
+        {!disabled && <ChevronDownIcon className={`w-3 h-3 opacity-50 ${overdue ? 'text-red-700' : ''}`} />}
       </Menu.Button>
 
       <Transition
@@ -44,7 +47,7 @@ export default function TaskStatusDropdown({ currentStatus, onStatusChange, dueD
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left rounded-2xl bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
+        <Menu.Items className="absolute right-0 z-50 mt-1.5 w-40 origin-top-right rounded-2xl bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-black/5 focus:outline-none border border-gray-100">
           <div className="space-y-1">
             {list.map((s) => (
               <Menu.Item key={s.id}>
@@ -52,7 +55,7 @@ export default function TaskStatusDropdown({ currentStatus, onStatusChange, dueD
                   <button
                     onClick={() => onStatusChange(s.id)}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase transition-all
+                      w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all
                       ${active ? `${s.light} ${s.text} translate-x-1` : 'text-gray-500 hover:bg-gray-50'}
                     `}
                   >

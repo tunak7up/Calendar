@@ -74,6 +74,11 @@ export default function RegisterException() {
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);
+    const todayStr = getFullDateStr(new Date());
+    if (dStr < todayStr) {
+      alert(t('register.alert_past_date'));
+      return;
+    }
     
     // Check if weekend
     const day = dObj.getDay();
@@ -189,7 +194,7 @@ export default function RegisterException() {
     };
 
     try {
-      await requestService.submitRequest(payload);
+      await requestService.submitExceptionRequest(payload);
       alert(t('register.alert_exception_success'));
       setSelectedDate(null);
       setExceptionType('');

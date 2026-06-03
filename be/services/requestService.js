@@ -4,15 +4,17 @@ const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
 
 const createBulkRequest = async (data) => {
+    const todayStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }).split(' ')[0];
+    if (data.request_details) {
+        for (const detail of data.request_details) {
+            if (detail.date < todayStr) {
+                throw new Error(`Bạn không thể đăng ký hoặc xin nghỉ cho ngày đã qua (${detail.date}).`);
+            }
+        }
+    }
+
     // Validation for work registration: No weekends allowed
     if (data.type === 'register') {
-        const isException = data.is_exception === true || (data.reason && (
-            data.reason.toLowerCase().includes('sớm') ||
-            data.reason.toLowerCase().includes('muộn') ||
-            data.reason.toLowerCase().includes('early') ||
-            data.reason.toLowerCase().includes('late')
-        ));
-
         for (const detail of data.request_details) {
             const date = new Date(detail.date);
             const day = date.getDay();
@@ -20,65 +22,88 @@ const createBulkRequest = async (data) => {
                 throw new Error(`Bạn không thể đăng ký làm việc vào Thứ 7 hoặc Chủ Nhật (${detail.date}).`);
             }
 
-            if (!isException) {
-                // Kiểm tra ngày đó đã có lịch làm việc được duyệt chưa
-                const existingSchedule = await schedule.findOne({
-                    where: {
-                        person_id: data.requester_id,
-                        working_date: detail.date
-                    }
-                });
-                if (existingSchedule) {
-                    throw new Error(`Ngày ${detail.date} đã có lịch làm việc được duyệt. Vui lòng chọn ngày khác.`);
+            // Kiểm tra ngày đó đã có lịch làm việc được duyệt chưa
+            const existingSchedule = await schedule.findOne({
+                where: {
+                    person_id: data.requester_id,
+                    working_date: detail.date
                 }
-
-                // Kiểm tra đã có request đang chờ duyệt cho ngày này chưa
-                const pendingDetail = await request_detail.findOne({
-                    include: [{
-                        model: request,
-                        as: 'request',
-                        required: true,
-                        where: {
-                            requester_id: data.requester_id,
-                            status: 'pending',
-                            type: 'register'
-                        }
-                    }],
-                    where: { date: detail.date }
-                });
-                if (pendingDetail) {
-                    throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký đang chờ duyệt.`);
-                }
-            } else {
-                // Đối với đăng ký đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
-                const existingSchedule = await schedule.findOne({
-                    where: {
-                        person_id: data.requester_id,
-                        working_date: detail.date
-                    }
-                });
-                if (!existingSchedule) {
-                    throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể điều chỉnh lịch cho ngày đã được xếp lịch.`);
-                }
-
-                // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa
-                const pendingDetail = await request_detail.findOne({
-                    include: [{
-                        model: request,
-                        as: 'request',
-                        required: true,
-                        where: {
-                            requester_id: data.requester_id,
-                            status: 'pending',
-                            type: 'register'
-                        }
-                    }],
-                    where: { date: detail.date }
-                });
-                if (pendingDetail) {
-                    throw new Error(`Ngày ${detail.date} đã có yêu cầu điều chỉnh hoặc đăng ký đang chờ duyệt.`);
-                }
+            });
+            if (existingSchedule) {
+                throw new Error(`Ngày ${detail.date} đã có lịch làm việc được duyệt. Vui lòng chọn ngày khác.`);
             }
+
+            // Kiểm tra đã có request đang chờ duyệt cho ngày này chưa
+            const pendingDetail = await request_detail.findOne({
+                include: [{
+                    model: request,
+                    as: 'request',
+                    required: true,
+                    where: {
+                        requester_id: data.requester_id,
+                        status: 'pending',
+                        type: 'register'
+                    }
+                }],
+                where: { date: detail.date }
+            });
+            if (pendingDetail) {
+                throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký đang chờ duyệt.`);
+            }
+        }
+    }
+};
+
+const createExceptionRequest = async (data) => {
+    const todayStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }).split(' ')[0];
+    if (data.request_details) {
+        for (const detail of data.request_details) {
+            if (detail.date < todayStr) {
+                throw new Error(`Bạn không thể đăng ký điều chỉnh cho ngày đã qua (${detail.date}).`);
+            }
+        }
+    }
+
+    // Validation for exception: Exactly 1 detail, must not be weekend
+    if (data.type === 'register') {
+        if (!data.request_details || data.request_details.length !== 1) {
+            throw new Error('Yêu cầu điều chỉnh lịch trình chỉ áp dụng cho một ngày duy nhất.');
+        }
+
+        const detail = data.request_details[0];
+        const date = new Date(detail.date);
+        const day = date.getDay();
+        if (day === 0 || day === 6) {
+            throw new Error(`Bạn không thể đăng ký làm việc vào Thứ 7 hoặc Chủ Nhật (${detail.date}).`);
+        }
+
+        // Đối với đăng ký đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
+        const existingSchedule = await schedule.findOne({
+            where: {
+                person_id: data.requester_id,
+                working_date: detail.date
+            }
+        });
+        if (!existingSchedule) {
+            throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể điều chỉnh lịch cho ngày đã được xếp lịch.`);
+        }
+
+        // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa
+        const pendingDetail = await request_detail.findOne({
+            include: [{
+                model: request,
+                as: 'request',
+                required: true,
+                where: {
+                    requester_id: data.requester_id,
+                    status: 'pending',
+                    type: 'register'
+                }
+            }],
+            where: { date: detail.date }
+        });
+        if (pendingDetail) {
+            throw new Error(`Ngày ${detail.date} đã có yêu cầu điều chỉnh hoặc đăng ký đang chờ duyệt.`);
         }
     }
 
@@ -92,7 +117,6 @@ const createBulkRequest = async (data) => {
             created_at: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })
         }, { transaction: t });
 
-
         const detailsData = data.request_details.map(detail => ({
             request_id: newRequest.request_id || newRequest.id,
             start_time: detail.start_time,
@@ -105,13 +129,12 @@ const createBulkRequest = async (data) => {
         return newRequest;
     });
 
-    // Send email to admins in the background to prevent blocking the response
+    // Send email to admins in the background
     (async () => {
         try {
             const requester = await person.findByPk(data.requester_id);
             const username = requester ? requester.username : 'Nhân viên';
-            const subjectSuffix = data.type === 'register' ? 'đăng ký lịch làm' : 'xin nghỉ làm';
-            const subject = `${requester.name} ${subjectSuffix}`;
+            const subject = `${requester.name} đăng ký đi trễ / về sớm`;
 
             const admins = await person.findAll({
                 where: {
@@ -119,23 +142,22 @@ const createBulkRequest = async (data) => {
                 }
             });
 
-            const frontendUrl = process.env.FRONTEND_URL;
-            const typeText = data.type === 'register' ? 'Đăng ký lịch làm' : 'Xin nghỉ làm';
+            const frontendUrl = process.env.FRONTEND_URL || 'https://qltt.kis-v.com/';
             const html = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div style="background-color: #4F46E5; color: white; padding: 20px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 20px;">Yêu Cầu Mới Cần Duyệt</h2>
+                    <h2 style="margin: 0; font-size: 20px;">Yêu Cầu Đi Trễ / Về Sớm Mới Cần Duyệt</h2>
                 </div>
                 <div style="padding: 24px; color: #333333;">
                     <p>Xin chào Admin,</p>
-                    <p>Hệ thống vừa nhận được một yêu cầu mới từ nhân viên <strong>${requester ? (requester.name || requester.username) : 'Nhân viên'}</strong>:</p>
+                    <p>Hệ thống vừa nhận được một yêu cầu điều chỉnh giờ làm việc mới từ nhân viên <strong>${requester ? (requester.name || requester.username) : 'Nhân viên'}</strong>:</p>
                     <div style="text-align: center; margin: 20px 0;">
                         <a href="${frontendUrl}/history/${newRequest.request_id || newRequest.id}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Truy Cập Trang Quản Lý</a>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                         <tr>
                             <td style="padding: 8px 0; font-weight: bold; width: 120px;">Loại yêu cầu:</td>
-                            <td style="padding: 8px 0;">${typeText}</td>
+                            <td style="padding: 8px 0;">Điều chỉnh giờ làm việc (Đi muộn / Về sớm)</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Lý do:</td>
@@ -143,12 +165,10 @@ const createBulkRequest = async (data) => {
                         </tr>
                     </table>
                     <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý lịch trình.</p>
-                    <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
                 </div>
             </div>
             `;
 
-            // Send all emails concurrently
             const emailPromises = admins.map(admin => {
                 if (admin.email) {
                     return sendMail({
@@ -163,13 +183,12 @@ const createBulkRequest = async (data) => {
             });
             await Promise.all(emailPromises);
         } catch (error) {
-            console.error('Error fetching requester/admins or sending request emails in background:', error);
+            console.error('Error sending request emails in background:', error);
         }
     })();
 
     return newRequest;
 };
-
 const getRequestById = async (request_id) => {
     const data = await request.findByPk(request_id, {
         include: [
@@ -300,6 +319,7 @@ const getRequestsByRange = async (startDate, endDate) => {
 
 module.exports = {
     createBulkRequest,
+    createExceptionRequest,
     getRequestById,
     getAllRequestDetails,
     getRequestsByRequesterId,

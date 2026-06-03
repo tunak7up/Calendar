@@ -269,7 +269,8 @@ export const en = {
       col_adjusted_time: "Adjusted Time",
       adjusted_schedule: "Adjusted Schedule",
       standard_hours: "Standard Hours",
-      adjusted_hours: "Adjusted Hours"
+      adjusted_hours: "Adjusted Hours",
+      alert_past_date: "You cannot register schedule for past dates."
     },
     myschedule: {
       work_title: "Work Schedule",

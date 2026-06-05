@@ -211,6 +211,10 @@ export default function AdminRequests() {
             <option value="all">{t('requests.type_all')}</option>
             <option value="register">{t('requests.type_register')}</option>
             <option value="leave">{t('requests.type_leave')}</option>
+            <option value="arrive_early">{t('register.exception_arrive_early')}</option>
+            <option value="arrive_late">{t('register.exception_arrive_late')}</option>
+            <option value="leave_early">{t('register.exception_leave_early')}</option>
+            <option value="leave_late">{t('register.exception_leave_late')}</option>
           </select>
         </div>
 
@@ -262,14 +266,18 @@ export default function AdminRequests() {
           <tr
             key={req.request_id || req.id}
             onClick={() => handleRowClick(req)}
-            className={`transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer select-none ${req.type === 'leave' ? 'bg-orange-100 hover:bg-orange-300' : 'bg-blue-100 hover:bg-blue-300'}`}
+            className={`transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer select-none ${
+              req.type === 'leave' ? 'bg-orange-100 hover:bg-orange-300' :
+              ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? 'bg-purple-100 hover:bg-purple-300' :
+              'bg-blue-100 hover:bg-blue-300'
+            }`}
 
           >
             <td className="py-4 px-6 text-sm font-semibold text-gray-900">
               {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
             </td>
-            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : 'N/A')}>
-              {req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : 'N/A')}
+            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : req.type === 'leave' ? t('requests.type_leave') : ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? t(`register.exception_${req.type}`) : 'N/A')}>
+              {req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : req.type === 'leave' ? t('requests.type_leave') : ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? t(`register.exception_${req.type}`) : 'N/A')}
             </td>
             <td className="py-4 px-6 text-sm text-gray-500 font-medium">
               <span className="flex items-center gap-2">

@@ -44,6 +44,40 @@ const createBulkRequest = async (data) => {
         }
     }
 
+    const exceptionTypes = ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'];
+    if (exceptionTypes.includes(data.type)) {
+        for (const detail of data.request_details) {
+            // Đối với đăng ký đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
+            const existingSchedule = await schedule.findOne({
+                where: {
+                    person_id: data.requester_id,
+                    working_date: detail.date
+                }
+            });
+            if (!existingSchedule) {
+                throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể điều chỉnh lịch cho ngày đã được xếp lịch.`);
+            }
+
+            // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa (của bất kỳ loại điều chỉnh nào)
+            const pendingDetail = await request_detail.findOne({
+                include: [{
+                    model: request,
+                    as: 'request',
+                    required: true,
+                    where: {
+                        requester_id: data.requester_id,
+                        status: 'pending',
+                        type: data.type
+                    }
+                }],
+                where: { date: detail.date }
+            });
+            if (pendingDetail) {
+                throw new Error(`Ngày ${detail.date} đã có yêu cầu điều chỉnh đang chờ duyệt.`);
+            }
+        }
+    }
+
     const newRequest = await sequelize.transaction(async (t) => {
         const newRequest = await request.create({
             type: data.type,
@@ -72,7 +106,23 @@ const createBulkRequest = async (data) => {
         try {
             const requester = await person.findByPk(data.requester_id);
             const username = requester ? requester.username : 'Nhân viên';
-            const subjectSuffix = data.type === 'register' ? 'đăng ký lịch làm' : 'xin nghỉ làm';
+            
+            const exceptionLabels = {
+                arrive_early: 'đi làm sớm',
+                arrive_late: 'đi làm muộn',
+                leave_early: 'về sớm',
+                leave_late: 'về muộn'
+            };
+            const exceptionTexts = {
+                arrive_early: 'Đi làm sớm',
+                arrive_late: 'Đi làm muộn',
+                leave_early: 'Về sớm',
+                leave_late: 'Về muộn'
+            };
+
+            const subjectSuffix = data.type === 'register' ? 'đăng ký lịch làm' :
+                                  data.type === 'leave' ? 'xin nghỉ làm' :
+                                  (exceptionLabels[data.type] || 'yêu cầu điều chỉnh giờ làm');
             const subject = `${requester.name} ${subjectSuffix}`;
 
             const admins = await person.findAll({
@@ -82,7 +132,9 @@ const createBulkRequest = async (data) => {
             });
 
             const frontendUrl = process.env.FRONTEND_URL;
-            const typeText = data.type === 'register' ? 'Đăng ký lịch làm' : 'Xin nghỉ làm';
+            const typeText = data.type === 'register' ? 'Đăng ký lịch làm' :
+                             data.type === 'leave' ? 'Xin nghỉ làm' :
+                             (exceptionTexts[data.type] || 'Điều chỉnh giờ làm');
             const html = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div style="background-color: #4F46E5; color: white; padding: 20px; text-align: center;">
@@ -188,17 +240,21 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
         if (status.toLowerCase() === 'approved') {
             console.log(`Processing sync to schedule for request ${request_id}. Type: ${data.type}`);
 
-            if (data.type.toLowerCase() === 'register') {
+            const exceptionTypes = ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'];
+            if (data.type.toLowerCase() === 'register' || exceptionTypes.includes(data.type.toLowerCase())) {
                 // Lọc các ngày chưa có schedule để tránh duplicate
                 const newEntries = [];
-                const duplicateDates = [];
                 for (const detail of data.details) {
                     const existing = await schedule.findOne({
                         where: { person_id: data.requester_id, working_date: detail.date },
                         transaction: t
                     });
                     if (existing) {
-                        duplicateDates.push(detail.date);
+                        await existing.update({
+                            start_time: detail.start_time,
+                            end_time: detail.end_time
+                        }, { transaction: t });
+                        console.log(`Updated existing schedule for person ${data.requester_id} on date ${detail.date} to ${detail.start_time} - ${detail.end_time}`);
                     } else {
                         newEntries.push({
                             person_id: data.requester_id,
@@ -209,13 +265,9 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
                     }
                 }
 
-                if (duplicateDates.length > 0) {
-                    console.warn(`Bỏ qua ${duplicateDates.length} ngày đã có lịch: ${duplicateDates.join(', ')}`);
-                }
-
                 if (newEntries.length > 0) {
                     await schedule.bulkCreate(newEntries, { transaction: t });
-                    console.log(`Successfully synced ${newEntries.length} entries to schedule.`);
+                    console.log(`Successfully synced ${newEntries.length} new entries to schedule.`);
                 }
             } else if (data.type.toLowerCase() === 'leave') {
                 // For leave, we remove the corresponding work shifts from the schedule

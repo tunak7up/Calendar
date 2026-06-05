@@ -5,7 +5,7 @@ export const requestService = {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
-  submitExceptionRequest: (payload) => apiFetch('/request/exception', {
+  submitExceptionRequest: (payload) => apiFetch('/request/', {
     method: 'POST',
     body: JSON.stringify(payload),
   }),

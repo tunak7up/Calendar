@@ -4,7 +4,8 @@ import {
   PlusIcon,
   EyeIcon,
   CalendarIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
@@ -60,7 +61,16 @@ export default function RegistrationHistory() {
 
   const filteredData = useMemo(() => {
     let list = requests.filter(item => {
-      const typeLabel = item.type === 'register' ? t('history.type_register') : t('history.type_leave');
+      let typeLabel = '';
+      if (item.type === 'register') {
+        typeLabel = t('history.type_register');
+      } else if (item.type === 'leave') {
+        typeLabel = t('history.type_leave');
+      } else if (['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type)) {
+        typeLabel = t(`register.exception_${item.type}`);
+      } else {
+        typeLabel = item.type || '';
+      }
       const matchSearch = typeLabel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.approver.toLowerCase().includes(searchTerm.toLowerCase());
@@ -86,9 +96,9 @@ export default function RegistrationHistory() {
   };
 
   const columns = [
-    { key: 'name', label: t('history.col_name'), sortable: true },
+    { key: 'type', label: t('register.exception_type'), sortable: true },
+    { key: 'reason', label: t('register.leave_reason'), sortable: true },
     { key: 'date', label: t('history.col_date'), sortable: true },
-    { key: 'refId', label: t('history.col_ref'), sortable: true },
     { key: 'status', label: t('history.col_status'), sortable: true },
     { key: 'approver', label: t('history.col_approver'), sortable: true },
   ];
@@ -151,6 +161,10 @@ export default function RegistrationHistory() {
               <option value="all">{t('history.type_all')}</option>
               <option value="leave">{t('history.type_leave')}</option>
               <option value="register">{t('history.type_register')}</option>
+              <option value="arrive_early">{t('register.exception_arrive_early')}</option>
+              <option value="arrive_late">{t('register.exception_arrive_late')}</option>
+              <option value="leave_early">{t('register.exception_leave_early')}</option>
+              <option value="leave_late">{t('register.exception_leave_late')}</option>
             </select>
             <select
               value={filterStatus}
@@ -228,20 +242,31 @@ export default function RegistrationHistory() {
           <tr
             key={item.id}
             onClick={() => handleRowClick(item)}
-            className={`border-b border-gray-200 transition-colors cursor-pointer select-none ${item.type === 'leave' ? 'bg-orange-100 hover:bg-orange-200' : 'bg-blue-100 hover:bg-blue-200'}`}
+            className="border-b border-gray-200 transition-colors cursor-pointer select-none bg-white hover:bg-gray-50/50"
           >
             <td className="px-6 py-4 whitespace-nowrap">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${item.type === 'leave' ? 'bg-orange-100 text-orange-500' : 'bg-blue-100 text-blue-500'}`}>
-                  {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> : <BriefcaseIcon className="w-5 h-5" />}
+                <div className={`p-2 rounded-lg ${
+                  item.type === 'leave' ? 'bg-orange-100 text-orange-500' :
+                  ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? 'bg-purple-100 text-purple-500' :
+                  'bg-blue-100 text-blue-500'
+                }`}>
+                  {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> :
+                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-5 h-5" /> :
+                   <BriefcaseIcon className="w-5 h-5" />}
                 </div>
                 <span className="font-semibold text-gray-900">
-                  {item.type === 'register' ? t('history.type_register') : t('history.type_leave')}
+                  {item.type === 'register' ? t('history.type_register') :
+                   item.type === 'leave' ? t('history.type_leave') :
+                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? t(`register.exception_${item.type}`) :
+                   item.type}
                 </span>
               </div>
             </td>
+            <td className="px-6 py-4 max-w-[200px] truncate font-medium text-gray-600" title={item.reason || ''}>
+              {item.reason || '—'}
+            </td>
             <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">{item.date}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-gray-500">{item.refId}</td>
             <td className="px-6 py-4 whitespace-nowrap">
               {item.status === 'pending' && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">

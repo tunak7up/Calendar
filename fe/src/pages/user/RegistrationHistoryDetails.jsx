@@ -117,7 +117,10 @@ export default function RegistrationHistoryDetails() {
   const request = {
     id: rawReq.id || rawReq.request_id,
     type: rawReq.type,
-    name: rawReq.type === 'register' ? t('history.type_register') : t('history.type_leave'),
+    name: rawReq.type === 'register' ? t('history.type_register') :
+          rawReq.type === 'leave' ? t('history.type_leave') :
+          ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(rawReq.type) ? t(`register.exception_${rawReq.type}`) :
+          rawReq.type,
     date: rawReq.date || new Date(rawReq.created_at).toLocaleDateString('vi-VN'),
     refId: rawReq.refId || `#REQ-${rawReq.request_id}`,
     approver: rawReq.approver?.name || (typeof rawReq.approver === 'string' ? rawReq.approver : 'N/A'),

@@ -84,7 +84,7 @@ const ShiftSelector = ({
             </div>
             <div>
               <h3 className="font-extrabold text-gray-900 text-base">{t('register.shift_afternoon')}</h3>
-              <p className="text-xs text-gray-400 font-medium">13:00 - 17:30</p>
+
             </div>
           </div>
 
@@ -137,7 +137,7 @@ const ShiftSelector = ({
             </div>
             <div>
               <h3 className="font-extrabold text-gray-900 text-base">{t('register.shift_full')}</h3>
-              <p className="text-xs text-gray-400 font-medium">08:30 - 17:30</p>
+           
             </div>
           </div>
 

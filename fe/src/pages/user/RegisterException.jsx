@@ -183,12 +183,11 @@ export default function RegisterException() {
       end_time: endTime
     }];
 
-    const displayTypeName = t(`register.exception_${exceptionType}`);
     const payload = {
       requester_id: user.person_id,
       approver_id: null,
-      type: 'register',
-      reason: `[${displayTypeName}] ${reason}`,
+      type: exceptionType,
+      reason: reason,
       request_details: requestDetails,
       is_exception: true
     };

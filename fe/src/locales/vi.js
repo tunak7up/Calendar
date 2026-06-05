@@ -26,7 +26,8 @@ export const vi = {
       logging_in: "Đăng nhập...",
       login_button: "Đăng nhập",
       error_auth: "Sai tên đăng nhập hoặc mật khẩu.",
-      footer_help: "Gặp sự cố? Liên hệ quản trị viên để được hỗ trợ."
+      footer_help: "Gặp sự cố? Liên hệ quản trị viên để được hỗ trợ.",
+      checking_session: "Đang kiểm tra phiên đăng nhập..."
     },
     dashboard: {
       welcome: "Chào mừng trở lại, {{name}}!",

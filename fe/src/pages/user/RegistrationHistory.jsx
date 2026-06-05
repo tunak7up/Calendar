@@ -4,14 +4,13 @@ import {
   PlusIcon,
   EyeIcon,
   CalendarIcon,
-  BriefcaseIcon,
-  ClockIcon
+  BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
-import SortableTable from '../../components/SortableTable';
+import RequestTable from '../../components/RequestTable';
 import { useTranslation } from 'react-i18next';
 
 export default function RegistrationHistory() {
@@ -94,14 +93,6 @@ export default function RegistrationHistory() {
   const handleRowClick = (item) => {
     navigate(`/history/${item.id}`, { state: { request: item } });
   };
-
-  const columns = [
-    { key: 'type', label: t('register.exception_type'), sortable: true },
-    { key: 'reason', label: t('register.leave_reason'), sortable: true },
-    { key: 'date', label: t('history.col_date'), sortable: true },
-    { key: 'status', label: t('history.col_status'), sortable: true },
-    { key: 'approver', label: t('history.col_approver'), sortable: true },
-  ];
 
   return (
     <div className="space-y-4 pb-20">
@@ -225,71 +216,15 @@ export default function RegistrationHistory() {
         </div>
       </div>
 
-      <SortableTable
-        columns={columns}
+      <RequestTable
         data={filteredData}
         loading={loading}
-        emptyMessage={t('history.empty')}
-        pageSize={pageSize}
         currentPage={currentPage}
+        pageSize={pageSize}
         totalItems={filteredData.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
-        tableClassName="min-w-[700px]"
-        stickyHeader
-        containerHeight="h-[500px]"
-        renderRow={(item) => (
-          <tr
-            key={item.id}
-            onClick={() => handleRowClick(item)}
-            className="border-b border-gray-200 transition-colors cursor-pointer select-none bg-white hover:bg-gray-50/50"
-          >
-            <td className="px-6 py-4 whitespace-nowrap">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                  item.type === 'leave' ? 'bg-orange-100 text-orange-500' :
-                  ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? 'bg-purple-100 text-purple-500' :
-                  'bg-blue-100 text-blue-500'
-                }`}>
-                  {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> :
-                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-5 h-5" /> :
-                   <BriefcaseIcon className="w-5 h-5" />}
-                </div>
-                <span className="font-semibold text-gray-900">
-                  {item.type === 'register' ? t('history.type_register') :
-                   item.type === 'leave' ? t('history.type_leave') :
-                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? t(`register.exception_${item.type}`) :
-                   item.type}
-                </span>
-              </div>
-            </td>
-            <td className="px-6 py-4 max-w-[200px] truncate font-medium text-gray-600" title={item.reason || ''}>
-              {item.reason || '—'}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">{item.date}</td>
-            <td className="px-6 py-4 whitespace-nowrap">
-              {item.status === 'pending' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                  {t('status.req_pending')}
-                </span>
-              )}
-              {item.status === 'approved' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  {t('status.req_approved')}
-                </span>
-              )}
-              {item.status === 'rejected' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  {t('status.req_rejected')}
-                </span>
-              )}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{item.approver}</td>
-          </tr>
-        )}
+        onRowClick={handleRowClick}
       />
     </div>
   );

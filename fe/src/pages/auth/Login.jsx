@@ -1,10 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { loginApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
+import { BASE_URL } from '../../services/api';
+
+const isTokenValid = (token) => {
+  if (!token) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const exp = payload.exp;
+    if (!exp) return false;
+    return exp * 1000 > Date.now();
+  } catch (e) {
+    return false;
+  }
+};
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -12,18 +27,73 @@ export default function Login({ onLogin }) {
   const [savePassword, setSavePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, isLoggedIn } = useAuth();
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('error') === 'session_expired') {
       setError(t('login.session_expired', { defaultValue: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' }));
       window.history.replaceState({}, document.title, window.location.pathname);
+      setIsChecking(false);
+      return;
     }
-  }, [location, t]);
+
+    const checkAuthStatus = async () => {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+
+      if (savedToken && isTokenValid(savedToken) && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          if (!isLoggedIn) {
+            login({ token: savedToken, user: parsedUser });
+          }
+          if (onLogin) {
+            onLogin({ token: savedToken, user: parsedUser });
+          } else {
+            navigate(parsedUser.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+          }
+          return;
+        } catch (e) {
+          console.error('Lỗi phân tích thông tin user:', e);
+        }
+      }
+
+      // Try silently refreshing the token
+      try {
+        const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          login(data);
+          if (onLogin) {
+            onLogin(data);
+          } else {
+            navigate(data.user?.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+          }
+        } else {
+          // Clear local storage if refresh fails to keep app in clean logged-out state
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setIsChecking(false);
+        }
+      } catch (err) {
+        console.error('Lỗi khi gọi refresh token:', err);
+        setIsChecking(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [location, t, isLoggedIn, login, navigate, onLogin]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +115,19 @@ export default function Login({ onLogin }) {
       setIsLoading(false);
     }
   };
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin"></div>
+          <p className="mt-4 text-sm font-semibold text-gray-500 tracking-wide">
+            {t('login.checking_session', { defaultValue: 'Đang kiểm tra phiên đăng nhập...' })}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4 relative">

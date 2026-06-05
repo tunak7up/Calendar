@@ -26,7 +26,8 @@ export const en = {
       logging_in: "Logging in...",
       login_button: "Login",
       error_auth: "Invalid username or password.",
-      footer_help: "Having trouble? Contact the administrator for support."
+      footer_help: "Having trouble? Contact the administrator for support.",
+      checking_session: "Checking session..."
     },
     dashboard: {
       welcome: "Welcome back, {{name}}!",

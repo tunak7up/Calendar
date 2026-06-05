@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   ClipboardDocumentCheckIcon,
-  CheckIcon,
-  XMarkIcon,
-  ClockIcon,
   MagnifyingGlassIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
@@ -11,7 +8,7 @@ import { apiFetch } from '../../services/api';
 import { requestService } from '../../services/requestService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
-import SortableTable from '../../components/SortableTable';
+import RequestTable from '../../components/RequestTable';
 import { useTranslation } from 'react-i18next';
 
 export default function AdminRequests() {
@@ -85,17 +82,6 @@ export default function AdminRequests() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_approved')}</span>;
-      case 'rejected':
-        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_rejected')}</span>;
-      default:
-        return <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">{t('status.req_pending')}</span>;
-    }
-  };
-
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
 
@@ -140,14 +126,6 @@ export default function AdminRequests() {
 
     return list;
   }, [requests, filterStatus, filterType, selectedEmployeeIds, searchTerm, sortKey, sortDir]);
-
-  const columns = [
-    { key: 'requester', label: t('requests.col_requester'), sortable: true },
-    { key: 'reason', label: t('requests.col_reason'), sortable: true },
-    { key: 'created_at', label: t('requests.col_sent_date'), sortable: true },
-    { key: 'status', label: t('requests.col_status'), sortable: true, align: 'center' },
-    { key: 'actions', label: t('requests.col_actions'), sortable: false, align: 'center' },
-  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -249,67 +227,18 @@ export default function AdminRequests() {
 
 
 
-      <SortableTable
-        columns={columns}
+      <RequestTable
         data={filteredRequests}
         loading={loading}
-        emptyMessage={t('requests.empty')}
-        pageSize={pageSize}
+        isAdmin={true}
+        onApprove={(id) => handleUpdateStatus(id, 'approved')}
+        onReject={(id) => handleUpdateStatus(id, 'rejected')}
         currentPage={currentPage}
+        pageSize={pageSize}
         totalItems={filteredRequests.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
-        tableClassName="min-w-[700px]"
-        stickyHeader
-        containerHeight="h-[500px]"
-        renderRow={(req) => (
-          <tr
-            key={req.request_id || req.id}
-            onClick={() => handleRowClick(req)}
-            className={`transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer select-none ${
-              req.type === 'leave' ? 'bg-orange-100 hover:bg-orange-300' :
-              ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? 'bg-purple-100 hover:bg-purple-300' :
-              'bg-blue-100 hover:bg-blue-300'
-            }`}
-
-          >
-            <td className="py-4 px-6 text-sm font-semibold text-gray-900">
-              {req.requester?.name || req.requester?.username || `User #${req.requester_id}`}
-            </td>
-            <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate" title={req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : req.type === 'leave' ? t('requests.type_leave') : ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? t(`register.exception_${req.type}`) : 'N/A')}>
-              {req.reason || (req.type === 'register' ? t('requests.val_register_schedule') : req.type === 'leave' ? t('requests.type_leave') : ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(req.type) ? t(`register.exception_${req.type}`) : 'N/A')}
-            </td>
-            <td className="py-4 px-6 text-sm text-gray-500 font-medium">
-              <span className="flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-gray-400" />
-                {new Date(req.created_at).toLocaleDateString()}
-              </span>
-            </td>
-            <td className="py-4 px-6 text-center">
-              {getStatusBadge(req.status)}
-            </td>
-            <td className="py-4 px-6 text-center">
-              {req.status?.toLowerCase() === 'pending' && (
-                <div className="flex justify-center gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'approved'); }}
-                    title={t('requests.title_approve')}
-                    className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
-                  >
-                    <CheckIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.request_id || req.id, 'rejected'); }}
-                    title={t('requests.title_reject')}
-                    className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-            </td>
-          </tr>
-        )}
+        onRowClick={handleRowClick}
       />
     </div>
   );

@@ -523,19 +523,14 @@ export default function AdminSchedule() {
       {/* Detail Modal */}
       {isModalOpen && (
         (() => {
-          const formattedModalDate = i18n.language === 'vi'
-            ? (() => {
-                const d = new Date(modalDate);
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const year = d.getFullYear();
-                return `${day}/${month}/${year}`;
-              })()
-            : new Date(modalDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              });
+          const formattedModalDate = (() => {
+            const d = new Date(modalDate);
+            if (isNaN(d.getTime())) return '';
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+          })();
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">

@@ -38,9 +38,14 @@ export default function WeekDatePicker({
   const weekDates = generateWeek(viewDate, i18n.language);
   const viewDateStr = getFullDateStr(viewDate);
   const todayStr = getFullDateStr(new Date());
-  const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-US';
-  const weekStartStr = weekDates[0].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const weekEndStr = weekDates[6].dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const formatDateToDMY = (dObj) => {
+    const day = String(dObj.getDate()).padStart(2, '0');
+    const month = String(dObj.getMonth() + 1).padStart(2, '0');
+    const year = dObj.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const weekStartStr = formatDateToDMY(weekDates[0].dateObj);
+  const weekEndStr = formatDateToDMY(weekDates[6].dateObj);
 
   const handleNativeChange = (e) => {
     const val = e.target.value;

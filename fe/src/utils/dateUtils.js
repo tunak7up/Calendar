@@ -9,13 +9,7 @@ export const getFullDateStr = (date) => {
 export const formatDisplayDate = (dateStr) => {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
-  const dObj = new Date(y, m - 1, d);
-  return dObj.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
+  return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
 };
 
 export const getTimeRangeStr = (shift) => {
@@ -30,15 +24,14 @@ export const getTimeRangeStr = (shift) => {
       return '';
   }
 };
+
 export const formatDateTime = (dateStr) => {
   if (!dateStr) return 'N/A';
   const date = new Date(dateStr);
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes} ${d}/${m}/${y}`;
 };

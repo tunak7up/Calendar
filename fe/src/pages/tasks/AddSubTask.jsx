@@ -210,7 +210,18 @@ export default function AddSubTask() {
                 <div>
                   <div className="text-[10px] font-bold text-gray-400 uppercase">{t('addsubtask.schedule')}</div>
                   <div className="text-[13px] font-bold text-gray-900 mt-1">
-                    {new Date(parentTask.start_time).toLocaleDateString()} - {new Date(parentTask.due_date).toLocaleDateString()}
+                    {(() => {
+                      const formatDateToDMY = (dateVal) => {
+                        if (!dateVal) return '';
+                        const d = new Date(dateVal);
+                        if (isNaN(d.getTime())) return '';
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        return `${day}/${month}/${year}`;
+                      };
+                      return `${formatDateToDMY(parentTask.start_time)} - ${formatDateToDMY(parentTask.due_date)}`;
+                    })()}
                   </div>
                 </div>
               </div>

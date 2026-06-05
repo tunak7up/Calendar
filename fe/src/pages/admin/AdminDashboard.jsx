@@ -258,7 +258,14 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
             <CalendarDaysIcon className="w-5 h-5 text-blue-600" />
             <span className="font-bold text-gray-800 text-sm">
-              {new Date().toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {(() => {
+                const d = new Date();
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                const weekday = d.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'long' });
+                return `${weekday}, ${day}/${month}/${year}`;
+              })()}
             </span>
           </div>
         </div>
@@ -452,7 +459,13 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                        {task.due_date ? new Date(task.due_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' }) : '—'}
+                        {task.due_date ? (() => {
+                          const d = new Date(task.due_date);
+                          const day = String(d.getDate()).padStart(2, '0');
+                          const month = String(d.getMonth() + 1).padStart(2, '0');
+                          const year = d.getFullYear();
+                          return `${day}/${month}/${year}`;
+                        })() : '—'}
                       </td>
                       <td className="px-4 py-2.5">{getTaskStatusBadge(task)}</td>
                     </tr>

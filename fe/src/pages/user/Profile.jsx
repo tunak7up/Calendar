@@ -308,21 +308,14 @@ export default function Profile() {
                   <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
                     <div className="flex items-center gap-1">
                       <ClockIcon className="w-3.5 h-3.5" />
-                      {t('profile.due')}: {
-                        i18n.language === 'vi'
-                          ? (() => {
-                            const d = new Date(task.due_date);
-                            const day = String(d.getDate()).padStart(2, '0');
-                            const month = String(d.getMonth() + 1).padStart(2, '0');
-                            const year = d.getFullYear();
-                            return `${day}/${month}/${year}`;
-                          })()
-                          : new Date(task.due_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })
-                      }
+                      {t('profile.due')}: {(() => {
+                        const d = new Date(task.due_date);
+                        if (isNaN(d.getTime())) return 'N/A';
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        return `${day}/${month}/${year}`;
+                      })()}
                     </div>
                     <div className="flex items-center gap-1 text-purple-600">
                       {t('profile.role')}: {
@@ -424,7 +417,7 @@ export default function Profile() {
                   <p className="text-[10px] font-bold text-gray-400">
                     {(() => {
                       const [year, month, day] = selectedDate.split('-');
-                      return i18n.language === 'vi' ? `${day}/${month}/${year}` : new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                      return `${day}/${month}/${year}`;
                     })()}
                   </p>
                 </div>

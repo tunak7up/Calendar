@@ -27,7 +27,7 @@ export default function RegisterException() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
@@ -229,7 +229,8 @@ export default function RegisterException() {
     if (!selectedDate) return '';
     const [y, m, d] = selectedDate.date.split('-');
     const dObj = new Date(y, m - 1, d);
-    return dObj.toLocaleDateString('vi-VN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const weekday = dObj.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'short' });
+    return `${weekday}, ${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
   };
 
   const typesConfig = [

@@ -121,7 +121,16 @@ export default function RegistrationHistoryDetails() {
           rawReq.type === 'leave' ? t('history.type_leave') :
           ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(rawReq.type) ? t(`register.exception_${rawReq.type}`) :
           rawReq.type,
-    date: rawReq.date || new Date(rawReq.created_at).toLocaleDateString('vi-VN'),
+    date: (() => {
+      const dVal = rawReq.date || rawReq.created_at;
+      if (!dVal) return '';
+      const d = new Date(dVal);
+      if (isNaN(d.getTime())) return '';
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    })(),
     refId: rawReq.refId || `#REQ-${rawReq.request_id}`,
     approver: rawReq.approver?.name || (typeof rawReq.approver === 'string' ? rawReq.approver : 'N/A'),
     approverRole: rawReq.approver?.role || rawReq.approverRole || '',

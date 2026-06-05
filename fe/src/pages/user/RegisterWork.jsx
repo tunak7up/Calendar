@@ -25,7 +25,7 @@ export default function RegisterWork() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
@@ -413,7 +413,8 @@ export default function RegisterWork() {
                   {sortedSchedule.map(item => {
                     const [y, m, d] = item.date.split('-');
                     const dObj = new Date(y, m - 1, d);
-                    const displayDate = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                    const weekday = dObj.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'short' });
+                    const displayDate = `${weekday}, ${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
 
                     return (
                       <tr key={item.date} className="hover:bg-gray-50/30 transition-colors">

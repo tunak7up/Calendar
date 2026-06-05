@@ -78,7 +78,22 @@ export default function RequestTable({
         const reqId = item.request_id || item.id;
         const requesterName = item.requester?.name || item.requester?.username || item.requesterName || `User #${item.requester_id || ''}`;
         const approverName = item.approver?.name || item.approver || 'N/A';
-        const displayDate = item.date || (item.created_at ? new Date(item.created_at).toLocaleDateString() : '');
+        const displayDate = (() => {
+          const raw = item.date || item.created_at;
+          if (!raw) return '';
+          const d = new Date(raw);
+          if (isNaN(d.getTime())) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+              const [y, m, dVal] = raw.split('-');
+              return `${dVal}/${m}/${y}`;
+            }
+            return raw;
+          }
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        })();
 
         return (
           <tr

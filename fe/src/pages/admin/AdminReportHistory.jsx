@@ -168,7 +168,14 @@ export default function AdminReportHistory() {
           >
             <td className="px-6 py-5">
               <span className="text-sm font-bold text-gray-800">
-                {new Date(report.working_date).toLocaleDateString()}
+                {(() => {
+                  const d = new Date(report.working_date);
+                  if (isNaN(d.getTime())) return '';
+                  const day = String(d.getDate()).padStart(2, '0');
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const year = d.getFullYear();
+                  return `${day}/${month}/${year}`;
+                })()}
               </span>
             </td>
             <td className="px-4 py-5">
@@ -247,7 +254,16 @@ export default function AdminReportHistory() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_date')}</p>
-                          <p className="text-sm font-semibold text-gray-900">{new Date(selectedReport.working_date).toLocaleDateString()}</p>
+                           <p className="text-sm font-semibold text-gray-900">
+                            {(() => {
+                              const d = new Date(selectedReport.working_date);
+                              if (isNaN(d.getTime())) return '';
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkin')}</p>

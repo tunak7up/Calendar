@@ -10,7 +10,7 @@ const request = sequelize.define(
             primaryKey: true
         },
         type: {
-            type: DataTypes.ENUM('register', 'leave'),
+            type: DataTypes.STRING,
         },
         requester_id: {
             type: DataTypes.INTEGER,
@@ -26,12 +26,12 @@ const request = sequelize.define(
                 key: 'person_id'
             },
         },
-        status: { 
-            type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+        status: {
+            type: DataTypes.STRING,
         },
         reason: {
             type: DataTypes.TEXT,
-        },        
+        },
         created_at: {
             type: DataTypes.STRING,
         },

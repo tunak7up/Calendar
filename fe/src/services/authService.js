@@ -11,7 +11,7 @@ export const loginApi = async (username, password) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include', // Important: allows receiving Set-Cookie
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, device_info: navigator.userAgent }),
   });
 
   let data;

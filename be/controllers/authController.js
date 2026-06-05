@@ -3,17 +3,18 @@ const authService = require('../services/authService');
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const device_info = req.body.device_info || req.headers['user-agent'];
 
     if (!username || !password)
       return res.status(400).json({ message: 'Vui long nhap day du thong tin' });
 
-    const result = await authService.login(username, password);
+    const result = await authService.login(username, password, device_info);
     const isProduction = process.env.NODE_ENV === 'production';
     // Set refresh token as HttpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: isProduction, // Only set secure flag in production
-      sameSite:isProduction ? 'none' : 'lax', // Use 'none' for cross-site in production, 'lax' for development
+      sameSite: isProduction ? 'none' : 'lax', // Use 'none' for cross-site in production, 'lax' for development
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -50,7 +51,6 @@ const logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
-      // Chạy ngầm hàm logout để không block quá trình clearCookie và phản hồi lại cho user
       authService.logout(refreshToken).catch(err => console.error('Lỗi xóa refresh token ngầm:', err));
     }
     const isProduction = process.env.NODE_ENV === 'production';

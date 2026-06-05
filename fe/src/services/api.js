@@ -73,6 +73,7 @@ export const apiFetch = async (endpoint, options = {}) => {
         response = await fetch(url, fetchOptions);
       } catch (refreshError) {
         setAccessToken(null);
+        localStorage.removeItem('user'); // Đảm bảo xóa sạch thông tin user
         window.location.href = '/login';
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       }

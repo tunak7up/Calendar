@@ -100,8 +100,8 @@ export function AuthProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
-      // Thêm chút thời gian chờ để user kịp nhìn thấy hiệu ứng loading
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Thêm chút thời gian chờ để user kịp nhìn thấy hiệu ứng loading, giảm xuống 300ms
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error('Lỗi khi gọi API đăng xuất:', error);
     } finally {

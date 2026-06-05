@@ -50,7 +50,8 @@ const logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
-      await authService.logout(refreshToken);
+      // Chạy ngầm hàm logout để không block quá trình clearCookie và phản hồi lại cho user
+      authService.logout(refreshToken).catch(err => console.error('Lỗi xóa refresh token ngầm:', err));
     }
     const isProduction = process.env.NODE_ENV === 'production';
     res.clearCookie('refreshToken', {

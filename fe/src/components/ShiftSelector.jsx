@@ -101,7 +101,6 @@ const ShiftSelector = ({
                     <option value="13:00">13:00</option>
                     <option value="13:30">13:30</option>
                     <option value="14:00">14:00</option>
-                    <option value="14:30">14:30</option>
                   </select>
                 </div>
                 <div>
@@ -165,10 +164,10 @@ const ShiftSelector = ({
                     onChange={(e) => onEndTimeChange(e.target.value)}
                     className="w-full bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer transition-all shadow-sm min-h-[38px]"
                   >
-                    <option value="18:00">18:00 </option>
-                    <option value="18:30">18:30 </option>
-                    <option value="19:00">19:00 </option>
-                    <option value="19:30">19:30 </option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:00">18:00</option>
+                    <option value="18:30">18:30</option>
                   </select>
                 </div>
               </div>

@@ -32,7 +32,7 @@ export default function RegisterWork() {
   const [draftDates, setDraftDates] = useState(initialDate ? [initialDate] : []);
   const [selectedShift, setSelectedShift] = useState('Morning');
   const [shiftStartTime, setShiftStartTime] = useState('08:30');
-  const [shiftEndTime, setShiftEndTime] = useState('18:00');
+  const [shiftEndTime, setShiftEndTime] = useState('17:30');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
 
@@ -46,7 +46,7 @@ export default function RegisterWork() {
       setShiftEndTime('17:30');
     } else { // Full Day
       setShiftStartTime('08:30');
-      setShiftEndTime('18:00');
+      setShiftEndTime('17:30');
     }
   };
 
@@ -98,7 +98,7 @@ export default function RegisterWork() {
     setDraftDates([]);
     setSelectedShift('Morning');
     setShiftStartTime('08:30');
-    setShiftEndTime('18:00');
+    setShiftEndTime('17:30');
     setRepeatOption('none');
     setRepeatInterval(1);
     setEndOption('never');
@@ -199,7 +199,7 @@ export default function RegisterWork() {
     // Mapping schedule items to API request_details format
     const requestDetails = schedule.map(item => {
       const start = item.startTime || '08:30';
-      const end = item.endTime || '18:00';
+      const end = item.endTime || '17:30';
       
       const startTime = `${item.date}T${start}:00+07:00`;
       const endTime = `${item.date}T${end}:00+07:00`;
@@ -243,7 +243,7 @@ export default function RegisterWork() {
   const totalWeeklyHours = schedule.reduce((sum, item) => sum + item.hours, 0);
 
   const getShiftTimeRange = (item) => {
-    return `${item.startTime || '08:30'} - ${item.endTime || '18:00'}`;
+    return `${item.startTime || '08:30'} - ${item.endTime || '17:30'}`;
   };
 
   return (

@@ -139,6 +139,24 @@ const getAttachmentsByTaskId = async (taskId) => {
     });
 };
 
+const checkAndUpdateOverdueStatus = async (taskInstance) => {
+    if (
+        taskInstance.due_date &&
+        new Date(taskInstance.due_date).getTime() < Date.now() &&
+        taskInstance.status !== 'completed'
+    ) {
+        if (taskInstance.status !== 'overdue') {
+            await taskInstance.update({ status: 'overdue' });
+        }
+    } else if (
+        taskInstance.due_date &&
+        new Date(taskInstance.due_date).getTime() >= Date.now() &&
+        taskInstance.status === 'overdue'
+    ) {
+        await taskInstance.update({ status: 'pending' });
+    }
+};
+
 const getAllTasks = async () => {
     const tasks = await task.findAll({
         include: [
@@ -158,13 +176,7 @@ const getAllTasks = async () => {
 
     await Promise.all(
         tasks.map(async t => {
-            if (
-                t.due_date &&
-                new Date(t.due_date).getTime() < Date.now() &&
-                t.status !== 'completed'
-            ) {
-                await t.update({ status: 'overdue' });
-            }
+            await checkAndUpdateOverdueStatus(t);
         })
     )
 
@@ -228,6 +240,8 @@ const getTaskById = async (id) => {
 
     if (!targetTask) throw new Error('Task not found');
 
+    await checkAndUpdateOverdueStatus(targetTask);
+
     const taskJson = targetTask.toJSON();
     const participants = taskJson.participants?.map(p => ({
         person_id: p.person_id,
@@ -276,6 +290,9 @@ const getAllTasksByParticipantsId = async (participantId) => {
             }
         ]
     });
+    await Promise.all(tasks.map(async t => {
+        await checkAndUpdateOverdueStatus(t);
+    }));
     return tasks.map(task => {
         const taskJson = task.toJSON();
         return {
@@ -298,6 +315,9 @@ const updateTask = async (id, data) => {
     if (!parentTask) throw new Error('Task not found');
 
     return await sequelize.transaction(async (t) => {
+        if (data.due_date && new Date(data.due_date).getTime() >= Date.now() && parentTask.status === 'overdue') {
+            data.status = 'pending';
+        }
         const updatedParent = await parentTask.update(data, { transaction: t });
 
         if (data.status === 'completed') {

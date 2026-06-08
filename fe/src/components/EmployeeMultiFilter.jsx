@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
  * @param {Function} onSelectionChange - Callback when selection updates
  * @param {String} placeholder - Dropdown placeholder text
  */
-const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChange, placeholder }) => {
+const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChange, placeholder, hideTags = false }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,7 +110,7 @@ const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChan
         )}
       </div>
 
-      {currentSelected.length > 0 && (
+      {!hideTags && currentSelected.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full sm:flex-1">
           {selectedEmployees.map(emp => (
             <div

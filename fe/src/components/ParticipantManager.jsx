@@ -69,12 +69,14 @@ const ParticipantManager = ({
                       <option value="reviewer">{t('components.participantManager.roles.reviewer')}</option>
                       <option value="observer">{t('components.participantManager.roles.observer')}</option>
                     </select>
-                    <button
-                      onClick={() => onRemove(p.person_id || p.name)}
-                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
+                    {!p.isLocked && (
+                      <button
+                        onClick={() => onRemove(p.person_id || p.name)}
+                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

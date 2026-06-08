@@ -839,7 +839,11 @@ export default function AdminSchedule() {
                             .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase()))
                             .map(task => (
                               <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
-                                <td className="py-3 px-4 font-medium text-gray-900">{task.name || task.title}</td>
+                                <td className="py-3 px-4 font-medium text-gray-900">
+                                  <div className="max-w-[200px] truncate" title={task.name || task.title}>
+                                    {task.name || task.title}
+                                  </div>
+                                </td>
                                 <td className="py-3 px-4 text-sm text-gray-500">
                                   {task.due_date 
                                     ? (() => {

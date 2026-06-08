@@ -400,7 +400,7 @@ export default function Dashboard() {
                         className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
                       >
                         <td className="py-4 px-6">
-                          <p className="font-bold text-gray-900">{task.name || task.title}</p>
+                          <p className="font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={task.name || task.title}>{task.name || task.title}</p>
                           {task.parent_id && (
                             <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                               <div className="w-2 h-2 border-b border-l border-gray-400 inline-block"></div>

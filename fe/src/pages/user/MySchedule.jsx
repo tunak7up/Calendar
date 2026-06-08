@@ -18,15 +18,20 @@ import {
   EyeIcon
 } from '@heroicons/react/24/outline';
 
-const TASK_COLORS = [
-  { bg: '#8b5cf6', border: '#7c3aed', text: '#ffffff' }, // purple
-  { bg: '#0ea5e9', border: '#0284c7', text: '#ffffff' }, // sky blue
-  { bg: '#10b981', border: '#059669', text: '#ffffff' }, // emerald green
-  { bg: '#f59e0b', border: '#d97706', text: '#ffffff' }, // amber/orange
-  { bg: '#ef4444', border: '#dc2626', text: '#ffffff' }, // red
-  { bg: '#ca8a04', border: '#a16207', text: '#ffffff' }, // deep yellow/gold
-  { bg: '#06b6d4', border: '#0891b2', text: '#ffffff' }, // cyan
-];
+const getTaskColor = (status) => {
+  const s = status?.toLowerCase();
+  if (s === 'overdue') {
+    return { bg: '#ef4444', border: '#b91c1c', text: '#ffffff' }; // red
+  }
+  if (s === 'in progress') {
+    return { bg: '#3b82f6', border: '#1d4ed8', text: '#ffffff' }; // blue
+  }
+  if (s === 'completed') {
+    return { bg: '#10b981', border: '#047857', text: '#ffffff' }; // green
+  }
+  // Default/pending
+  return { bg: '#9ca3af', border: '#4b5563', text: '#ffffff' }; // grey
+};
 
 // Parse datetime string từ BE (luôn là giờ VN nhưng không có timezone suffix)
 // Tránh browser hiểu nhầm là UTC → thêm +07:00 nếu chưa có
@@ -35,6 +40,16 @@ const parseVNTime = (str) => {
   if (str.includes('+') || str.includes('Z')) return new Date(str);
   // Chuẩn hóa separator về T rồi gắn +07:00
   return new Date(str.replace(' ', 'T') + '+07:00');
+};
+
+const getLocalYYYYMMDD = (val) => {
+  if (!val) return '';
+  const d = val instanceof Date ? val : parseVNTime(val);
+  if (!d) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 };
 
 const formatTime = (str) => {
@@ -80,14 +95,22 @@ export default function MySchedule() {
           title: t('myschedule.work_title'),
           start: item.start_time,
           end: item.end_time,
-          extendedProps: { isWorkHour: true }
+          priorityOrder: 6,
+          extendedProps: { isWorkHour: true, priorityOrder: 6 }
         }));
         setWorkingHours(mappedWorkingHours);
       }
 
       if (taskRes.success) {
         const mappedTasks = taskRes.data.map(task => {
-          const colorSet = TASK_COLORS[task.task_id % TASK_COLORS.length];
+          const colorSet = getTaskColor(task.status);
+          const status = task.status?.toLowerCase();
+          let pOrder = 5;
+          if (status === 'overdue') pOrder = 1;
+          else if (status === 'in progress') pOrder = 2;
+          else if (status === 'pending') pOrder = 3;
+          else if (status === 'completed') pOrder = 4;
+
           return {
             id: `task_${task.task_id}`,
             title: task.name || 'Untitled Task',
@@ -97,7 +120,8 @@ export default function MySchedule() {
             backgroundColor: colorSet.bg,
             borderColor: colorSet.border,
             textColor: colorSet.text,
-            extendedProps: { isTask: true, taskData: task }
+            priorityOrder: pOrder,
+            extendedProps: { isTask: true, taskData: task, priorityOrder: pOrder }
           };
         });
         setTasks(mappedTasks);
@@ -208,8 +232,8 @@ export default function MySchedule() {
     
     // Find tasks where clickedDate is between start_time and due_date
     const dayTasks = tasks.filter(t => {
-      const taskStartDate = t.start?.split(/[T ]/)[0] || t.end?.split(/[T ]/)[0];
-      const taskDueDate = t.end?.split(/[T ]/)[0];
+      const taskStartDate = getLocalYYYYMMDD(t.start) || getLocalYYYYMMDD(t.end);
+      const taskDueDate = getLocalYYYYMMDD(t.end);
       return taskStartDate && taskDueDate && 
              clickedDate >= taskStartDate && 
              clickedDate <= taskDueDate;
@@ -228,9 +252,29 @@ export default function MySchedule() {
 
   const filteredModalTasks = React.useMemo(() => {
     if (!menuConfig) return [];
-    if (modalStatusFilter === 'all') return menuConfig.tasks;
-    return menuConfig.tasks.filter(t => t.status?.toLowerCase() === modalStatusFilter.toLowerCase());
+    let list = menuConfig.tasks;
+    if (modalStatusFilter !== 'all') {
+      list = menuConfig.tasks.filter(t => {
+        const s = t.status?.toLowerCase();
+        if (modalStatusFilter === 'pending') {
+          return s === 'pending' || s === 'overdue';
+        }
+        return s === modalStatusFilter.toLowerCase();
+      });
+    }
+    return [...list].sort((a, b) => {
+      const getStatusOrder = (status) => {
+        const s = status?.toLowerCase();
+        if (s === 'overdue') return 1;
+        if (s === 'in progress') return 2;
+        if (s === 'pending') return 3;
+        if (s === 'completed') return 4;
+        return 5;
+      };
+      return getStatusOrder(a.status) - getStatusOrder(b.status);
+    });
   }, [menuConfig, modalStatusFilter]);
+
 
   return (
     <div className="space-y-6 pb-20">
@@ -254,6 +298,8 @@ export default function MySchedule() {
                 dayGridMonth: { displayEventTime: false },
               }}
               events={displayEvents}
+              eventOrder="priorityOrder"
+              eventOrderStrict={true}
               editable={true}
               droppable={true}
               height="auto"
@@ -276,7 +322,7 @@ export default function MySchedule() {
                 fetchData(info.startStr, info.endStr);
               }}
               eventClick={(info) => {
-                const dateStr = info.event.startStr.split('T')[0];
+                const dateStr = getLocalYYYYMMDD(info.event.start);
                 if (dateStr) {
                   handleDateClick({ dateStr });
                 }
@@ -427,7 +473,7 @@ export default function MySchedule() {
                 {filteredModalTasks.length > 0 ? (
                   <div className="space-y-2">
                     {filteredModalTasks.map((task, idx) => {
-                      const colorSet = TASK_COLORS[task.task_id % TASK_COLORS.length];
+                      const colorSet = getTaskColor(task.status);
                       return (
                         <div 
                           key={task.task_id}
@@ -443,9 +489,12 @@ export default function MySchedule() {
                               style={{ backgroundColor: colorSet.bg }}
                             />
                             <div>
-                              <div className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{task.name}</div>
+                              <div className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors truncate max-w-[200px] sm:max-w-[360px]" title={task.name}>{task.name}</div>
                               <div className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">
-                                {task.status === 'completed' ? t('myschedule.completed') : task.status === 'in progress' ? t('myschedule.in_progress') : t('myschedule.pending')} • {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
+                                {task.status === 'completed' ? t('myschedule.completed') : 
+                                 task.status === 'in progress' ? t('myschedule.in_progress') : 
+                                 task.status === 'overdue' ? t('status.overdue') : 
+                                 t('myschedule.pending')} • {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
                               </div>
                             </div>
                           </div>

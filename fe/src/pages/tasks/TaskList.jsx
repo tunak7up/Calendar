@@ -16,9 +16,10 @@ import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
-import { FunnelIcon } from '@heroicons/react/24/outline';
+import { FunnelIcon, MagnifyingGlassIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
 import { useTranslation } from 'react-i18next';
+import DateRangeFilter from '../../components/DateRangeFilter';
 
 
 function StatusBadge({ status }) {
@@ -82,6 +83,10 @@ export default function TaskList({ isAdmin }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
   const pageSize = 15;
 
   const formatCustomDate = (dateString) => {
@@ -134,11 +139,63 @@ export default function TaskList({ isAdmin }) {
     return new Date(task.due_date) < new Date();
   };
 
+  const getEffectiveStatus = (task) => {
+    if (task.status === 'completed') return 'completed';
+    if (isOverdue(task)) return 'overdue';
+    if (task.status === 'overdue') return 'pending';
+    return task.status;
+  };
+
+  const getTaskRoleForCurrentUser = (task, currentUser) => {
+    if (!isAdmin) return task.role;
+    const participant = task.participants?.find(p => p.person_id === currentUser?.person_id);
+    if (participant) return participant.role;
+    if (task.assigner === currentUser?.name) return 'assigner';
+    return 'N/A';
+  };
+
+  const baseFilteredTasks = React.useMemo(() => {
+    let temp = employeeTasks;
+
+    // 1. Date Range Filter (Bypass if there is an active search query to allow finding older tasks)
+    if (startDate && !searchQuery.trim()) {
+      temp = temp.filter(t => {
+        const dStr = t.due_date ? t.due_date.split('T')[0] : '';
+        return dStr >= startDate;
+      });
+    }
+    if (endDate && !searchQuery.trim()) {
+      temp = temp.filter(t => {
+        const sStr = t.start_time ? t.start_time.split('T')[0] : '';
+        return sStr <= endDate;
+      });
+    }
+
+    // 2. Search Query Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      temp = temp.filter(t =>
+        (t.name && t.name.toLowerCase().includes(q)) ||
+        (t.description && t.description.toLowerCase().includes(q)) ||
+        (t.task_id && t.task_id.toString().includes(q))
+      );
+    }
+
+    // 3. Role Filter
+    if (filterRole !== 'all') {
+      temp = temp.filter(t => {
+        const role = getTaskRoleForCurrentUser(t, user);
+        return role?.toLowerCase() === filterRole.toLowerCase();
+      });
+    }
+
+    return temp;
+  }, [employeeTasks, startDate, endDate, searchQuery, filterRole, user, isAdmin]);
+
   const filteredTasks = React.useMemo(() => {
-    if (filterStatus === 'all') return employeeTasks;
-    if (filterStatus === 'overdue') return employeeTasks.filter(t => isOverdue(t));
-    return employeeTasks.filter(t => t.status === filterStatus);
-  }, [employeeTasks, filterStatus]);
+    if (filterStatus === 'all') return baseFilteredTasks;
+    return baseFilteredTasks.filter(t => getEffectiveStatus(t) === filterStatus);
+  }, [baseFilteredTasks, filterStatus]);
 
   // Sort tasks: parents first, then their subtasks — only when no sortKey active
   const displayTasks = React.useMemo(() => {
@@ -163,10 +220,11 @@ export default function TaskList({ isAdmin }) {
     // Sort parents by status priority
     parents.sort((a, b) => {
       const getPriority = (task) => {
-        if (isOverdue(task)) return 1;
-        if (task.status === 'pending') return 2;
-        if (task.status === 'in progress') return 3;
-        if (task.status === 'completed') return 4;
+        const effStatus = getEffectiveStatus(task);
+        if (effStatus === 'overdue') return 1;
+        if (effStatus === 'pending') return 2;
+        if (effStatus === 'in progress') return 3;
+        if (effStatus === 'completed') return 4;
         return 5;
       };
       // If priority is same, sort by due date (earliest first)
@@ -189,14 +247,14 @@ export default function TaskList({ isAdmin }) {
   }, [filteredTasks, sortKey, sortDir]);
 
   const columns = [
-    { key: 'name', label: t('tasks.col_name'), sortable: true, className: 'w-[28%] min-w-[220px]' },
-    { key: 'assigner', label: t('tasks.col_assigner'), sortable: true, className: 'w-[12%] min-w-[110px]' },
-    { key: 'start_time', label: t('tasks.col_start'), sortable: true, className: 'w-[100px]' },
-    { key: 'due_date', label: t('tasks.col_deadline'), sortable: true, className: 'w-[100px]' },
-    { key: 'status', label: t('tasks.col_status'), sortable: true, className: 'w-[140px]' },
-    { key: 'extra', label: isAdmin ? t('tasks.col_participants') : t('tasks.col_role'), sortable: false, className: 'w-[120px]' },
-    { key: 'created_at', label: t('tasks.col_created'), sortable: true, className: 'w-[100px]', defaultSortDir: 'desc' },
-    { key: 'action', label: t('tasks.col_actions'), sortable: false, align: 'center', className: 'w-[80px]' },
+    { key: 'name', label: t('tasks.col_name'), sortable: true, className: 'w-[30%] min-w-[180px]' },
+    { key: 'assigner', label: t('tasks.col_assigner'), sortable: true, className: 'w-[10%] min-w-[80px]' },
+    { key: 'start_time', label: t('tasks.col_start'), sortable: true, className: 'w-[90px]' },
+    { key: 'due_date', label: t('tasks.col_deadline'), sortable: true, className: 'w-[90px]' },
+    { key: 'status', label: t('tasks.col_status'), sortable: true, className: 'w-[115px]' },
+    { key: 'extra', label: isAdmin ? t('tasks.col_participants') : t('tasks.col_role'), sortable: false, className: 'w-[110px]' },
+    { key: 'created_at', label: t('tasks.col_created'), sortable: true, className: 'w-[90px]', defaultSortDir: 'desc' },
+    { key: 'action', label: t('tasks.col_actions'), sortable: false, align: 'center', className: 'w-[50px]' },
   ];
 
   const handleStatusChange = async (taskId, newStatus) => {
@@ -246,22 +304,13 @@ export default function TaskList({ isAdmin }) {
         </div>
       </div>
 
-      {isAdmin && (
-        <div className="mb-6 bg-white p-4 rounded-2xl border border-gray-300 shadow-md">
-          <EmployeeMultiFilter
-            employees={employees}
-            selectedIds={selectedEmployeeIds}
-            onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
-            placeholder={t('tasks.filter_employee')}
-          />
-        </div>
-      )}
+      {/* Employee filter moved and merged into the unified filter card below */}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
           label={t('tasks.stat_total')}
-          value={employeeTasks.length}
+          value={baseFilteredTasks.length}
           icon={<ClipboardDocumentListIcon />}
           iconBg="bg-gray-100"
           iconColor="text-gray-500"
@@ -270,7 +319,7 @@ export default function TaskList({ isAdmin }) {
         />
         <StatCard
           label={t('tasks.stat_pending')}
-          value={employeeTasks.filter(t => t.status === 'pending').length}
+          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'pending').length}
           icon={<ClockIcon />}
           iconBg="bg-gray-100"
           iconColor="text-gray-400"
@@ -279,7 +328,7 @@ export default function TaskList({ isAdmin }) {
         />
         <StatCard
           label={t('tasks.stat_in_progress')}
-          value={employeeTasks.filter(t => t.status === 'in progress').length}
+          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'in progress').length}
           icon={<ClockIcon className="animate-spin-slow" />}
           iconBg="bg-blue-50"
           iconColor="text-blue-500"
@@ -288,7 +337,7 @@ export default function TaskList({ isAdmin }) {
         />
         <StatCard
           label={t('tasks.stat_completed')}
-          value={employeeTasks.filter(t => t.status === 'completed').length}
+          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'completed').length}
           icon={<CheckCircleIcon />}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
@@ -297,13 +346,96 @@ export default function TaskList({ isAdmin }) {
         />
         <StatCard
           label={t('tasks.stat_overdue')}
-          value={employeeTasks.filter(t => isOverdue(t)).length}
+          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'overdue').length}
           icon={<ExclamationTriangleIcon />}
           iconBg="bg-red-100"
           iconColor="text-red-600"
           isActive={filterStatus === 'overdue'}
           onClick={() => setFilterStatus('overdue')}
         />
+      </div>
+
+      {/* General Filters: Employee, Search, Role, DateRange */}
+      <div className="flex flex-col gap-4 mb-6 bg-white p-4 rounded-2xl border border-gray-300 shadow-md">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
+          {isAdmin && (
+            <div className="w-full lg:w-[240px] flex-shrink-0">
+              <EmployeeMultiFilter
+                employees={employees}
+                selectedIds={selectedEmployeeIds}
+                onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
+                placeholder={t('tasks.filter_employee')}
+                hideTags={true}
+              />
+            </div>
+          )}
+          <div className="relative flex-1 min-w-[180px]">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+            </span>
+            <input
+              type="text"
+              placeholder={t('tasks.search_placeholder') || "Search tasks..."}
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-9 p-3 outline-none transition-all min-h-[44px]"
+            />
+          </div>
+          <div className="relative w-full lg:w-[160px] flex-shrink-0">
+            <select
+              value={filterRole}
+              onChange={(e) => { setFilterRole(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none appearance-none cursor-pointer transition-all pr-8 font-semibold text-gray-700 min-h-[44px]"
+            >
+              <option value="all">{t('tasks.role_all') || "All Roles"}</option>
+              <option value="assignee">{t('tasks.role_assignee') || "Assignee"}</option>
+              <option value="assigner">{t('tasks.role_assigner') || "Assigner"}</option>
+            </select>
+            <ChevronDownIcon className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          <div className="w-full lg:w-auto flex-shrink-0">
+            <DateRangeFilter
+              startDate={startDate}
+              endDate={endDate}
+              onRangeChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Selected Employee Tags Row */}
+        {isAdmin && selectedEmployeeIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300 w-full">
+            {employees
+              .filter(emp => selectedEmployeeIds.includes(emp.person_id.toString()))
+              .map(emp => (
+                <div
+                  key={emp.person_id}
+                  className="flex items-center gap-1.5 bg-white text-[#0056b3] px-2.5 py-1.5 rounded-lg border border-blue-100 text-xs font-bold shadow-sm hover:shadow-md transition-all group/tag whitespace-nowrap"
+                >
+                  <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                    <UserIcon className="w-3 h-3 text-[#0056b3]" />
+                  </div>
+                  <span>{emp.name || emp.username}</span>
+                  <button
+                    onClick={() => setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.person_id.toString()))}
+                    className="hover:bg-[#0056b3] hover:text-white rounded-md p-0.5 transition-all text-[#0056b3]/60"
+                  >
+                    <XMarkIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            <button
+              onClick={() => setSelectedEmployeeIds([])}
+              className="text-[10px] uppercase tracking-widest font-black text-gray-400 hover:text-red-500 px-2 transition-colors self-center whitespace-nowrap"
+            >
+              {t('components.employeeFilter.clear') || "XÓA TẤT CẢ"}
+            </button>
+          </div>
+        )}
       </div>
 
       <SortableTable
@@ -327,15 +459,17 @@ export default function TaskList({ isAdmin }) {
               <div className="flex items-center gap-2">
                 {task.parent_id && <div className="w-4 border-b-2 border-l-2 border-gray-300 h-4 rounded-bl-md inline-block" />}
                 <div>
-                  <p className="font-bold text-gray-900 text-sm leading-snug">{task.name}</p>
+                  <p className="font-bold text-gray-900 text-sm leading-snug truncate max-w-[180px] sm:max-w-[250px] md:max-w-[360px]" title={task.name}>
+                    {task.name}
+                  </p>
                   <p className="text-xs text-gray-400 mt-0.5">ID: REQ-{task.task_id}</p>
                 </div>
               </div>
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm truncate w-[12%] min-w-[110px]" title={task.assigner}>{task.assigner}</td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.start_time)}</td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.due_date)}</td>
-            <td className="px-4 py-5 w-[140px]" onClick={(e) => e.stopPropagation()}>
+            <td className="px-4 py-5 text-gray-600 text-sm truncate w-[10%] min-w-[80px]" title={task.assigner}>{task.assigner}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[90px]">{formatCustomDate(task.start_time)}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[90px]">{formatCustomDate(task.due_date)}</td>
+            <td className="px-4 py-5 w-[115px]" onClick={(e) => e.stopPropagation()}>
               <TaskStatusSelect
                 currentStatus={task.status}
                 dueDate={task.due_date}
@@ -343,7 +477,7 @@ export default function TaskList({ isAdmin }) {
                 size="sm"
               />
             </td>
-            <td className="px-4 py-5 text-gray-600 text-sm w-[120px] truncate">
+            <td className="px-4 py-5 text-gray-600 text-sm w-[110px] truncate">
               {isAdmin ? (
                 <div className="flex flex-wrap gap-1">
                   {task.participants && task.participants.map(p => (
@@ -351,18 +485,18 @@ export default function TaskList({ isAdmin }) {
                   ))}
                 </div>
               ) : (
-                task.role 
-                  ? (task.role.toLowerCase() === 'assignee' 
-                      ? t('tasks.role_assignee') 
-                      : (task.role.toLowerCase() === 'assigner' 
-                          ? t('tasks.role_assigner') 
-                          : task.role))
+                task.role
+                  ? (task.role.toLowerCase() === 'assignee'
+                    ? t('tasks.role_assignee')
+                    : (task.role.toLowerCase() === 'assigner'
+                      ? t('tasks.role_assigner')
+                      : task.role))
                   : 'N/A'
               )}
             </td>
-            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[100px]">{formatCustomDate(task.created_at)}</td>
+            <td className="px-3 py-5 text-gray-600 text-xs whitespace-nowrap w-[90px]">{formatCustomDate(task.created_at)}</td>
 
-            <td className="px-4 py-5 text-center w-[80px]">
+            <td className="px-4 py-5 text-center w-[50px]">
               <button
                 onClick={(e) => handleDeleteTask(e, task.task_id)}
                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"

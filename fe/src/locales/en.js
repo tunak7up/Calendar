@@ -115,7 +115,9 @@ export const en = {
       col_actions: "Actions",
       confirm_delete: "Delete this task?",
       role_assignee: "Assignee",
-      role_assigner: "Assigner"
+      role_assigner: "Assigner",
+      role_all: "All Roles",
+      search_placeholder: "Search tasks..."
     },
     requests: {
       title: "Approve Requests",

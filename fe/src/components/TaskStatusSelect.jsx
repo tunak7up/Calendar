@@ -27,7 +27,7 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       <Menu.Button
         disabled={disabled}
         className={`
-          flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm
+          flex items-center gap-2 font-black uppercase tracking-widest transition-all rounded-full border shadow-sm whitespace-nowrap
           ${size === 'sm' ? 'px-2.5 py-0.5 text-[8.5px]' : 'px-4 py-1.5 text-[10px]'}
           ${overdue ? 'bg-gray-100 text-red-700 border-gray-200 shadow-sm' : `${statusInfo.light} ${statusInfo.text} ${statusInfo.border}`}
           ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105 active:scale-95 hover:shadow-md'}

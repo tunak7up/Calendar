@@ -546,7 +546,7 @@ export default function TaskDetails() {
                 </div>
               )}
             </div>
-            <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
+            <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 flex-shrink-0">
               <TaskStatusSelect
                 currentStatus={fullTask.status}
                 dueDate={fullTask.due_date}

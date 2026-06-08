@@ -114,7 +114,9 @@ export const vi = {
       col_actions: "Thao tác",
       confirm_delete: "Xóa công việc này?",
       role_assignee: "Người thực hiện",
-      role_assigner: "Người giao"
+      role_assigner: "Người giao",
+      role_all: "Tất cả vai trò",
+      search_placeholder: "Tìm kiếm công việc..."
     },
     requests: {
       title: "Duyệt yêu cầu",

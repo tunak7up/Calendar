@@ -18,12 +18,14 @@ import SubTaskModal from '../../components/SubTaskModal';
 import ParticipantManager from '../../components/ParticipantManager';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
+import { useAuth } from '../../context/AuthContext';
 
 
 export default function AddTask() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   
   const getLocalDateString = () => {
     const d = new Date();
@@ -85,9 +87,29 @@ export default function AddTask() {
           const managersList = persons.filter(p => p.role === 'manager');
           setManagers(managersList);
           setAllUsers(persons);
-          if (managersList.length > 0) {
-            setFormData(prev => ({ ...prev, assigner: managersList[0].name }));
+          
+          let initialAssignees = location.state?.assignee ? [location.state.assignee] : [];
+          if (currentUser) {
+            const self = persons.find(p => p.person_id === currentUser.person_id || p.name === currentUser.name || p.username === currentUser.username);
+            if (self) {
+              const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
+              if (!alreadyAdded) {
+                initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
+              } else {
+                initialAssignees = initialAssignees.map(a => 
+                  (a.person_id === self.person_id || a.name === self.name) 
+                    ? { ...a, isLocked: true } 
+                    : a
+                );
+              }
+            }
           }
+
+          setFormData(prev => ({ 
+            ...prev, 
+            assigner: managersList.length > 0 ? managersList[0].name : '',
+            assignees: initialAssignees
+          }));
         }
         setLoading(false);
       } catch (error) {
@@ -108,9 +130,26 @@ export default function AddTask() {
   }, []);
 
   const handleReset = () => {
+    let initialAssignees = location.state?.assignee ? [location.state.assignee] : [];
+    if (currentUser) {
+      const self = allUsers.find(p => p.person_id === currentUser.person_id || p.name === currentUser.name || p.username === currentUser.username);
+      if (self) {
+        const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
+        if (!alreadyAdded) {
+          initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
+        } else {
+          initialAssignees = initialAssignees.map(a => 
+            (a.person_id === self.person_id || a.name === self.name) 
+              ? { ...a, isLocked: true } 
+              : a
+          );
+        }
+      }
+    }
     setFormData({
       ...initialState,
-      assigner: managers.length > 0 ? managers[0].name : ''
+      assigner: managers.length > 0 ? managers[0].name : '',
+      assignees: initialAssignees
     });
   };
 
@@ -203,9 +242,10 @@ export default function AddTask() {
   const removeAssignee = (personIdOrName) => {
     setFormData({ 
       ...formData, 
-      assignees: formData.assignees.filter(a => 
-        !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName)
-      ) 
+      assignees: formData.assignees.filter(a => {
+        if (a.isLocked) return true;
+        return !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName);
+      }) 
     });
   };
 

@@ -300,7 +300,7 @@ export default function Profile() {
               tasks.map((task) => (
                 <div key={task.task_id} onClick={() => navigate(`/tasks/${task.task_id}`)} className="p-4 rounded-2xl border border-gray-100 bg-[#f8fafc] hover:border-purple-200 hover:shadow-sm transition-all cursor-pointer group">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors">{task.name || task.title}</h3>
+                    <h3 className="text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={task.name || task.title}>{task.name || task.title}</h3>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getStatusColor(task.status)} border`}>
                       {task.status || 'Pending'}
                     </span>

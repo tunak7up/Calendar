@@ -16,10 +16,10 @@ git clone https://github.com/your-repo/sern.git
 ```
 
 ### 3. Cấu hình biến môi trường
-Tạo file `.env` ở thư mục gốc (hoặc dùng cấu hình mặc định trong source):
+Tạo file `.env` đồng cấp với file docker-compose.yml, ví dụ:
 ```env
-BACKEND_PORT=36363
-FRONTEND_PORT=34321
+BACKEND_PORT=12345
+FRONTEND_PORT=23456
 ```
 
 ### 4. Khởi chạy

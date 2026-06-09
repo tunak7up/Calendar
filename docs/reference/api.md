@@ -1,6 +1,6 @@
 # Tài liệu REST API
 
-Dưới đây là một số endpoint API chính của Backend (Node.js/Express.js). Tài liệu chi tiết có thể được tham khảo trong mã nguồn (routes/controllers).
+Dưới đây là một số endpoint API chính của Backend (Node.js/Express.js). Các Endpoint chi tiết có thể được tham khảo trong mã nguồn (routes/controllers).
 
 Tất cả các API thường được gọi thông qua tiền tố `/api`.
 *(Ví dụ: `http://localhost:3000/api/task`)*

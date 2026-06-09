@@ -13,7 +13,6 @@ Sử dụng Docker là cách dễ dàng nhất để chạy cả Frontend, Backe
 ### 2. Tải mã nguồn
 ```bash
 git clone https://github.com/your-repo/sern.git
-cd sern
 ```
 
 ### 3. Cấu hình biến môi trường

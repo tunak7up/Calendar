@@ -27,4 +27,4 @@ Hệ thống cung cấp cơ chế phân quyền RBAC (Role-Based Access Control)
    - Mật khẩu mặc định.
    - Vai trò (Role).
 
-![Quản lý Users](public/screenshots/manager/usermanagement.png)
+![Quản lý Users](../public/screenshots/manager/usermanagement.png)

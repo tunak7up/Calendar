@@ -206,7 +206,8 @@ const exportTemplate = async (req, res) => {
 const importTasks = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'Kh?ng t?m th?y file upload.' });
+            sendRes(res, 400, 'Error importing tasks', null, 'No file uploaded');
+            return;
         }
 
         const assignerId = req.user.person_id;
@@ -214,13 +215,19 @@ const importTasks = async (req, res) => {
 
         const result = await taskService.importTasks(req.file.buffer, assignerId, createdBy);
 
-        return res.status(200).json({
-            message: `Import ho?n t?t. Th?nh c?ng: ${result.success}, Th?t b?i: ${result.failed}.`,
-            ...result
-        });
+        if (result.success === 0) {
+            const errorDetails = result.errors.map(e => `Dòng ${e.row}: ${e.reason}`).join('\n');
+            return sendRes(res, 400, `Import thất bại!\nChi tiết lỗi:\n${errorDetails}`, result);
+        }
+
+        if (result.failed > 0) {
+            const errorDetails = result.errors.map(e => `Dòng ${e.row}: ${e.reason}`).join('\n');
+            return sendRes(res, 201, `Import thành công ${result.success} dòng, thất bại ${result.failed} dòng.\nChi tiết lỗi:\n${errorDetails}`, result);
+        }
+
+        return sendRes(res, 201, `Import hoàn tất. Thành công: ${result.success} dòng.`, result);
     } catch (err) {
-        console.error('importTasks error:', err);
-        return res.status(500).json({ message: err.message });
+        sendRes(res, 500, 'Error importing tasks', null, err.message);
     }
 };
 module.exports = {

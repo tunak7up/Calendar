@@ -472,8 +472,9 @@ const exportTasks = async (taskIds = null) => {
         { header: 'Task ID', key: 'task_id' },
         { header: 'Parent ID', key: 'parent_id' },
         { header: 'Title', key: 'title' },
-        { header: 'Assigner ID', key: 'assigner_id' },
+        { header: 'Assigner', key: 'assigner' },
         { header: 'Created By', key: 'created_by' },
+        { header: 'Participants', key: 'participants' },
         { header: 'Start Time', key: 'start_time' },
         { header: 'Due Date', key: 'due_date' },
         { header: 'Status', key: 'status' },
@@ -487,7 +488,26 @@ const exportTasks = async (taskIds = null) => {
         ? { task_id: { [Op.in]: taskIds } }
         : {};
 
-    const tasks = await task.findAll({ where: whereClause });
+    const tasks = await task.findAll({
+        where: whereClause,
+        include: [
+            {
+                model: person,
+                as: 'assigner',
+                attributes: ['name']
+            },
+            {
+                model: person,
+                as: 'creator',
+                attributes: ['name']
+            },
+            {
+                model: person,
+                as: 'participants',
+                attributes: ['name']
+            }
+        ]
+    });
 
     const formatDate = (val) => {
         if (!val) return '';
@@ -496,12 +516,14 @@ const exportTasks = async (taskIds = null) => {
     };
 
     tasks.forEach(t => {
+        const participantNames = t.participants ? t.participants.map(p => p.name).join(', ') : '';
         sheet.addRow({
             task_id: t.task_id,
             parent_id: t.parent_id ?? '',
             title: t.title ?? '',
-            assigner_id: t.assigner_id ?? '',
-            created_by: t.created_by ?? '',
+            assigner: t.assigner?.name ?? '',
+            created_by: t.creator?.name ?? '',
+            participants: participantNames,
             start_time: formatDate(t.start_time),
             due_date: formatDate(t.due_date),
             status: t.status ?? '',

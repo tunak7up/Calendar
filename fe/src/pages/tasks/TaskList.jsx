@@ -357,9 +357,9 @@ export default function TaskList({ isAdmin }) {
                   const formData = new FormData();
                   formData.append('file', file);
                   try {
-                    await taskService.importTasks(formData);
+                    const response = await taskService.importTasks(formData);
                     fetchTasks();
-                    alert('Import thành công!');
+                    alert(response.message || 'Import thành công!');
                   } catch (error) {
                     alert('Lỗi import: ' + error.message);
                   }

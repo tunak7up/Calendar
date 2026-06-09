@@ -580,6 +580,11 @@ export default function TaskDetails() {
               <span className="text-gray-500 font-medium">{t('taskdetails.deadline')}</span>
               <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
             </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <UserIcon className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-500 font-medium">Người tạo:</span>
+              <span className="text-gray-900 font-semibold">{persons[fullTask.created_by] || 'N/A'}</span>
+            </div>
           </div>
         </div>
 

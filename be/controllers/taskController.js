@@ -53,7 +53,7 @@ const getChildTasksByParentId = async (req, res) => {
 
 const getTasksByTimeRange = async (req, res) => {
     try {
-        const { startTime, endTime } = req.body;
+        const { startTime, endTime } = req.query;
         const tasks = await taskService.getTasksByTimeRange(startTime, endTime);
         sendRes(res, 200, 'Tasks retrieved successfully', tasks);
     } catch (error) {
@@ -178,6 +178,51 @@ const removeParticipantFromTask = async (req, res) => {
     }
 };
 
+const exportTasks = async (req, res) => {
+    try {
+        const taskIds = req.body?.taskIds || req.query?.taskIds;
+        const workbook = await taskService.exportTasks(taskIds);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=tasks.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        sendRes(res, 400, 'Error exporting tasks', null, error.message);
+    }
+};
+
+const exportTemplate = async (req, res) => {
+    try {
+        const workbook = await taskService.exportTemplate();
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=import_template.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        sendRes(res, 400, 'Error exporting template', null, error.message);
+    }
+};
+
+const importTasks = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Kh?ng t?m th?y file upload.' });
+        }
+
+        const assignerId = req.user.person_id;
+        const createdBy = req.user.person_id;
+
+        const result = await taskService.importTasks(req.file.buffer, assignerId, createdBy);
+
+        return res.status(200).json({
+            message: `Import ho?n t?t. Th?nh c?ng: ${result.success}, Th?t b?i: ${result.failed}.`,
+            ...result
+        });
+    } catch (err) {
+        console.error('importTasks error:', err);
+        return res.status(500).json({ message: err.message });
+    }
+};
 module.exports = {
     createTask,
     createSubTask,
@@ -196,5 +241,8 @@ module.exports = {
     updateTaskTitleOrDescription,
     addParticipantToTask,
     updateParticipantRole,
-    removeParticipantFromTask
+    removeParticipantFromTask,
+    exportTasks,
+    importTasks,
+    exportTemplate
 };

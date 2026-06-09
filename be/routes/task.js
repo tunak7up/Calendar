@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const taskController = require('../controllers/taskController');
 const { authorize } = require('../middleware/auth');
+const multer  = require('multer');
+const upload  = multer({ storage: multer.memoryStorage() });
 
 router.post('/', taskController.createTask);
 router.post('/attachment', taskController.createTaskAttachment);
@@ -12,6 +14,9 @@ router.get('/parent/:parentId', taskController.getChildTasksByParentId);
 router.get('/participant/:participantId', taskController.getAllTasksByParticipantsId);
 router.get('/person/:personId/pending', taskController.getAllPendingTasksByPersonId);
 router.post('/person/:personId/due-date', taskController.getTasksBeforeDueDate);
+router.get('/export', taskController.exportTasks);
+router.get('/import-template', taskController.exportTemplate);
+router.post('/import', upload.single('file'), taskController.importTasks);
 router.get('/person/:personId', taskController.getAllTasksByPersonId);
 router.put('/update-title-description/:id', taskController.updateTaskTitleOrDescription);
 router.get('/:id', taskController.getTaskById);

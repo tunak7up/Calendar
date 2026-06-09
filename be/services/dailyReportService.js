@@ -87,7 +87,6 @@ const getDailyReportByPersonId = async (person_id) => {
 const BREAK_MINUTES = 60;
 
 const exportDailyReport = async (personIds, startDate, endDate) => {
-    console.log('=== exportDailyReport v2 - single sheet ===');
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Daily Report');
 

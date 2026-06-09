@@ -26,7 +26,7 @@ FRONTEND_PORT=23456
 ```bash
 docker-compose up -d --build
 ```
-Hệ thống sẽ tự động build image cho Node.js API (Backend) và React Vite (Frontend). Sau khi hoàn tất, bạn có thể truy cập hệ thống tại: `http://localhost:34321` (hoặc port bạn đã cấu hình).
+Hệ thống sẽ tự động build image cho Node.js API (Backend) và React Vite (Frontend). Sau khi hoàn tất, bạn có thể truy cập hệ thống tại: `http://localhost:23456` (hoặc port bạn đã cấu hình).
 
 ## Cài đặt thủ công (Không dùng Docker)
 

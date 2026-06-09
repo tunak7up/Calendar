@@ -12,8 +12,8 @@ Hệ thống cung cấp cơ chế phân quyền RBAC (Role-Based Access Control)
    - Được phân công công việc (Assigner).
 
 2. **Employee / Intern (Thực tập sinh/Nhân viên):**
-   - Chỉ có thể xem danh sách Task được phân công cho mình.
-   - Nộp báo cáo (Daily Report) và gửi yêu cầu (Leave Request, Equipment Request).
+   - Có thể xem, thêm, sửa xóa các Task được phân công cho mình.
+   - Nộp báo cáo (Daily Report) và gửi yêu cầu (Đăng ký lịch làm, xin nghỉ, đến sớm, về muộn,...).
    - Được thêm vào Task dưới dạng Participants.
 
 ## Thêm tài khoản mới
@@ -24,7 +24,7 @@ Hệ thống cung cấp cơ chế phân quyền RBAC (Role-Based Access Control)
 4. Cung cấp:
    - Họ và tên
    - Email đăng nhập
-   - Mật khẩu mặc định (Có thể thiết lập tự động cấp mật khẩu và gửi qua email).
+   - Mật khẩu mặc định.
    - Vai trò (Role).
 
 ![Quản lý Users](/screenshots/quan-ly-user.png)

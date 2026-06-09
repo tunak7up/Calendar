@@ -4,14 +4,12 @@
 
 ## Tính năng hiển thị
 
-1. **Thống kê tổng quan (KPA):**
-   - Tổng số công việc (Total Tasks).
-   - Số công việc đã hoàn thành (Completed).
-   - Số công việc đang thực hiện (In Progress).
-   - Số công việc bị trễ hạn (Overdue).
-2. **Biểu đồ thống kê:** Trực quan hóa số lượng công việc theo trạng thái hoặc theo tiến độ tuần.
-3. **Task cần chú ý (Recent/Urgent):** Danh sách nhanh các công việc được giao cho bạn có độ ưu tiên Cao (High) hoặc sắp đến Due Date.
+1. **Thống kê giờ làm (KPA):**
+   - So sánh giờ đăng ký với thực tế
+   - Bảng xếp hạng giờ làm việc của nhân viên
+2. **Thông tin điểm danh:** Thông tin chấm công của nhân viên trong ngày
+3. **Tổng quan công việc:** Danh sách nhanh các công việc sắp xếp theo trạng thái (quá hạn, đang chờ,...)
 
-Với Dashboard, Quản lý có thể nhìn lướt qua để biết thực trạng của đội ngũ, còn Thực tập sinh có thể tập trung vào những việc cần làm ngay.
+Với Dashboard, Quản lý có thể nhìn lướt qua để biết thực trạng của đội ngũ.
 
-![Dashboard Overview](/screenshots/dashboard.png)
+![Dashboard Overview](../public/screenshots/manager/dashboard.png)

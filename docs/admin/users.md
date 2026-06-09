@@ -27,4 +27,4 @@ Hệ thống cung cấp cơ chế phân quyền RBAC (Role-Based Access Control)
    - Mật khẩu mặc định (Có thể thiết lập tự động cấp mật khẩu và gửi qua email).
    - Vai trò (Role).
 
-![Quản lý Users](/screenshots/quan-ly-user.png)
+![Quản lý Users](public/screenshots/manager/usermanagement.png)

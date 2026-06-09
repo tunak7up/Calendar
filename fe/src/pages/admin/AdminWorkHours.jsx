@@ -16,7 +16,7 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
 
 const MONTH_NAMES_VI = [
-   'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+  'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
   'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12', 'Tháng 1'
 ];
 const MONTH_NAMES_EN = [
@@ -28,8 +28,8 @@ export default function AdminWorkHours() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1, 12);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12);
 
   const [startDate, setStartDate] = useState(firstDay.toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(lastDay.toISOString().split('T')[0]);
@@ -248,11 +248,11 @@ export default function AdminWorkHours() {
   };
 
   const columns = [
-    { key: 'name',            label: t('workhours.col_employee'), sortable: true },
-    { key: 'totalDays',       label: t('workhours.col_days'),     sortable: true,  align: 'center' },
+    { key: 'name', label: t('workhours.col_employee'), sortable: true },
+    { key: 'totalDays', label: t('workhours.col_days'), sortable: true, align: 'center' },
     { key: 'registeredHours', label: t('workhours.col_registered'), sortable: true, align: 'center' },
-    { key: 'actualHours',     label: t('workhours.col_actual'),   sortable: true,  align: 'center' },
-    { key: 'status',          label: t('workhours.col_status'),   sortable: false, align: 'center' },
+    { key: 'actualHours', label: t('workhours.col_actual'), sortable: true, align: 'center' },
+    { key: 'status', label: t('workhours.col_status'), sortable: false, align: 'center' },
   ];
 
   const d = new Date(startDate);

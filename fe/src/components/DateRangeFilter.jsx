@@ -60,7 +60,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     if (!newStart) return;
     if (newStart > endDate) {
       const [year, month] = newStart.split('-').map(Number);
-      const lastDayDate = new Date(year, month, 0);
+      const lastDayDate = new Date(year, month, 0, 12);
       const lastDayStr = lastDayDate.toISOString().split('T')[0];
       onRangeChange(newStart, lastDayStr);
     } else {
@@ -113,8 +113,8 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     const val = e.target.value;
     if (!val) return;
     const [year, month] = val.split('-').map(Number);
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
+    const first = new Date(year, month, 1, 12);
+    const last = new Date(year, month + 1, 0, 12);
     onRangeChange(first.toISOString().split('T')[0], last.toISOString().split('T')[0]);
   };
 

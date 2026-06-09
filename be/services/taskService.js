@@ -614,20 +614,20 @@ const importTasks = async (fileBuffer, assignerId, createdBy) => {
 
         // Bỏ qua dòng trống
         if (!entry.title) {
-            results.errors.push({ row: rowNumber, reason: 'Thiếu title, bỏ qua.' });
+            results.errors.push({ row: rowNumber, reason: 'Vui lòng nhập title' });
             results.failed++;
             return;
         }
 
         // Validate enums
         if (entry.status && !VALID_STATUS.includes(entry.status.toLowerCase())) {
-            results.errors.push({ row: rowNumber, reason: `status không hợp lệ: "${entry.status}"` });
+            results.errors.push({ row: rowNumber, reason: `status không hợp lệ: "${entry.status}", chỉ chấp nhận các giá trị pending, completed, in progress, overdue` });
             results.failed++;
             return;
         }
 
         if (entry.priority && !VALID_PRIORITY.includes(entry.priority.toLowerCase())) {
-            results.errors.push({ row: rowNumber, reason: `priority không hợp lệ: "${entry.priority}"` });
+            results.errors.push({ row: rowNumber, reason: `priority không hợp lệ: "${entry.priority}", chỉ chấp nhận các giá trị low, medium, high` });
             results.failed++;
             return;
         }

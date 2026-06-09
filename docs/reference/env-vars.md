@@ -28,4 +28,4 @@ Với các dự án dùng Vite, biến môi trường của Frontend thường c
 |------|---------|-------|
 | `VITE_API_URL` | URL chỉ định để các hàm fetch gọi tới Backend | `http://localhost:3000/api` |
 
-Khi Build lên Production, bạn nên tạo file `.env.production` để khai báo `VITE_API_URL` là domain thực tế (ví dụ `https://api.ima.com/api`).
+Khi Build lên Production với Docker, bạn nên tạo file `.env.production` để khai báo `VITE_API_URL` là domain thực tế (ví dụ `https://api.ima.com/api`).

@@ -6,7 +6,7 @@ Sau khi bạn đã cài đặt xong theo tài liệu [Cài đặt](./installatio
 
 Hệ thống sử dụng ORM Sequelize. Lần đầu tiên chạy, hệ thống có thể tự động tạo các bảng (nếu được cấu hình `sync()`).
 
-Hãy đảm bảo rằng bạn đã tạo một database trống trên MySQL Server với tên giống như cấu hình trong `.env` của thư mục `be/`:
+Hãy đảm bảo rằng bạn đã tạo một database trống trên SQL Server với tên giống như cấu hình trong `.env` của thư mục `be/`:
 ```sql
 CREATE DATABASE intern_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```

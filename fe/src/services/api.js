@@ -71,7 +71,7 @@ export const apiFetch = async (endpoint, options = {}) => {
         headers['Authorization'] = `Bearer ${newToken}`;
         fetchOptions.headers = headers;
         response = await fetch(url, fetchOptions);
-      } catch (refreshError) {
+      } catch {
         setAccessToken(null);
         localStorage.removeItem('user'); // Đảm bảo xóa sạch thông tin user
         window.location.href = '/login';

@@ -28,6 +28,7 @@ export default function RegistrationHistory() {
 
   React.useEffect(() => {
     const fetchRequests = async () => {
+      if (!user?.person_id) return;
       try {
         const result = await requestService.getRequestsByRequester(user.person_id);
         if (result.success) {
@@ -52,7 +53,7 @@ export default function RegistrationHistory() {
     };
 
     fetchRequests();
-  }, []);
+  }, [user?.person_id]);
 
 
   const [sortKey, setSortKey] = useState(null);

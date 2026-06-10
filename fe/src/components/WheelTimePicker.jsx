@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const WheelColumn = ({ items, value, onChange, label, disabledItems = [] }) => {
   const containerRef = useRef(null);
   const itemHeight = 40; // Height of each item in pixels
-  const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef(null);
 
   // Scroll to the selected value on mount
@@ -15,14 +14,13 @@ const WheelColumn = ({ items, value, onChange, label, disabledItems = [] }) => {
         containerRef.current.scrollTop = index * itemHeight;
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
-  const handleScroll = (e) => {
-    setIsScrolling(true);
+  const handleScroll = () => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     
     scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
       if (containerRef.current) {
         const scrollTop = containerRef.current.scrollTop;
         // Calculate the nearest index based on scroll position

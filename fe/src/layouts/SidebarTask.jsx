@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     ClipboardDocumentListIcon,
     PlusIcon,
@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 export default function SidebarTask() {
     const { t } = useTranslation();
     const location = useLocation();
-    const [isOpen, setIsOpen] = useState(false);
 
     const getLinkClass = (path) => {
         return location.pathname === path
@@ -49,7 +48,6 @@ export default function SidebarTask() {
                         <Link
                             to="/tasks/add"
                             className={getLinkClass('/tasks/add')}
-                            onClick={() => setIsOpen(false)}
                         >
                             <PlusIcon className={getIconClass('/tasks/add')} />
                             <span className="ms-4 text-sm font-medium">{t('sidebar.add_task')}</span>
@@ -59,7 +57,6 @@ export default function SidebarTask() {
                         <Link
                             to="/tasks"
                             className={getLinkClass('/tasks')}
-                            onClick={() => setIsOpen(false)}
                         >
                             <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
                             <span className="ms-4 text-sm font-medium">{t('sidebar.tasks_list')}</span>

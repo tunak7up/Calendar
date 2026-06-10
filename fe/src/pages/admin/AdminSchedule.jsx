@@ -29,7 +29,6 @@ export default function AdminSchedule() {
   const lastFetchedRangeRef = useRef({ start: '', end: '', lang: '' });
 
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [schedules, setSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
@@ -43,12 +42,6 @@ export default function AdminSchedule() {
   const [selectedModalPerson, setSelectedModalPerson] = useState(null);
   const [taskStatusFilters, setTaskStatusFilters] = useState(['pending', 'in progress']);
   const [activeGroup, setActiveGroup] = useState('registered'); // 'registered' or 'unscheduled'
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     // Fetch Employees for Filter
@@ -257,7 +250,7 @@ export default function AdminSchedule() {
     });
 
     return groupEvents;
-  }, [enrichedSchedules, selectedEmployeeIds]);
+  }, [enrichedSchedules, selectedEmployeeIds, i18n.language]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -335,7 +328,7 @@ export default function AdminSchedule() {
               hour: 'numeric',
               minute: '2-digit'
             })}`;
-          } catch (e) {
+          } catch {
             shiftText = '—';
           }
         }
@@ -418,7 +411,7 @@ export default function AdminSchedule() {
               hour: 'numeric',
               minute: '2-digit'
             })}`;
-          } catch (e) {
+          } catch {
             shiftText = '—';
           }
         }

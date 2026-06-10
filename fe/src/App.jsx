@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import HeaderPage from './layouts/HeaderPage'
@@ -30,7 +30,7 @@ import './styles/App.css'
 import MainLayout from './layouts/MainLayout'
 
 function App() {
-  const { isLoggedIn, isAdmin, isLoading, isLoggingOut, logout } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading, isLoggingOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 

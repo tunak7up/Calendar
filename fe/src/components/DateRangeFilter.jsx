@@ -12,6 +12,14 @@ const toDisplayFormat = (dateStr) => {
   return dateStr;
 };
 
+const formatLocalDate = (date) => {
+  if (!date) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 const isValidDate = (day, month, year) => {
   const d = new Date(year, month - 1, day);
   return d.getFullYear() === year && (d.getMonth() + 1) === month && d.getDate() === day;
@@ -61,7 +69,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     if (newStart > endDate) {
       const [year, month] = newStart.split('-').map(Number);
       const lastDayDate = new Date(year, month, 0);
-      const lastDayStr = lastDayDate.toISOString().split('T')[0];
+      const lastDayStr = formatLocalDate(lastDayDate);
       onRangeChange(newStart, lastDayStr);
     } else {
       onRangeChange(newStart, endDate);
@@ -115,7 +123,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     const [year, month] = val.split('-').map(Number);
     const first = new Date(year, month, 1);
     const last = new Date(year, month + 1, 0);
-    onRangeChange(first.toISOString().split('T')[0], last.toISOString().split('T')[0]);
+    onRangeChange(formatLocalDate(first), formatLocalDate(last));
   };
 
   const getMonthOptions = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -147,8 +147,6 @@ export default function TaskDetails() {
   const [newComment, setNewComment] = useState('');
   const [persons, setPersons] = useState({});
   const [allUsers, setAllUsers] = useState([]); // Matching AddTask
-  const [showAddParticipant, setShowAddParticipant] = useState(false);
-  const [participantFormData, setParticipantFormData] = useState({ person_id: '', role: 'assignee' });
   const [taskAttachments, setTaskAttachments] = useState([]);
   const [commentFiles, setCommentFiles] = useState([]);
   const taskFileInputRef = useRef(null);
@@ -159,81 +157,96 @@ export default function TaskDetails() {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
 
-  const fetchTaskData = async () => {
-    try {
-      const data = await taskService.getTaskById(id);
-      if (data.success) {
-        setFullTask(data.data);
+  const fetchTaskData = useCallback(() => {
+    taskService.getTaskById(id)
+      .then(data => {
+        if (data.success) {
+          setFullTask(data.data);
 
-        // If it's a sub-task, fetch parent info
-        if (data.data.parent_id) {
-          const pData = await taskService.getTaskById(data.data.parent_id);
-          if (pData.success) {
-            setParentTask(pData.data);
+          // If it's a sub-task, fetch parent info
+          if (data.data.parent_id) {
+            taskService.getTaskById(data.data.parent_id)
+              .then(pData => {
+                if (pData.success) {
+                  setParentTask(pData.data);
+                }
+              })
+              .catch(err => console.error('Error fetching parent task:', err));
+          } else {
+            setParentTask(null);
           }
-        } else {
-          setParentTask(null);
         }
-      }
-    } catch (error) {
-      console.error('Error fetching task:', error);
-    }
-  };
+      })
+      .catch(error => {
+        console.error('Error fetching task:', error);
+      });
+  }, [id]);
 
-  const fetchComments = async () => {
-    try {
-      const data = await apiFetch(`/comment/task/${id}`);
-      if (data.success) {
-        setComments(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    }
-  };
+  const fetchComments = useCallback(() => {
+    apiFetch(`/comment/task/${id}`)
+      .then(data => {
+        if (data.success) {
+          setComments(data.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching comments:', error);
+      });
+  }, [id]);
 
-  const fetchTaskAttachments = async () => {
-    try {
-      const res = await apiFetch(`/file-attachment/task/${id}`);
-      if (res.success) {
-        setTaskAttachments(res.data);
-      }
-    } catch (error) {
-      console.error('Error fetching task attachments:', error);
-    }
-  };
+  const fetchTaskAttachments = useCallback(() => {
+    apiFetch(`/file-attachment/task/${id}`)
+      .then(res => {
+        if (res.success) {
+          setTaskAttachments(res.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching task attachments:', error);
+      });
+  }, [id]);
 
-  const fetchSubTasks = async () => {
-    try {
-      const data = await taskService.getChildTasksByParentId(id);
-      if (data.success) {
-        const enhancedSubTasks = await Promise.all((data.data || []).map(async st => {
-          const cData = await apiFetch(`/comment/task/${st.task_id}`);
-          return {
-            ...st,
-            comments: cData.success ? cData.data : [],
-            newComment: ''
-          };
-        }));
-        setSubTasks(enhancedSubTasks);
-      }
-    } catch (error) {
-      console.error('Error fetching sub-tasks:', error);
-    }
-  };
+  const fetchSubTasks = useCallback(() => {
+    taskService.getChildTasksByParentId(id)
+      .then(data => {
+        if (data.success) {
+          Promise.all((data.data || []).map(st => {
+            return apiFetch(`/comment/task/${st.task_id}`)
+              .then(cData => ({
+                ...st,
+                comments: cData.success ? cData.data : [],
+                newComment: ''
+              }))
+              .catch(() => ({
+                ...st,
+                comments: [],
+                newComment: ''
+              }));
+          }))
+          .then(enhancedSubTasks => {
+            setSubTasks(enhancedSubTasks);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching sub-tasks:', error);
+      });
+  }, [id]);
 
-  const fetchPersons = async () => {
-    try {
-      const res = await apiFetch('/person');
-      if (res.success) {
-        const pMap = {};
-        res.data.forEach(p => pMap[p.person_id] = p.name || p.username);
-        setPersons(pMap);
-        setAllUsers(res.data);
-      }
-    } catch (error) {
-      console.error('Error fetching persons:', error);
-    }
-  };
+  const fetchPersons = useCallback(() => {
+    apiFetch('/person')
+      .then(res => {
+        if (res.success) {
+          const pMap = {};
+          res.data.forEach(p => pMap[p.person_id] = p.name || p.username);
+          setPersons(pMap);
+          setAllUsers(res.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching persons:', error);
+      });
+  }, []);
 
   const handleAddParticipant = async (personId) => {
     try {
@@ -316,7 +329,7 @@ export default function TaskDetails() {
 
   useEffect(() => {
     fetchPersons();
-  }, []);
+  }, [fetchPersons]);
 
   useEffect(() => {
     if (id) {
@@ -325,7 +338,7 @@ export default function TaskDetails() {
       fetchSubTasks();
       fetchTaskAttachments();
     }
-  }, [id]);
+  }, [id, fetchTaskData, fetchComments, fetchSubTasks, fetchTaskAttachments]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;

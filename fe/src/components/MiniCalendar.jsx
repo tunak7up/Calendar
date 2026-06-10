@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 
@@ -20,15 +20,18 @@ export default function MiniCalendar({ selectedDate, onSelectDate, workDays = []
     selectedDate ? new Date(selectedDate).getMonth() : today.getMonth()
   );
 
-  const WEEKDAYS = i18n.language === 'vi' ? WEEKDAYS_VI : WEEKDAYS_EN;
+  const [prevViewDate, setPrevViewDate] = useState(viewDate);
 
-  useEffect(() => {
+  if (viewDate !== prevViewDate) {
+    setPrevViewDate(viewDate);
     if (viewDate) {
       const d = new Date(viewDate);
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth());
     }
-  }, [viewDate]);
+  }
+
+  const WEEKDAYS = i18n.language === 'vi' ? WEEKDAYS_VI : WEEKDAYS_EN;
 
   const prevMonth = () => {
     let newMonth, newYear;

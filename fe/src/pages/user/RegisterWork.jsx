@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import WeekDatePicker from '../../components/WeekDatePicker';
-import { getFullDateStr, getTimeRangeStr } from '../../utils/dateUtils';
+import { getFullDateStr } from '../../utils/dateUtils';
 import { scheduleService } from '../../services/scheduleService';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
@@ -52,6 +52,7 @@ export default function RegisterWork() {
 
   useEffect(() => {
     const fetchSchedule = async () => {
+      if (!user?.person_id) return;
       try {
         const result = await scheduleService.getScheduleByPersonId(user.person_id);
         if (result.success) {
@@ -63,7 +64,7 @@ export default function RegisterWork() {
       }
     };
     fetchSchedule();
-  }, []);
+  }, [user?.person_id]);
   const [isRepeatDropdownOpen, setIsRepeatDropdownOpen] = useState(false);
   const [repeatOption, setRepeatOption] = useState('none');
   const [repeatInterval, setRepeatInterval] = useState(1);

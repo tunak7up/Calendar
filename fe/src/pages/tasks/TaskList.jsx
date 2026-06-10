@@ -11,7 +11,6 @@ import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
@@ -71,10 +70,22 @@ function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) 
   );
 }
 
+const isOverdue = (task) => {
+  if (task.status === 'completed') return false;
+  return new Date(task.due_date) < new Date();
+};
+
+const getEffectiveStatus = (task) => {
+  if (task.status === 'completed') return 'completed';
+  if (isOverdue(task)) return 'overdue';
+  if (task.status === 'overdue') return 'pending';
+  return task.status;
+};
+
 export default function TaskList({ isAdmin }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
@@ -100,12 +111,12 @@ export default function TaskList({ isAdmin }) {
     return `${day}/${month}/${year}`;
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = React.useCallback(async () => {
     try {
       setLoading(true);
       const result = isAdmin
         ? await taskService.getAllTasks()
-        : await taskService.getAllTasksByParticipantId(user.person_id);
+        : await taskService.getAllTasksByParticipantId(user?.person_id);
       if (result.success) {
         setTasks(result.data);
       }
@@ -114,7 +125,7 @@ export default function TaskList({ isAdmin }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAdmin, user?.person_id]);
 
   React.useEffect(() => {
     fetchTasks();
@@ -128,31 +139,19 @@ export default function TaskList({ isAdmin }) {
         })
         .catch(err => console.error('Error fetching employees:', err));
     }
-  }, [isAdmin, user]);
+  }, [isAdmin, fetchTasks]);
 
   const employeeTasks = isAdmin && selectedEmployeeIds.length > 0
     ? tasks.filter(t => t.participants && t.participants.some(p => selectedEmployeeIds.includes(p.person_id.toString())))
     : tasks;
 
-  const isOverdue = (task) => {
-    if (task.status === 'completed') return false;
-    return new Date(task.due_date) < new Date();
-  };
-
-  const getEffectiveStatus = (task) => {
-    if (task.status === 'completed') return 'completed';
-    if (isOverdue(task)) return 'overdue';
-    if (task.status === 'overdue') return 'pending';
-    return task.status;
-  };
-
-  const getTaskRoleForCurrentUser = (task, currentUser) => {
+  const getTaskRoleForCurrentUser = React.useCallback((task, currentUser) => {
     if (!isAdmin) return task.role;
     const participant = task.participants?.find(p => p.person_id === currentUser?.person_id);
     if (participant) return participant.role;
     if (task.assigner === currentUser?.name) return 'assigner';
     return 'N/A';
-  };
+  }, [isAdmin]);
 
   const baseFilteredTasks = React.useMemo(() => {
     let temp = employeeTasks;
@@ -190,7 +189,7 @@ export default function TaskList({ isAdmin }) {
     }
 
     return temp;
-  }, [employeeTasks, startDate, endDate, searchQuery, filterRole, user, isAdmin]);
+  }, [employeeTasks, startDate, endDate, searchQuery, filterRole, user, getTaskRoleForCurrentUser]);
 
   const filteredTasks = React.useMemo(() => {
     if (filterStatus === 'all') return baseFilteredTasks;

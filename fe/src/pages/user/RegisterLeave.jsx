@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SunIcon, CloudIcon, CalendarDaysIcon, TrashIcon, CalendarIcon, ClockIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import WeekDatePicker from '../../components/WeekDatePicker';
-import { getFullDateStr, getTimeRangeStr } from '../../utils/dateUtils';
+import { getFullDateStr } from '../../utils/dateUtils';
 import { scheduleService } from '../../services/scheduleService';
 import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
-
-
-
 
 export default function RegisterLeave() {
   const location = useLocation();
@@ -23,31 +20,10 @@ export default function RegisterLeave() {
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
-  const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const result = await scheduleService.getScheduleByPersonId(user.person_id);
-        if (result.success) {
-          setWorkSchedules(result.data);
-          const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
-          setWorkDays(days);
-
-          // If initialDate was passed, auto-add it if it's a work day
-          if (initialDate && days.includes(initialDate)) {
-            fetchShiftAndAdd(initialDate);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching schedule:', error);
-      }
-    };
-    fetchSchedule();
-  }, []);
-
-  const fetchShiftAndAdd = async (dateStr) => {
+  const fetchShiftAndAdd = useCallback(async (dateStr) => {
+    if (!user?.person_id) return;
     try {
       const res = await scheduleService.getShiftByDate(user.person_id, dateStr);
       if (res.success && res.data) {
@@ -66,14 +42,14 @@ export default function RegisterLeave() {
       console.error('Error fetching shift:', error);
       alert(t('register.alert_leave_fetch_error'));
     }
-  };
+  }, [user, t]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
+      if (!user?.person_id) return;
       try {
         const result = await scheduleService.getScheduleByPersonId(user.person_id);
         if (result.success) {
-          setWorkSchedules(result.data);
           const days = result.data.map(item => item.start_time.split(/[T ]/)[0]);
           setWorkDays(days);
 
@@ -87,7 +63,7 @@ export default function RegisterLeave() {
       }
     };
     fetchSchedule();
-  }, []);
+  }, [user?.person_id, initialDate, fetchShiftAndAdd]);
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);
@@ -147,7 +123,7 @@ export default function RegisterLeave() {
     };
 
     try {
-      const result = await requestService.submitRequest(payload);
+      await requestService.submitRequest(payload);
       alert(t('register.alert_leave_submit_success'));
       setSchedule([]);
       setReason('');

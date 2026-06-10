@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
@@ -78,7 +78,7 @@ export default function Dashboard() {
     checkDailyReport();
   }, [user]);
 
-  const fetchReportAttachments = async () => {
+  const fetchReportAttachments = useCallback(async () => {
     if (!reportId) return;
     try {
       const res = await apiFetch(`/file-attachment/report/${reportId}`);
@@ -88,19 +88,16 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching report attachments:', error);
     }
-  };
+  }, [reportId]);
 
   useEffect(() => {
     if (reportId) {
       fetchReportAttachments();
     }
-  }, [reportId]);
+  }, [reportId, fetchReportAttachments]);
 
-  useEffect(() => {
-    fetchTasks();
-  }, [user]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
+    if (!user?.person_id) return;
     setLoading(true);
     try {
       const response = await taskService.getAllTasksByParticipantId(user.person_id);
@@ -121,7 +118,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.person_id]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const handleCheckIn = async () => {
     try {

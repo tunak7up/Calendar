@@ -56,7 +56,6 @@ export default function AddTask() {
   const [isSubTaskModalOpen, setIsSubTaskModalOpen] = useState(false);
   const [managers, setManagers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [pendingFiles, setPendingFiles] = useState([]);
 
   const [isStartCalOpen, setIsStartCalOpen] = useState(false);
@@ -111,14 +110,12 @@ export default function AddTask() {
             assignees: initialAssignees
           }));
         }
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
-        setLoading(false);
       }
     };
     fetchUsers();
-  }, []);
+  }, [currentUser, location.state?.assignee]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

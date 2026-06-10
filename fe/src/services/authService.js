@@ -17,7 +17,7 @@ export const loginApi = async (username, password) => {
   let data;
   try {
     data = await response.json();
-  } catch (err) {
+  } catch {
     throw new Error('Đăng nhập thất bại. Server trả về nội dung không hợp lệ.');
   }
 

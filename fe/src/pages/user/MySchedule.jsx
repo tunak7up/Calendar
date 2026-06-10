@@ -472,7 +472,7 @@ export default function MySchedule() {
                 
                 {filteredModalTasks.length > 0 ? (
                   <div className="space-y-2">
-                    {filteredModalTasks.map((task, idx) => {
+                    {filteredModalTasks.map((task) => {
                       const colorSet = getTaskColor(task.status);
                       return (
                         <div 

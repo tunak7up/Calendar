@@ -21,7 +21,6 @@ import {
   CheckCircleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { formatDateTime } from '../../utils/dateUtils';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -178,7 +177,7 @@ export default function Profile() {
         }
       };
     });
-  }, [allSchedules, dailyReports, i18n.language]);
+  }, [allSchedules, dailyReports, t]);
 
   const selectedDateDetail = React.useMemo(() => {
     const sched = allSchedules.find(s => s.working_date && s.working_date.split(/[T ]/)[0] === selectedDate);

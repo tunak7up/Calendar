@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ClipboardDocumentCheckIcon,
   ClockIcon,
@@ -17,6 +17,25 @@ import SortableTable from '../../components/SortableTable';
 import WorkHoursChart from '../../components/WorkHoursChart';
 import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
+
+const now = new Date();
+const todayStr = now.toISOString().split('T')[0];
+const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+const defaultChartEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+const isOverdue = (task) => {
+  if (task.status?.toLowerCase() === 'completed') return false;
+  return task.due_date && new Date(task.due_date) < new Date();
+};
+
+const getTaskPriority = (task) => {
+  if (isOverdue(task)) return 0;
+  const s = task.status?.toLowerCase();
+  if (s === 'pending') return 1;
+  if (s === 'in progress') return 2;
+  if (s === 'completed') return 3;
+  return 4;
+};
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -63,24 +82,14 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
 
   const [taskSearchTerm, setTaskSearchTerm] = useState('');
-  const [taskPage, setTaskPage] = useState(1);
-  const taskPageSize = 8;
 
-  const now = new Date();
-  const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const defaultChartEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
   const [chartStartDate, setChartStartDate] = useState(defaultChartStart);
   const [chartEndDate, setChartEndDate] = useState(defaultChartEnd);
   const [chartLoading, setChartLoading] = useState(false);
   const [allSchedules, setAllSchedules] = useState([]);
   const [allReports, setAllReports] = useState([]);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  useEffect(() => { fetchDashboardData(); }, []);
-  useEffect(() => { fetchChartData(); }, [chartStartDate, chartEndDate]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [empRes, reqRes, repRes, schedRes, taskRes] = await Promise.all([
@@ -104,9 +113,9 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchChartData = async () => {
+  const fetchChartData = useCallback(async () => {
     setChartLoading(true);
     try {
       const [schedRes, repRes] = await Promise.all([
@@ -122,11 +131,14 @@ export default function AdminDashboard() {
     } finally {
       setChartLoading(false);
     }
-  };
+  }, [chartStartDate, chartEndDate]);
+
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+  useEffect(() => { fetchChartData(); }, [fetchChartData]);
 
   const pendingRequests = requests.filter(req => req.status?.toLowerCase() === 'pending');
 
-  const getShiftLabel = (schedule) => {
+  const getShiftLabel = useCallback((schedule) => {
     if (!schedule) return '';
     const startHour = schedule.start_time ? new Date(schedule.start_time).getHours() : NaN;
     const endHour = schedule.end_time ? new Date(schedule.end_time).getHours() : NaN;
@@ -138,7 +150,7 @@ export default function AdminDashboard() {
     const rawStart = schedule.start_time ? schedule.start_time.substring(11, 16) : '--';
     const rawEnd = schedule.end_time ? schedule.end_time.substring(11, 16) : '--';
     return `${rawStart} – ${rawEnd}`;
-  };
+  }, [t]);
 
   const todayAttendance = useMemo(() => {
     const scheduledIds = new Set(schedules.map(s => s.person_id));
@@ -170,23 +182,9 @@ export default function AdminDashboard() {
       });
     });
     return rows;
-  }, [schedules, reports, employees, i18n.language]);
+  }, [schedules, reports, employees, getShiftLabel]);
 
   const workingCount = useMemo(() => todayAttendance.filter(item => !!item.check_in).length, [todayAttendance]);
-
-  const isOverdue = (task) => {
-    if (task.status?.toLowerCase() === 'completed') return false;
-    return task.due_date && new Date(task.due_date) < new Date();
-  };
-
-  const getTaskPriority = (task) => {
-    if (isOverdue(task)) return 0;
-    const s = task.status?.toLowerCase();
-    if (s === 'pending') return 1;
-    if (s === 'in progress') return 2;
-    if (s === 'completed') return 3;
-    return 4;
-  };
 
   const sortedFilteredTasks = useMemo(() => {
     let list = tasks.filter(task => {
@@ -415,7 +413,7 @@ export default function AdminDashboard() {
                   type="text"
                   placeholder={t('admindashboard.filter_placeholder')}
                   value={taskSearchTerm}
-                  onChange={e => { setTaskSearchTerm(e.target.value); setTaskPage(1); }}
+                  onChange={e => { setTaskSearchTerm(e.target.value); }}
                   className="w-full pl-9 pr-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500/20 outline-none"
                 />
               </div>

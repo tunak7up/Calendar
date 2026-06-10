@@ -27,7 +27,6 @@ export default function RegistrationHistoryDetails() {
   const [error, setError] = useState(null);
 
   const [status, setStatus] = useState('pending');
-  const [selectedStatus, setSelectedStatus] = useState('pending');
   const [isUpdating, setIsUpdating] = useState(false);
   const [feedbackInput, setFeedbackInput] = useState('');
   const [responseText, setResponseText] = useState('');
@@ -40,7 +39,6 @@ export default function RegistrationHistoryDetails() {
         rawReq?.status?.toLowerCase() === 'đã hủy' || rawReq?.status?.toLowerCase() === 'rejected' ? 'rejected' :
         (rawReq?.status || 'pending');
       setStatus(initialStatus);
-      setSelectedStatus(initialStatus);
     }
   }, [rawReq]);
 
@@ -57,7 +55,6 @@ export default function RegistrationHistoryDetails() {
             response.data?.status?.toLowerCase() === 'đã hủy' || response.data?.status?.toLowerCase() === 'rejected' ? 'rejected' :
             (response.data?.status || 'pending');
           setStatus(initialStatus);
-          setSelectedStatus(initialStatus);
         } else {
           setError(response.message || t('history.not_found'));
         }
@@ -166,7 +163,6 @@ export default function RegistrationHistoryDetails() {
 
         setResponseText(commentContent);
         setStatus(newStatus);
-        setSelectedStatus(newStatus);
         alert(t('history.alert_update_success'));
       } else {
         alert(t('history.alert_update_fail'));

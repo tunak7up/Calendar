@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ClockIcon,
@@ -44,11 +44,7 @@ export default function AdminWorkHours() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => {
-    fetchData();
-  }, [startDate, endDate]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [empRes, schedRes, reportRes] = await Promise.all([
@@ -65,7 +61,11 @@ export default function AdminWorkHours() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleExport = async () => {
     const employeeList = employees.filter(emp => emp.role !== 'manager');
@@ -122,7 +122,7 @@ export default function AdminWorkHours() {
               body: JSON.stringify({ personIds: ids, startDate, endDate })
             });
           }
-        } catch (refreshError) {
+        } catch {
           throw new Error('Token hết hạn, vui lòng đăng nhập lại');
         }
       }
@@ -239,13 +239,6 @@ export default function AdminWorkHours() {
     }
     return list;
   }, [employeeSummary, sortKey, sortDir]);
-
-  const totalPages = Math.ceil(sortedSummary.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
-  };
 
   const columns = [
     { key: 'name',            label: t('workhours.col_employee'), sortable: true },

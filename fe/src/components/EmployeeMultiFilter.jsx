@@ -16,7 +16,7 @@ const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChan
   const containerRef = useRef(null);
 
   // Ensure selectedIds is an array
-  const currentSelected = Array.isArray(selectedIds) ? selectedIds : [];
+  const currentSelected = useMemo(() => Array.isArray(selectedIds) ? selectedIds : [], [selectedIds]);
 
   const availableEmployees = useMemo(() => {
     return employees.filter(emp => !currentSelected.includes(emp.person_id.toString()));

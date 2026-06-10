@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   UsersIcon,
   XCircleIcon,
@@ -25,8 +25,7 @@ export default function AdminEmployeeList() {
     status: true
   });
 
-  const fetchEmployees = () => {
-    setLoading(true);
+  const fetchEmployees = useCallback(() => {
     apiFetch('/person')
       .then(data => {
         if (data.success) {
@@ -35,11 +34,11 @@ export default function AdminEmployeeList() {
       })
       .catch(error => console.error("Error fetching employees:", error))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [fetchEmployees]);
 
   const openModal = (user = null) => {
     if (user) {

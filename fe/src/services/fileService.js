@@ -31,7 +31,7 @@ const makeAuthenticatedFetch = async (url, options = {}) => {
       headers['Authorization'] = `Bearer ${accessToken}`;
       fetchOptions.headers = headers;
       response = await fetch(url, fetchOptions);
-    } catch (refreshError) {
+    } catch {
       setAccessToken(null);
       window.location.href = '/login?error=session_expired';
       throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');

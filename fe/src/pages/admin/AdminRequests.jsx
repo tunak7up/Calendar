@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ClipboardDocumentCheckIcon,
   MagnifyingGlassIcon,
@@ -29,12 +29,7 @@ export default function AdminRequests() {
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const [filterMonth, setFilterMonth] = useState(currentMonthStr);
 
-  useEffect(() => {
-    fetchRequests();
-    fetchEmployees();
-  }, [filterMonth]); // Re-fetch when month changes
-
-  const fetchEmployees = () => {
+  const fetchEmployees = useCallback(() => {
     apiFetch('/person')
       .then(data => {
         if (data.success) {
@@ -42,11 +37,10 @@ export default function AdminRequests() {
         }
       })
       .catch(error => console.error("Error fetching employees:", error));
-  };
+  }, []);
 
-  const fetchRequests = () => {
+  const fetchRequests = useCallback(() => {
     if (!filterMonth) return;
-    setLoading(true);
 
     // Calculate start and end dates of the month
     const [year, month] = filterMonth.split('-').map(Number);
@@ -62,7 +56,12 @@ export default function AdminRequests() {
       })
       .catch(error => console.error("Error fetching requests:", error))
       .finally(() => setLoading(false));
-  };
+  }, [filterMonth]);
+
+  useEffect(() => {
+    fetchRequests();
+    fetchEmployees();
+  }, [fetchRequests, fetchEmployees]);
 
   const handleUpdateStatus = async (requestId, newStatus) => {
     try {
@@ -170,6 +169,7 @@ export default function AdminRequests() {
             type="month"
             value={filterMonth}
             onChange={(e) => {
+              setLoading(true);
               setFilterMonth(e.target.value);
               setCurrentPage(1);
             }}

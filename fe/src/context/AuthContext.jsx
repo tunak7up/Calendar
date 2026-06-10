@@ -1,5 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
-import { apiFetch, setAccessToken, BASE_URL } from '../services/api';
+import { setAccessToken, BASE_URL } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -66,7 +67,7 @@ export function AuthProvider({ children }) {
           setAccessToken(null);
           setUser(null);
         }
-      } catch (error) {
+      } catch {
         if (!isMounted) return;
         setAccessToken(null);
         setUser(null);

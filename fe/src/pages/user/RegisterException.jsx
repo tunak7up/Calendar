@@ -43,6 +43,7 @@ export default function RegisterException() {
   // Fetch approved schedule days for user
   useEffect(() => {
     const fetchSchedule = async () => {
+      if (!user?.person_id) return;
       try {
         const result = await scheduleService.getScheduleByPersonId(user.person_id);
         if (result.success) {
@@ -70,7 +71,7 @@ export default function RegisterException() {
       }
     };
     fetchSchedule();
-  }, []);
+  }, [user?.person_id, initialDate]);
 
   const handleDayClick = (dObj) => {
     const dStr = getFullDateStr(dObj);

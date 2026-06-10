@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-export const generateWeek = (dateObj, lang = 'vi') => {
+const generateWeek = (dateObj, lang = 'vi') => {
   const dates = [];
   const date = new Date(dateObj.getTime());
   const day = date.getDay();

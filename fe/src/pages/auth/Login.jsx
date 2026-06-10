@@ -16,7 +16,7 @@ const isTokenValid = (token) => {
     const exp = payload.exp;
     if (!exp) return false;
     return exp * 1000 > Date.now();
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -59,8 +59,8 @@ export default function Login({ onLogin }) {
             navigate(parsedUser.role === 'manager' ? '/admin/dashboard' : '/dashboard');
           }
           return;
-        } catch (e) {
-          console.error('Lỗi phân tích thông tin user:', e);
+        } catch {
+          console.error('Lỗi phân tích thông tin user');
         }
       }
 

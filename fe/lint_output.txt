@@ -1,0 +1,140 @@
+﻿
+> fe@0.0.0 lint
+> eslint .
+
+
+C:\Dat\Calendar\fe\src\components\MiniCalendar.jsx
+  1:20  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Dat\Calendar\fe\src\components\WheelTimePicker.jsx
+  1:17  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Dat\Calendar\fe\src\pages\admin\AdminEmployeeList.jsx
+  41:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  39 |
+  40 |   useEffect(() => {
+> 41 |     fetchEmployees(false);
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |   }, [fetchEmployees]);
+  43 |
+  44 |   const openModal = (user = null) => {  react-hooks/set-state-in-effect
+
+C:\Dat\Calendar\fe\src\pages\admin\AdminRequests.jsx
+  63:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  61 |
+  62 |   useEffect(() => {
+> 63 |     fetchRequests();
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  64 |     fetchEmployees();
+  65 |   }, [fetchRequests, fetchEmployees]);
+  66 |  react-hooks/set-state-in-effect
+
+C:\Dat\Calendar\fe\src\pages\admin\AdminWorkHours.jsx
+  243:9  error  'totalPages' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Dat\Calendar\fe\src\pages\tasks\AddSubTask.jsx
+  2:10  error  'apiFetch' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Dat\Calendar\fe\src\pages\tasks\AddTask.jsx
+   59:10  error    'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                         no-unused-vars
+  121:6   warning  React Hook useEffect has missing dependencies: 'currentUser' and 'location.state.assignee'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Dat\Calendar\fe\src\pages\tasks\TaskDetails.jsx
+  150:10  error    'showAddParticipant' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  150:30  error    'setShowAddParticipant' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+  151:10  error    'participantFormData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+  151:31  error    'setParticipantFormData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  318:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  316 |
+  317 |   useEffect(() => {
+> 318 |     fetchPersons();
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  319 |   }, []);
+  320 |
+  321 |   useEffect(() => {                                                                    react-hooks/set-state-in-effect
+  323:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  321 |   useEffect(() => {
+  322 |     if (id) {
+> 323 |       fetchTaskData();
+      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  324 |       fetchComments();
+  325 |       fetchSubTasks();
+  326 |       fetchTaskAttachments();  react-hooks/set-state-in-effect
+  328:6   warning  React Hook useEffect has missing dependencies: 'fetchComments', 'fetchSubTasks', 'fetchTaskAttachments', and 'fetchTaskData'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+C:\Dat\Calendar\fe\src\pages\tasks\TaskList.jsx
+   14:10  error    'formatDateTime' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                             no-unused-vars
+   77:14  error    'i18n' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                              no-unused-vars
+  131:6   warning  React Hook React.useEffect has a missing dependency: 'fetchTasks'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  193:6   warning  React Hook React.useMemo has a missing dependency: 'getTaskRoleForCurrentUser'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  198:6   warning  React Hook React.useMemo has a missing dependency: 'getEffectiveStatus'. Either include it or remove the dependency array         react-hooks/exhaustive-deps
+  247:6   warning  React Hook React.useMemo has a missing dependency: 'getEffectiveStatus'. Either include it or remove the dependency array         react-hooks/exhaustive-deps
+
+C:\Dat\Calendar\fe\src\pages\user\Dashboard.jsx
+   97:6  warning  React Hook useEffect has a missing dependency: 'fetchReportAttachments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  101:6  warning  React Hook useEffect has a missing dependency: 'fetchTasks'. Either include it or remove the dependency array              react-hooks/exhaustive-deps
+
+C:\Dat\Calendar\fe\src\pages\user\Profile.jsx
+  180:6  warning  React Hook React.useMemo has an unnecessary dependency: 'i18n.language'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Dat\Calendar\fe\src\pages\user\RegisterLeave.jsx
+  25:40  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.person_id, t]. Inferred less specific property than source.
+
+  23 |   const [workDays, setWorkDays] = useState([]);
+  24 |
+> 25 |   const fetchShiftAndAdd = useCallback(async (dateStr) => {
+     |                                        ^^^^^^^^^^^^^^^^^^^^
+> 26 |     if (!user?.person_id) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |     try {
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |     }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |   }, [user?.person_id, t]);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   useEffect(() => {
+  48 |     const fetchSchedule = async () => {  react-hooks/preserve-manual-memoization
+
+C:\Dat\Calendar\fe\src\services\api.js
+  74:16  error  'refreshError' is defined but never used  no-unused-vars
+
+C:\Dat\Calendar\fe\src\services\authService.js
+  20:12  error  'err' is defined but never used  no-unused-vars
+
+C:\Dat\Calendar\fe\src\services\fileService.js
+  34:14  error  'refreshError' is defined but never used  no-unused-vars
+
+Γ£û 28 problems (19 errors, 9 warnings)
+

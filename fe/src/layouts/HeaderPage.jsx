@@ -1,6 +1,6 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSelector from '../components/LanguageSelector'
@@ -26,12 +26,10 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function HeaderPage({ isAdmin, setIsAdmin }) {
-  const navigate = useNavigate();
+export default function HeaderPage({ isAdmin }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const isManager = user?.role === 'manager';
   const currentNav = isAdmin ? adminNavigation : userNavigation;
 
   const navigation = currentNav.map(item => ({

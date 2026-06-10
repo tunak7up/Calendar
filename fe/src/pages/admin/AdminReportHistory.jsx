@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Fragment } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
 import { useLocation } from 'react-router-dom';
 import { dailyReportService } from '../../services/dailyReportService';
 import { apiFetch } from '../../services/api';
@@ -7,7 +7,6 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { formatDateTime } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 
 export default function AdminReportHistory() {
@@ -34,9 +33,9 @@ export default function AdminReportHistory() {
 
   useEffect(() => {
     fetchData();
-  }, [startDate, endDate, selectedEmployeeIds]);
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const empRes = await apiFetch('/person');
@@ -69,7 +68,7 @@ export default function AdminReportHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate, selectedEmployeeIds]);
 
   // Status keys used internally (English) mapped from t() at render time
   const STATUS_DONE = 'done';

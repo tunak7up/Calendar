@@ -20,7 +20,7 @@ export default function AdminReportHistory() {
   );
 
   const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1, 12);
   const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
 
@@ -253,7 +253,7 @@ export default function AdminReportHistory() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_date')}</p>
-                           <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-gray-900">
                             {(() => {
                               const d = new Date(selectedReport.working_date);
                               if (isNaN(d.getTime())) return '';

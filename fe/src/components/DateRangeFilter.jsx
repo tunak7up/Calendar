@@ -69,7 +69,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     if (newStart > endDate) {
       const [year, month] = newStart.split('-').map(Number);
       const lastDayDate = new Date(year, month, 0);
-      const lastDayStr = formatLocalDate(lastDayDate);
+      const lastDayStr = lastDayDate.toISOString().split('T')[0];
       onRangeChange(newStart, lastDayStr);
     } else {
       onRangeChange(newStart, endDate);
@@ -123,7 +123,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     const [year, month] = val.split('-').map(Number);
     const first = new Date(year, month, 1);
     const last = new Date(year, month + 1, 0);
-    onRangeChange(formatLocalDate(first), formatLocalDate(last));
+    onRangeChange(first.toISOString().split('T')[0], last.toISOString().split('T')[0]);
   };
 
   const getMonthOptions = () => {

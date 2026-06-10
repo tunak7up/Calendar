@@ -17,6 +17,9 @@ const task = sequelize.define(
                 key: 'task_id'
             },
         },
+        title: {
+            type: DataTypes.STRING(256),
+        },
         assigner_id: {
             type: DataTypes.INTEGER,
             references: {
@@ -36,9 +39,6 @@ const task = sequelize.define(
         },
         due_date: {
             type: DataTypes.DATE,
-        },
-        title: {
-            type: DataTypes.STRING(256),
         },
         status: {
             type: DataTypes.ENUM('pending', 'completed', 'in progress', 'overdue'),

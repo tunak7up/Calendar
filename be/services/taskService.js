@@ -1,6 +1,7 @@
 const { task, person, task_participant, task_attachment, comment, comment_attachment } = require('../models');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
+const ExcelJS = require('exceljs');
 
 const sequelize = require('../config/db');
 
@@ -462,6 +463,244 @@ const removeParticipantFromTask = async (taskId, participantId) => {
     });
 };
 
+const exportTasks = async (taskIds = null) => {
+    console.log('=== exportTasks ===');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Tasks');
+
+    sheet.columns = [
+        { header: 'Task ID', key: 'task_id' },
+        { header: 'Parent ID', key: 'parent_id' },
+        { header: 'Title', key: 'title' },
+        { header: 'Assigner', key: 'assigner' },
+        { header: 'Created By', key: 'created_by' },
+        { header: 'Participants', key: 'participants' },
+        { header: 'Start Time', key: 'start_time' },
+        { header: 'Due Date', key: 'due_date' },
+        { header: 'Status', key: 'status' },
+        { header: 'Priority', key: 'priority' },
+        { header: 'Created At', key: 'created_at' },
+        { header: 'Ended At', key: 'ended_at' },
+        { header: 'Description', key: 'description' },
+    ];
+
+    const whereClause = taskIds && taskIds.length > 0
+        ? { task_id: { [Op.in]: taskIds } }
+        : {};
+
+    const tasks = await task.findAll({
+        where: whereClause,
+        include: [
+            {
+                model: person,
+                as: 'assigner',
+                attributes: ['name']
+            },
+            {
+                model: person,
+                as: 'creator',
+                attributes: ['name']
+            },
+            {
+                model: person,
+                as: 'participants',
+                attributes: ['name']
+            }
+        ]
+    });
+
+    const formatDate = (val) => {
+        if (!val) return '';
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 19).replace('T', ' ');
+    };
+
+    tasks.forEach(t => {
+        const participantNames = t.participants ? t.participants.map(p => p.name).join(', ') : '';
+        sheet.addRow({
+            task_id: t.task_id,
+            parent_id: t.parent_id ?? '',
+            title: t.title ?? '',
+            assigner: t.assigner?.name ?? '',
+            created_by: t.creator?.name ?? '',
+            participants: participantNames,
+            start_time: formatDate(t.start_time),
+            due_date: formatDate(t.due_date),
+            status: t.status ?? '',
+            priority: t.priority ?? '',
+            created_at: formatDate(t.created_at),
+            ended_at: formatDate(t.ended_at),
+            description: t.description ?? '',
+        });
+    });
+
+    // Style header row
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9E1F2' },
+    };
+    headerRow.alignment = { horizontal: 'center' };
+
+    const MAX_WIDTHS = {
+        title: 60,
+        description: 50,
+    };
+    // Auto-fit columns
+    sheet.columns.forEach(column => {
+        let maxLength = column.header?.length ?? 10;
+        column.eachCell({ includeEmpty: false }, cell => {
+            const len = cell.value ? cell.value.toString().length : 0;
+            if (len > maxLength) maxLength = len;
+        });
+
+        const cap = MAX_WIDTHS[column.key];
+        column.width = cap ? Math.min(maxLength + 4, cap) : maxLength + 4;
+    });
+
+    return workbook;
+};
+
+const HEADER_MAP = {
+    'title': 'title',
+    'start time': 'start_time',
+    'start_time': 'start_time',
+    'due date': 'due_date',
+    'due_date': 'due_date',
+    'status': 'status',
+    'priority': 'priority',
+    'ended at': 'ended_at',
+    'ended_at': 'ended_at',
+    'description': 'description',
+};
+
+const VALID_STATUS = ['pending', 'completed', 'in progress', 'overdue'];
+const VALID_PRIORITY = ['low', 'medium', 'high'];
+
+const importTasks = async (fileBuffer, assignerId, createdBy) => {
+    console.log('=== importTasks ===');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(fileBuffer);
+
+    const sheet = workbook.worksheets[0];
+    if (!sheet) throw new Error('File Excel không có sheet nào.');
+
+    // Đọc header từ dòng 1
+    const headerRow = sheet.getRow(1).values; // index bắt đầu từ 1
+    const colMap = {}; // colIndex -> key chuẩn
+
+    headerRow.forEach((header, colIndex) => {
+        if (!header) return;
+        const normalized = header.toString().trim().toLowerCase();
+        const key = HEADER_MAP[normalized];
+        if (key) colMap[colIndex] = key;
+    });
+
+    const results = { success: 0, failed: 0, errors: [] };
+    const rowsToInsert = [];
+
+    sheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // bỏ header
+
+        const values = row.values; // 1-indexed
+        const entry = {};
+
+        Object.entries(colMap).forEach(([colIndex, key]) => {
+            const raw = values[colIndex];
+            entry[key] = raw !== undefined && raw !== null ? raw.toString().trim() : null;
+        });
+
+        // Bỏ qua dòng trống
+        if (!entry.title) {
+            results.errors.push({ row: rowNumber, reason: 'Vui lòng nhập title' });
+            results.failed++;
+            return;
+        }
+
+        // Validate enums
+        if (entry.status && !VALID_STATUS.includes(entry.status.toLowerCase())) {
+            results.errors.push({ row: rowNumber, reason: `status không hợp lệ: "${entry.status}", chỉ chấp nhận các giá trị pending, completed, in progress, overdue` });
+            results.failed++;
+            return;
+        }
+
+        if (entry.priority && !VALID_PRIORITY.includes(entry.priority.toLowerCase())) {
+            results.errors.push({ row: rowNumber, reason: `priority không hợp lệ: "${entry.priority}", chỉ chấp nhận các giá trị low, medium, high` });
+            results.failed++;
+            return;
+        }
+
+        // Parse dates — chấp nhận cả chuỗi ISO lẫn Date object từ Excel
+        const parseDate = (val) => {
+            if (!val) return null;
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? null : d;
+        };
+
+        rowsToInsert.push({
+            title: entry.title,
+            start_time: parseDate(entry.start_time),
+            due_date: parseDate(entry.due_date),
+            status: entry.status?.toLowerCase() || 'pending',
+            priority: entry.priority?.toLowerCase() || 'medium',
+            ended_at: parseDate(entry.ended_at),
+            description: entry.description || null,
+            assigner_id: assignerId,
+            created_by: createdBy,
+            created_at: new Date(),
+        });
+    });
+
+    // Bulk insert
+    if (rowsToInsert.length > 0) {
+        try {
+            await task.bulkCreate(rowsToInsert);
+            results.success = rowsToInsert.length;
+        } catch (err) {
+            throw new Error(`bulkCreate thất bại: ${err.message}`);
+        }
+    }
+
+    return results;
+};
+
+const exportTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Template');
+
+    sheet.columns = [
+        { header: 'Title', key: 'title', width: 30 },
+        { header: 'Description', key: 'description', width: 40 },
+        { header: 'Start Time', key: 'start_time', width: 20 },
+        { header: 'Due Date', key: 'due_date', width: 20 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Priority', key: 'priority', width: 15 },
+    ];
+
+    // Add a sample row to guide the user (optional, but helpful)
+    sheet.addRow({
+        title: 'Task Mẫu',
+        description: 'Mô tả công việc mẫu',
+        start_time: new Date().toISOString().slice(0, 10),
+        due_date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        status: 'pending',
+        priority: 'medium',
+    });
+
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9E1F2' },
+    };
+    headerRow.alignment = { horizontal: 'center' };
+
+    return workbook;
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -480,5 +719,7 @@ module.exports = {
     addParticipantToTask,
     updateParticipantRole,
     removeParticipantFromTask,
-    updateTaskTitleOrDescription
+    exportTasks,
+    importTasks,
+    exportTemplate
 };

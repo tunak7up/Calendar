@@ -1,5 +1,55 @@
 import { apiFetch } from './api';
 
+const downloadWithAuth = async (endpoint, fileName) => {
+  const { BASE_URL, getAccessToken, refreshAccessToken, setAccessToken } = await import('./api');
+
+  const url = `${BASE_URL}${endpoint}`;
+  let accessToken = getAccessToken();
+  const headers = {};
+
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  let response = await fetch(url, {
+    method: 'GET',
+    headers,
+    credentials: 'include',
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    try {
+      accessToken = await refreshAccessToken();
+      headers['Authorization'] = `Bearer ${accessToken}`;
+      response = await fetch(url, {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+      });
+    } catch (refreshError) {
+      setAccessToken(null);
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
+    }
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Download failed: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+};
+
 export const taskService = {
   // --- Create ---
   createTask: (taskData) => apiFetch('/task', {
@@ -58,5 +108,19 @@ export const taskService = {
   // --- Delete ---
   deleteTask: (id) => apiFetch(`/task/${id}`, {
     method: 'DELETE',
+  }),
+
+  // --- Export / Import ---
+  exportTasks: async () => {
+    await downloadWithAuth('/task/export', 'tasks.xlsx');
+  },
+
+  exportTemplate: async () => {
+    await downloadWithAuth('/task/import-template', 'import_template.xlsx');
+  },
+
+  importTasks: (formData) => apiFetch('/task/import', {
+    method: 'POST',
+    body: formData,
   }),
 };

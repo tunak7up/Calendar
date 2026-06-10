@@ -1,21 +1,10 @@
 services:
-  # database:
-  #   image: mcr.microsoft.com/mssql/server:2019-latest
-  #   container_name: mssql
-  #   ports:
-  #     - "14360:1433"
-  #   environment:
-  #     SA_PASSWORD: "YourStrong!Password"
-  #     ACCEPT_EULA: "Y"
-  #   volumes:
-  #     - db_data:/var/opt/mssql
-
   backend:
     build:
       context: ./be
       dockerfile: Dockerfile
     ports:
-      - "36363:3000"
+      - "${BACKEND_PORT}:3000"
     env_file:
       - ./be/.env
     volumes:
@@ -26,19 +15,9 @@ services:
       context: ./fe
       dockerfile: Dockerfile
     ports:
-      - "34321:80"
+      - "${FRONTEND_PORT}:80"
     depends_on:
       - backend
-      # - cdn
-
-  # cdn:
-  #   image: nginx:alpine
-  #   container_name: sern_cdn
-  #   ports:
-  #     - "4040:80"
-  #   volumes:
-  #     - ./be/uploads:/usr/share/nginx/html/uploads
-  #     - ./cdn/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   db_data:

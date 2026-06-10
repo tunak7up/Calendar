@@ -291,15 +291,90 @@ export default function TaskList({ isAdmin }) {
           <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('tasks.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {!isAdmin && (
-            <button
-              onClick={() => navigate('/tasks/add')}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
-            >
-              <PlusIcon className="w-5 h-5" />
-              <span>{t('tasks.create_btn')}</span>
-            </button>
+          {user?.role === 'manager' && (
+            <>
+              <button
+                onClick={() => taskService.exportTasks().catch(err => alert('Export failed: ' + err.message))}
+                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 transition-all flex-1 md:flex-none justify-center"
+              >
+                <span>Export</span>
+              </button>
+
+              <Menu as="div" className="relative inline-block text-left flex-1 md:flex-none">
+                <Menu.Button className="flex w-full items-center justify-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all">
+                  <span>Import</span>
+                  <ChevronDownIcon className="w-5 h-5" />
+                </Menu.Button>
+                <Transition
+                  as={React.Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                    <div className="px-1 py-1">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => document.getElementById('import-file-upload').click()}
+                            className={`${
+                              active ? 'bg-orange-500 text-white' : 'text-gray-900'
+                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          >
+                            Upload Excel
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => taskService.exportTemplate().catch(err => alert('Download template failed: ' + err.message))}
+                            className={`${
+                              active ? 'bg-orange-500 text-white' : 'text-gray-900'
+                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          >
+                            Download Import Template
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+
+              <input
+                type="file"
+                id="import-file-upload"
+                accept=".xlsx"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const response = await taskService.importTasks(formData);
+                    fetchTasks();
+                    alert(response.message || 'Import thành công!');
+                  } catch (error) {
+                    alert('Lỗi import: ' + error.message);
+                  }
+                  e.target.value = '';
+                }}
+              />
+            </>
           )}
+
+          <button
+            onClick={() => navigate('/tasks/add')}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span>{t('tasks.create_btn')}</span>
+          </button>
         </div>
       </div>
 

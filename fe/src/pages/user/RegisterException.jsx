@@ -16,6 +16,7 @@ import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
+import { presetReasonService } from '../../services/presetReasonService';
 
 const getHHMM = (isoStr) => {
   if (!isoStr) return '';
@@ -39,6 +40,7 @@ export default function RegisterException() {
 
   const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+  const [presetReasons] = useState(() => presetReasonService.getByType('exception'));
 
   // Fetch approved schedule days for user
   useEffect(() => {
@@ -389,6 +391,30 @@ export default function RegisterException() {
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                 {t('register.exception_reason')}
               </h2>
+              
+              {presetReasons.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {presetReasons.map((pr) => {
+                    const textVal = i18n.language === 'vi' ? pr.vi : pr.en;
+                    const isSelected = reason === textVal;
+                    return (
+                      <button
+                        key={pr.id}
+                        type="button"
+                        onClick={() => setReason(isSelected ? '' : textVal)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
+                            : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-750'
+                        }`}
+                      >
+                        {textVal}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}

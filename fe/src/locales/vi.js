@@ -12,6 +12,7 @@ export const vi = {
       admin_requests: "Yêu cầu",
       admin_workhours: "Giờ làm",
       admin_reports: "Báo cáo",
+      admin_preset_reasons: "Lý do mẫu",
       profile: "Hồ sơ của bạn",
       logout: "Đăng xuất"
     },
@@ -116,7 +117,11 @@ export const vi = {
       role_assignee: "Người thực hiện",
       role_assigner: "Người giao",
       role_all: "Tất cả vai trò",
-      search_placeholder: "Tìm kiếm công việc..."
+      search_placeholder: "Tìm kiếm công việc...",
+      export: "Xuất file excel",
+      import: "Nhập file excel",
+      upload: "Tải lên",
+      download_import_template: "Tải file mẫu",
     },
     requests: {
       title: "Duyệt yêu cầu",

@@ -9,18 +9,20 @@ import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
+import { presetReasonService } from '../../services/presetReasonService';
 
 export default function RegisterLeave() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const initialDate = location.state?.date;
 
   const [viewDateObj, setViewDateObj] = useState(initialDate ? new Date(initialDate) : new Date());
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+  const [presetReasons] = useState(() => presetReasonService.getByType('leave'));
 
   const fetchShiftAndAdd = useCallback(async (dateStr) => {
     if (!user?.person_id) return;
@@ -200,7 +202,31 @@ export default function RegisterLeave() {
 
         {/* Reason */}
         <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-6 uppercase">{t('register.leave_reason')}</h2>
+          <h2 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase">{t('register.leave_reason')}</h2>
+          
+          {presetReasons.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
+              {presetReasons.map((pr) => {
+                const textVal = i18n.language === 'vi' ? pr.vi : pr.en;
+                const isSelected = reason === textVal;
+                return (
+                  <button
+                    key={pr.id}
+                    type="button"
+                    onClick={() => setReason(isSelected ? '' : textVal)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
+                        : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    }`}
+                  >
+                    {textVal}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <textarea
             className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
             placeholder={t('register.leave_reason_placeholder')}

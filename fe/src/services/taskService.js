@@ -26,7 +26,7 @@ const downloadWithAuth = async (endpoint, fileName) => {
         headers,
         credentials: 'include',
       });
-    } catch (refreshError) {
+    } catch {
       setAccessToken(null);
       localStorage.removeItem('user');
       window.location.href = '/login';

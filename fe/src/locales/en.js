@@ -12,6 +12,7 @@ export const en = {
       admin_requests: "Requests",
       admin_workhours: "Work Hours",
       admin_reports: "Reports",
+      admin_preset_reasons: "Preset Reasons",
       profile: "Your Profile",
       logout: "Log Out"
     },
@@ -117,7 +118,11 @@ export const en = {
       role_assignee: "Assignee",
       role_assigner: "Assigner",
       role_all: "All Roles",
-      search_placeholder: "Search tasks..."
+      search_placeholder: "Search tasks...",
+      export: "Export",
+      import: "Import",
+      upload: "Upload",
+      download_import_template: "Download Import Template",
     },
     requests: {
       title: "Approve Requests",

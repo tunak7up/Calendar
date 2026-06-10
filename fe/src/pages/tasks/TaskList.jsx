@@ -297,12 +297,12 @@ export default function TaskList({ isAdmin }) {
                 onClick={() => taskService.exportTasks().catch(err => alert('Export failed: ' + err.message))}
                 className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 transition-all flex-1 md:flex-none justify-center"
               >
-                <span>Export</span>
+                <span>{t('tasks.export')}</span>
               </button>
 
               <Menu as="div" className="relative inline-block text-left flex-1 md:flex-none">
                 <Menu.Button className="flex w-full items-center justify-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all">
-                  <span>Import</span>
+                  <span>{t('tasks.import')}</span>
                   <ChevronDownIcon className="w-5 h-5" />
                 </Menu.Button>
                 <Transition
@@ -324,7 +324,7 @@ export default function TaskList({ isAdmin }) {
                               active ? 'bg-orange-500 text-white' : 'text-gray-900'
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
-                            Upload Excel
+                            {t('tasks.upload')}
                           </button>
                         )}
                       </Menu.Item>
@@ -336,7 +336,7 @@ export default function TaskList({ isAdmin }) {
                               active ? 'bg-orange-500 text-white' : 'text-gray-900'
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
-                            Download Import Template
+                            {t('tasks.download_import_template')}
                           </button>
                         )}
                       </Menu.Item>

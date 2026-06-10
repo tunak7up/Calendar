@@ -24,6 +24,7 @@ import Profile from './pages/user/Profile'
 import Dashboard from './pages/user/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportHistory from './pages/admin/AdminReportHistory'
+import AdminPresetReasons from './pages/admin/AdminPresetReasons'
 
 import './styles/App.css'
 
@@ -136,6 +137,7 @@ function App() {
             <Route path="/admin/schedule" element={isAdmin ? <AdminSchedule /> : <Navigate to="/schedule" />} />
             <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
             <Route path="/admin/reports" element={isAdmin ? <AdminReportHistory /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/preset-reasons" element={isAdmin ? <AdminPresetReasons /> : <Navigate to="/schedule" />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/dashboard" : "/dashboard") : "/login"} />} />

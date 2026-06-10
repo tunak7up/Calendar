@@ -19,6 +19,7 @@ const adminNavigation = [
   { key: 'admin_requests', path: '/admin/requests', id: 'admin_requests' },
   { key: 'admin_workhours', path: '/admin/work-hours', id: 'admin_workhours' },
   { key: 'admin_reports', path: '/admin/reports', id: 'admin_reports' },
+  { key: 'admin_preset_reasons', path: '/admin/preset-reasons', id: 'admin_preset_reasons' },
   { key: 'tasks', path: '/tasks', id: 'admin_task' },
 ];
 

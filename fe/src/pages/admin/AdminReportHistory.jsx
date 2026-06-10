@@ -31,10 +31,6 @@ export default function AdminReportHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -69,6 +65,10 @@ export default function AdminReportHistory() {
       setLoading(false);
     }
   }, [startDate, endDate, selectedEmployeeIds]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Status keys used internally (English) mapped from t() at render time
   const STATUS_DONE = 'done';

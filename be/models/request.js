@@ -32,6 +32,15 @@ const request = sequelize.define(
         reason: {
             type: DataTypes.TEXT,
         },
+        preset_reason_id: {
+            type: DataTypes.INTEGER,
+            field: 'PresetReasonID',
+            allowNull: true,
+            references: {
+                model: 'PresetReasons',
+                key: 'ID'
+            }
+        },
         created_at: {
             type: DataTypes.STRING,
         },

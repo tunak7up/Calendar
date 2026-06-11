@@ -481,6 +481,8 @@ export default function TaskDetails() {
 
         <button
           onClick={handleDeleteTask}
+          data-customizable-id="btn-delete-task"
+          data-customizable-type="bg"
           className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm"
         >
           <TrashIcon className="w-4 h-4" />
@@ -526,7 +528,7 @@ export default function TaskDetails() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 mt-2">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 leading-tight" data-customizable-id="task-details-title" data-customizable-type="text">
                       {fullTask.title || fullTask.name || ''}
                     </h1>
                     <button

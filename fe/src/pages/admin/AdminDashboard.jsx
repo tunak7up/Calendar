@@ -233,12 +233,14 @@ export default function AdminDashboard() {
       {/* ── Header ── */}
       <div className="flex-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('admindashboard.title')}</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('admindashboard.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="admin-dashboard-title" data-customizable-type="text">{t('admindashboard.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="admin-dashboard-subtitle" data-customizable-type="text">{t('admindashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => navigate('/admin/requests')}
+            data-customizable-id="btn-admin-dashboard-requests"
+            data-customizable-type="bg"
             className="relative flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-amber-200 shadow-sm hover:border-amber-400 hover:shadow-md transition-all group"
             title={t('admindashboard.pending_requests')}
           >

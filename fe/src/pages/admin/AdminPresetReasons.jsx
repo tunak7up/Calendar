@@ -13,11 +13,10 @@ import {
 import { presetReasonService } from '../../services/presetReasonService';
 import Button from '../../components/Button';
 import { useTranslation } from 'react-i18next';
-import BackButton from '../../components/BackButton';
 
 export default function AdminPresetReasons() {
-  const { t } = useTranslation();
-  const [reasons, setReasons] = useState(() => presetReasonService.getAll());
+  const { t, i18n } = useTranslation();
+  const [reasons, setReasons] = useState([]);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'leave', 'exception'
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,24 +30,44 @@ export default function AdminPresetReasons() {
     isActive: true
   });
 
-  const loadReasons = () => {
-    setReasons(presetReasonService.getAll());
+  const loadReasons = async () => {
+    try {
+      const res = await presetReasonService.getAll();
+      if (res.success && Array.isArray(res.data)) {
+        setReasons(res.data);
+      }
+    } catch (err) {
+      console.error('Error loading preset reasons:', err);
+    }
   };
+
+  // Load reasons on mount
+  useEffect(() => {
+    loadReasons();
+  }, []);
 
   // Set page title for SEO
   useEffect(() => {
-    document.title = `${t('nav.logo')} - Quản lý lý do mẫu`;
-  }, [t]);
+    document.title = `${t('nav.logo')} - ${i18n.language === 'vi' ? 'Quản lý lý do mẫu' : 'Preset Reasons Management'}`;
+  }, [t, i18n.language]);
 
-  const handleToggleActive = (id, currentStatus) => {
-    presetReasonService.update(id, { isActive: !currentStatus });
-    loadReasons();
+  const handleToggleActive = async (id, currentStatus) => {
+    try {
+      await presetReasonService.update(id, { isActive: !currentStatus });
+      await loadReasons();
+    } catch (err) {
+      console.error('Error toggling preset reason active status:', err);
+    }
   };
 
-  const handleDelete = (id, viText) => {
+  const handleDelete = async (id, viText) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa lý do: "${viText}" không?`)) {
-      presetReasonService.delete(id);
-      loadReasons();
+      try {
+        await presetReasonService.delete(id);
+        await loadReasons();
+      } catch (err) {
+        console.error('Error deleting preset reason:', err);
+      }
     }
   };
 
@@ -74,7 +93,7 @@ export default function AdminPresetReasons() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.vi.trim() || !formData.en.trim()) {
       alert('Vui lòng điền đầy đủ nội dung bằng tiếng Việt và tiếng Anh!');
@@ -88,14 +107,18 @@ export default function AdminPresetReasons() {
       isActive: formData.isActive
     };
 
-    if (editingReason) {
-      presetReasonService.update(editingReason.id, payload);
-    } else {
-      presetReasonService.create(payload);
+    try {
+      if (editingReason) {
+        await presetReasonService.update(editingReason.id, payload);
+      } else {
+        await presetReasonService.create(payload);
+      }
+      setIsModalOpen(false);
+      await loadReasons();
+    } catch (err) {
+      console.error('Error saving preset reason:', err);
+      alert('Đã xảy ra lỗi khi lưu lý do mẫu!');
     }
-
-    setIsModalOpen(false);
-    loadReasons();
   };
 
   // Filter and Search logic
@@ -116,26 +139,31 @@ export default function AdminPresetReasons() {
     });
   }, [reasons, activeTab, searchQuery]);
 
+  const isVi = i18n.language === 'vi';
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <BackButton className="mb-4" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-            <span>Quản lý lý do mẫu</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3" data-customizable-id="admin-preset-reasons-title" data-customizable-type="text">
+            <span>{isVi ? 'Quản lý lý do mẫu' : 'Preset Reasons Management'}</span>
             <ChatBubbleBottomCenterTextIcon className="w-8 h-8 text-blue-500" />
           </h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">
-            Tùy chỉnh danh sách lý do xin nghỉ hoặc đi muộn/về sớm dành cho nhân viên.
+          <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="admin-preset-reasons-subtitle" data-customizable-type="text">
+            {isVi 
+              ? 'Tùy chỉnh danh sách lý do xin nghỉ hoặc đi muộn/về sớm dành cho nhân viên.' 
+              : 'Customize the preset reason templates for employee leave or exceptions.'}
           </p>
         </div>
         <button
           onClick={handleOpenAddModal}
+          data-customizable-id="btn-admin-add-preset-reason"
+          data-customizable-type="bg"
           className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all w-full md:w-auto justify-center"
         >
           <PlusIcon className="w-5 h-5" />
-          <span>Thêm lý do mới</span>
+          <span>{isVi ? 'Thêm lý do mới' : 'Add New Reason'}</span>
         </button>
       </div>
 
@@ -153,7 +181,7 @@ export default function AdminPresetReasons() {
                   : 'text-gray-400 hover:text-gray-600 bg-transparent'
               }`}
             >
-              Tất cả ({reasons.length})
+              {isVi ? 'Tất cả' : 'All'} ({reasons.length})
             </button>
             <button
               onClick={() => setActiveTab('leave')}
@@ -163,7 +191,7 @@ export default function AdminPresetReasons() {
                   : 'text-gray-400 hover:text-gray-600 bg-transparent'
               }`}
             >
-              Nghỉ phép ({reasons.filter(r => r.type === 'leave').length})
+              {isVi ? 'Nghỉ phép' : 'Leave'} ({reasons.filter(r => r.type === 'leave').length})
             </button>
             <button
               onClick={() => setActiveTab('exception')}
@@ -173,7 +201,7 @@ export default function AdminPresetReasons() {
                   : 'text-gray-400 hover:text-gray-600 bg-transparent'
               }`}
             >
-              Đi muộn, về sớm ({reasons.filter(r => r.type === 'exception').length})
+              {isVi ? 'Đi muộn, về sớm' : 'Exceptions'} ({reasons.filter(r => r.type === 'exception').length})
             </button>
           </div>
 
@@ -184,7 +212,7 @@ export default function AdminPresetReasons() {
             </span>
             <input
               type="text"
-              placeholder="Tìm kiếm nội dung lý do..."
+              placeholder={isVi ? 'Tìm kiếm nội dung lý do...' : 'Search reason content...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block pl-9 p-3 outline-none transition-all h-[44px]"
@@ -200,11 +228,10 @@ export default function AdminPresetReasons() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[18%]">Loại</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[36%]">Tiếng Việt (VI)</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[36%]">Tiếng Anh (EN)</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[10%]">Trạng thái</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[10%]">Thao tác</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[20%]">{isVi ? 'Loại' : 'Type'}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[60%]">{isVi ? 'Nội dung lý do' : 'Reason Content'}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[10%]">{isVi ? 'Trạng thái' : 'Status'}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[10%]">{isVi ? 'Thao tác' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -213,19 +240,18 @@ export default function AdminPresetReasons() {
                   <td className="px-6 py-5 whitespace-nowrap">
                     {reason.type === 'leave' ? (
                       <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                        Nghỉ phép
+                        {isVi ? 'Nghỉ phép' : 'Leave'}
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
-                        Đi muộn, về sớm
+                        {isVi ? 'Đi muộn, về sớm' : 'Exceptions'}
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-5">
-                    <p className="text-sm font-semibold text-gray-800 leading-snug">{reason.vi}</p>
-                  </td>
-                  <td className="px-6 py-5">
-                    <p className="text-sm font-medium text-gray-500 leading-snug italic">{reason.en}</p>
+                    <p className="text-sm font-semibold text-gray-800 leading-snug">
+                      {isVi ? reason.vi : reason.en}
+                    </p>
                   </td>
                   <td className="px-6 py-5 whitespace-nowrap text-center">
                     <button
@@ -249,14 +275,14 @@ export default function AdminPresetReasons() {
                       <button
                         onClick={() => handleOpenEditModal(reason)}
                         className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
-                        title="Chỉnh sửa lý do"
+                        title={isVi ? 'Chỉnh sửa lý do' : 'Edit reason'}
                       >
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(reason.id, reason.vi)}
                         className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
-                        title="Xóa lý do"
+                        title={isVi ? 'Xóa lý do' : 'Delete reason'}
                       >
                         <TrashIcon className="w-4 h-4" />
                       </button>
@@ -266,9 +292,9 @@ export default function AdminPresetReasons() {
               ))}
               {filteredReasons.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-400 font-semibold">
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-400 font-semibold">
                     <SparklesIcon className="w-10 h-10 text-gray-300 mx-auto mb-2 animate-bounce" />
-                    Không tìm thấy lý do mẫu nào phù hợp.
+                    {isVi ? 'Không tìm thấy lý do mẫu nào phù hợp.' : 'No matching preset reasons found.'}
                   </td>
                 </tr>
               )}

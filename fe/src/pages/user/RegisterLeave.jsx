@@ -22,7 +22,22 @@ export default function RegisterLeave() {
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
-  const [presetReasons] = useState(() => presetReasonService.getByType('leave'));
+  const [presetReasons, setPresetReasons] = useState([]);
+  const [selectedPresetId, setSelectedPresetId] = useState(null);
+
+  useEffect(() => {
+    const loadPresetReasons = async () => {
+      try {
+        const res = await presetReasonService.getByType('leave');
+        if (res.success) {
+          setPresetReasons(res.data);
+        }
+      } catch (err) {
+        console.error('Error loading preset reasons:', err);
+      }
+    };
+    loadPresetReasons();
+  }, []);
 
   const fetchShiftAndAdd = useCallback(async (dateStr) => {
     if (!user?.person_id) return;
@@ -121,6 +136,7 @@ export default function RegisterLeave() {
       approver_id: null,
       type: 'leave', // Important: Type is leave
       reason: reason || t('register.leave_type_register'),
+      preset_reason_id: selectedPresetId,
       request_details: requestDetails
     };
 
@@ -149,8 +165,8 @@ export default function RegisterLeave() {
       <div>
         <div className="mb-8">
           <BackButton className="mb-6" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('register.leave_title')}</h1>
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('register.leave_subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="register-leave-title" data-customizable-type="text">{t('register.leave_title')}</h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="register-leave-subtitle" data-customizable-type="text">{t('register.leave_subtitle')}</p>
         </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
@@ -213,7 +229,15 @@ export default function RegisterLeave() {
                   <button
                     key={pr.id}
                     type="button"
-                    onClick={() => setReason(isSelected ? '' : textVal)}
+                    onClick={() => {
+                      if (isSelected) {
+                        setReason('');
+                        setSelectedPresetId(null);
+                      } else {
+                        setReason(textVal);
+                        setSelectedPresetId(pr.id);
+                      }
+                    }}
                     className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
@@ -231,7 +255,10 @@ export default function RegisterLeave() {
             className="w-full h-32 p-4 rounded-2xl border border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm resize-none transition-all outline-none text-gray-700"
             placeholder={t('register.leave_reason_placeholder')}
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => {
+              setReason(e.target.value);
+              setSelectedPresetId(null);
+            }}
           ></textarea>
         </div>
 
@@ -248,8 +275,8 @@ export default function RegisterLeave() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>{t('register.btn_cancel')}</Button>
-            <Button onClick={handleSubmit}>{t('register.btn_submit_leave')}</Button>
+            <Button variant="secondary" onClick={handleCancel} data-customizable-id="btn-cancel-leave" data-customizable-type="bg">{t('register.btn_cancel')}</Button>
+            <Button onClick={handleSubmit} data-customizable-id="btn-submit-leave" data-customizable-type="bg">{t('register.btn_submit_leave')}</Button>
           </div>
         </div>
       </div>

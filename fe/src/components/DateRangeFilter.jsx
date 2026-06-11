@@ -114,9 +114,20 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     const val = e.target.value;
     if (!val) return;
     const [year, month] = val.split('-').map(Number);
+    
     const first = new Date(year, month, 1);
+    const firstY = first.getFullYear();
+    const firstM = String(first.getMonth() + 1).padStart(2, '0');
+    const firstD = String(first.getDate()).padStart(2, '0');
+    const firstStr = `${firstY}-${firstM}-${firstD}`;
+
     const last = new Date(year, month + 1, 0);
-    onRangeChange(first.toISOString().split('T')[0], last.toISOString().split('T')[0]);
+    const lastY = last.getFullYear();
+    const lastM = String(last.getMonth() + 1).padStart(2, '0');
+    const lastD = String(last.getDate()).padStart(2, '0');
+    const lastStr = `${lastY}-${lastM}-${lastD}`;
+
+    onRangeChange(firstStr, lastStr);
   };
 
   const getMonthOptions = () => {

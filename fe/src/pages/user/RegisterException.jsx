@@ -40,7 +40,22 @@ export default function RegisterException() {
 
   const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
-  const [presetReasons] = useState(() => presetReasonService.getByType('exception'));
+  const [presetReasons, setPresetReasons] = useState([]);
+  const [selectedPresetId, setSelectedPresetId] = useState(null);
+
+  useEffect(() => {
+    const loadPresetReasons = async () => {
+      try {
+        const res = await presetReasonService.getByType('exception');
+        if (res.success) {
+          setPresetReasons(res.data);
+        }
+      } catch (err) {
+        console.error('Error loading preset reasons:', err);
+      }
+    };
+    loadPresetReasons();
+  }, []);
 
   // Fetch approved schedule days for user
   useEffect(() => {
@@ -191,6 +206,7 @@ export default function RegisterException() {
       approver_id: null,
       type: exceptionType,
       reason: reason,
+      preset_reason_id: selectedPresetId,
       request_details: requestDetails,
       is_exception: true
     };
@@ -247,11 +263,11 @@ export default function RegisterException() {
     <div className="space-y-6 pb-20">
       <div className="mb-8">
         <BackButton className="mb-6" />
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3" data-customizable-id="register-exception-title" data-customizable-type="text">
           <span>{t('register.exception_title')}</span>
           <SparklesIcon className="w-6 h-6 text-blue-500 animate-pulse" />
         </h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('register.exception_subtitle')}</p>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="register-exception-subtitle" data-customizable-type="text">{t('register.exception_subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 space-y-10">
@@ -401,7 +417,15 @@ export default function RegisterException() {
                       <button
                         key={pr.id}
                         type="button"
-                        onClick={() => setReason(isSelected ? '' : textVal)}
+                        onClick={() => {
+                          if (isSelected) {
+                            setReason('');
+                            setSelectedPresetId(null);
+                          } else {
+                            setReason(textVal);
+                            setSelectedPresetId(pr.id);
+                          }
+                        }}
                         className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
@@ -417,7 +441,10 @@ export default function RegisterException() {
 
               <textarea
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  setSelectedPresetId(null);
+                }}
                 placeholder={t('register.exception_reason_placeholder')}
                 className="w-full h-28 p-4 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white shadow-sm resize-none transition-all outline-none text-gray-700 text-sm"
               ></textarea>
@@ -428,12 +455,14 @@ export default function RegisterException() {
             {/* Submit & Cancel Actions */}
             <div className="flex justify-end items-center">
               <div className="flex items-center gap-3">
-                <Button variant="secondary" onClick={handleCancel}>
+                <Button variant="secondary" onClick={handleCancel} data-customizable-id="btn-cancel-exception" data-customizable-type="bg">
                   {t('register.btn_cancel')}
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={!selectedDate || !exceptionType || !reason.trim()}
+                  data-customizable-id="btn-submit-exception"
+                  data-customizable-type="bg"
                 >
                   {t('register.btn_submit_exception')}
                 </Button>

@@ -13,6 +13,7 @@ const task_attachment = require('./task_attachment');
 const notification = require('./notification');
 const schedule = require('./schedule');
 const refresh_token = require('./refresh_token');
+const preset_reason = require('./preset_reason');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -66,6 +67,9 @@ person.hasMany(schedule, { foreignKey: 'person_id', as: 'schedules' });
 refresh_token.belongsTo(person, { foreignKey: 'person_id', as: 'person' });
 person.hasMany(refresh_token, { foreignKey: 'person_id', as: 'refresh_tokens' });
 
+preset_reason.hasMany(request, { foreignKey: 'preset_reason_id', as: 'requests' });
+request.belongsTo(preset_reason, { foreignKey: 'preset_reason_id', as: 'preset_reason' });
+
 module.exports = {
     person,
     task,
@@ -80,5 +84,6 @@ module.exports = {
     task_attachment,
     notification,
     schedule,
-    refresh_token
+    refresh_token,
+    preset_reason
 };

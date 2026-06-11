@@ -144,8 +144,8 @@ export default function Login({ onLogin }) {
           <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 mb-4">
             <CalendarDaysIcon className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('login.welcome')}</h1>
-          <p className="text-sm text-gray-400 mt-1 text-center">{t('login.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight" data-customizable-id="login-welcome" data-customizable-type="text">{t('login.welcome')}</h1>
+          <p className="text-sm text-gray-400 mt-1 text-center" data-customizable-id="login-subtitle" data-customizable-type="text">{t('login.subtitle')}</p>
         </div>
 
         {/* Form card */}
@@ -227,6 +227,8 @@ export default function Login({ onLogin }) {
               id="login-submit"
               type="submit"
               disabled={isLoading}
+              data-customizable-id="btn-login-submit"
+              data-customizable-type="bg"
               className="mt-1 w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl py-3 text-[0.95rem] shadow-md shadow-blue-100 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (

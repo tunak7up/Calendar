@@ -1,4 +1,4 @@
-const { request, request_detail, person, schedule } = require('../models');
+const { request, request_detail, person, schedule, preset_reason } = require('../models');
 const sequelize = require('../config/db');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
@@ -85,6 +85,7 @@ const createBulkRequest = async (data) => {
             approver_id: data.approver_id,
             status: data.status || 'pending',
             reason: data.reason,
+            preset_reason_id: data.preset_reason_id,
             created_at: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })
         }, { transaction: t });
 
@@ -184,12 +185,17 @@ const createBulkRequest = async (data) => {
     return newRequest;
 };
 
+const createExceptionRequest = async (data) => {
+    return await createBulkRequest(data);
+};
+
 const getRequestById = async (request_id) => {
     const data = await request.findByPk(request_id, {
         include: [
             { model: request_detail, as: 'details' },
             { model: person, as: 'approver', attributes: ['name', 'role'] },
-            { model: person, as: 'requester', attributes: ['name', 'username', 'role'] }
+            { model: person, as: 'requester', attributes: ['name', 'username', 'role'] },
+            { model: preset_reason, as: 'preset_reason' }
         ]
     });
     if (!data) throw new Error('Request not found');
@@ -201,7 +207,8 @@ const getAllRequests = async () => {
         include: [
             { model: request_detail, as: 'details' },
             { model: person, as: 'approver', attributes: ['name', 'role'] },
-            { model: person, as: 'requester', attributes: ['name', 'username'] }
+            { model: person, as: 'requester', attributes: ['name', 'username'] },
+            { model: preset_reason, as: 'preset_reason' }
         ],
         order: [['created_at', 'DESC']]
     });
@@ -216,7 +223,8 @@ const getRequestsByRequesterId = async (requester_id) => {
         where: { requester_id },
         include: [
             { model: request_detail, as: 'details' },
-            { model: person, as: 'approver', attributes: ['name', 'role'] }
+            { model: person, as: 'approver', attributes: ['name', 'role'] },
+            { model: preset_reason, as: 'preset_reason' }
         ],
         order: [['created_at', 'DESC']]
     });
@@ -308,7 +316,8 @@ const getRequestsByRange = async (startDate, endDate) => {
         include: [
             { model: request_detail, as: 'details' },
             { model: person, as: 'approver', attributes: ['name', 'role'] },
-            { model: person, as: 'requester', attributes: ['name', 'username'] }
+            { model: person, as: 'requester', attributes: ['name', 'username'] },
+            { model: preset_reason, as: 'preset_reason' }
         ],
         order: [['created_at', 'DESC']]
     });
@@ -316,6 +325,7 @@ const getRequestsByRange = async (startDate, endDate) => {
 
 module.exports = {
     createBulkRequest,
+    createExceptionRequest,
     getRequestById,
     getAllRequestDetails,
     getRequestsByRequesterId,

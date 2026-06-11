@@ -25,6 +25,7 @@ import Dashboard from './pages/user/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportHistory from './pages/admin/AdminReportHistory'
 import AdminPresetReasons from './pages/admin/AdminPresetReasons'
+import ThemeCustomizer from './components/ThemeCustomizer'
 
 import './styles/App.css'
 
@@ -66,7 +67,7 @@ function App() {
     }
 
     // Admin pages with only 1 sidebar item — don't show sidebar
-    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports'];
+    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports', '/admin/preset-reasons'];
     if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
       return null;
     }
@@ -144,6 +145,7 @@ function App() {
           </Routes>
         </MainLayout>
       )}
+      <ThemeCustomizer />
     </div>
   )
 }

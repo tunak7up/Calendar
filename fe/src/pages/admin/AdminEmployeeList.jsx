@@ -8,6 +8,7 @@ import {
 import { apiFetch } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import CustomSelect from '../../components/CustomSelect';
 
 export default function AdminEmployeeList() {
   const { t } = useTranslation();
@@ -169,11 +170,13 @@ export default function AdminEmployeeList() {
                 employees.map((emp) => (
                   <tr
                     key={emp.person_id}
-                    onClick={() => navigate(`/profile/${emp.person_id}`)}
-                    className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                    className="hover:bg-blue-50/30 transition-colors"
                   >
                     <td className="py-4 px-6 text-sm font-semibold text-gray-500 hidden sm:table-cell">#{emp.person_id}</td>
-                    <td className="py-4 px-6">
+                    <td
+                      className="py-4 px-6 cursor-pointer group"
+                      onClick={() => navigate(`/profile/${emp.person_id}`)}
+                    >
                       <div className="flex items-center gap-3">
                         <img
                           alt={emp.name}
@@ -186,29 +189,31 @@ export default function AdminEmployeeList() {
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden md:table-cell">{emp.email || <span className="text-gray-400 font-normal italic">{t('employees.email_not_updated')}</span>}</td>
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
                     <td className="py-4 px-6">
-                      <select
+                      <CustomSelect
                         value={emp.role || 'employee'}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => handleInlineUpdate(emp.person_id, 'role', e.target.value)}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none cursor-pointer hover:bg-gray-200 transition-colors appearance-none"
-                      >
-                        <option value="employee">{t('employees.role_employee')}</option>
-                        <option value="manager">{t('employees.role_manager')}</option>
-                      </select>
+                        onChange={(val) => handleInlineUpdate(emp.person_id, 'role', val)}
+                        options={[
+                          { value: 'employee', label: t('employees.role_employee') },
+                          { value: 'manager', label: t('employees.role_manager') }
+                        ]}
+                        buttonClassName="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border-transparent"
+                        activeOptionClassName="bg-gray-100 text-gray-950 font-black"
+                      />
                     </td>
                     <td className="py-4 px-6 text-center hidden sm:table-cell">
-                      <select
-                        value={emp.status ? "true" : "false"}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => handleInlineUpdate(emp.person_id, 'status', e.target.value === "true")}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer appearance-none ${emp.status
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
-                            : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
-                          }`}
-                      >
-                        <option value="true">{t('employees.status_active')}</option>
-                        <option value="false">{t('employees.status_locked')}</option>
-                      </select>
+                      <CustomSelect
+                        value={emp.status}
+                        onChange={(val) => handleInlineUpdate(emp.person_id, 'status', val)}
+                        options={[
+                          { value: true, label: t('employees.status_active') },
+                          { value: false, label: t('employees.status_locked') }
+                        ]}
+                        buttonClassName={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold border ${emp.status
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                          : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
+                        }`}
+                        activeOptionClassName={emp.status ? 'bg-emerald-100 text-emerald-900 font-black' : 'bg-red-100 text-red-900 font-black'}
+                      />
                     </td>
                     <td className="py-4 px-6 text-center">
                       <button

@@ -251,8 +251,8 @@ export default function RegisterWork() {
     <div className="space-y-6 pb-20">
       <div className="mb-8">
         <BackButton className="mb-6" />
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('register.work_title')}</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('register.work_subtitle')}</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="register-work-title" data-customizable-type="text">{t('register.work_title')}</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="register-work-subtitle" data-customizable-type="text">{t('register.work_subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
@@ -388,7 +388,7 @@ export default function RegisterWork() {
 
           {/* Container 2: Add to Schedule button */}
           <div className="flex justify-end mt-4">
-            <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0}>
+            <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0} data-customizable-id="btn-add-schedule" data-customizable-type="bg">
               <span>{t('register.add_to_schedule')}</span>
               {draftDates.length > 0 && (
                 <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
@@ -463,8 +463,8 @@ export default function RegisterWork() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleCancel}>{t('register.btn_cancel')}</Button>
-            <Button onClick={handleSubmit}>{t('register.btn_submit_work')}</Button>
+            <Button variant="secondary" onClick={handleCancel} data-customizable-id="btn-cancel-work" data-customizable-type="bg">{t('register.btn_cancel')}</Button>
+            <Button onClick={handleSubmit} data-customizable-id="btn-submit-work" data-customizable-type="bg">{t('register.btn_submit_work')}</Button>
           </div>
         </div>
       </div>

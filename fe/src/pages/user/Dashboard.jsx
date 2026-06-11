@@ -301,10 +301,10 @@ export default function Dashboard() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="dashboard-welcome" data-customizable-type="text">
             {t('dashboard.welcome', { name: user?.name || user?.username })}
           </h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('dashboard.subtitle')}</p>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="dashboard-welcome-sub" data-customizable-type="text">{t('dashboard.subtitle')}</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -357,13 +357,15 @@ export default function Dashboard() {
           <button
             onClick={handleCheckIn}
             className="px-8 py-3 bg-[#0056b3] hover:bg-[#004494] text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+            data-customizable-id="check-in-btn"
+            data-customizable-type="bg"
           >
             {t('dashboard.check_in_btn')}
           </button>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col" data-customizable-id="card-pending-tasks" data-customizable-type="bg">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
               <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{t('dashboard.tasks_count', { count: tasks.length })}</span>
@@ -439,7 +441,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6" data-customizable-id="card-daily-report" data-customizable-type="bg">
             <div className="flex items-center gap-2 mb-4">
               <DocumentTextIcon className="w-5 h-5 text-blue-600" />
               <h2 className="text-lg font-bold text-gray-800">{t('dashboard.daily_report')}</h2>
@@ -476,6 +478,8 @@ export default function Dashboard() {
                       fileInputRef.current?.click();
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
+                    data-customizable-id="btn-add-file"
+                    data-customizable-type="bg"
                   >
                     <PlusIcon className="w-3.5 h-3.5" />
                     {t('dashboard.add_file')}
@@ -515,6 +519,8 @@ export default function Dashboard() {
               <button
                 onClick={handleSaveDescription}
                 className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
+                data-customizable-id="btn-save-draft"
+                data-customizable-type="bg"
               >
                 <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
                 {t('dashboard.save_draft')}
@@ -526,6 +532,8 @@ export default function Dashboard() {
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' 
                     : 'bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20'
                   }`}
+                data-customizable-id="btn-submit-report"
+                data-customizable-type="bg"
               >
                 {checkOutTime ? (
                   <>

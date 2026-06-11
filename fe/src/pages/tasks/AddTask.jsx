@@ -250,8 +250,8 @@ export default function AddTask() {
     <div className="space-y-6 pb-20">
       <div>
         <BackButton className="mb-6" />
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('addtask.title')}</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">{t('addtask.subtitle')}</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="add-task-title" data-customizable-type="text">{t('addtask.title')}</h1>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="add-task-subtitle" data-customizable-type="text">{t('addtask.subtitle')}</p>
       </div>
 
       {/* Task Definition Section */}
@@ -532,12 +532,16 @@ export default function AddTask() {
       <div className="flex items-center justify-end gap-4 pt-6">
         <button
           onClick={() => navigate(-1)}
+          data-customizable-id="btn-add-task-cancel"
+          data-customizable-type="bg"
           className="text-gray-400 text-sm font-bold hover:text-gray-600 transition-colors px-6 py-3 rounded-xl hover:bg-gray-50"
         >
           {t('addtask.btn_cancel')}
         </button>
         <button
           onClick={handleSubmit}
+          data-customizable-id="btn-add-task-submit"
+          data-customizable-type="bg"
           className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3.5 rounded-xl text-sm font-bold transition-all shadow-xl shadow-blue-100 active:scale-95 flex items-center gap-2"
         >
           <PlusIcon className="w-5 h-5" />

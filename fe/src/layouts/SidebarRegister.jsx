@@ -55,10 +55,10 @@ export default function SidebarRegister() {
         className="fixed top-[56px] left-0 z-40 w-64 h-[calc(100vh-56px)] transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar"
       >
-        <div className="h-full px-4 py-8 overflow-y-auto bg-white border-r border-gray-100">
+        <div className="h-full px-4 py-8 overflow-y-auto bg-white border-r border-gray-100" data-customizable-id="sidebar-bg" data-customizable-type="bg">
           {/* Brand block */}
           <div className="flex items-center mb-10 px-2">
-            <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30">
+            <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30" data-customizable-id="sidebar-brand-icon" data-customizable-type="bg">
               <ClockIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col ml-3">
@@ -71,6 +71,8 @@ export default function SidebarRegister() {
               <Link
                 to="/history"
                 className={getLinkClass('/history')}
+                data-customizable-id="sidebar-link-history"
+                data-customizable-type="text"
               >
                 <ClipboardDocumentListIcon className={getIconClass('/history')} />
                 <span className="ms-4 font-semibold text-sm">{t('sidebar.req_list')}</span>
@@ -80,6 +82,8 @@ export default function SidebarRegister() {
               <Link
                 to="/register/leave"
                 className={getLinkClass('/register/leave')}
+                data-customizable-id="sidebar-link-leave"
+                data-customizable-type="text"
               >
                 <CalendarDaysIcon className={getIconClass('/register/leave')} />
                 <span className="ms-4 font-semibold text-sm">{t('sidebar.register_leave')}</span>
@@ -89,6 +93,8 @@ export default function SidebarRegister() {
               <Link
                 to="/register/work"
                 className={getLinkClass('/register/work')}
+                data-customizable-id="sidebar-link-work"
+                data-customizable-type="text"
               >
                 <Squares2X2Icon className={getIconClass('/register/work')} />
                 <span className="ms-4 font-semibold text-sm">{t('sidebar.register_work')}</span>
@@ -98,6 +104,8 @@ export default function SidebarRegister() {
               <Link
                 to="/register/exception"
                 className={getLinkClass('/register/exception')}
+                data-customizable-id="sidebar-link-exception"
+                data-customizable-type="text"
               >
                 <ClockIcon className={getIconClass('/register/exception')} />
                 <span className="ms-4 font-semibold text-sm">{t('sidebar.register_exception')}</span>

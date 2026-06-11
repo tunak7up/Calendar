@@ -43,7 +43,7 @@ export default function HeaderPage({ isAdmin }) {
   }));
 
   return (
-    <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
+    <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200" data-customizable-id="header-bg" data-customizable-type="bg">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-[56px] items-center justify-between">
           <div className="flex items-center">
@@ -58,7 +58,7 @@ export default function HeaderPage({ isAdmin }) {
 
             {/* Logo */}
             <div className="flex shrink-0 items-center mr-8">
-              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]">{t('nav.logo')}</Link>
+              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
             </div>
 
             {/* Desktop Nav */}
@@ -68,6 +68,8 @@ export default function HeaderPage({ isAdmin }) {
                   <Link
                     key={item.id}
                     to={item.path}
+                    data-customizable-id={`nav-${item.id}`}
+                    data-customizable-type="text"
                     aria-current={item.current ? 'page' : undefined}
                     className={classNames(
                       item.current

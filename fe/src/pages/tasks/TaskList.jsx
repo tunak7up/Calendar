@@ -287,21 +287,27 @@ export default function TaskList({ isAdmin }) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('tasks.title')}</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('tasks.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="tasks-title" data-customizable-type="text">{t('tasks.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="tasks-subtitle" data-customizable-type="text">{t('tasks.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {user?.role === 'manager' && (
             <>
               <button
                 onClick={() => taskService.exportTasks().catch(err => alert('Export failed: ' + err.message))}
+                data-customizable-id="btn-tasks-export"
+                data-customizable-type="bg"
                 className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 transition-all flex-1 md:flex-none justify-center"
               >
                 <span>{t('tasks.export')}</span>
               </button>
 
               <Menu as="div" className="relative inline-block text-left flex-1 md:flex-none">
-                <Menu.Button className="flex w-full items-center justify-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all">
+                <Menu.Button
+                  data-customizable-id="btn-tasks-import"
+                  data-customizable-type="bg"
+                  className="flex w-full items-center justify-center gap-2 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all"
+                >
                   <span>{t('tasks.import')}</span>
                   <ChevronDownIcon className="w-5 h-5" />
                 </Menu.Button>
@@ -370,6 +376,8 @@ export default function TaskList({ isAdmin }) {
 
           <button
             onClick={() => navigate('/tasks/add')}
+            data-customizable-id="btn-tasks-create"
+            data-customizable-type="bg"
             className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
           >
             <PlusIcon className="w-5 h-5" />

@@ -100,13 +100,15 @@ export default function RegistrationHistory() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">{t('history.title')}</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('history.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="history-title" data-customizable-type="text">{t('history.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="history-subtitle" data-customizable-type="text">{t('history.subtitle')}</p>
         </div>
 
         <div className="hidden sm:flex items-center gap-3">
           <button
             onClick={() => navigate('/register/work')}
+            data-customizable-id="btn-history-register-work"
+            data-customizable-type="bg"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all"
           >
             <BriefcaseIcon className="w-5 h-5" />
@@ -114,6 +116,8 @@ export default function RegistrationHistory() {
           </button>
           <button
             onClick={() => navigate('/register/leave')}
+            data-customizable-id="btn-history-register-leave"
+            data-customizable-type="bg"
             className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all"
           >
             <CalendarIcon className="w-5 h-5" />

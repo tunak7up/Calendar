@@ -18,6 +18,5 @@ router.use('/daily-report', authenticate, require('./dailyReport'));
 router.use('/mail', authenticate, require('./mail'));
 router.use('/file-attachment', authenticate, require('./fileAttachment'));
 router.use('/preset-reason', authenticate, require('./presetReason'));
-router.use('/theme-config', authenticate, require('./themeConfig'));
 
 module.exports = router;

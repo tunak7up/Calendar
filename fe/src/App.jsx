@@ -25,7 +25,6 @@ import Dashboard from './pages/user/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportHistory from './pages/admin/AdminReportHistory'
 import AdminPresetReasons from './pages/admin/AdminPresetReasons'
-import ThemeCustomizer from './components/ThemeCustomizer'
 
 import './styles/App.css'
 
@@ -151,7 +150,6 @@ function App() {
           </Routes>
         </MainLayout>
       )}
-      <ThemeCustomizer />
     </div>
   )
 }

@@ -26,36 +26,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 export default function WorkHoursChart({ employees = [], schedules = [], dailyReports = [], startDate, endDate }) {
   const { t } = useTranslation();
 
-  const [registeredBg, setRegisteredBg] = useState('rgba(59, 130, 246, 0.75)');
-  const [actualBg, setActualBg] = useState('rgba(16, 185, 129, 0.75)');
-
-
-  useEffect(() => {
-    const updateColors = () => {
-      try {
-        const saved = localStorage.getItem('theme-customizer-colors');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const reg = parsed['[data-custom-component="ChartColor-Registered"]']?.bg || 'rgba(59, 130, 246, 0.75)';
-          const act = parsed['[data-custom-component="ChartColor-Actual"]']?.bg || 'rgba(16, 185, 129, 0.75)';
-          setRegisteredBg(reg);
-          setActualBg(act);
-        } else {
-          setRegisteredBg('rgba(59, 130, 246, 0.75)');
-          setActualBg('rgba(16, 185, 129, 0.75)');
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    updateColors();
-
-    window.addEventListener('theme-customizer-change', updateColors);
-    return () => {
-      window.removeEventListener('theme-customizer-change', updateColors);
-    };
-  }, []);
+  const registeredBg = 'rgba(59, 130, 246, 0.75)';
+  const actualBg = 'rgba(16, 185, 129, 0.75)';
 
 
   // --- helpers ---

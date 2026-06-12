@@ -1,7 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 @import "tailwindcss";
 @plugin "flyonui";
 @import "flyonui/variants.css";
 @import "flyonui/src/vendor/fullcalendar.css";
+
+:root {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+html,
+body,
+#root {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
 
 /* --- FullCalendar Modern Styling --- */
 

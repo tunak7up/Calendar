@@ -30,6 +30,7 @@ import ThemeCustomizer from './components/ThemeCustomizer'
 import './styles/App.css'
 
 import MainLayout from './layouts/MainLayout'
+import { saveAuthRedirect, clearAuthRedirect, getAuthRedirect, getDefaultRedirectPath } from './utils/authRedirect'
 
 function App() {
   const { isLoggedIn, isAdmin, isLoading, isLoggingOut } = useAuth();
@@ -39,9 +40,10 @@ function App() {
   // Redirect to login if not logged in
   useEffect(() => {
     if (!isLoading && !isLoggingOut && !isLoggedIn && location.pathname !== '/login') {
+      saveAuthRedirect(`${location.pathname}${location.search}${location.hash}`);
       navigate('/login');
     }
-  }, [isLoggedIn, isLoading, isLoggingOut, location.pathname, navigate]);
+  }, [isLoggedIn, isLoading, isLoggingOut, location.pathname, location.search, location.hash, navigate]);
 
   // Hiện loading khi đang kiểm tra auth hoặc đang đăng xuất
   if (isLoading || isLoggingOut) {
@@ -106,7 +108,9 @@ function App() {
         <main className="flex-1">
           <Routes>
             <Route path="/login" element={<Login onLogin={(data) => {
-              navigate(data.user?.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+              const redirectTo = getAuthRedirect() || getDefaultRedirectPath(data.user);
+              clearAuthRedirect();
+              navigate(redirectTo);
             }} />} />
           </Routes>
         </main>

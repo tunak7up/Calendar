@@ -29,6 +29,8 @@ const downloadWithAuth = async (endpoint, fileName) => {
     } catch {
       setAccessToken(null);
       localStorage.removeItem('user');
+      const { saveAuthRedirect } = await import('../utils/authRedirect');
+      saveAuthRedirect(window.location.pathname + window.location.search + window.location.hash);
       window.location.href = '/login';
       throw new Error('Phi?n ??ng nh?p ?? h?t h?n. Vui l?ng ??ng nh?p l?i.');
     }

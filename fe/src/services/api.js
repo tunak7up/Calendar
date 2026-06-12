@@ -1,4 +1,6 @@
 
+import { saveAuthRedirect } from '../utils/authRedirect';
+
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
 let inMemoryToken = localStorage.getItem('token') || null;
@@ -74,6 +76,7 @@ export const apiFetch = async (endpoint, options = {}) => {
       } catch {
         setAccessToken(null);
         localStorage.removeItem('user'); // Đảm bảo xóa sạch thông tin user
+        saveAuthRedirect(window.location.pathname + window.location.search + window.location.hash);
         window.location.href = '/login';
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       }

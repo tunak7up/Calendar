@@ -1,4 +1,5 @@
 import { getAccessToken, setAccessToken, BASE_URL, refreshAccessToken } from './api';
+import { saveAuthRedirect } from '../utils/authRedirect';
 
 const API_BASE_URL = BASE_URL;
 
@@ -33,6 +34,7 @@ const makeAuthenticatedFetch = async (url, options = {}) => {
       response = await fetch(url, fetchOptions);
     } catch {
       setAccessToken(null);
+      saveAuthRedirect(window.location.pathname + window.location.search + window.location.hash);
       window.location.href = '/login?error=session_expired';
       throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
     }

@@ -6,6 +6,7 @@ import { loginApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
 import { BASE_URL } from '../../services/api';
+import { clearAuthRedirect, getAuthRedirect, getDefaultRedirectPath } from '../../utils/authRedirect';
 
 const isTokenValid = (token) => {
   if (!token) return false;
@@ -56,7 +57,9 @@ export default function Login({ onLogin }) {
           if (onLogin) {
             onLogin({ token: savedToken, user: parsedUser });
           } else {
-            navigate(parsedUser.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+            const redirectTo = getAuthRedirect() || getDefaultRedirectPath(parsedUser);
+            clearAuthRedirect();
+            navigate(redirectTo);
           }
           return;
         } catch {
@@ -78,7 +81,9 @@ export default function Login({ onLogin }) {
           if (onLogin) {
             onLogin(data);
           } else {
-            navigate(data.user?.role === 'manager' ? '/admin/dashboard' : '/dashboard');
+            const redirectTo = getAuthRedirect() || getDefaultRedirectPath(data.user);
+            clearAuthRedirect();
+            navigate(redirectTo);
           }
         } else {
           // Clear local storage if refresh fails to keep app in clean logged-out state
@@ -103,7 +108,14 @@ export default function Login({ onLogin }) {
     try {
       const data = await loginApi(username, password);
       login(data); // Lưu token vào context + localStorage
-      onLogin && onLogin(data);
+
+      if (onLogin) {
+        onLogin(data);
+      } else {
+        const redirectTo = getAuthRedirect() || getDefaultRedirectPath(data.user);
+        clearAuthRedirect();
+        navigate(redirectTo);
+      }
     } catch (err) {
       const errMsg = err.message || '';
       if (errMsg.includes('Sai tên đăng nhập') || !errMsg) {

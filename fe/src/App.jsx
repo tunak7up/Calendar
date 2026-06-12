@@ -40,8 +40,9 @@ function App() {
   // Redirect to login if not logged in
   useEffect(() => {
     if (!isLoading && !isLoggingOut && !isLoggedIn && location.pathname !== '/login') {
-      saveAuthRedirect(`${location.pathname}${location.search}${location.hash}`);
-      navigate('/login');
+      const fullPath = `${location.pathname}${location.search}${location.hash}`;
+      saveAuthRedirect(fullPath);
+      navigate('/login', { state: { from: fullPath }, replace: true });
     }
   }, [isLoggedIn, isLoading, isLoggingOut, location.pathname, location.search, location.hash, navigate]);
 
@@ -108,9 +109,10 @@ function App() {
         <main className="flex-1">
           <Routes>
             <Route path="/login" element={<Login onLogin={(data) => {
-              const redirectTo = getAuthRedirect() || getDefaultRedirectPath(data.user);
+              const stateFrom = location.state?.from;
+              const redirectTo = stateFrom || getAuthRedirect() || getDefaultRedirectPath(data.user);
               clearAuthRedirect();
-              navigate(redirectTo);
+              navigate(redirectTo, { replace: true });
             }} />} />
           </Routes>
         </main>

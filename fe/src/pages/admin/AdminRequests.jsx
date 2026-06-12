@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ClipboardDocumentCheckIcon,
   MagnifyingGlassIcon,
-  CalendarIcon
+  CalendarIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch } from '../../services/api';
 import { requestService } from '../../services/requestService';
@@ -135,6 +136,13 @@ export default function AdminRequests() {
           <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="admin-requests-subtitle" data-customizable-type="text">{t('requests.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={() => navigate('/admin/preset-reasons')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold rounded-xl shadow-sm border border-blue-200 transition-all active:scale-95 flex-1 md:flex-none justify-center"
+          >
+            <TagIcon className="w-5 h-5" />
+            <span>{t('nav.admin_preset_reasons', { defaultValue: 'Lý do có sẵn' })}</span>
+          </button>
           <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-gray-300 flex items-center gap-2 flex-1 md:flex-none justify-center" data-customizable-id="admin-requests-total-badge" data-customizable-type="bg">
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-gray-400" />
             <span className="font-bold text-gray-700">{filteredRequests.length}</span>

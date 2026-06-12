@@ -31,10 +31,10 @@ export default function SidebarTask() {
             className="fixed top-[56px] left-0 z-40 w-64 h-[calc(100vh-56px)] transition-transform -translate-x-full sm:translate-x-0"
             aria-label="Sidebar"
         >
-            <div className="h-full px-4 py-8 overflow-y-auto bg-[#f8fafc] border-r border-gray-100">
+            <div className="h-full px-4 py-8 overflow-y-auto bg-[#f8fafc] border-r border-gray-100" data-custom-component="SidebarBackground" data-customizable-id="sidebar-bg" data-customizable-type="bg">
                 {/* Brand block */}
                 <div className="flex items-center mb-10 px-2">
-                    <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30">
+                    <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30" data-custom-component="SidebarBrandIcon" data-customizable-id="sidebar-brand-icon" data-customizable-type="bg">
                         <ClipboardDocumentCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col ml-3">
@@ -48,6 +48,9 @@ export default function SidebarTask() {
                         <Link
                             to="/tasks/add"
                             className={getLinkClass('/tasks/add')}
+                            data-custom-component={location.pathname === '/tasks/add' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                            data-customizable-id="sidebar-link-addtask"
+                            data-customizable-type="text"
                         >
                             <PlusIcon className={getIconClass('/tasks/add')} />
                             <span className="ms-4 text-sm font-medium">{t('sidebar.add_task')}</span>
@@ -57,6 +60,9 @@ export default function SidebarTask() {
                         <Link
                             to="/tasks"
                             className={getLinkClass('/tasks')}
+                            data-custom-component={location.pathname === '/tasks' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                            data-customizable-id="sidebar-link-tasks"
+                            data-customizable-type="text"
                         >
                             <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
                             <span className="ms-4 text-sm font-medium">{t('sidebar.tasks_list')}</span>

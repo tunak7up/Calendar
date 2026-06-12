@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { PaintBrushIcon, XMarkIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { themeConfigService } from '../services/themeConfigService';
+import { useAuth } from '../context/AuthContext';
+import { DEFAULT_THEME } from '../config/themeDefaults';
 
 const PRESET_COLORS = [
   { hex: '#0056b3', name: 'Royal Blue' },
@@ -32,8 +35,36 @@ const rgbToHex = (rgbStr) => {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 };
 
+const adjustColorBrightness = (hex, percent = 0.12) => {
+  if (!hex || !hex.startsWith('#')) return hex;
+  let color = hex.replace('#', '');
+  if (color.length === 3) {
+    color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+  }
+  const num = parseInt(color, 16);
+  const r = (num >> 16);
+  const g = ((num >> 8) & 0x00FF);
+  const b = (num & 0x0000FF);
+
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const isDark = luma < 40;
+  const actualPercent = isDark ? Math.abs(percent) : -Math.abs(percent);
+  const amount = Math.round(255 * actualPercent);
+
+  const newR = Math.max(0, Math.min(255, r + amount));
+  const newG = Math.max(0, Math.min(255, g + amount));
+  const newB = Math.max(0, Math.min(255, b + amount));
+
+  return '#' + ((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1);
+};
+
 const getUniqueSelector = (el) => {
   if (!el || el.nodeType !== Node.ELEMENT_NODE) return '';
+
+  const customComp = el.getAttribute('data-custom-component') || el.closest('[data-custom-component]')?.getAttribute('data-custom-component');
+  if (customComp) {
+    return `[data-custom-component="${customComp}"]`;
+  }
 
   const customId = el.getAttribute('data-customizable-id');
   if (customId) {
@@ -81,11 +112,12 @@ const getDefaultType = (tagName) => {
 };
 
 export default function ThemeCustomizer() {
+  const { isLoggedIn } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [customColors, setCustomColors] = useState(() => {
     try {
       const saved = localStorage.getItem('theme-customizer-colors');
-      if (!saved) return {};
+      if (!saved) return DEFAULT_THEME;
       const parsed = JSON.parse(saved);
       
       const migrated = {};
@@ -103,15 +135,43 @@ export default function ThemeCustomizer() {
           migrated[key] = val;
         }
       });
-      return migrated;
+      return { ...DEFAULT_THEME, ...migrated };
     } catch (e) {
       console.error(e);
-      return {};
+      return DEFAULT_THEME;
     }
   });
 
   const [pickerConfig, setPickerConfig] = useState(null); // { selector, tagName, x, y }
   const [activeTab, setActiveTab] = useState('bg'); // 'bg' or 'text'
+
+  // Load custom colors from database on mount or login state change
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const fetchColors = async () => {
+      try {
+        const res = await themeConfigService.getAll();
+        if (res.success && Array.isArray(res.data)) {
+          const loadedColors = { ...DEFAULT_THEME };
+          res.data.forEach(item => {
+            loadedColors[item.selector] = {
+              ...DEFAULT_THEME[item.selector],
+              bg: item.bg || undefined,
+              text: item.text || undefined,
+              defaultBg: item.defaultBg || DEFAULT_THEME[item.selector]?.defaultBg,
+              defaultText: item.defaultText || DEFAULT_THEME[item.selector]?.defaultText
+            };
+          });
+          setCustomColors(loadedColors);
+          localStorage.setItem('theme-customizer-colors', JSON.stringify(loadedColors));
+          window.dispatchEvent(new CustomEvent('theme-customizer-change', { detail: loadedColors }));
+        }
+      } catch (err) {
+        console.error('Error fetching theme configs from DB:', err);
+      }
+    };
+    fetchColors();
+  }, [isLoggedIn]);
 
   // 1. Inject / Update style rules in document head
   useEffect(() => {
@@ -123,20 +183,29 @@ export default function ThemeCustomizer() {
     }
 
     const cssRules = Object.entries(customColors).map(([selector, styles]) => {
+      const isChartColor = selector.includes('ChartColor-Registered') || selector.includes('ChartColor-Actual');
       let rules = [];
       if (styles.bg) {
         rules.push(`background-color: ${styles.bg} !important;`);
+        rules.push(`border-color: ${adjustColorBrightness(styles.bg, 0.12)} !important;`);
       }
-      if (styles.text) {
+      if (styles.text && !isChartColor) {
         rules.push(`color: ${styles.text} !important;`);
       }
-      return rules.length > 0 ? `${selector} { ${rules.join(' ')} }` : '';
+      
+      if (rules.length > 0) {
+        if (isChartColor) {
+          return `${selector} span:first-child { ${rules.join(' ')} }`;
+        }
+        return `${selector} { ${rules.join(' ')} }`;
+      }
+      return '';
     }).filter(Boolean).join('\n');
 
     styleTag.innerHTML = cssRules;
   }, [customColors]);
 
-  // 2. Inject edit mode styles when active
+  // 2. Inject edit mode styles when active (adds dashed outline to all customizable elements)
   useEffect(() => {
     let styleTag = document.getElementById('edit-mode-helper-styles');
     if (!styleTag) {
@@ -148,16 +217,19 @@ export default function ThemeCustomizer() {
     if (isEditMode) {
       document.body.classList.add('theme-edit-mode-active');
       styleTag.innerHTML = `
+        [data-custom-component]:not(.theme-picker-panel *):not(.theme-customizer-container *),
+        [data-customizable-id]:not(.theme-picker-panel *):not(.theme-customizer-container *) {
+          outline: 1.5px dashed rgba(59, 130, 246, 0.5) !important;
+          outline-offset: 2px !important;
+          transition: all 0.15s ease-in-out !important;
+        }
+        [data-custom-component]:not(.theme-picker-panel *):not(.theme-customizer-container *):hover,
+        [data-customizable-id]:not(.theme-picker-panel *):not(.theme-customizer-container *):hover,
         .theme-customizer-hovered {
-          position: relative !important;
-          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/%3E%3C/svg%3E") 4 20, pointer !important;
           outline: 2px dashed #2563eb !important;
           outline-offset: 2px !important;
-          transition: outline 0.15s ease-in-out !important;
-        }
-        .theme-customizer-hovered:hover {
-          outline: 2px dashed #1d4ed8 !important;
-          background-color: rgba(37, 99, 235, 0.05) !important;
+          background-color: rgba(59, 130, 246, 0.08) !important;
+          cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/%3E%3C/svg%3E") 4 20, pointer !important;
         }
       `;
     } else {
@@ -181,16 +253,18 @@ export default function ThemeCustomizer() {
         return;
       }
 
+      const highlightTarget = target.closest('[data-custom-component]') || target.closest('[data-customizable-id]') || target;
+
       const targetTags = ['BUTTON', 'DIV', 'SPAN', 'LABEL', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
-      if (!targetTags.includes(target.tagName)) {
+      if (!targetTags.includes(highlightTarget.tagName)) {
         return;
       }
 
-      if (currentHovered && currentHovered !== target) {
+      if (currentHovered && currentHovered !== highlightTarget) {
         currentHovered.classList.remove('theme-customizer-hovered');
       }
 
-      currentHovered = target;
+      currentHovered = highlightTarget;
       currentHovered.classList.add('theme-customizer-hovered');
     };
 
@@ -225,8 +299,10 @@ export default function ThemeCustomizer() {
         return;
       }
 
+      const clickedTarget = target.closest('[data-custom-component]') || target.closest('[data-customizable-id]') || target;
+
       const targetTags = ['BUTTON', 'DIV', 'SPAN', 'LABEL', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
-      if (!targetTags.includes(target.tagName)) {
+      if (!targetTags.includes(clickedTarget.tagName)) {
         const pickerPanel = e.target.closest('.theme-picker-panel');
         if (!pickerPanel) {
           setPickerConfig(null);
@@ -237,11 +313,11 @@ export default function ThemeCustomizer() {
       e.preventDefault();
       e.stopPropagation();
 
-      const selector = getUniqueSelector(target);
-      const defaultType = getDefaultType(target.tagName);
+      const selector = getUniqueSelector(clickedTarget);
+      const defaultType = getDefaultType(clickedTarget.tagName);
       setActiveTab(defaultType);
 
-      const rect = target.getBoundingClientRect();
+      const rect = clickedTarget.getBoundingClientRect();
       const width = 280;
       let leftX = rect.left + window.scrollX;
       if (leftX + width > window.innerWidth) {
@@ -251,7 +327,7 @@ export default function ThemeCustomizer() {
 
       setPickerConfig({
         selector,
-        tagName: target.tagName,
+        tagName: clickedTarget.tagName,
         x: leftX,
         y: rect.bottom + window.scrollY + 8
       });
@@ -263,41 +339,110 @@ export default function ThemeCustomizer() {
     };
   }, [isEditMode]);
 
-  const handleColorSelect = (color) => {
+  const handleColorSelect = async (color) => {
     if (!pickerConfig) return;
     const { selector } = pickerConfig;
     const currentStyles = customColors[selector] || {};
+
+    let defaultBg = currentStyles.defaultBg;
+    let defaultText = currentStyles.defaultText;
+
+    if (!defaultBg || !defaultText) {
+      try {
+        let el = document.querySelector(selector);
+        if (el) {
+          const styleTag = document.getElementById('dynamic-theme-customizer');
+          const oldMedia = styleTag ? styleTag.media : '';
+          if (styleTag) styleTag.media = 'only x'; // temporarily disable custom styles
+          
+          let targetEl = el;
+          if (selector.includes('ChartColor-Registered') || selector.includes('ChartColor-Actual')) {
+            targetEl = el.querySelector('span') || el;
+          }
+          const computedStyle = window.getComputedStyle(targetEl);
+          if (!defaultBg) defaultBg = rgbToHex(computedStyle.backgroundColor);
+          if (!defaultText) defaultText = rgbToHex(computedStyle.color);
+          
+          if (styleTag) styleTag.media = oldMedia; // re-enable custom styles
+        }
+      } catch (e) {
+        console.error('Failed to read default colors:', e);
+      }
+      if (!defaultBg) defaultBg = '#ffffff';
+      if (!defaultText) defaultText = '#000000';
+    }
+
+    const updatedStyles = {
+      ...currentStyles,
+      [activeTab]: color,
+      defaultBg,
+      defaultText
+    };
+    
+    // Optimistic UI update
     const updated = {
       ...customColors,
-      [selector]: {
-        ...currentStyles,
-        [activeTab]: color
-      }
+      [selector]: updatedStyles
     };
     setCustomColors(updated);
     localStorage.setItem('theme-customizer-colors', JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('theme-customizer-change', { detail: updated }));
+
+    // Save to database
+    try {
+      await themeConfigService.save({
+        selector,
+        bg: updatedStyles.bg || null,
+        text: updatedStyles.text || null,
+        defaultBg,
+        defaultText
+      });
+    } catch (err) {
+      console.error('Failed to save theme config to database:', err);
+    }
   };
 
-  const handleClearElementColor = () => {
+  const handleClearElementColor = async () => {
     if (!pickerConfig) return;
     const { selector } = pickerConfig;
     const updated = { ...customColors };
     
+    let updatedStyles = {};
     if (updated[selector]) {
-      delete updated[selector][activeTab];
-      if (Object.keys(updated[selector]).length === 0) {
-        delete updated[selector];
-      }
+      updated[selector][activeTab] = DEFAULT_THEME[selector]?.[activeTab];
+      updatedStyles = { ...updated[selector] };
     }
+    
     setCustomColors(updated);
     localStorage.setItem('theme-customizer-colors', JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('theme-customizer-change', { detail: updated }));
+
+    // Save to database (will update config in DB, setting color back to null/default)
+    try {
+      await themeConfigService.save({
+        selector,
+        bg: updatedStyles.bg === DEFAULT_THEME[selector]?.bg ? null : updatedStyles.bg,
+        text: updatedStyles.text === DEFAULT_THEME[selector]?.text ? null : updatedStyles.text,
+        defaultBg: updatedStyles.defaultBg || null,
+        defaultText: updatedStyles.defaultText || null
+      });
+    } catch (err) {
+      console.error('Failed to clear theme config from database:', err);
+    }
   };
 
-  const handleResetAll = () => {
+  const handleResetAll = async () => {
     if (window.confirm('Bạn có chắc chắn muốn khôi phục toàn bộ giao diện gốc?')) {
-      setCustomColors({});
-      localStorage.removeItem('theme-customizer-colors');
+      setCustomColors(DEFAULT_THEME);
+      localStorage.setItem('theme-customizer-colors', JSON.stringify(DEFAULT_THEME));
       setPickerConfig(null);
+      window.dispatchEvent(new CustomEvent('theme-customizer-change', { detail: DEFAULT_THEME }));
+
+      try {
+        await themeConfigService.reset();
+      } catch (err) {
+        console.error('Failed to reset all theme configs in database:', err);
+      }
     }
   };
 
@@ -307,9 +452,17 @@ export default function ThemeCustomizer() {
     const savedColor = customColors[selector]?.[activeTab];
     if (savedColor) return savedColor;
 
+    const defaultColor = activeTab === 'bg'
+      ? customColors[selector]?.defaultBg
+      : customColors[selector]?.defaultText;
+    if (defaultColor) return defaultColor;
+
     try {
-      const el = document.querySelector(selector);
+      let el = document.querySelector(selector);
       if (el) {
+        if (selector.includes('ChartColor-Registered') || selector.includes('ChartColor-Actual')) {
+          el = el.querySelector('span') || el;
+        }
         const computedStyle = window.getComputedStyle(el);
         const rawColor = activeTab === 'bg' ? computedStyle.backgroundColor : computedStyle.color;
         return rgbToHex(rawColor);
@@ -338,7 +491,7 @@ export default function ThemeCustomizer() {
           {Object.keys(customColors).length > 0 && (
             <button
               onClick={handleResetAll}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center border border-red-400 cursor-pointer"
+              className="bg-white border border-gray-200 text-red-500 hover:bg-red-50 hover:border-red-200 p-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer outline-none focus:outline-none focus:ring-2 focus:ring-red-100"
               title="Khôi phục toàn bộ"
             >
               <ArrowPathIcon className="w-5 h-5" />
@@ -348,7 +501,7 @@ export default function ThemeCustomizer() {
           {/* Main Toggle Button */}
           <button
             onClick={() => setIsEditMode(!isEditMode)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 border cursor-pointer font-bold text-sm ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 border cursor-pointer font-bold text-sm outline-none focus:outline-none focus:ring-2 focus:ring-blue-100 ${
               isEditMode
                 ? 'bg-blue-600 border-blue-500 text-white shadow-blue-500/20'
                 : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 shadow-gray-200/50'

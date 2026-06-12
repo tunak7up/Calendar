@@ -66,10 +66,10 @@ export default function SidebarAdmin() {
         className="fixed top-[56px] left-0 z-40 w-64 h-[calc(100vh-56px)] transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar"
       >
-        <div className="h-full px-4 py-8 overflow-y-auto bg-gray-50 border-r border-gray-200">
+        <div className="h-full px-4 py-8 overflow-y-auto bg-gray-50 border-r border-gray-200" data-custom-component="SidebarBackground" data-customizable-id="sidebar-bg" data-customizable-type="bg">
           {/* Brand block */}
           <div className="flex items-center mb-10 px-2">
-            <div className="flex items-center justify-center w-12 h-12 bg-red-600 rounded-2xl shadow-lg shadow-red-500/30">
+            <div className="flex items-center justify-center w-12 h-12 bg-red-600 rounded-2xl shadow-lg shadow-red-500/30" data-custom-component="SidebarBrandIcon" data-customizable-id="sidebar-brand-icon" data-customizable-type="bg">
               <ShieldCheckIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col ml-3">
@@ -84,6 +84,9 @@ export default function SidebarAdmin() {
                 <Link
                   to="/admin/employees"
                   className={getLinkClass('/admin/employees')}
+                  data-custom-component={path === '/admin/employees' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                  data-customizable-id="sidebar-link-employees"
+                  data-customizable-type="text"
                 >
                   <UsersIcon className={getIconClass('/admin/employees')} />
                   <span className="ms-4 font-semibold text-sm">{t('sidebar.manage_employees')}</span>
@@ -95,6 +98,9 @@ export default function SidebarAdmin() {
                 <Link
                   to="/admin/requests"
                   className={getLinkClass('/admin/requests')}
+                  data-custom-component={path === '/admin/requests' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                  data-customizable-id="sidebar-link-requests"
+                  data-customizable-type="text"
                 >
                   <ClipboardDocumentCheckIcon className={getIconClass('/admin/requests')} />
                   <span className="ms-4 font-semibold text-sm">{t('sidebar.approve_requests')}</span>
@@ -106,6 +112,9 @@ export default function SidebarAdmin() {
                 <Link
                   to="/admin/schedule"
                   className={getLinkClass('/admin/schedule')}
+                  data-custom-component={path === '/admin/schedule' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                  data-customizable-id="sidebar-link-schedule"
+                  data-customizable-type="text"
                 >
                   <CalendarDaysIcon className={getIconClass('/admin/schedule')} />
                   <span className="ms-4 font-semibold text-sm">{t('sidebar.company_calendar')}</span>
@@ -117,6 +126,9 @@ export default function SidebarAdmin() {
                 <Link
                   to="/admin/work-hours"
                   className={getLinkClass('/admin/work-hours')}
+                  data-custom-component={path === '/admin/work-hours' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                  data-customizable-id="sidebar-link-workhours"
+                  data-customizable-type="text"
                 >
                   <ClockIcon className={getIconClass('/admin/work-hours')} />
                   <span className="ms-4 font-semibold text-sm">{t('sidebar.work_hours')}</span>
@@ -129,6 +141,9 @@ export default function SidebarAdmin() {
                   <Link
                     to="/tasks"
                     className={getLinkClass('/tasks')}
+                    data-custom-component={path === '/tasks' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                    data-customizable-id="sidebar-link-tasks"
+                    data-customizable-type="text"
                   >
                     <ClipboardDocumentListIcon className={getIconClass('/tasks')} />
                     <span className="ms-4 font-semibold text-sm">{t('sidebar.all_tasks')}</span>
@@ -138,6 +153,9 @@ export default function SidebarAdmin() {
                   <Link
                     to="/tasks/add"
                     className={getLinkClass('/tasks/add')}
+                    data-custom-component={path === '/tasks/add' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                    data-customizable-id="sidebar-link-addtask"
+                    data-customizable-type="text"
                   >
                     <PlusIcon className={getIconClass('/tasks/add')} />
                     <span className="ms-4 font-semibold text-sm">{t('sidebar.create_task')}</span>

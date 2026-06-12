@@ -55,6 +55,7 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       align="right"
       disabled={disabled}
       buttonLabel={buttonLabel}
+      data-custom-component="TaskStatusSelect"
     />
   );
 }

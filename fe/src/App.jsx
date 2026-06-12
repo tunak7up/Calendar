@@ -84,7 +84,7 @@ function App() {
     }
 
     if (isRegisterPath) {
-      return <SidebarRegister activeItem={location.pathname} />;
+      return isAdmin ? null : <SidebarRegister activeItem={location.pathname} />;
     }
 
     return null;

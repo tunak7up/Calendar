@@ -19,6 +19,7 @@ export default function BackButton({ onClick, className = '' }) {
     <button
       onClick={handleBack}
       className={`group flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors duration-200 active:scale-95 ${className}`}
+      data-custom-component="BackButton"
     >
       <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
       <span>{t('taskdetails.back')}</span>

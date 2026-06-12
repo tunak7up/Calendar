@@ -67,8 +67,6 @@ export default function HeaderPage({ isAdmin }) {
                   <Link
                     key={item.id}
                     to={item.path}
-                    data-customizable-id={`nav-${item.id}`}
-                    data-customizable-type="text"
                     aria-current={item.current ? 'page' : undefined}
                     className={classNames(
                       item.current

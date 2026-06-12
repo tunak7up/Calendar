@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,6 +25,37 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
  */
 export default function WorkHoursChart({ employees = [], schedules = [], dailyReports = [], startDate, endDate }) {
   const { t } = useTranslation();
+
+  const [registeredBg, setRegisteredBg] = useState('rgba(59, 130, 246, 0.75)');
+  const [actualBg, setActualBg] = useState('rgba(16, 185, 129, 0.75)');
+
+
+  useEffect(() => {
+    const updateColors = () => {
+      try {
+        const saved = localStorage.getItem('theme-customizer-colors');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const reg = parsed['[data-custom-component="ChartColor-Registered"]']?.bg || 'rgba(59, 130, 246, 0.75)';
+          const act = parsed['[data-custom-component="ChartColor-Actual"]']?.bg || 'rgba(16, 185, 129, 0.75)';
+          setRegisteredBg(reg);
+          setActualBg(act);
+        } else {
+          setRegisteredBg('rgba(59, 130, 246, 0.75)');
+          setActualBg('rgba(16, 185, 129, 0.75)');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    updateColors();
+
+    window.addEventListener('theme-customizer-change', updateColors);
+    return () => {
+      window.removeEventListener('theme-customizer-change', updateColors);
+    };
+  }, []);
 
 
   // --- helpers ---
@@ -105,8 +136,8 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
       {
         label: t('dashboard.registered'),
         data: displayed.map(e => e.registered),
-        backgroundColor: 'rgba(59, 130, 246, 0.75)',
-        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: registeredBg,
+        borderColor: registeredBg,
         borderWidth: 1.5,
         borderRadius: 6,
         borderSkipped: false,
@@ -114,8 +145,8 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
       {
         label: t('dashboard.reality'),
         data: displayed.map(e => e.actual),
-        backgroundColor: 'rgba(16, 185, 129, 0.75)',
-        borderColor: 'rgba(16, 185, 129, 1)',
+        backgroundColor: actualBg,
+        borderColor: actualBg,
         borderWidth: 1.5,
         borderRadius: 6,
         borderSkipped: false,
@@ -128,13 +159,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
-        labels: {
-          font: { family: 'Inter, sans-serif', size: 12, weight: '600' },
-          usePointStyle: true,
-          pointStyle: 'rectRounded',
-          padding: 10,
-        },
+        display: false,
       },
       tooltip: {
         backgroundColor: 'rgba(15,23,42,0.92)',
@@ -180,8 +205,27 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
   return (
     <div className="flex flex-col lg:flex-row h-full w-full gap-5">
       {/* Bar chart */}
-      <div className="flex-none h-[250px] lg:h-auto lg:flex-[2] relative lg:min-h-0">
-        <Bar data={chartData} options={options} />
+      <div className="flex-none h-[250px] lg:h-auto lg:flex-[2] relative lg:min-h-0 flex flex-col">
+        {/* Custom Legend */}
+        <div className="flex justify-center gap-6 mb-3 border border-gray-100 p-2 rounded-xl bg-gray-50/50 shadow-inner w-fit mx-auto select-none">
+          <div 
+            className="flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-100"
+            data-custom-component="ChartColor-Registered"
+          >
+            <span className="w-3.5 h-3.5 rounded shadow-sm border" style={{ backgroundColor: registeredBg, borderColor: registeredBg }}></span>
+            <span className="text-xs font-bold text-gray-700">{t('dashboard.registered')}</span>
+          </div>
+          <div 
+            className="flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-100"
+            data-custom-component="ChartColor-Actual"
+          >
+            <span className="w-3.5 h-3.5 rounded shadow-sm border" style={{ backgroundColor: actualBg, borderColor: actualBg }}></span>
+            <span className="text-xs font-bold text-gray-700">{t('dashboard.reality')}</span>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0">
+          <Bar data={chartData} options={options} />
+        </div>
       </div>
 
       {/* Detail ranking table */}
@@ -207,8 +251,8 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-blue-600">{e.registered.toFixed(1)}h</span>
-                      <span className="text-[10px] font-bold text-emerald-600">{e.actual.toFixed(1)}h</span>
+                      <span className="text-[10px] font-bold" style={{ color: registeredBg }}>{e.registered.toFixed(1)}h</span>
+                      <span className="text-[10px] font-bold" style={{ color: actualBg }}>{e.actual.toFixed(1)}h</span>
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">

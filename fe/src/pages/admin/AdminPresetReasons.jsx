@@ -13,6 +13,7 @@ import {
 import { presetReasonService } from '../../services/presetReasonService';
 import Button from '../../components/Button';
 import { useTranslation } from 'react-i18next';
+import BackButton from '../../components/BackButton';
 
 export default function AdminPresetReasons() {
   const { t, i18n } = useTranslation();
@@ -143,6 +144,10 @@ export default function AdminPresetReasons() {
 
   return (
     <div className="space-y-6 pb-20">
+      <div className="flex items-center">
+        <BackButton />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>

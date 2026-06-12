@@ -36,6 +36,7 @@ export default function Button({
       onClick={onClick}
       disabled={disabled}
       className={`${baseStyles} ${variantStyles} ${className}`}
+      data-custom-component="Button"
       {...props}
     >
       {children}

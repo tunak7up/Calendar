@@ -130,10 +130,12 @@
 /* 4. Event Styling */
 .fc-event {
   border-radius: 8px !important;
-  padding: 2px 4px !important;
+  padding: 0 !important;
   font-size: 0.75rem !important;
   border: none !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .fc-daygrid-event-dot {

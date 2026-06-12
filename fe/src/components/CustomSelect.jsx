@@ -12,7 +12,8 @@ export default function CustomSelect({
   dropdownWidth = 'w-40',
   align = 'left',
   disabled = false,
-  buttonLabel = null
+  buttonLabel = null,
+  ...props
 }) {
   const selectedOption = options.find(opt => opt.value === value) || options[0];
 
@@ -25,6 +26,8 @@ export default function CustomSelect({
           ${size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-4 py-2 text-sm'}
           ${buttonClassName || 'bg-gray-50 border border-gray-150 text-gray-700 rounded-lg hover:bg-gray-100'}
         `}
+        data-custom-component="CustomSelect"
+        {...props}
       >
         {buttonLabel !== null ? buttonLabel : selectedOption?.label}
         {!disabled && <ChevronDownIcon className="w-3.5 h-3.5 opacity-50" />}

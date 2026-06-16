@@ -7,7 +7,18 @@ const transporter = nodemailer.createTransport({
   auth: mailConfig.auth,
 });
 
+// Validate email format
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 const sendMail = async ({ to, subject, html, text }) => {
+  // Validate recipient email
+  if (!to || !isValidEmail(to)) {
+    throw new Error(`Invalid email address: ${to}`);
+  }
+
   const mailOptions = {
     from: mailConfig.from,
     to,

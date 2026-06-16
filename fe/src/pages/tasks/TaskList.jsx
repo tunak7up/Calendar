@@ -7,7 +7,7 @@ import {
   ClockIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Menu, Transition } from '@headlessui/react';
+import { Menu, Transition, Dialog } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useNavigate } from 'react-router-dom';
@@ -98,6 +98,10 @@ export default function TaskList({ isAdmin }) {
   const [endDate, setEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const [importFile, setImportFile] = useState(null);
+  const [excelHeaders, setExcelHeaders] = useState([]);
+  const [mappingConfig, setMappingConfig] = useState({});
+  const [showMappingModal, setShowMappingModal] = useState(false);
   const pageSize = 15;
 
   const formatCustomDate = (dateString) => {
@@ -326,9 +330,8 @@ export default function TaskList({ isAdmin }) {
                         {({ active }) => (
                           <button
                             onClick={() => document.getElementById('import-file-upload').click()}
-                            className={`${
-                              active ? 'bg-orange-500 text-white' : 'text-gray-900'
-                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                            className={`${active ? 'bg-orange-500 text-white' : 'text-gray-900'
+                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
                             {t('tasks.upload')}
                           </button>
@@ -338,9 +341,8 @@ export default function TaskList({ isAdmin }) {
                         {({ active }) => (
                           <button
                             onClick={() => taskService.exportTemplate().catch(err => alert('Download template failed: ' + err.message))}
-                            className={`${
-                              active ? 'bg-orange-500 text-white' : 'text-gray-900'
-                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                            className={`${active ? 'bg-orange-500 text-white' : 'text-gray-900'
+                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
                             {t('tasks.download_import_template')}
                           </button>
@@ -359,14 +361,20 @@ export default function TaskList({ isAdmin }) {
                 onChange={async (e) => {
                   const file = e.target.files[0];
                   if (!file) return;
+                  setImportFile(file);
                   const formData = new FormData();
                   formData.append('file', file);
                   try {
-                    const response = await taskService.importTasks(formData);
-                    fetchTasks();
-                    alert(response.message || 'Import thành công!');
+                    const response = await taskService.previewImportTasks(formData);
+                    if (response.success && response.data) {
+                      setExcelHeaders(response.data);
+                      setMappingConfig({});
+                      setShowMappingModal(true);
+                    } else {
+                      alert('Lỗi đọc file excel');
+                    }
                   } catch (error) {
-                    alert('Lỗi import: ' + error.message);
+                    alert('Lỗi preview: ' + error.message);
                   }
                   e.target.value = '';
                 }}
@@ -590,6 +598,118 @@ export default function TaskList({ isAdmin }) {
           </tr>
         )}
       />
+
+      {/* Mapping Modal */}
+      <Transition appear show={showMappingModal} as={React.Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowMappingModal(false)}>
+          <Transition.Child
+            as={React.Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={React.Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900 mb-4">
+                    Ghép nối dữ liệu (Mapping)
+                  </Dialog.Title>
+                  <div className="mt-2 text-sm text-gray-500 mb-4">
+                    Vui lòng chọn các cột tương ứng từ file Excel của bạn cho từng trường dữ liệu yêu cầu.
+                  </div>
+
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    {[
+                      { key: 'title', label: 'Tên công việc (Title) *' },
+                      { key: 'description', label: 'Mô tả (Description)' },
+                      { key: 'start_time', label: 'Ngày bắt đầu (Start Time)' },
+                      { key: 'due_date', label: 'Hạn chót (Due Date)' },
+                      { key: 'status', label: 'Trạng thái (Status)' },
+                      { key: 'priority', label: 'Độ ưu tiên (Priority)' },
+                    ].map(field => (
+                      <div key={field.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="font-medium text-gray-700 sm:w-1/2">{field.label}</div>
+                        <select
+                          className="sm:w-1/2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                          value={Object.keys(mappingConfig).find(colIdx => mappingConfig[colIdx] === field.key) || ''}
+                          onChange={(e) => {
+                            const newColIndex = e.target.value;
+                            setMappingConfig(prev => {
+                              const newConfig = { ...prev };
+                              Object.keys(newConfig).forEach(k => {
+                                if (newConfig[k] === field.key) {
+                                  delete newConfig[k];
+                                }
+                              });
+                              if (newColIndex !== '') {
+                                newConfig[newColIndex] = field.key;
+                              }
+                              return newConfig;
+                            });
+                          }}
+                        >
+                          <option value="">-- Bỏ qua --</option>
+                          {excelHeaders.map(header => (
+                            <option key={header.index} value={header.index}>
+                              Cột {header.index}: {header.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-xl border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200"
+                      onClick={() => setShowMappingModal(false)}
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      onClick={async () => {
+                        if (!importFile) return;
+                        const formData = new FormData();
+                        formData.append('file', importFile);
+                        formData.append('mapping', JSON.stringify(mappingConfig));
+                        try {
+                          const response = await taskService.importTasks(formData);
+                          fetchTasks();
+                          alert(response.message || 'Import thành công!');
+                          setShowMappingModal(false);
+                          setImportFile(null);
+                        } catch (error) {
+                          alert('Lỗi import: ' + error.message);
+                        }
+                      }}
+                    >
+                      Xác nhận Import
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
       {/* Floating Action Button for Mobile */}
       <button

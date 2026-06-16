@@ -203,6 +203,19 @@ const exportTemplate = async (req, res) => {
     }
 };
 
+const previewImport = async (req, res) => {
+    try {
+        if (!req.file) {
+            sendRes(res, 400, 'Error previewing import', null, 'No file uploaded');
+            return;
+        }
+        const headers = await taskService.previewImportTasks(req.file.buffer);
+        sendRes(res, 200, 'Preview extracted successfully', headers);
+    } catch (err) {
+        sendRes(res, 500, 'Error previewing import', null, err.message);
+    }
+};
+
 const importTasks = async (req, res) => {
     try {
         if (!req.file) {
@@ -213,7 +226,16 @@ const importTasks = async (req, res) => {
         const assignerId = req.user.person_id;
         const createdBy = req.user.person_id;
 
-        const result = await taskService.importTasks(req.file.buffer, assignerId, createdBy);
+        let customMapping = null;
+        if (req.body.mapping) {
+            try {
+                customMapping = JSON.parse(req.body.mapping);
+            } catch (e) {
+                console.error("Invalid mapping JSON", e);
+            }
+        }
+
+        const result = await taskService.importTasks(req.file.buffer, assignerId, createdBy, customMapping);
 
         if (result.success === 0) {
             const errorDetails = result.errors.map(e => `Dòng ${e.row}: ${e.reason}`).join('\n');
@@ -250,6 +272,7 @@ module.exports = {
     updateParticipantRole,
     removeParticipantFromTask,
     exportTasks,
+    previewImport,
     importTasks,
     exportTemplate
 };

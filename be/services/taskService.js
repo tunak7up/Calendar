@@ -579,7 +579,25 @@ const HEADER_MAP = {
 const VALID_STATUS = ['pending', 'completed', 'in progress', 'overdue'];
 const VALID_PRIORITY = ['low', 'medium', 'high'];
 
-const importTasks = async (fileBuffer, assignerId, createdBy) => {
+const previewImportTasks = async (fileBuffer) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(fileBuffer);
+    const sheet = workbook.worksheets[0];
+    if (!sheet) throw new Error('File Excel không có sheet nào.');
+
+    const headerRow = sheet.getRow(1).values;
+    const headers = [];
+    if (headerRow) {
+        headerRow.forEach((header, index) => {
+            if (header) {
+                headers.push({ index, name: header.toString().trim() });
+            }
+        });
+    }
+    return headers;
+};
+
+const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => {
     console.log('=== importTasks ===');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(fileBuffer);
@@ -591,12 +609,18 @@ const importTasks = async (fileBuffer, assignerId, createdBy) => {
     const headerRow = sheet.getRow(1).values; // index bắt đầu từ 1
     const colMap = {}; // colIndex -> key chuẩn
 
-    headerRow.forEach((header, colIndex) => {
-        if (!header) return;
-        const normalized = header.toString().trim().toLowerCase();
-        const key = HEADER_MAP[normalized];
-        if (key) colMap[colIndex] = key;
-    });
+    if (customMapping && Object.keys(customMapping).length > 0) {
+        Object.entries(customMapping).forEach(([colIndex, key]) => {
+            if (key) colMap[colIndex] = key;
+        });
+    } else {
+        headerRow.forEach((header, colIndex) => {
+            if (!header) return;
+            const normalized = header.toString().trim().toLowerCase();
+            const key = HEADER_MAP[normalized];
+            if (key) colMap[colIndex] = key;
+        });
+    }
 
     const results = { success: 0, failed: 0, errors: [] };
     const rowsToInsert = [];
@@ -720,6 +744,7 @@ module.exports = {
     updateParticipantRole,
     removeParticipantFromTask,
     exportTasks,
+    previewImportTasks,
     importTasks,
     exportTemplate
 };

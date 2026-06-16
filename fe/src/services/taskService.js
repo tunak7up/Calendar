@@ -125,4 +125,9 @@ export const taskService = {
     method: 'POST',
     body: formData,
   }),
+
+  previewImportTasks: (formData) => apiFetch('/task/import-preview', {
+    method: 'POST',
+    body: formData,
+  }),
 };

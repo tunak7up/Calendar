@@ -5,6 +5,7 @@ const transporter = nodemailer.createTransport({
   port: mailConfig.port,
   secure: mailConfig.secure,
   auth: mailConfig.auth,
+  name: mailConfig.name,
 });
 
 // Validate email format
@@ -13,8 +14,18 @@ const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
+const htmlToPlainText = (html) => {
+  if (!html) return '';
+  const plain = html
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain;
+};
+
 const sendMail = async ({ to, subject, html, text }) => {
-  // Validate recipient email
   if (!to || !isValidEmail(to)) {
     throw new Error(`Invalid email address: ${to}`);
   }
@@ -24,7 +35,7 @@ const sendMail = async ({ to, subject, html, text }) => {
     to,
     subject,
     html,
-    text, 
+    text: text || htmlToPlainText(html) || 'Nội dung email tự động từ hệ thống. Vui lòng không trả lời.',
   };
 
   const info = await transporter.sendMail(mailOptions);

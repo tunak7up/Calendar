@@ -32,4 +32,5 @@ Nếu bạn có danh sách hàng chục công việc cần giao, sử dụng Imp
 3. Quay lại trang **Tasks**, nhấn **Import** và chọn file của bạn.
 4. Hệ thống sẽ hiển thị thông báo chi tiết: Bao nhiêu dòng thành công, bao nhiêu dòng thất bại và chỉ rõ lý do thất bại (nếu có).
 
-![Import Tasks](/screenshots/import-tasks.png)
+![Import Tasks](../public/screenshots/manager/import-tasks.png)
+![Mapping Tasks](../public/screenshots/manager/mapping.png)

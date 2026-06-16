@@ -13,7 +13,7 @@ Module **Tasks** là trái tim của hệ thống Intern Management App, giúp n
    - **Hạn chót (Due Date):** Ngày giờ bắt buộc hoàn thành.
 4. Nhấn **Lưu** để hệ thống tạo task và tự động gửi email thông báo cho người nhận.
 
-![Tạo công việc](/screenshots/tao-cong-viec.png)
+<!-- ![Tạo công việc](/screenshots/tao-cong-viec.png) -->
 
 ## Công việc phụ (Sub-tasks)
 

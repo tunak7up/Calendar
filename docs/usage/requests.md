@@ -18,3 +18,7 @@ Quản lý sẽ nhận được thông báo:
 - Xem xét lý do.
 - Nhấn **Phê duyệt** (Approve) hoặc **Từ chối** (Reject).
 - Nếu từ chối, Quản lý có thể để lại ghi chú lý do. Hệ thống sẽ phản hồi lại cho người tạo đơn.
+
+![Request_manager](../public/screenshots/manager/request.png)
+![Request_employee_create ](../public/screenshots/employee/create_request.png)
+

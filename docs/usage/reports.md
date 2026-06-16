@@ -14,4 +14,4 @@ Người quản lý có thể xem tất cả báo cáo được nộp trong ngà
 - Xem tài liệu đính kèm.
 - Chấm điểm hoặc để lại bình luận nhận xét để thực tập sinh cải thiện trong ngày tiếp theo.
 
-![Báo cáo hàng ngày](/screenshots/daily-reports.png)
+![Báo cáo hàng ngày](../public/screenshots/employee/daily.png)

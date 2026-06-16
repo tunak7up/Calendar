@@ -191,14 +191,14 @@ export default function AdminSchedule() {
 
     // Aggregate by date into 2 groups: registered and unscheduled
     const aggregated = {}; // key: date -> { registered: 0, unscheduled: 0 }
-    
+
     baseEvents.forEach(e => {
       const date = e.start;
       if (!date) return;
       if (!aggregated[date]) {
         aggregated[date] = { registered: 0, unscheduled: 0 };
       }
-      
+
       const hasSchedule = e.extendedProps?.hasSchedule;
       if (hasSchedule) {
         aggregated[date].registered++;
@@ -212,8 +212,8 @@ export default function AdminSchedule() {
       if (counts.registered > 0) {
         groupEvents.push({
           id: `group_registered_${date}`,
-          title: i18n.language === 'vi' 
-            ? `Đăng ký: ${counts.registered} người` 
+          title: i18n.language === 'vi'
+            ? `Đăng ký: ${counts.registered} người`
             : `Registered: ${counts.registered} ${counts.registered === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
@@ -231,8 +231,8 @@ export default function AdminSchedule() {
       if (counts.unscheduled > 0) {
         groupEvents.push({
           id: `group_unscheduled_${date}`,
-          title: i18n.language === 'vi' 
-            ? `Ngoài lịch: ${counts.unscheduled} người` 
+          title: i18n.language === 'vi'
+            ? `Ngoài lịch: ${counts.unscheduled} người`
             : `Unscheduled: ${counts.unscheduled} ${counts.unscheduled === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
@@ -357,7 +357,7 @@ export default function AdminSchedule() {
   const handleEventClick = async (eventObj) => {
     const clickedDateStr = eventObj.startStr || (eventObj.start instanceof Date ? eventObj.start.toISOString().split('T')[0] : eventObj.start?.split?.(/[T ]/)?.[0]);
     const groupType = eventObj.extendedProps?.groupType || 'registered';
-    
+
     setModalDate(clickedDateStr);
     setIsModalOpen(true);
     setSelectedModalPerson(null);
@@ -552,328 +552,323 @@ export default function AdminSchedule() {
                     <XMarkIcon className="w-6 h-6" />
                   </button>
                 </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              {modalLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                </div>
-              ) : !selectedModalPerson ? (
-                /* Day Summary View */
-                (() => {
-                  const registeredList = modalData.filter(p => p.hasSchedule);
-                  const unscheduledList = modalData.filter(p => !p.hasSchedule);
-                  const registeredCount = registeredList.length;
-                  const unscheduledCount = unscheduledList.length;
-                  const currentList = activeGroup === 'registered' ? registeredList : unscheduledList;
+                <div className="p-6 overflow-y-auto flex-1">
+                  {modalLoading ? (
+                    <div className="flex justify-center items-center py-12">
+                      <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : !selectedModalPerson ? (
+                    /* Day Summary View */
+                    (() => {
+                      const registeredList = modalData.filter(p => p.hasSchedule);
+                      const unscheduledList = modalData.filter(p => !p.hasSchedule);
+                      const registeredCount = registeredList.length;
+                      const unscheduledCount = unscheduledList.length;
+                      const currentList = activeGroup === 'registered' ? registeredList : unscheduledList;
 
-                  return (
+                      return (
+                        <div className="space-y-4">
+                          {/* Group selection boxes */}
+                          <div className="grid grid-cols-2 gap-4 mb-6">
+                            {/* Box 1: Đăng ký đi làm */}
+                            <div
+                              onClick={() => setActiveGroup('registered')}
+                              className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${activeGroup === 'registered'
+                                ? 'border-blue-600 bg-blue-50/40 shadow-sm'
+                                : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-xl ${activeGroup === 'registered' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                  <UsersIcon className="w-4 h-4" />
+                                </div>
+                                <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'registered' ? 'text-blue-900' : 'text-gray-500'}`}>
+                                  {t('adminschedule.registered_work')}
+                                </span>
+                              </div>
+                              <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
+                                {registeredCount}
+                                <span className="text-xs font-bold text-gray-400">{t('adminschedule.registered_unit')}</span>
+                              </div>
+                            </div>
+
+                            {/* Box 2: Làm ngoài lịch */}
+                            <div
+                              onClick={() => setActiveGroup('unscheduled')}
+                              className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${activeGroup === 'unscheduled'
+                                ? 'border-amber-500 bg-amber-50/40 shadow-sm'
+                                : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-xl ${activeGroup === 'unscheduled' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                  <ClockIcon className="w-4 h-4" />
+                                </div>
+                                <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'unscheduled' ? 'text-amber-950' : 'text-gray-500'}`}>
+                                  {t('adminschedule.unscheduled_work')}
+                                </span>
+                              </div>
+                              <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
+                                {unscheduledCount}
+                                <span className="text-xs font-bold text-gray-400">{t('adminschedule.unscheduled_unit')}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* List area */}
+                          {currentList.length === 0 ? (
+                            <div className="text-center py-12 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                              {activeGroup === 'registered'
+                                ? t('adminschedule.no_registered')
+                                : t('adminschedule.no_unscheduled')
+                              }
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {currentList.map(person => (
+                                <div
+                                  key={person.person_id}
+                                  onClick={() => setSelectedModalPerson(person)}
+                                  className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
+                                >
+                                  <div className="flex-1">
+                                    <h3
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/profile/${person.person_id}`);
+                                      }}
+                                      className="font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors inline-block cursor-pointer"
+                                      title={i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
+                                    >
+                                      {person.name}
+                                    </h3>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                                      <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4 text-gray-400" /> {person.shift}</span>
+                                      <span>{t('adminschedule.check_in')}{person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>}</span>
+                                      <span>
+                                        {t('adminschedule.check_out')}{
+                                          person.report?.check_out
+                                            ? person.report.check_out.slice(0, 5)
+                                            : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>
+                                        }
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        {t('adminschedule.report_status')}{person.has_reported ? <CheckCircleIcon className="w-4.5 h-4.5 text-green-500" /> : <div className="w-4.5 h-4.5" />}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
+                                      {t('adminschedule.tasks_count', { count: person.tasks.length })}
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/profile/${person.person_id}`);
+                                      }}
+                                      className="text-[#0056b3] hover:text-blue-800 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                    >
+                                      {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    /* Person Task Detail View */
                     <div className="space-y-4">
-                      {/* Group selection boxes */}
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        {/* Box 1: Đăng ký đi làm */}
-                        <div
-                          onClick={() => setActiveGroup('registered')}
-                          className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${
-                            activeGroup === 'registered'
-                              ? 'border-blue-600 bg-blue-50/40 shadow-sm'
-                              : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-xl ${activeGroup === 'registered' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                              <UsersIcon className="w-4 h-4" />
-                            </div>
-                            <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'registered' ? 'text-blue-900' : 'text-gray-500'}`}>
-                              {t('adminschedule.registered_work')}
-                            </span>
-                          </div>
-                          <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
-                            {registeredCount}
-                            <span className="text-xs font-bold text-gray-400">{t('adminschedule.registered_unit')}</span>
+                      {/* Quick Profile Info Button Card */}
+                      <button
+                        onClick={() => navigate(`/profile/${selectedModalPerson.person_id}`)}
+                        className="flex items-center justify-between bg-indigo-50/30 hover:bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 transition-colors w-full cursor-pointer text-left group/profile shadow-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedModalPerson.name || selectedModalPerson.username)}&background=e0e7ff&color=4338ca&rounded=true&size=40&bold=true`}
+                            alt={selectedModalPerson.name}
+                            className="w-10 h-10 rounded-full border border-gray-100"
+                          />
+                          <div>
+                            <h4 className="text-sm font-bold text-gray-900 group-hover/profile:text-indigo-600 transition-colors">{selectedModalPerson.name}</h4>
+                            <p className="text-xs text-gray-400">@{selectedModalPerson.username}</p>
                           </div>
                         </div>
+                        <span className="text-xs font-bold text-gray-700 group-hover/profile:text-indigo-600 transition-colors flex items-center gap-1">
+                          {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'} →
+                        </span>
+                      </button>
 
-                        {/* Box 2: Làm ngoài lịch */}
-                        <div
-                          onClick={() => setActiveGroup('unscheduled')}
-                          className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between cursor-pointer ${
-                            activeGroup === 'unscheduled'
-                              ? 'border-amber-500 bg-amber-50/40 shadow-sm'
-                              : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-xl ${activeGroup === 'unscheduled' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                              <ClockIcon className="w-4 h-4" />
-                            </div>
-                            <span className={`text-xs sm:text-sm font-semibold ${activeGroup === 'unscheduled' ? 'text-amber-950' : 'text-gray-500'}`}>
-                              {t('adminschedule.unscheduled_work')}
-                            </span>
-                          </div>
-                          <div className="mt-3 text-xl sm:text-2xl font-semibold text-gray-900 flex items-baseline gap-1">
-                            {unscheduledCount}
-                            <span className="text-xs font-bold text-gray-400">{t('adminschedule.unscheduled_unit')}</span>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                        <div className="flex flex-col gap-2 w-full sm:w-auto">
+                          <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{t('adminschedule.filter_by_status')}</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskStatusFilters(prev =>
+                                  prev.includes('pending') ? prev.filter(s => s !== 'pending') : [...prev, 'pending']
+                                );
+                              }}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${taskStatusFilters.includes('pending')
+                                ? 'bg-gray-100 text-gray-700 border-gray-300 shadow-sm'
+                                : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                              {t('adminschedule.status_pending')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskStatusFilters(prev =>
+                                  prev.includes('in progress') ? prev.filter(s => s !== 'in progress') : [...prev, 'in progress']
+                                );
+                              }}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${taskStatusFilters.includes('in progress')
+                                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm'
+                                : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                              {t('adminschedule.status_in_progress')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskStatusFilters(prev =>
+                                  prev.includes('completed') ? prev.filter(s => s !== 'completed') : [...prev, 'completed']
+                                );
+                              }}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${taskStatusFilters.includes('completed')
+                                ? 'bg-emerald-50 text-[#10b981] border-emerald-200 shadow-sm'
+                                : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                              {t('adminschedule.status_completed')}
+                            </button>
                           </div>
                         </div>
+                        <button
+                          onClick={() => {
+                            navigate('/tasks/add', {
+                              state: {
+                                assignee: {
+                                  person_id: selectedModalPerson.person_id,
+                                  username: selectedModalPerson.username,
+                                  name: selectedModalPerson.name,
+                                  role: 'assignee'
+                                }
+                              }
+                            });
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/10 w-full sm:w-auto justify-center"
+                        >
+                          <PlusIcon className="w-4 h-4" />
+                          {t('adminschedule.add_task')}
+                        </button>
                       </div>
 
-                      {/* List area */}
-                      {currentList.length === 0 ? (
-                        <div className="text-center py-12 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                          {activeGroup === 'registered' 
-                            ? t('adminschedule.no_registered') 
-                            : t('adminschedule.no_unscheduled')
-                          }
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {currentList.map(person => (
-                            <div
-                              key={person.person_id}
-                              onClick={() => setSelectedModalPerson(person)}
-                              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all gap-4"
-                            >
-                              <div className="flex-1">
-                                <h3
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/profile/${person.person_id}`);
-                                  }}
-                                  className="font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors inline-block cursor-pointer"
-                                  title={i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
-                                >
-                                  {person.name}
-                                </h3>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
-                                  <span className="flex items-center gap-1"><ClockIcon className="w-4 h-4 text-gray-400" /> {person.shift}</span>
-                                  <span>{t('adminschedule.check_in')}{person.check_in ? person.check_in.slice(0, 5) : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>}</span>
-                                  <span>
-                                    {t('adminschedule.check_out')}{
-                                      person.report?.check_out
-                                        ? person.report.check_out.slice(0, 5)
-                                        : <span className="text-red-400 font-medium">{t('adminschedule.not_available')}</span>
-                                    }
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    {t('adminschedule.report_status')}{person.has_reported ? <CheckCircleIcon className="w-4.5 h-4.5 text-green-500" /> : <XMarkIcon className="w-4.5 h-4.5 text-red-400" />}
-                                  </span>
-                                </div>
+
+
+                      {/* Daily Report Section */}
+                      <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
+                        <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                          <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+                          {t('adminschedule.report_title')}
+                        </h3>
+                        {selectedModalPerson.report ? (
+                          <div className="space-y-3">
+                            <div className="flex gap-4 text-xs font-medium text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <ClockIcon className="w-4 h-4 text-gray-400" />
+                                {t('adminschedule.check_in')}{selectedModalPerson.report.check_in
+                                  ? selectedModalPerson.report.check_in.slice(0, 5)
+                                  : t('adminschedule.not_available')}
                               </div>
-                              <div className="flex items-center gap-3">
-                                <div className="px-3 py-1 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-full text-xs font-bold transition-colors">
-                                  {t('adminschedule.tasks_count', { count: person.tasks.length })}
-                                </div>
-                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/profile/${person.person_id}`);
-                                  }}
-                                  className="text-[#0056b3] hover:text-blue-800 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                  {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'}
-                                </button>
+                              <div className="flex items-center gap-1">
+                                <ClockIcon className="w-4 h-4 text-gray-400" />
+                                {t('adminschedule.check_out')}{selectedModalPerson.report.check_out
+                                  ? selectedModalPerson.report.check_out.slice(0, 5)
+                                  : t('adminschedule.not_available')}
                               </div>
                             </div>
-                          ))}
+                            <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
+                              {selectedModalPerson.report.description || <span className="text-gray-400 italic">{t('adminschedule.no_report_desc')}</span>}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 italic">{t('adminschedule.not_reported_yet')}</div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-400 font-medium">
+                          {t('adminschedule.tasks_found', { count: selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length })}
+                        </p>
+                      </div>
+                      {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
+                        <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                          {t('adminschedule.no_tasks_matched')}
+                        </div>
+                      ) : (
+                        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                          <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_task_name')}</th>
+                                <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_date')}</th>
+                                <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_status')}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {selectedModalPerson.tasks
+                                .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase()))
+                                .map(task => (
+                                  <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
+                                    <td className="py-3 px-4 font-medium text-gray-900">
+                                      <div className="max-w-[200px] truncate" title={task.name || task.title}>
+                                        {task.name || task.title}
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-gray-500">
+                                      {task.due_date
+                                        ? (() => {
+                                          const d = new Date(task.due_date);
+                                          const day = String(d.getDate()).padStart(2, '0');
+                                          const month = String(d.getMonth() + 1).padStart(2, '0');
+                                          const year = d.getFullYear();
+                                          return `${day}/${month}/${year}`;
+                                        })()
+                                        : t('adminschedule.not_available')}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm
+                                    ${task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                          task.status?.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                            'bg-gray-50 text-gray-700 border-gray-200'}
+                                  `}>
+                                        {task.status?.toLowerCase() === 'pending' ? t('adminschedule.status_pending') :
+                                          task.status?.toLowerCase() === 'in progress' ? t('adminschedule.status_in_progress') :
+                                            task.status?.toLowerCase() === 'completed' ? t('adminschedule.status_completed') :
+                                              task.status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
                         </div>
                       )}
                     </div>
-                  );
-                })()
-              ) : (
-                /* Person Task Detail View */
-                <div className="space-y-4">
-                  {/* Quick Profile Info Button Card */}
-                  <button
-                    onClick={() => navigate(`/profile/${selectedModalPerson.person_id}`)}
-                    className="flex items-center justify-between bg-indigo-50/30 hover:bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 transition-colors w-full cursor-pointer text-left group/profile shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedModalPerson.name || selectedModalPerson.username)}&background=e0e7ff&color=4338ca&rounded=true&size=40&bold=true`}
-                        alt={selectedModalPerson.name}
-                        className="w-10 h-10 rounded-full border border-gray-100"
-                      />
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900 group-hover/profile:text-indigo-600 transition-colors">{selectedModalPerson.name}</h4>
-                        <p className="text-xs text-gray-400">@{selectedModalPerson.username}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-gray-700 group-hover/profile:text-indigo-600 transition-colors flex items-center gap-1">
-                      {i18n.language === 'vi' ? 'Xem trang cá nhân' : 'View Profile'} →
-                    </span>
-                  </button>
-
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                    <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{t('adminschedule.filter_by_status')}</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTaskStatusFilters(prev =>
-                              prev.includes('pending') ? prev.filter(s => s !== 'pending') : [...prev, 'pending']
-                            );
-                          }}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                            taskStatusFilters.includes('pending')
-                              ? 'bg-gray-100 text-gray-700 border-gray-300 shadow-sm'
-                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          {t('adminschedule.status_pending')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTaskStatusFilters(prev =>
-                              prev.includes('in progress') ? prev.filter(s => s !== 'in progress') : [...prev, 'in progress']
-                            );
-                          }}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                            taskStatusFilters.includes('in progress')
-                              ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm'
-                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          {t('adminschedule.status_in_progress')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTaskStatusFilters(prev =>
-                              prev.includes('completed') ? prev.filter(s => s !== 'completed') : [...prev, 'completed']
-                            );
-                          }}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                            taskStatusFilters.includes('completed')
-                              ? 'bg-emerald-50 text-[#10b981] border-emerald-200 shadow-sm'
-                              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          {t('adminschedule.status_completed')}
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        navigate('/tasks/add', {
-                          state: {
-                            assignee: {
-                              person_id: selectedModalPerson.person_id,
-                              username: selectedModalPerson.username,
-                              name: selectedModalPerson.name,
-                              role: 'assignee'
-                            }
-                          }
-                        });
-                      }}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-[#0056b3] text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/10 w-full sm:w-auto justify-center"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                      {t('adminschedule.add_task')}
-                    </button>
-                  </div>
-
-
-
-                  {/* Daily Report Section */}
-                  <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 mb-4">
-                    <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
-                      <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                      {t('adminschedule.report_title')}
-                    </h3>
-                    {selectedModalPerson.report ? (
-                      <div className="space-y-3">
-                        <div className="flex gap-4 text-xs font-medium text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="w-4 h-4 text-gray-400" />
-                            {t('adminschedule.check_in')}{selectedModalPerson.report.check_in
-                              ? selectedModalPerson.report.check_in.slice(0, 5)
-                              : t('adminschedule.not_available')}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <ClockIcon className="w-4 h-4 text-gray-400" />
-                            {t('adminschedule.check_out')}{selectedModalPerson.report.check_out
-                              ? selectedModalPerson.report.check_out.slice(0, 5)
-                              : t('adminschedule.not_available')}
-                          </div>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
-                          {selectedModalPerson.report.description || <span className="text-gray-400 italic">{t('adminschedule.no_report_desc')}</span>}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-500 italic">{t('adminschedule.not_reported_yet')}</div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400 font-medium">
-                      {t('adminschedule.tasks_found', { count: selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length })}
-                    </p>
-                  </div>
-                  {selectedModalPerson.tasks.filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase())).length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      {t('adminschedule.no_tasks_matched')}
-                    </div>
-                  ) : (
-                    <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-                      <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_task_name')}</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_date')}</th>
-                            <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">{t('adminschedule.col_status')}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {selectedModalPerson.tasks
-                            .filter(t => taskStatusFilters.length === 0 || taskStatusFilters.includes(t.status?.toLowerCase()))
-                            .map(task => (
-                              <tr key={task.task_id} className="bg-white hover:bg-gray-50/50">
-                                <td className="py-3 px-4 font-medium text-gray-900">
-                                  <div className="max-w-[200px] truncate" title={task.name || task.title}>
-                                    {task.name || task.title}
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-500">
-                                  {task.due_date 
-                                    ? (() => {
-                                        const d = new Date(task.due_date);
-                                        const day = String(d.getDate()).padStart(2, '0');
-                                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                                        const year = d.getFullYear();
-                                        return `${day}/${month}/${year}`;
-                                      })() 
-                                    : t('adminschedule.not_available')}
-                                </td>
-                                <td className="py-3 px-4">
-                                  <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm
-                                    ${task.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                      task.status?.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                        'bg-gray-50 text-gray-700 border-gray-200'}
-                                  `}>
-                                    {task.status?.toLowerCase() === 'pending' ? t('adminschedule.status_pending') :
-                                     task.status?.toLowerCase() === 'in progress' ? t('adminschedule.status_in_progress') :
-                                     task.status?.toLowerCase() === 'completed' ? t('adminschedule.status_completed') :
-                                     task.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
-      );
-    })()
-  )}
+          );
+        })()
+      )}
     </div>
   );
 }

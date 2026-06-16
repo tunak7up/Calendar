@@ -335,7 +335,7 @@ export const vi = {
       no_unscheduled: "Không có nhân viên nào làm việc ngoài lịch vào ngày này.",
       check_in: "Check-in: ",
       check_out: "Check-out: ",
-      not_available: "N/A",
+      not_available: "",
       report_status: "Báo cáo: ",
       tasks_count: "{{count}} Công việc",
       view_details: "Xem chi tiết",

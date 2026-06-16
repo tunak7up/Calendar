@@ -336,7 +336,7 @@ export const en = {
       no_unscheduled: "No employees worked unscheduled on this date.",
       check_in: "Check-in: ",
       check_out: "Check-out: ",
-      not_available: "N/A",
+      not_available: "",
       report_status: "Report: ",
       tasks_count: "{{count}} Tasks",
       view_details: "View Details",

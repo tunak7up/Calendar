@@ -112,7 +112,10 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
 
   const handleQuickMonthChange = (e) => {
     const val = e.target.value;
-    if (!val) return;
+    if (!val) {
+      onRangeChange('', '');
+      return;
+    }
     const [year, month] = val.split('-').map(Number);
     
     const first = new Date(year, month, 1);
@@ -152,6 +155,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
           className="bg-transparent border-none text-xs font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors w-full"
           defaultValue=""
         >
+          <option value="">Chọn tháng...</option>
           {getMonthOptions()}
         </select>
       </div>

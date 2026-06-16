@@ -234,9 +234,24 @@ export default function TaskList({ isAdmin }) {
       const priorityDiff = getPriority(a) - getPriority(b);
       if (priorityDiff !== 0) return priorityDiff;
 
+      // Logic phụ 1: Ưu tiên task mới tạo lên trước (descending)
+      const createdA = new Date(a.created_at).getTime();
+      const createdB = new Date(b.created_at).getTime();
+      if (!isNaN(createdA) && !isNaN(createdB) && createdA !== createdB) {
+        return createdB - createdA;
+      }
+
+      // Logic phụ 2: Ngày hết hạn gần nhất (ascending)
       const dateA = new Date(a.due_date).getTime();
       const dateB = new Date(b.due_date).getTime();
-      return dateA - dateB;
+      
+      if (!isNaN(dateA) && !isNaN(dateB)) {
+        return dateA - dateB;
+      }
+      if (!isNaN(dateA) && isNaN(dateB)) return -1;
+      if (isNaN(dateA) && !isNaN(dateB)) return 1;
+
+      return 0;
     });
 
     const sorted = [];

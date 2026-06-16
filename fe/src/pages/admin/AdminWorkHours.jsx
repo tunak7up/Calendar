@@ -16,12 +16,12 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
 
 const MONTH_NAMES_VI = [
-  'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12', 'Tháng 1'
+  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
 ];
 const MONTH_NAMES_EN = [
-  'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December', 'January'
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 export default function AdminWorkHours() {
@@ -248,9 +248,14 @@ export default function AdminWorkHours() {
     { key: 'status', label: t('workhours.col_status'), sortable: false, align: 'center' },
   ];
 
-  const d = new Date(startDate);
-  const MONTH_NAMES = i18n.language === 'vi' ? MONTH_NAMES_VI : MONTH_NAMES_EN;
-  const monthYearLabel = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+  let monthYearLabel = t('workhours.all_time') !== 'workhours.all_time' ? t('workhours.all_time') : 'Vui lòng chọn tháng';
+  if (startDate) {
+    const d = new Date(startDate);
+    if (!isNaN(d.getTime())) {
+      const MONTH_NAMES = i18n.language === 'vi' ? MONTH_NAMES_VI : MONTH_NAMES_EN;
+      monthYearLabel = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+    }
+  }
 
   return (
     <div className="space-y-6 pb-20">

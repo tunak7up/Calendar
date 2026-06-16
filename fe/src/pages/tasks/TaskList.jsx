@@ -367,8 +367,37 @@ export default function TaskList({ isAdmin }) {
                   try {
                     const response = await taskService.previewImportTasks(formData);
                     if (response.success && response.data) {
-                      setExcelHeaders(response.data);
-                      setMappingConfig({});
+                      const headers = response.data;
+                      setExcelHeaders(headers);
+
+                      const initialMapping = {};
+                      const normalize = (str) => {
+                          if (!str) return '';
+                          return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                      };
+                      
+                      const mappings = {
+                          'title': ['title', 'ten cong viec', 'tieu de', 'ten', 'task'],
+                          'description': ['description', 'mo ta', 'chi tiet', 'noidung', 'noi dung'],
+                          'start_time': ['start time', 'start_time', 'ngay bat dau', 'thoi gian bat dau', 'bat dau', 'start'],
+                          'due_date': ['due date', 'due_date', 'han chot', 'ngay het han', 'deadline', 'end', 'ket thuc'],
+                          'status': ['status', 'trang thai', 'tinh trang'],
+                          'priority': ['priority', 'do uu tien', 'muc do'],
+                      };
+                      
+                      headers.forEach(header => {
+                          const normalizedHeader = normalize(header.name);
+                          for (const [key, possibleNames] of Object.entries(mappings)) {
+                              if (possibleNames.some(name => normalizedHeader === name || normalizedHeader.includes(name))) {
+                                  if (!Object.values(initialMapping).includes(key)) {
+                                      initialMapping[header.index] = key;
+                                      break;
+                                  }
+                              }
+                          }
+                      });
+
+                      setMappingConfig(initialMapping);
                       setShowMappingModal(true);
                     } else {
                       alert('Lỗi đọc file excel');

@@ -6,7 +6,8 @@ import {
   ClipboardDocumentListIcon,
   PlusIcon,
   ShieldCheckIcon,
-  ClockIcon
+  ClockIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +34,7 @@ export default function SidebarAdmin() {
   else if (path === '/admin/requests') section = 'requests';
   else if (path === '/admin/schedule') section = 'schedule';
   else if (path === '/admin/work-hours') section = 'workhours';
+  else if (path === '/admin/theme-settings') section = 'theme-settings';
   else if (path.startsWith('/tasks')) section = 'tasks';
 
   return (
@@ -162,6 +164,20 @@ export default function SidebarAdmin() {
                   </Link>
                 </li>
               </>
+            )}
+            {section === 'theme-settings' && (
+              <li>
+                <Link
+                  to="/admin/theme-settings"
+                  className={getLinkClass('/admin/theme-settings')}
+                  data-custom-component={path === '/admin/theme-settings' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+                  data-customizable-id="sidebar-link-themesettings"
+                  data-customizable-type="text"
+                >
+                  <PaintBrushIcon className={getIconClass('/admin/theme-settings')} />
+                  <span className="ms-4 font-semibold text-sm">{t('sidebar.theme_settings')}</span>
+                </Link>
+              </li>
             )}
           </ul>
         </div>

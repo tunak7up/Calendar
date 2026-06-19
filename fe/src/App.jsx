@@ -16,6 +16,7 @@ import TaskList from './pages/tasks/TaskList'
 import AddSubTask from './pages/tasks/AddSubTask'
 import TaskDetails from './pages/tasks/TaskDetails'
 import SidebarAdmin from './layouts/SidebarAdmin'
+import SidebarThemeSettings from './layouts/SidebarThemeSettings'
 import AdminEmployeeList from './pages/admin/AdminEmployeeList'
 import AdminRequests from './pages/admin/AdminRequests'
 import AdminSchedule from './pages/admin/AdminSchedule'
@@ -70,9 +71,13 @@ function App() {
     }
 
     // Admin pages with only 1 sidebar item — don't show sidebar
-    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports', '/admin/preset-reasons', '/admin/theme-settings'];
+    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports', '/admin/preset-reasons'];
     if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
       return null;
+    }
+
+    if (isAdmin && location.pathname === '/admin/theme-settings') {
+      return <SidebarThemeSettings />;
     }
 
     if (isAdmin && isAdminPath) {

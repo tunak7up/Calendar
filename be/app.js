@@ -58,18 +58,13 @@ async function startServer() {
         const defaultThemes = [
           { component: '[data-custom-component="ChartColor-Registered"]', label: 'Biểu đồ - Đăng ký', bg: 'rgba(59, 130, 246, 0.75)', text: '#374151', defaultBg: 'rgba(59, 130, 246, 0.75)', defaultText: '#374151' },
           { component: '[data-custom-component="ChartColor-Actual"]', label: 'Biểu đồ - Thực tế', bg: 'rgba(16, 185, 129, 0.75)', text: '#374151', defaultBg: 'rgba(16, 185, 129, 0.75)', defaultText: '#374151' },
-          { component: '[data-custom-component="Button"]', label: 'Nút chính', bg: '#2563eb', text: '#ffffff', defaultBg: '#2563eb', defaultText: '#ffffff' },
-          { component: '[data-custom-component="BackButton"]', label: 'Nút quay lại', bg: '#ffffff', text: '#374151', defaultBg: '#ffffff', defaultText: '#374151' },
-          { component: '[data-custom-component="CustomSelect"]', label: 'Hộp chọn (Custom Select)', bg: '#ffffff', text: '#374151', defaultBg: '#ffffff', defaultText: '#374151' },
-          { component: '[data-custom-component="TaskStatusSelect"]', label: 'Hộp chọn trạng thái công việc (Task Status Select)', bg: '#f3f4f6', text: '#1f2937', defaultBg: '#f3f4f6', defaultText: '#1f2937' },
-          { component: '[data-custom-component="HeaderNavLink"]', label: 'Link Menu Header', bg: 'transparent', text: '#4b5563', defaultBg: 'transparent', defaultText: '#4b5563' },
-          { component: '[data-custom-component="SidebarBackground"]', label: 'Nền Sidebar', bg: '#f8fafc', text: '#1f2937', defaultBg: '#f8fafc', defaultText: '#1f2937' },
-          { component: '[data-custom-component="SidebarBrandIcon"]', label: 'Icon thương hiệu Sidebar', bg: '#0056b3', text: '#ffffff', defaultBg: '#0056b3', defaultText: '#ffffff' },
-          { component: '[data-custom-component="SidebarLink-Active"]', label: 'Sidebar Link (Đang chọn)', bg: '#0056b3', text: '#ffffff', defaultBg: '#0056b3', defaultText: '#ffffff' },
-          { component: '[data-custom-component="SidebarLink-Inactive"]', label: 'Sidebar Link (Không chọn)', bg: 'transparent', text: '#4b5563', defaultBg: 'transparent', defaultText: '#4b5563' },
-          { component: '[data-custom-component="CalendarCard-registered"]', label: 'Thẻ Lịch - Đã đăng ký', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
-          { component: '[data-custom-component="CalendarCard-unscheduled"]', label: 'Thẻ Lịch - Chưa lên lịch', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
-          { component: '[data-custom-component="CalendarCard-Individual"]', label: 'Thẻ Lịch - Cá nhân', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
+          { component: '[data-custom-component="Attendance-Scheduled"]', label: 'Điểm danh - Có đăng ký trước & đi làm', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
+          { component: '[data-custom-component="Attendance-Unscheduled"]', label: 'Điểm danh - Không đăng ký trước', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+          { component: '[data-custom-component="Attendance-Absent"]', label: 'Điểm danh - Chưa check-in', bg: '#ffffff', text: '#374151', defaultBg: '#ffffff', defaultText: '#374151' },
+          { component: '[data-custom-component="TaskStatus-Pending"]', label: 'Trạng thái - Chưa bắt đầu (Pending)', bg: '#f3f4f6', text: '#374151', defaultBg: '#f3f4f6', defaultText: '#374151' },
+          { component: '[data-custom-component="TaskStatus-InProgress"]', label: 'Trạng thái - Đang thực hiện (In progress)', bg: '#dbeafe', text: '#1e40af', defaultBg: '#dbeafe', defaultText: '#1e40af' },
+          { component: '[data-custom-component="TaskStatus-Completed"]', label: 'Trạng thái - Hoàn thành (Completed)', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
+          { component: '[data-custom-component="TaskStatus-Overdue"]', label: 'Trạng thái - Trễ hạn (Overdue)', bg: '#f3f4f6', text: '#b91c1c', defaultBg: '#f3f4f6', defaultText: '#b91c1c' }
         ];
         await theme_setting.bulkCreate(defaultThemes);
         console.log('Theme settings seeded successfully.');

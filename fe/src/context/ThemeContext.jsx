@@ -3,6 +3,23 @@ import { themeSettingService } from '../services/themeSettingService';
 
 const ThemeContext = createContext(null);
 
+function hexToRGBA(hex, alpha = 1) {
+  if (!hex || hex === 'transparent') return 'transparent';
+  if (hex.startsWith('rgba')) return hex;
+  let r = 0, g = 0, b = 0;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Dynamic CSS injection into document head
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,18 +92,54 @@ export function ThemeProvider({ children }) {
 
     let css = '';
     Object.entries(theme).forEach(([selector, colors]) => {
-      css += `${selector} {\n`;
-      if (colors.bg) {
-        css += `  background-color: ${colors.bg} !important;\n`;
-        // For specific elements like calendar cards, sidebars or headers, sync border-color too
-        if (selector.includes('CalendarCard') || selector.includes('SidebarBrandIcon') || selector.includes('SidebarBackground')) {
+      if (selector.includes('Attendance-')) {
+        const baseName = selector.replace('"]', ''); // e.g. [data-custom-component="Attendance-Scheduled
+        if (colors.bg) {
+          // Dot rule
+          css += `${baseName}-Dot"] {\n`;
+          css += `  background-color: ${colors.bg} !important;\n`;
           css += `  border-color: ${colors.bg} !important;\n`;
+          css += `}\n\n`;
+          
+          // Row rules (convert to semi-transparent backgrounds)
+          const rowBg = hexToRGBA(colors.bg, 0.15);
+          const rowHoverBg = hexToRGBA(colors.bg, 0.3);
+          css += `${baseName}-Row"] {\n`;
+          css += `  background-color: ${rowBg} !important;\n`;
+          css += `}\n\n`;
+          css += `${baseName}-Row"]:hover {\n`;
+          css += `  background-color: ${rowHoverBg} !important;\n`;
+          css += `}\n\n`;
+        }
+        if (colors.text) {
+          // Text rule
+          css += `${baseName}-Text"] {\n`;
+          css += `  color: ${colors.text} !important;\n`;
+          css += `}\n\n`;
+        }
+      } else {
+        css += `${selector} {\n`;
+        if (colors.bg) {
+          css += `  background-color: ${colors.bg} !important;\n`;
+          if (selector.includes('CalendarCard') || selector.includes('SidebarBrandIcon') || selector.includes('SidebarBackground') || selector.includes('TaskStatus')) {
+            css += `  border-color: ${colors.bg} !important;\n`;
+          }
+        }
+        if (colors.text) {
+          css += `  color: ${colors.text} !important;\n`;
+        }
+        css += `}\n\n`;
+
+        // Inner status dot color sync for TaskStatus
+        if (selector.includes('TaskStatus') && colors.text) {
+          css += `${selector} .status-dot {\n`;
+          css += `  background-color: ${colors.text} !important;\n`;
+          css += `}\n\n`;
+          css += `.status-dot${selector} {\n`;
+          css += `  background-color: ${colors.text} !important;\n`;
+          css += `}\n\n`;
         }
       }
-      if (colors.text) {
-        css += `  color: ${colors.text} !important;\n`;
-      }
-      css += `}\n\n`;
     });
 
     styleTag.innerHTML = css;

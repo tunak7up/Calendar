@@ -428,11 +428,11 @@ const checkAfternoonCheckOut = async () => {
 
           await sendMail({
             to: p.email,
-            subject: `[NHẮC NHỞ] Quên check-out ca chiều - ${todayStr}`,
+            subject: `[NHẮC NHỞ] Quên check-out - ${todayStr}`,
             html: `
               <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                 <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center; color: white;">
-                  <h2 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">NHẮC NHỞ QUÊN CHECK-OUT CA CHIỀU</h2>
+                  <h2 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">NHẮC NHỞ QUÊN CHECK-OUT</h2>
                 </div>
                 <div style="padding: 30px; background-color: #ffffff; color: #334155; line-height: 1.6;">
                   <p style="font-size: 16px; margin-top: 0;">Xin chào <strong>${p.name}</strong>,</p>

@@ -66,6 +66,15 @@ const downloadFile = async (url, fileName) => {
   }
 };
 
+const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico', 'img'];
+const isImageFile = (fileName) => {
+  if (!fileName) return false;
+  const parts = fileName.split('.');
+  if (parts.length < 2) return false;
+  const ext = parts.pop().toLowerCase();
+  return imageExtensions.includes(ext);
+};
+
 const CommentItem = ({ comment, persons }) => {
   const [files, setFiles] = useState([]);
 
@@ -93,37 +102,81 @@ const CommentItem = ({ comment, persons }) => {
       <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content || comment.text}</p>
 
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
           {files.map(f => {
             const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${f.url}`;
             const fileName = f.file_name || 'File đính kèm';
+            const isImage = isImageFile(fileName);
             return (
-              <button
-                key={f.file_attachment_id}
-                onClick={() => downloadFile(fullUrl, fileName)}
-                className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
-              >
-                <PaperClipIcon className="w-3 h-3" />
-                {fileName}
-              </button>
-            );
-          })}
+              <div key={f.file_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+                {isImage ? (
+                  <button
+                    type="button"
+                    onClick={() => window.open(fullUrl, '_blank')}
+                    className="block w-full h-32 overflow-hidden bg-gray-100 hover:bg-gray-200"
+                  >
+                    <img
+                      src={fullUrl}
+                      alt={fileName}
+                      className="w-full h-32 object-cover"
+                    />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => downloadFile(fullUrl, fileName)}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline bg-blue-50 px-2 py-2 rounded-t-2xl w-full text-left"
+                  >
+                    <PaperClipIcon className="w-3 h-3" />
+                    {fileName}
+                  </button>
+                )}
+                {isImage && (
+                  <div className="px-2 py-1 text-xs text-gray-600 truncate" title={fileName}>
+                    {fileName}
+                  </div>
+                )}
+              </div>
+          )})}
         </div>
       )}
 
       {comment.attachments && comment.attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
           {comment.attachments.map(att => {
             const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+            const fileName = att.file_name || 'Attachment';
+            const isImage = isImageFile(fileName);
             return (
-              <button
-                key={att.comment_attachment_id}
-                onClick={() => downloadFile(fullUrl, 'Attachment')}
-                className="text-xs flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded-md"
-              >
-                <PaperClipIcon className="w-3 h-3" />
-                Attachment
-              </button>
+              <div key={att.comment_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+                {isImage ? (
+                  <button
+                    type="button"
+                    onClick={() => window.open(fullUrl, '_blank')}
+                    className="block w-full h-32 overflow-hidden bg-gray-100 hover:bg-gray-200"
+                  >
+                    <img
+                      src={fullUrl}
+                      alt={fileName}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => downloadFile(fullUrl, fileName)}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline bg-blue-50 px-2 py-2 rounded-t-2xl w-full text-left"
+                  >
+                    <PaperClipIcon className="w-3 h-3" />
+                    {fileName}
+                  </button>
+                )}
+                {isImage && (
+                  <div className="px-2 py-1 text-xs text-gray-600 truncate" title={fileName}>
+                    {fileName}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -703,24 +756,41 @@ export default function TaskDetails() {
               {taskAttachments.map(att => {
                 const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
                 const fileName = att.file_name || 'File đính kèm';
+                const isImage = isImageFile(fileName);
                 return (
-                  <div key={att.file_attachment_id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-indigo-50/50 transition-colors group">
-                    <button
-                      onClick={() => downloadFile(fullUrl, fileName)}
-                      className="flex items-center gap-2 overflow-hidden flex-1 mr-2 text-left"
-                    >
-                      <DocumentTextIcon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-700 truncate hover:text-indigo-600">
-                        {fileName}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAttachment(att.file_attachment_id)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                      title={t('taskdetails.remove_file')}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                  <div key={att.file_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group">
+                    {isImage ? (
+                      <button
+                        type="button"
+                        onClick={() => window.open(fullUrl, '_blank')}
+                        className="block w-full h-40 overflow-hidden bg-gray-100 hover:bg-gray-200"
+                      >
+                        <img
+                          src={fullUrl}
+                          alt={fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => downloadFile(fullUrl, fileName)}
+                        className="flex items-center gap-2 px-3 py-3 text-sm text-indigo-600 hover:text-indigo-700 bg-white w-full text-left"
+                      >
+                        <DocumentTextIcon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                        <span className="truncate">{fileName}</span>
+                      </button>
+                    )}
+                    <div className="flex items-center justify-between px-3 py-2 bg-white">
+                      <div className="text-xs text-gray-600 truncate" title={fileName}>{fileName}</div>
+                      <button
+                        onClick={() => handleDeleteAttachment(att.file_attachment_id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                        title={t('taskdetails.remove_file')}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}

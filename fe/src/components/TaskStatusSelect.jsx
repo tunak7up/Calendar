@@ -21,19 +21,28 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
   const list = statuses(t);
   const statusInfo = list.find(s => s.id === currentStatus?.toLowerCase()) || list[0];
 
-  const options = list.map(s => ({
-    value: s.id,
-    label: (
-      <>
-        <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-        {s.label}
-      </>
-    )
-  }));
+  const statusKey = overdue ? 'TaskStatus-Overdue' : (
+    currentStatus?.toLowerCase() === 'in progress' ? 'TaskStatus-InProgress' :
+    currentStatus?.toLowerCase() === 'completed' ? 'TaskStatus-Completed' : 'TaskStatus-Pending'
+  );
+
+  const options = list.map(s => {
+    const sKey = s.id === 'in progress' ? 'TaskStatus-InProgress' :
+                 s.id === 'completed' ? 'TaskStatus-Completed' : 'TaskStatus-Pending';
+    return {
+      value: s.id,
+      label: (
+        <>
+          <span className={`w-1.5 h-1.5 rounded-full status-dot ${s.dot}`} data-custom-component={sKey} />
+          {s.label}
+        </>
+      )
+    };
+  });
 
   const buttonLabel = (
     <>
-      <span className={`w-1.5 h-1.5 rounded-full ${overdue ? 'bg-red-500 animate-pulse' : statusInfo.dot} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`} />
+      <span className={`w-1.5 h-1.5 rounded-full status-dot ${overdue ? 'bg-red-500 animate-pulse' : statusInfo.dot} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`} />
       {overdue ? t('status.overdue') : statusInfo.label}
     </>
   );
@@ -55,7 +64,7 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       align="right"
       disabled={disabled}
       buttonLabel={buttonLabel}
-      data-custom-component="TaskStatusSelect"
+      data-custom-component={statusKey}
     />
   );
 }

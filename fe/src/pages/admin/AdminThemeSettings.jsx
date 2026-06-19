@@ -10,6 +10,22 @@ import {
   PaintBrushIcon
 } from '@heroicons/react/24/outline';
 
+function hexToRGBA(hex, alpha = 1) {
+  if (!hex || hex === 'transparent') return 'transparent';
+  if (hex.startsWith('rgba')) return hex;
+  let r = 0, g = 0, b = 0;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export default function AdminThemeSettings() {
   const { t, i18n } = useTranslation();
   const { theme, loading, updateTheme } = useTheme();
@@ -105,53 +121,39 @@ export default function AdminThemeSettings() {
 
   // Render individual component preview inline in the config table
   const renderInlinePreview = (key, label, bg, text) => {
-    const style = {
-      backgroundColor: bg || 'transparent',
-      color: text || 'inherit',
-      borderColor: (bg && (key.includes('CalendarCard') || key.includes('SidebarBrandIcon') || key.includes('SidebarBackground'))) ? bg : 'transparent'
-    };
-
-    switch (key) {
-      case '[data-custom-component="Button"]':
-        return (
-          <button style={style} className="px-5 py-2.5 rounded-xl text-xs font-bold shadow-md hover:opacity-90 pointer-events-none border border-transparent">
-            {label}
-          </button>
-        );
-      case '[data-custom-component="BackButton"]':
-        return (
-          <button style={style} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-xl text-[10px] font-bold shadow-sm pointer-events-none">
-            <span>←</span> <span>{label}</span>
-          </button>
-        );
-      case '[data-custom-component="CustomSelect"]':
-        return (
-          <div style={style} className="flex items-center justify-between gap-1.5 font-bold border border-gray-150 rounded-lg px-3 py-1.5 text-xs shadow-sm w-36 select-none pointer-events-none">
-            <span>{label}</span>
-            <span className="text-[8px] opacity-60">▼</span>
-          </div>
-        );
-      case '[data-custom-component="TaskStatusSelect"]':
-        return (
-          <div style={style} className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border border-transparent px-3 py-1 text-[9px] shadow-sm select-none pointer-events-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>{label}</span>
-            <span className="text-[7px] opacity-60">▼</span>
-          </div>
-        );
-      case '[data-custom-component="HeaderNavLink"]':
-        return (
-          <span style={style} className="font-semibold rounded-md px-3 py-1.5 text-xs select-none border border-transparent">
-            {label}
-          </span>
-        );
-      default:
-        return (
-          <div className="text-gray-400 text-[11px] italic">
-            {isVi ? '(Xem trong khung Preview tổng thể)' : '(See in consolidated preview panel)'}
-          </div>
-        );
+    if (key.includes('TaskStatus-')) {
+      return (
+        <div style={{ backgroundColor: bg, color: text, borderColor: bg === '#ffffff' ? '#e2e8f0' : bg }} className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[9px] shadow-sm select-none pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
+          <span>{label.split(' - ')[1] || label}</span>
+          <span className="text-[7px] opacity-60">▼</span>
+        </div>
+      );
     }
+
+    if (key.includes('Attendance-')) {
+      return (
+        <div className="flex items-center gap-2 p-1 border border-gray-150 rounded-xl bg-white shadow-sm px-3 select-none pointer-events-none">
+          <span className="w-3 h-3 rounded border" style={{ backgroundColor: bg, borderColor: bg }} />
+          <span className="text-[10px] font-bold" style={{ color: text }}>{label.split(' - ')[1] || label}</span>
+        </div>
+      );
+    }
+
+    if (key.includes('ChartColor-')) {
+      return (
+        <div className="flex items-center gap-2 select-none pointer-events-none">
+          <span className="w-6 h-4 rounded shadow-sm border border-gray-200" style={{ backgroundColor: bg }} />
+          <span className="text-[10px] font-bold text-gray-700">{label.split(' - ')[1] || label}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-gray-400 text-[11px] italic">
+        {isVi ? '(Xem trong khung Preview tổng thể)' : '(See in consolidated preview panel)'}
+      </div>
+    );
   };
 
   return (
@@ -311,103 +313,84 @@ export default function AdminThemeSettings() {
               <span>{isVi ? 'Khung xem thử đồng bộ' : 'Consolidated Sandbox Preview'}</span>
             </h3>
 
-            {/* MOCK SIDEBAR PREVIEW */}
+            {/* MOCK TASK STATUS PREVIEW */}
             <div className="space-y-2">
-              <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{isVi ? '1. Thanh điều hướng bên (Sidebar)' : '1. Sidebar Elements'}</h4>
-              <div 
-                className="border border-gray-200 rounded-2xl p-4 flex flex-col gap-4 shadow-sm"
-                style={{ backgroundColor: getVal('[data-custom-component="SidebarBackground"]', 'bg') }}
-              >
-                {/* Brand icon / name */}
-                <div className="flex items-center gap-2.5">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-sm"
-                    style={{ 
-                      backgroundColor: getVal('[data-custom-component="SidebarBrandIcon"]', 'bg'),
-                      color: getVal('[data-custom-component="SidebarBrandIcon"]', 'text')
-                    }}
-                  >
-                    QT
-                  </div>
-                  <span 
-                    className="text-xs font-black"
-                    style={{ color: getVal('[data-custom-component="SidebarBackground"]', 'text') }}
-                  >
-                    {getVal('[data-custom-component="SidebarBrandIcon"]', 'label')}
-                  </span>
-                </div>
-
-                {/* Link items */}
-                <div className="space-y-1.5">
-                  <div 
-                    className="px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm"
-                    style={{ 
-                      backgroundColor: getVal('[data-custom-component="SidebarLink-Active"]', 'bg'),
-                      color: getVal('[data-custom-component="SidebarLink-Active"]', 'text')
-                    }}
-                  >
-                    <span>📈</span>
-                    <span>{getVal('[data-custom-component="SidebarLink-Active"]', 'label')}</span>
-                  </div>
-
-                  <div 
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2"
-                    style={{ 
-                      backgroundColor: getVal('[data-custom-component="SidebarLink-Inactive"]', 'bg'),
-                      color: getVal('[data-custom-component="SidebarLink-Inactive"]', 'text')
-                    }}
-                  >
-                    <span>📅</span>
-                    <span>{getVal('[data-custom-component="SidebarLink-Inactive"]', 'label')}</span>
-                  </div>
-                </div>
+              <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                {isVi ? '1. Trạng thái công việc (Task Statuses)' : '1. Task Statuses'}
+              </h4>
+              <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 shadow-sm">
+                {[
+                  { key: '[data-custom-component="TaskStatus-Pending"]', labelKey: 'Pending' },
+                  { key: '[data-custom-component="TaskStatus-InProgress"]', labelKey: 'In Progress' },
+                  { key: '[data-custom-component="TaskStatus-Completed"]', labelKey: 'Completed' },
+                  { key: '[data-custom-component="TaskStatus-Overdue"]', labelKey: 'Overdue' }
+                ].map(item => {
+                  const bg = getVal(item.key, 'bg');
+                  const text = getVal(item.key, 'text');
+                  const label = getVal(item.key, 'label');
+                  return (
+                    <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
+                      <span className="text-[11px] font-bold text-gray-500 font-mono">
+                        {item.labelKey}
+                      </span>
+                      <div 
+                        style={{ backgroundColor: bg, color: text, borderColor: bg === '#ffffff' ? '#e2e8f0' : bg }} 
+                        className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[8.5px] shadow-sm pointer-events-none"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
+                        <span>{label.split(' - ')[1] || label}</span>
+                        <span className="text-[7px] opacity-60">▼</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* MOCK CALENDAR DAYS */}
+            {/* MOCK ATTENDANCE STATUS PREVIEW */}
             <div className="space-y-2">
-              <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{isVi ? '2. Thẻ hiển thị lịch (Calendar Cards)' : '2. Calendar Day Cards'}</h4>
-              <div className="border border-gray-150 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2 shadow-inner">
-                {/* Day Header */}
-                <div className="text-[10px] font-bold text-gray-400 border-b border-gray-200 pb-1.5 flex justify-between">
-                  <span>THỨ SÁU (FRI)</span>
-                  <span>19/06</span>
-                </div>
-                
-                {/* Card Registered */}
-                <div 
-                  className="px-3 py-2 rounded-lg text-[10.5px] font-bold border border-l-4 shadow-sm"
-                  style={{ 
-                    backgroundColor: getVal('[data-custom-component="CalendarCard-registered"]', 'bg'),
-                    color: getVal('[data-custom-component="CalendarCard-registered"]', 'text'),
-                    borderColor: getVal('[data-custom-component="CalendarCard-registered"]', 'bg')
-                  }}
-                >
-                  {getVal('[data-custom-component="CalendarCard-registered"]', 'label')}
-                </div>
-
-                {/* Card Unscheduled */}
-                <div 
-                  className="px-3 py-2 rounded-lg text-[10.5px] font-bold border border-l-4 shadow-sm"
-                  style={{ 
-                    backgroundColor: getVal('[data-custom-component="CalendarCard-unscheduled"]', 'bg'),
-                    color: getVal('[data-custom-component="CalendarCard-unscheduled"]', 'text'),
-                    borderColor: getVal('[data-custom-component="CalendarCard-unscheduled"]', 'bg')
-                  }}
-                >
-                  {getVal('[data-custom-component="CalendarCard-unscheduled"]', 'label')}
+              <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                {isVi ? '2. Điểm danh hôm nay (Attendance)' : '2. Today\'s Attendance'}
+              </h4>
+              <div className="border border-gray-200 rounded-2xl p-4 bg-white flex flex-col gap-3 shadow-sm">
+                {/* Mock Legend Row */}
+                <div className="flex flex-wrap gap-2 text-[8px] font-bold text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-100 shadow-inner justify-center">
+                  {['Attendance-Scheduled', 'Attendance-Unscheduled', 'Attendance-Absent'].map(statusKey => {
+                    const key = `[data-custom-component="${statusKey}"]`;
+                    const bg = getVal(key, 'bg');
+                    const text = getVal(key, 'text');
+                    const label = getVal(key, 'label');
+                    const cleanLabel = label.split(' - ')[1] || label;
+                    return (
+                      <div key={statusKey} className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded border" style={{ backgroundColor: bg, borderColor: bg }} />
+                        <span style={{ color: text }}>{cleanLabel}</span>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Card Individual */}
-                <div 
-                  className="px-3 py-2 rounded-lg text-[10.5px] font-bold border border-l-4 shadow-sm"
-                  style={{ 
-                    backgroundColor: getVal('[data-custom-component="CalendarCard-Individual"]', 'bg'),
-                    color: getVal('[data-custom-component="CalendarCard-Individual"]', 'text'),
-                    borderColor: getVal('[data-custom-component="CalendarCard-Individual"]', 'bg')
-                  }}
-                >
-                  {getVal('[data-custom-component="CalendarCard-Individual"]', 'label')}
+                {/* Mock Table Rows */}
+                <div className="space-y-1">
+                  {[
+                    { name: 'tuna', statusKey: 'Attendance-Scheduled', time: '12:50 - --:--' },
+                    { name: 'datnguyen', statusKey: 'Attendance-Unscheduled', time: '09:15 - --:--' },
+                    { name: 'a Duc', statusKey: 'Attendance-Absent', time: '--:-- - --:--' }
+                  ].map(row => {
+                    const key = `[data-custom-component="${row.statusKey}"]`;
+                    const bg = getVal(key, 'bg');
+                    const rowBg = hexToRGBA(bg, 0.15);
+                    return (
+                      <div 
+                        key={row.name} 
+                        style={{ backgroundColor: rowBg }} 
+                        className="flex justify-between items-center px-4 py-2 rounded-xl border border-gray-100 text-[10.5px] font-bold text-gray-800 shadow-sm"
+                      >
+                        <span>{row.name}</span>
+                        <span className="text-[9px] text-gray-400 font-mono font-medium">{row.time}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -423,14 +406,14 @@ export default function AdminThemeSettings() {
                       className="w-3 h-3 rounded shadow-sm border border-transparent"
                       style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Registered"]', 'bg') }}
                     />
-                    <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Registered"]', 'label')}</span>
+                    <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Registered"]', 'label').split(' - ')[1]}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span 
                       className="w-3 h-3 rounded shadow-sm border border-transparent"
                       style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Actual"]', 'bg') }}
                     />
-                    <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Actual"]', 'label')}</span>
+                    <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Actual"]', 'label').split(' - ')[1]}</span>
                   </div>
                 </div>
 

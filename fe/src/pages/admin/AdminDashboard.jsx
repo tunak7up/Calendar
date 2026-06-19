@@ -319,16 +319,16 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-gray-500 bg-white p-2 rounded-xl border border-gray-100 shadow-inner">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span>
-                <span className="text-emerald-800">{t('admindashboard.legend_scheduled')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Attendance-Scheduled-Dot"></span>
+                <span className="text-emerald-800" data-custom-component="Attendance-Scheduled-Text">{t('admindashboard.legend_scheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>
-                <span className="text-amber-800">{t('admindashboard.legend_unscheduled')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Attendance-Unscheduled-Dot"></span>
+                <span className="text-amber-800" data-custom-component="Attendance-Unscheduled-Text">{t('admindashboard.legend_unscheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-white border border-gray-200"></span>
-                <span>{t('admindashboard.legend_absent')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Attendance-Absent-Dot"></span>
+                <span data-custom-component="Attendance-Absent-Text">{t('admindashboard.legend_absent')}</span>
               </div>
             </div>
           </div>
@@ -367,6 +367,7 @@ export default function AdminDashboard() {
                         key={emp.person_id}
                         onClick={() => navigate(`/profile/${emp.person_id}`)}
                         className={`transition-colors ${rowBgClass}`}
+                        data-custom-component={isUnscheduled ? "Attendance-Unscheduled" : (isWorking ? "Attendance-Scheduled" : "Attendance-Absent")}
                       >
                         <td className="px-4 py-2.5">
                           <span className="font-semibold text-gray-900 text-xs">{emp.name}</span>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,9 +26,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
  */
 export default function WorkHoursChart({ employees = [], schedules = [], dailyReports = [], startDate, endDate }) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
-  const registeredBg = 'rgba(59, 130, 246, 0.75)';
-  const actualBg = 'rgba(16, 185, 129, 0.75)';
+  const registeredBg = theme?.['[data-custom-component="ChartColor-Registered"]']?.bg || 'rgba(59, 130, 246, 0.75)';
+  const actualBg = theme?.['[data-custom-component="ChartColor-Actual"]']?.bg || 'rgba(16, 185, 129, 0.75)';
 
 
   // --- helpers ---

@@ -25,6 +25,7 @@ import Dashboard from './pages/user/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportHistory from './pages/admin/AdminReportHistory'
 import AdminPresetReasons from './pages/admin/AdminPresetReasons'
+import AdminThemeSettings from './pages/admin/AdminThemeSettings'
 
 import './styles/App.css'
 
@@ -69,7 +70,7 @@ function App() {
     }
 
     // Admin pages with only 1 sidebar item — don't show sidebar
-    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports', '/admin/preset-reasons'];
+    const singleItemAdminPaths = ['/admin/employees', '/admin/requests', '/admin/work-hours', '/admin/reports', '/admin/preset-reasons', '/admin/theme-settings'];
     if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
       return null;
     }
@@ -144,6 +145,7 @@ function App() {
             <Route path="/admin/work-hours" element={isAdmin ? <AdminWorkHours /> : <Navigate to="/schedule" />} />
             <Route path="/admin/reports" element={isAdmin ? <AdminReportHistory /> : <Navigate to="/schedule" />} />
             <Route path="/admin/preset-reasons" element={isAdmin ? <AdminPresetReasons /> : <Navigate to="/schedule" />} />
+            <Route path="/admin/theme-settings" element={isAdmin ? <AdminThemeSettings /> : <Navigate to="/schedule" />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to={isLoggedIn ? (isAdmin ? "/admin/dashboard" : "/dashboard") : "/login"} />} />

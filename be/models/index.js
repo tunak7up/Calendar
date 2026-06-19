@@ -14,6 +14,7 @@ const notification = require('./notification');
 const schedule = require('./schedule');
 const refresh_token = require('./refresh_token');
 const preset_reason = require('./preset_reason');
+const theme_setting = require('./theme_setting');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -85,5 +86,6 @@ module.exports = {
     notification,
     schedule,
     refresh_token,
-    preset_reason
+    preset_reason,
+    theme_setting
 };

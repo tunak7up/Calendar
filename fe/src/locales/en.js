@@ -13,6 +13,7 @@ export const en = {
       admin_workhours: "Work Hours",
       admin_reports: "Reports",
       admin_preset_reasons: "Preset Reasons",
+      theme_settings: "Theme Settings",
       profile: "Your Profile",
       logout: "Log Out"
     },

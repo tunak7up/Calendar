@@ -8,6 +8,7 @@ import { scheduleService } from '../../services/scheduleService';
 import { useNavigate } from 'react-router-dom';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../context/ThemeContext';
 
 const PERSON_COLORS = [
   { bg: '#3b82f6', border: '#2563eb', text: '#ffffff' }, // blue
@@ -21,6 +22,7 @@ const PERSON_COLORS = [
 
 export default function AdminSchedule() {
   const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -207,6 +209,9 @@ export default function AdminSchedule() {
       }
     });
 
+    const regTheme = theme?.['[data-custom-component="Schedule-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' };
+    const unschedTheme = theme?.['[data-custom-component="Schedule-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' };
+
     const groupEvents = [];
     Object.entries(aggregated).forEach(([date, counts]) => {
       if (counts.registered > 0) {
@@ -217,9 +222,9 @@ export default function AdminSchedule() {
             : `Registered: ${counts.registered} ${counts.registered === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
-          backgroundColor: '#eff6ff', // blue-50
-          borderColor: '#bfdbfe', // blue-200
-          textColor: '#1e4ed8', // blue-700
+          backgroundColor: regTheme.bg,
+          borderColor: regTheme.bg,
+          textColor: regTheme.text,
           extendedProps: {
             isGroupSummary: true,
             groupType: 'registered',
@@ -236,9 +241,9 @@ export default function AdminSchedule() {
             : `Unscheduled: ${counts.unscheduled} ${counts.unscheduled === 1 ? 'person' : 'people'}`,
           start: date,
           allDay: true,
-          backgroundColor: '#fef3c7', // amber-100
-          borderColor: '#fcd34d', // amber-300
-          textColor: '#92400e', // amber-800
+          backgroundColor: unschedTheme.bg,
+          borderColor: unschedTheme.bg,
+          textColor: unschedTheme.text,
           extendedProps: {
             isGroupSummary: true,
             groupType: 'unscheduled',
@@ -250,7 +255,7 @@ export default function AdminSchedule() {
     });
 
     return groupEvents;
-  }, [enrichedSchedules, selectedEmployeeIds, i18n.language]);
+  }, [enrichedSchedules, selectedEmployeeIds, i18n.language, theme]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);

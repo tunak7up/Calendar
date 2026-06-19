@@ -57,5 +57,39 @@ export const DEFAULT_THEME = {
     text: '#b91c1c',
     defaultBg: '#f3f4f6',
     defaultText: '#b91c1c'
+  },
+
+  // Schedule page
+  '[data-custom-component="Schedule-Registered"]': {
+    bg: '#eff6ff',
+    text: '#1e4ed8',
+    defaultBg: '#eff6ff',
+    defaultText: '#1e4ed8'
+  },
+  '[data-custom-component="Schedule-Unscheduled"]': {
+    bg: '#fef3c7',
+    text: '#92400e',
+    defaultBg: '#fef3c7',
+    defaultText: '#92400e'
+  },
+
+  // Task Priorities
+  '[data-custom-component="TaskPriority-High"]': {
+    bg: '#fee2e2',
+    text: '#b91c1c',
+    defaultBg: '#fee2e2',
+    defaultText: '#b91c1c'
+  },
+  '[data-custom-component="TaskPriority-Medium"]': {
+    bg: '#fef3c7',
+    text: '#d97706',
+    defaultBg: '#fef3c7',
+    defaultText: '#d97706'
+  },
+  '[data-custom-component="TaskPriority-Low"]': {
+    bg: '#d1fae5',
+    text: '#059669',
+    defaultBg: '#d1fae5',
+    defaultText: '#059669'
   }
 };

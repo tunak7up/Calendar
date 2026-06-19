@@ -75,11 +75,7 @@ const ScheduleCalendar = React.forwardRef(({
                 }}
                 title={arg.event.title}
               >
-                {groupType === 'registered' ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0"></span>
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                )}
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: arg.event.textColor }}></span>
                 <span className="truncate">{arg.event.title}</span>
               </div>
             );

@@ -9,6 +9,7 @@ import ScheduleCalendar from '../../components/ScheduleCalendar';
 import { useTranslation } from 'react-i18next';
 import ProfileWorkHoursChart from '../../components/ProfileWorkHoursChart';
 import BackButton from '../../components/BackButton';
+import { useTheme } from '../../context/ThemeContext';
 
 import {
   ArrowLeftIcon,
@@ -27,6 +28,7 @@ export default function Profile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const { theme } = useTheme();
 
   // If no ID is provided, assume viewing own profile
   const targetId = id || user?.person_id;
@@ -109,15 +111,18 @@ export default function Profile() {
       }
     });
 
+    const regTheme = theme?.['[data-custom-component="Schedule-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' };
+    const unschedTheme = theme?.['[data-custom-component="Schedule-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' };
+
     return Array.from(eventMap.values()).map(item => {
       const hasSchedule = !!item.schedule;
       const checkIn = item.report?.check_in || null;
       const checkOut = item.report?.check_out || null;
 
       // Default blue colors for "đi làm đúng lịch"
-      let bg = '#dbeafe'; // blue-100
-      let border = '#93c5fd'; // blue-300
-      let text = '#1e40af'; // blue-800
+      let bg = regTheme.bg; // blue-100
+      let border = regTheme.bg; // blue-300
+      let text = regTheme.text; // blue-800
       let title = '';
 
       const checkInText = checkIn ? checkIn.slice(0, 5) : null;
@@ -151,16 +156,16 @@ export default function Profile() {
           }
         } else {
           // Đi làm đúng lịch -> Xanh dương
-          bg = '#dbeafe';
-          border = '#93c5fd';
-          text = '#1e40af';
+          bg = regTheme.bg;
+          border = regTheme.bg;
+          text = regTheme.text;
           title = `${shiftStr} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
         }
       } else {
         // Ngoài lịch -> Màu vàng
-        bg = '#fef3c7'; // amber-100
-        border = '#fcd34d'; // amber-300
-        text = '#92400e'; // amber-800
+        bg = unschedTheme.bg; // amber-100
+        border = unschedTheme.bg; // amber-300
+        text = unschedTheme.text; // amber-800
         title = `${t('myschedule.unscheduled')} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
       }
 
@@ -177,7 +182,7 @@ export default function Profile() {
         }
       };
     });
-  }, [allSchedules, dailyReports, t]);
+  }, [allSchedules, dailyReports, t, theme]);
 
   const selectedDateDetail = React.useMemo(() => {
     const sched = allSchedules.find(s => s.working_date && s.working_date.split(/[T ]/)[0] === selectedDate);

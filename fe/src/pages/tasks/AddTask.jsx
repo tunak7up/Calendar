@@ -494,9 +494,12 @@ export default function AddTask() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${st.priority === 'High' ? 'bg-red-50 text-red-600' :
-                    st.priority === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
-                    }`}>
+                  <span 
+                    data-custom-component={`TaskPriority-${st.priority}`}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border ${st.priority === 'High' ? 'bg-red-50 text-red-600' :
+                      st.priority === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
+                    }`}
+                  >
                     {st.priority === 'High' ? t('addtask.priority_high') : st.priority === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
                   </span>
                   <button

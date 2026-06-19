@@ -53,22 +53,29 @@ async function startServer() {
     // Seed default theme settings if empty
     try {
       const { theme_setting } = require('./models');
-      const count = await theme_setting.count();
-      if (count === 0) {
-        const defaultThemes = [
-          { component: '[data-custom-component="ChartColor-Registered"]', label: 'Biểu đồ - Đăng ký', bg: 'rgba(59, 130, 246, 0.75)', text: '#374151', defaultBg: 'rgba(59, 130, 246, 0.75)', defaultText: '#374151' },
-          { component: '[data-custom-component="ChartColor-Actual"]', label: 'Biểu đồ - Thực tế', bg: 'rgba(16, 185, 129, 0.75)', text: '#374151', defaultBg: 'rgba(16, 185, 129, 0.75)', defaultText: '#374151' },
-          { component: '[data-custom-component="Attendance-Scheduled"]', label: 'Điểm danh - Có đăng ký trước & đi làm', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
-          { component: '[data-custom-component="Attendance-Unscheduled"]', label: 'Điểm danh - Không đăng ký trước', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
-          { component: '[data-custom-component="Attendance-Absent"]', label: 'Điểm danh - Chưa check-in', bg: '#ffffff', text: '#374151', defaultBg: '#ffffff', defaultText: '#374151' },
-          { component: '[data-custom-component="TaskStatus-Pending"]', label: 'Trạng thái - Chưa bắt đầu (Pending)', bg: '#f3f4f6', text: '#374151', defaultBg: '#f3f4f6', defaultText: '#374151' },
-          { component: '[data-custom-component="TaskStatus-InProgress"]', label: 'Trạng thái - Đang thực hiện (In progress)', bg: '#dbeafe', text: '#1e40af', defaultBg: '#dbeafe', defaultText: '#1e40af' },
-          { component: '[data-custom-component="TaskStatus-Completed"]', label: 'Trạng thái - Hoàn thành (Completed)', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
-          { component: '[data-custom-component="TaskStatus-Overdue"]', label: 'Trạng thái - Trễ hạn (Overdue)', bg: '#f3f4f6', text: '#b91c1c', defaultBg: '#f3f4f6', defaultText: '#b91c1c' }
-        ];
-        await theme_setting.bulkCreate(defaultThemes);
-        console.log('Theme settings seeded successfully.');
+      const defaultThemes = [
+        { component: '[data-custom-component="ChartColor-Registered"]', label: 'Biểu đồ - Đăng ký', bg: 'rgba(59, 130, 246, 0.75)', text: '#374151', defaultBg: 'rgba(59, 130, 246, 0.75)', defaultText: '#374151' },
+        { component: '[data-custom-component="ChartColor-Actual"]', label: 'Biểu đồ - Thực tế', bg: 'rgba(16, 185, 129, 0.75)', text: '#374151', defaultBg: 'rgba(16, 185, 129, 0.75)', defaultText: '#374151' },
+        { component: '[data-custom-component="Attendance-Scheduled"]', label: 'Điểm danh - Có đăng ký trước & đi làm', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
+        { component: '[data-custom-component="Attendance-Unscheduled"]', label: 'Điểm danh - Không đăng ký trước', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+        { component: '[data-custom-component="Attendance-Absent"]', label: 'Điểm danh - Chưa check-in', bg: '#ffffff', text: '#374151', defaultBg: '#ffffff', defaultText: '#374151' },
+        { component: '[data-custom-component="TaskStatus-Pending"]', label: 'Trạng thái - Chưa bắt đầu (Pending)', bg: '#f3f4f6', text: '#374151', defaultBg: '#f3f4f6', defaultText: '#374151' },
+        { component: '[data-custom-component="TaskStatus-InProgress"]', label: 'Trạng thái - Đang thực hiện (In progress)', bg: '#dbeafe', text: '#1e40af', defaultBg: '#dbeafe', defaultText: '#1e40af' },
+        { component: '[data-custom-component="TaskStatus-Completed"]', label: 'Trạng thái - Hoàn thành (Completed)', bg: '#d1fae5', text: '#065f46', defaultBg: '#d1fae5', defaultText: '#065f46' },
+        { component: '[data-custom-component="TaskStatus-Overdue"]', label: 'Trạng thái - Trễ hạn (Overdue)', bg: '#f3f4f6', text: '#b91c1c', defaultBg: '#f3f4f6', defaultText: '#b91c1c' },
+        { component: '[data-custom-component="Schedule-Registered"]', label: 'Lịch biểu - Có đăng ký (Registered)', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
+        { component: '[data-custom-component="Schedule-Unscheduled"]', label: 'Lịch biểu - Ngoài lịch (Unscheduled)', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+        { component: '[data-custom-component="TaskPriority-High"]', label: 'Độ ưu tiên - Cao (High)', bg: '#fee2e2', text: '#b91c1c', defaultBg: '#fee2e2', defaultText: '#b91c1c' },
+        { component: '[data-custom-component="TaskPriority-Medium"]', label: 'Độ ưu tiên - Trung bình (Medium)', bg: '#fef3c7', text: '#d97706', defaultBg: '#fef3c7', defaultText: '#d97706' },
+        { component: '[data-custom-component="TaskPriority-Low"]', label: 'Độ ưu tiên - Thấp (Low)', bg: '#d1fae5', text: '#059669', defaultBg: '#d1fae5', defaultText: '#059669' }
+      ];
+      for (const t of defaultThemes) {
+        await theme_setting.findOrCreate({
+          where: { component: t.component },
+          defaults: t
+        });
       }
+      console.log('Theme settings seeded / verified successfully.');
     } catch (err) {
       console.error('Failed to seed theme settings:', err.message);
     }

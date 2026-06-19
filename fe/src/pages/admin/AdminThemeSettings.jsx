@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import BackButton from '../../components/BackButton';
 import Button from '../../components/Button';
 import {
@@ -32,11 +33,12 @@ function hexToRGBA(hex, alpha = 1) {
 export default function AdminThemeSettings() {
   const { t, i18n } = useTranslation();
   const { theme, loading, updateTheme } = useTheme();
+  const [searchParams] = useSearchParams();
+  const activePage = searchParams.get('page') || 'dashboard';
 
   const [localTheme, setLocalTheme] = useState(null);
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' }); // 'success', 'error', 'loading'
-  const [activeTab, setActiveTab] = useState('charts'); // 'charts', 'attendance', 'tasks'
-  const [activePage, setActivePage] = useState('dashboard'); // 'dashboard', 'schedule', 'tasks'
+  const [activeTab, setActiveTab] = useState('charts'); // 'charts', 'attendance', 'status', 'priority', 'schedule'
 
   // Initialize local theme editing state once context data is fetched
   useEffect(() => {
@@ -49,6 +51,17 @@ export default function AdminThemeSettings() {
       setLocalTheme(clone);
     }
   }, [theme]);
+
+  // Set tab when activePage changes
+  useEffect(() => {
+    if (activePage === 'dashboard') {
+      setActiveTab('charts');
+    } else if (activePage === 'schedule') {
+      setActiveTab('schedule');
+    } else if (activePage === 'tasks') {
+      setActiveTab('status');
+    }
+  }, [activePage]);
 
   // Set page title
   useEffect(() => {
@@ -175,35 +188,62 @@ export default function AdminThemeSettings() {
       )}
 
       {/* Sub-page Tabs */}
-      <div className="flex border-b border-gray-200 gap-2 sm:gap-4 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
-        <button
-          onClick={() => setActiveTab('charts')}
-          className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'charts'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-        >
-          {isVi ? 'Biểu đồ so sánh' : 'Comparison Charts'}
-        </button>
-        <button
-          onClick={() => setActiveTab('attendance')}
-          className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'attendance'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-        >
-          {isVi ? 'Điểm danh hôm nay' : 'Today\'s Attendance'}
-        </button>
-        <button
-          onClick={() => setActiveTab('tasks')}
-          className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'tasks'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-        >
-          {isVi ? 'Trạng thái công việc' : 'Task Statuses'}
-        </button>
-      </div>
+      {activePage === 'dashboard' && (
+        <div className="flex border-b border-gray-200 gap-2 sm:gap-4 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+          <button
+            onClick={() => setActiveTab('charts')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'charts'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            {isVi ? 'Biểu đồ so sánh' : 'Comparison Charts'}
+          </button>
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'attendance'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            {isVi ? 'Điểm danh hôm nay' : 'Today\'s Attendance'}
+          </button>
+        </div>
+      )}
+
+      {activePage === 'tasks' && (
+        <div className="flex border-b border-gray-200 gap-2 sm:gap-4 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+          <button
+            onClick={() => setActiveTab('status')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'status'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            {isVi ? 'Trạng thái công việc' : 'Task Statuses'}
+          </button>
+          <button
+            onClick={() => setActiveTab('priority')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'priority'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            {isVi ? 'Mức độ ưu tiên' : 'Task Priorities'}
+          </button>
+        </div>
+      )}
+
+      {activePage === 'schedule' && (
+        <div className="flex border-b border-gray-200 gap-2 sm:gap-4 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer border-blue-600 text-blue-600`}
+          >
+            {isVi ? 'Màu sắc lịch biểu' : 'Schedule Colors'}
+          </button>
+        </div>
+      )}
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -224,9 +264,17 @@ export default function AdminThemeSettings() {
                 <tbody className="divide-y divide-gray-100">
                   {Object.entries(localTheme)
                     .filter(([key]) => {
-                      if (activeTab === 'charts') return key.includes('ChartColor-');
-                      if (activeTab === 'attendance') return key.includes('Attendance-');
-                      if (activeTab === 'tasks') return key.includes('TaskStatus-');
+                      if (activePage === 'dashboard') {
+                        if (activeTab === 'charts') return key.includes('ChartColor-');
+                        if (activeTab === 'attendance') return key.includes('Attendance-');
+                      }
+                      if (activePage === 'schedule') {
+                        return key.includes('Schedule-');
+                      }
+                      if (activePage === 'tasks') {
+                        if (activeTab === 'status') return key.includes('TaskStatus-');
+                        if (activeTab === 'priority') return key.includes('TaskPriority-');
+                      }
                       return false;
                     })
                     .map(([key, item]) => (
@@ -312,47 +360,57 @@ export default function AdminThemeSettings() {
               <span>{isVi ? 'Khung xem thử đồng bộ' : 'Consolidated Sandbox Preview'}</span>
             </h3>
 
-            {activeTab === 'tasks' && (
-              /* MOCK TASK STATUS PREVIEW */
+            {activePage === 'dashboard' && activeTab === 'charts' && (
+              /* MOCK CHART PREVIEW */
               <div className="space-y-2">
-                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                  {isVi ? '1. Trạng thái công việc (Task Statuses)' : '1. Task Statuses'}
-                </h4>
-                <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 shadow-sm">
-                  {[
-                    { key: '[data-custom-component="TaskStatus-Pending"]', labelKey: 'Pending' },
-                    { key: '[data-custom-component="TaskStatus-InProgress"]', labelKey: 'In Progress' },
-                    { key: '[data-custom-component="TaskStatus-Completed"]', labelKey: 'Completed' },
-                    { key: '[data-custom-component="TaskStatus-Overdue"]', labelKey: 'Overdue' }
-                  ].map(item => {
-                    const bg = getVal(item.key, 'bg');
-                    const text = getVal(item.key, 'text');
-                    const label = getVal(item.key, 'label');
-                    return (
-                      <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
-                        <span className="text-[11px] font-bold text-gray-500 font-mono">
-                          {item.labelKey}
-                        </span>
-                        <div
-                          style={{ backgroundColor: bg, color: text, borderColor: bg === '#ffffff' ? '#e2e8f0' : bg }}
-                          className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[8.5px] shadow-sm pointer-events-none"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
-                          <span>{label.split(' - ')[1] || label}</span>
-                          <span className="text-[7px] opacity-60">▼</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{isVi ? 'Biểu đồ giờ làm việc (Chart Legend & Bars)' : 'Work Hours Chart Previews'}</h4>
+                <div className="border border-gray-250 bg-white rounded-2xl p-4 flex flex-col gap-4 shadow-sm items-center">
+                  {/* Mock Chart Legend */}
+                  <div className="flex gap-4 p-1.5 rounded-xl bg-gray-50 border border-gray-100 shadow-sm w-full justify-center">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-3 h-3 rounded shadow-sm border border-transparent"
+                        style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Registered"]', 'bg') }}
+                      />
+                      <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Registered"]', 'label').split(' - ')[1]}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-3 h-3 rounded shadow-sm border border-transparent"
+                        style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Actual"]', 'bg') }}
+                      />
+                      <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Actual"]', 'label').split(' - ')[1]}</span>
+                    </div>
+                  </div>
+
+                  {/* Mock Chart Bars */}
+                  <div className="flex items-end gap-5 h-20 border-b border-l border-gray-200 w-fit px-6 pt-2">
+                    <div
+                      className="w-6 rounded-t shadow-sm transition-all"
+                      style={{
+                        height: '60%',
+                        backgroundColor: getVal('[data-custom-component="ChartColor-Registered"]', 'bg')
+                      }}
+                      title={getVal('[data-custom-component="ChartColor-Registered"]', 'label')}
+                    />
+                    <div
+                      className="w-6 rounded-t shadow-sm transition-all"
+                      style={{
+                        height: '80%',
+                        backgroundColor: getVal('[data-custom-component="ChartColor-Actual"]', 'bg')
+                      }}
+                      title={getVal('[data-custom-component="ChartColor-Actual"]', 'label')}
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
-            {activeTab === 'attendance' && (
+            {activePage === 'dashboard' && activeTab === 'attendance' && (
               /* MOCK ATTENDANCE STATUS PREVIEW */
               <div className="space-y-2">
                 <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                  {isVi ? '2. Điểm danh hôm nay (Attendance)' : '2. Today\'s Attendance'}
+                  {isVi ? 'Điểm danh hôm nay (Attendance)' : 'Today\'s Attendance'}
                 </h4>
                 <div className="border border-gray-200 rounded-2xl p-4 bg-white flex flex-col gap-3 shadow-sm">
                   {/* Mock Legend Row */}
@@ -398,47 +456,114 @@ export default function AdminThemeSettings() {
               </div>
             )}
 
-            {activeTab === 'charts' && (
-              /* MOCK CHART PREVIEW */
+            {activePage === 'schedule' && (
+              /* MOCK SCHEDULE PREVIEW */
               <div className="space-y-2">
-                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{isVi ? '3. Biểu đồ giờ làm việc (Chart Legend & Bars)' : '3. Work Hours Chart Previews'}</h4>
-                <div className="border border-gray-250 bg-white rounded-2xl p-4 flex flex-col gap-4 shadow-sm items-center">
-                  {/* Mock Chart Legend */}
-                  <div className="flex gap-4 p-1.5 rounded-xl bg-gray-50 border border-gray-100 shadow-sm w-full justify-center">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="w-3 h-3 rounded shadow-sm border border-transparent"
-                        style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Registered"]', 'bg') }}
-                      />
-                      <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Registered"]', 'label').split(' - ')[1]}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="w-3 h-3 rounded shadow-sm border border-transparent"
-                        style={{ backgroundColor: getVal('[data-custom-component="ChartColor-Actual"]', 'bg') }}
-                      />
-                      <span className="text-[9px] font-bold text-gray-700">{getVal('[data-custom-component="ChartColor-Actual"]', 'label').split(' - ')[1]}</span>
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                  {isVi ? 'Xem thử lịch biểu (Schedule Preview)' : 'Schedule Preview'}
+                </h4>
+                <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 shadow-sm">
+                  {/* Mock Registered Card */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-gray-400 font-mono block">REGISTERED (CÓ ĐĂNG KÝ)</span>
+                    <div
+                      style={{
+                        backgroundColor: getVal('[data-custom-component="Schedule-Registered"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-Registered"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-Registered"]', 'bg')
+                      }}
+                      className="flex items-center gap-1.5 truncate px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-l-4 w-full shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Registered"]', 'text') }} />
+                      <span className="truncate">{getVal('[data-custom-component="Schedule-Registered"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Registered"]', 'label')}: 3 người</span>
                     </div>
                   </div>
 
-                  {/* Mock Chart Bars */}
-                  <div className="flex items-end gap-5 h-20 border-b border-l border-gray-200 w-fit px-6 pt-2">
+                  {/* Mock Unscheduled Card */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-gray-400 font-mono block">UNSCHEDULED (NGOÀI LỊCH)</span>
                     <div
-                      className="w-6 rounded-t shadow-sm transition-all"
                       style={{
-                        height: '60%',
-                        backgroundColor: getVal('[data-custom-component="ChartColor-Registered"]', 'bg')
+                        backgroundColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-Unscheduled"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'bg')
                       }}
-                      title={getVal('[data-custom-component="ChartColor-Registered"]', 'label')}
-                    />
-                    <div
-                      className="w-6 rounded-t shadow-sm transition-all"
-                      style={{
-                        height: '80%',
-                        backgroundColor: getVal('[data-custom-component="ChartColor-Actual"]', 'bg')
-                      }}
-                      title={getVal('[data-custom-component="ChartColor-Actual"]', 'label')}
-                    />
+                      className="flex items-center gap-1.5 truncate px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-l-4 w-full shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'text') }} />
+                      <span className="truncate">{getVal('[data-custom-component="Schedule-Unscheduled"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Unscheduled"]', 'label')}: 1 người</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activePage === 'tasks' && (
+              /* MOCK TASKS PREVIEW */
+              <div className="space-y-6">
+                {/* Task Statuses Preview */}
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                    {isVi ? '1. Trạng thái công việc (Task Statuses)' : '1. Task Statuses'}
+                  </h4>
+                  <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
+                    {[
+                      { key: '[data-custom-component="TaskStatus-Pending"]', labelKey: 'Pending' },
+                      { key: '[data-custom-component="TaskStatus-InProgress"]', labelKey: 'In Progress' },
+                      { key: '[data-custom-component="TaskStatus-Completed"]', labelKey: 'Completed' },
+                      { key: '[data-custom-component="TaskStatus-Overdue"]', labelKey: 'Overdue' }
+                    ].map(item => {
+                      const bg = getVal(item.key, 'bg');
+                      const text = getVal(item.key, 'text');
+                      const label = getVal(item.key, 'label');
+                      const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
+                      return (
+                        <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
+                          <span className="text-[11px] font-bold text-gray-500 font-mono">
+                            {item.labelKey}
+                          </span>
+                          <div
+                            style={{ backgroundColor: bg, color: text, borderColor: bg }}
+                            className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[8.5px] shadow-sm pointer-events-none"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
+                            <span>{cleanLabel}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Task Priorities Preview */}
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                    {isVi ? '2. Mức độ ưu tiên (Task Priorities)' : '2. Task Priorities'}
+                  </h4>
+                  <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
+                    {[
+                      { key: '[data-custom-component="TaskPriority-High"]', labelKey: 'High' },
+                      { key: '[data-custom-component="TaskPriority-Medium"]', labelKey: 'Medium' },
+                      { key: '[data-custom-component="TaskPriority-Low"]', labelKey: 'Low' }
+                    ].map(item => {
+                      const bg = getVal(item.key, 'bg');
+                      const text = getVal(item.key, 'text');
+                      const label = getVal(item.key, 'label');
+                      const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
+                      return (
+                        <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
+                          <span className="text-[11px] font-bold text-gray-500 font-mono">
+                            {item.labelKey}
+                          </span>
+                          <div
+                            style={{ backgroundColor: bg, color: text, borderColor: bg }}
+                            className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-sm pointer-events-none"
+                          >
+                            <span>{cleanLabel}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

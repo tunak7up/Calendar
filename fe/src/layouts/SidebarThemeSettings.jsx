@@ -13,14 +13,20 @@ export default function SidebarThemeSettings() {
   const location = useLocation();
   const isVi = i18n.language === 'vi';
 
-  const getLinkClass = (path) => {
-    return location.pathname === path
+  const isPageActive = (path, page) => {
+    const searchParams = new URLSearchParams(location.search);
+    const currentPage = searchParams.get('page') || 'dashboard';
+    return location.pathname === path && currentPage === page;
+  };
+
+  const getLinkClass = (path, page) => {
+    return isPageActive(path, page)
       ? "flex items-center px-4 py-3 text-[#0056b3] bg-[#edf3fb] rounded-xl font-semibold cursor-pointer"
       : "flex items-center px-4 py-3 text-[#64748b] rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group";
   };
 
-  const getIconClass = (path) => {
-    return location.pathname === path
+  const getIconClass = (path, page) => {
+    return isPageActive(path, page)
       ? "w-5 h-5 text-[#0056b3]"
       : "w-5 h-5 text-[#64748b] group-hover:text-gray-900";
   };
@@ -34,7 +40,7 @@ export default function SidebarThemeSettings() {
       <div className="h-full px-4 py-8 overflow-y-auto bg-[#f8fafc] border-r border-gray-100" data-custom-component="SidebarBackground" data-customizable-id="sidebar-bg" data-customizable-type="bg">
         {/* Brand block */}
         <div className="flex items-center mb-10 px-2">
-          <div className="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30" data-custom-component="SidebarBrandIcon" data-customizable-id="sidebar-brand-icon" data-customizable-type="bg">
+          <div className="flex items-center justify-center w-12 h-12 bg-[#0056b3] rounded-2xl shadow-lg shadow-blue-500/30" data-custom-component="SidebarBrandIcon" data-customizable-id="sidebar-brand-icon" data-customizable-type="bg">
             <PaintBrushIcon className="w-[1.35rem] h-[1.35rem] text-white" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col ml-3">
@@ -50,39 +56,41 @@ export default function SidebarThemeSettings() {
         <ul className="space-y-3 font-medium">
           <li>
             <Link
-              to="/admin/theme-settings"
-              className={getLinkClass('/admin/theme-settings')}
-              data-custom-component={location.pathname === '/admin/theme-settings' ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
-              data-customizable-id="sidebar-link-themesettings"
+              to="/admin/theme-settings?page=dashboard"
+              className={getLinkClass('/admin/theme-settings', 'dashboard')}
+              data-custom-component={isPageActive('/admin/theme-settings', 'dashboard') ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+              data-customizable-id="sidebar-link-themesettings-dashboard"
               data-customizable-type="text"
             >
-              <Squares2X2Icon className={getIconClass('/admin/theme-settings')} />
+              <Squares2X2Icon className={getIconClass('/admin/theme-settings', 'dashboard')} />
               <span className="ms-4 text-sm font-medium">Dashboard</span>
             </Link>
           </li>
           
-          <li className="opacity-60">
-            <div className="flex items-center justify-between w-full px-4 py-3 text-gray-400 rounded-xl cursor-not-allowed">
-              <div className="flex items-center">
-                <CalendarDaysIcon className="w-5 h-5 text-gray-300" />
-                <span className="ms-4 text-sm font-medium">{isVi ? 'Lịch biểu' : 'Schedule'}</span>
-              </div>
-              <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md tracking-wider">
-                {isVi ? 'Sắp có' : 'Soon'}
-              </span>
-            </div>
+          <li>
+            <Link
+              to="/admin/theme-settings?page=schedule"
+              className={getLinkClass('/admin/theme-settings', 'schedule')}
+              data-custom-component={isPageActive('/admin/theme-settings', 'schedule') ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+              data-customizable-id="sidebar-link-themesettings-schedule"
+              data-customizable-type="text"
+            >
+              <CalendarDaysIcon className={getIconClass('/admin/theme-settings', 'schedule')} />
+              <span className="ms-4 text-sm font-medium">{isVi ? 'Lịch biểu' : 'Schedule'}</span>
+            </Link>
           </li>
 
-          <li className="opacity-60">
-            <div className="flex items-center justify-between w-full px-4 py-3 text-gray-400 rounded-xl cursor-not-allowed">
-              <div className="flex items-center">
-                <ClipboardDocumentListIcon className="w-5 h-5 text-gray-300" />
-                <span className="ms-4 text-sm font-medium">{isVi ? 'Công việc' : 'Tasks'}</span>
-              </div>
-              <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md tracking-wider">
-                {isVi ? 'Sắp có' : 'Soon'}
-              </span>
-            </div>
+          <li>
+            <Link
+              to="/admin/theme-settings?page=tasks"
+              className={getLinkClass('/admin/theme-settings', 'tasks')}
+              data-custom-component={isPageActive('/admin/theme-settings', 'tasks') ? 'SidebarLink-Active' : 'SidebarLink-Inactive'}
+              data-customizable-id="sidebar-link-themesettings-tasks"
+              data-customizable-type="text"
+            >
+              <ClipboardDocumentListIcon className={getIconClass('/admin/theme-settings', 'tasks')} />
+              <span className="ms-4 text-sm font-medium">{isVi ? 'Công việc' : 'Tasks'}</span>
+            </Link>
           </li>
         </ul>
       </div>

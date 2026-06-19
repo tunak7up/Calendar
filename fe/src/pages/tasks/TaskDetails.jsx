@@ -499,7 +499,10 @@ export default function TaskDetails() {
                 <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">
                   {parentTask ? t('taskdetails.subtask_code') : t('taskdetails.task_code')}: REQ-{fullTask.task_id}
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize ${getPriorityColor(fullTask.priority)}`}>
+                <span 
+                  data-custom-component={`TaskPriority-${fullTask.priority}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize border ${getPriorityColor(fullTask.priority)}`}
+                >
                   {t('taskdetails.priority_label')} {fullTask.priority === 'High' ? t('taskdetails.priority_high') : fullTask.priority === 'Medium' ? t('taskdetails.priority_medium') : fullTask.priority === 'Low' ? t('taskdetails.priority_low') : t('taskdetails.priority_normal')}
                 </span>
               </div>

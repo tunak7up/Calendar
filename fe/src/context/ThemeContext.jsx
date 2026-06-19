@@ -121,7 +121,7 @@ export function ThemeProvider({ children }) {
         css += `${selector} {\n`;
         if (colors.bg) {
           css += `  background-color: ${colors.bg} !important;\n`;
-          if (selector.includes('CalendarCard') || selector.includes('SidebarBrandIcon') || selector.includes('SidebarBackground') || selector.includes('TaskStatus')) {
+          if (selector.includes('CalendarCard') || selector.includes('SidebarBrandIcon') || selector.includes('SidebarBackground') || selector.includes('TaskStatus') || selector.includes('TaskPriority') || selector.includes('Schedule-')) {
             css += `  border-color: ${colors.bg} !important;\n`;
           }
         }

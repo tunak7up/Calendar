@@ -38,6 +38,7 @@ export default defineConfig({
           { text: 'Lịch làm việc', link: '/usage/schedule' },
           { text: 'Quản lý Yêu cầu', link: '/usage/requests' },
           { text: 'Thông báo & Email', link: '/usage/notifications' },
+          { text: 'Thay đổi màu giao diện', link: '/usage/changecolor' },
         ],
       },
       {

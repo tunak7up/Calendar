@@ -14,6 +14,7 @@ export const en = {
       admin_reports: "Reports",
       admin_preset_reasons: "Preset Reasons",
       theme_settings: "Theme Settings",
+      docs: "Guide lines",
       profile: "Your Profile",
       logout: "Log Out"
     },

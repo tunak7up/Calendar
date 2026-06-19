@@ -19,5 +19,14 @@ services:
     depends_on:
       - backend
 
+  docs:
+    build:
+      context: ./docs
+      dockerfile: Dockerfile
+    ports:
+      - "${DOCS_PORT}:80"
+    depends_on:
+      - frontend
+
 volumes:
   db_data:

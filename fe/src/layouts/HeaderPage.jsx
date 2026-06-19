@@ -98,6 +98,18 @@ export default function HeaderPage({ isAdmin }) {
               </Link>
             )}
 
+            {isAdmin && (
+              <a
+                href="https://docs-qltt.kis-v.com/"
+                target="_blank"
+                rel="noreferrer"
+                title={t('nav.docs')}
+                className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
+              >
+                <QuestionMarkCircleIcon className="h-6 w-6" aria-hidden="true" />
+              </a>
+            )}
+
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">
               <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">

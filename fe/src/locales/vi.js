@@ -14,6 +14,7 @@ export const vi = {
       admin_reports: "Báo cáo",
       admin_preset_reasons: "Lý do mẫu",
       theme_settings: "Cài đặt nhãn và màu sắc",
+      docs: "Hướng dẫn",
       profile: "Hồ sơ của bạn",
       logout: "Đăng xuất"
     },

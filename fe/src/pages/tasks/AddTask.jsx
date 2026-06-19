@@ -374,13 +374,13 @@ export default function AddTask() {
 
               if (level === 'Low') {
                 activeClass = 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-emerald-500'}`}></span>;
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-emerald-500'}`}></span>;
               } else if (level === 'Medium') {
                 activeClass = 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500'}`}></span>;
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-amber-500'}`}></span>;
               } else {
                 activeClass = 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-rose-500'}`}></span>;
+                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-rose-500'}`}></span>;
               }
 
               const labelText = level === 'High' ? t('addtask.priority_high') : level === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low');
@@ -390,6 +390,7 @@ export default function AddTask() {
                   key={level}
                   type="button"
                   onClick={() => setFormData({ ...formData, priority: level })}
+                  data-custom-component={isActive ? `TaskPriority-${level}` : undefined}
                   className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-6 text-xs font-bold rounded-xl border border-transparent transition-all duration-300 cursor-pointer select-none transform ${isActive 
                     ? `${activeClass} scale-[1.01]` 
                     : `${inactiveClass}`
@@ -487,7 +488,7 @@ export default function AddTask() {
             formData.subTasks.map((st, idx) => (
               <div key={idx} className="flex items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-sm group hover:border-blue-100 transition-all">
                 <div className="flex items-center gap-4">
-                  <div className={`w-1 h-8 rounded-full ${st.priority === 'High' ? 'bg-red-500' : st.priority === 'Medium' ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                  <div className={`w-1 h-8 rounded-full ${st.priority?.toLowerCase() === 'high' ? 'bg-red-500' : st.priority?.toLowerCase() === 'medium' ? 'bg-amber-500' : 'bg-green-500'}`}></div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">{st.title}</p>
                     <p className="text-[11px] text-gray-400 line-clamp-1">{st.description || t('addtask.no_description')}</p>
@@ -495,12 +496,12 @@ export default function AddTask() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span 
-                    data-custom-component={`TaskPriority-${st.priority}`}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border ${st.priority === 'High' ? 'bg-red-50 text-red-600' :
-                      st.priority === 'Medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
+                    data-custom-component={`TaskPriority-${st.priority ? st.priority.charAt(0).toUpperCase() + st.priority.slice(1).toLowerCase() : ''}`}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border ${st.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-600' :
+                      st.priority?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
                     }`}
                   >
-                    {st.priority === 'High' ? t('addtask.priority_high') : st.priority === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
+                    {st.priority?.toLowerCase() === 'high' ? t('addtask.priority_high') : st.priority?.toLowerCase() === 'medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
                   </span>
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, subTasks: prev.subTasks.filter((_, i) => i !== idx) }))}

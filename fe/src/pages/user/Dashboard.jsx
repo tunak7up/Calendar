@@ -413,14 +413,14 @@ export default function Dashboard() {
                         </td>
                         <td className="py-4 px-6">
                           <span 
-                            data-custom-component={`TaskPriority-${task.priority}`}
+                            data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}`}
                             className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
-                              task.priority === 'High' ? 'bg-red-100 text-red-700 border-red-200' :
-                              task.priority === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                              task.priority?.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                              task.priority?.toLowerCase() === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
                               'bg-emerald-100 text-emerald-700 border-emerald-200'
                             }`}
                           >
-                            {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
+                            {task.priority?.toLowerCase() === 'high' ? t('dashboard.priority_high') : task.priority?.toLowerCase() === 'medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-600">

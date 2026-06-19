@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -10,28 +10,10 @@ import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import { useTranslation } from 'react-i18next';
-import {
-  BriefcaseIcon,
-  UserMinusIcon,
-  PlusCircleIcon,
-  XMarkIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline';
+import { useTheme } from '../../context/ThemeContext';
+import DateDetailsModal from '../../components/DateDetailsModal';
 
-const getTaskColor = (status) => {
-  const s = status?.toLowerCase();
-  if (s === 'overdue') {
-    return { bg: '#ef4444', border: '#b91c1c', text: '#ffffff' }; // red
-  }
-  if (s === 'in progress') {
-    return { bg: '#3b82f6', border: '#1d4ed8', text: '#ffffff' }; // blue
-  }
-  if (s === 'completed') {
-    return { bg: '#10b981', border: '#047857', text: '#ffffff' }; // green
-  }
-  // Default/pending
-  return { bg: '#9ca3af', border: '#4b5563', text: '#ffffff' }; // grey
-};
+// Dynamic getTaskColor is defined inside MySchedule component now.
 
 // Parse datetime string từ BE (luôn là giờ VN nhưng không có timezone suffix)
 // Tránh browser hiểu nhầm là UTC → thêm +07:00 nếu chưa có
@@ -62,6 +44,35 @@ export default function MySchedule() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
+
+  const getTaskColor = useCallback((status) => {
+    const s = status?.toLowerCase();
+    let themeKey = 'TaskStatus-Pending';
+    let defaultColors = { bg: '#9ca3af', text: '#ffffff' };
+
+    if (s === 'overdue') {
+      themeKey = 'TaskStatus-Overdue';
+      defaultColors = { bg: '#ef4444', text: '#ffffff' };
+    } else if (s === 'in progress') {
+      themeKey = 'TaskStatus-InProgress';
+      defaultColors = { bg: '#3b82f6', text: '#ffffff' };
+    } else if (s === 'completed') {
+      themeKey = 'TaskStatus-Completed';
+      defaultColors = { bg: '#10b981', text: '#ffffff' };
+    }
+
+    const customColors = theme?.[`[data-custom-component="${themeKey}"]`];
+    const bg = customColors?.bg || defaultColors.bg;
+    const text = customColors?.text || defaultColors.text;
+
+    return {
+      bg,
+      border: bg,
+      text
+    };
+  }, [theme]);
+
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -70,9 +81,8 @@ export default function MySchedule() {
   const lastFetchedRangeRef = useRef({ start: '', end: '', lang: '' });
 
   const [workingHours, setWorkingHours] = useState([]);
-  const [tasks, setTasks] = useState([]);
+  const [rawTasks, setRawTasks] = useState([]);
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay, shift, tasks }
-  const [modalStatusFilter, setModalStatusFilter] = useState('all');
 
   const fetchData = useCallback(async (start, end) => {
     if (!user?.person_id) return;
@@ -102,34 +112,37 @@ export default function MySchedule() {
       }
 
       if (taskRes.success) {
-        const mappedTasks = taskRes.data.map(task => {
-          const colorSet = getTaskColor(task.status);
-          const status = task.status?.toLowerCase();
-          let pOrder = 5;
-          if (status === 'overdue') pOrder = 1;
-          else if (status === 'in progress') pOrder = 2;
-          else if (status === 'pending') pOrder = 3;
-          else if (status === 'completed') pOrder = 4;
-
-          return {
-            id: `task_${task.task_id}`,
-            title: task.name || 'Untitled Task',
-            start: task.start_time,
-            end: task.due_date,
-            allDay: false,
-            backgroundColor: colorSet.bg,
-            borderColor: colorSet.border,
-            textColor: colorSet.text,
-            priorityOrder: pOrder,
-            extendedProps: { isTask: true, taskData: task, priorityOrder: pOrder }
-          };
-        });
-        setTasks(mappedTasks);
+        setRawTasks(taskRes.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   }, [user, t]);
+
+  const tasks = useMemo(() => {
+    return rawTasks.map(task => {
+      const colorSet = getTaskColor(task.status);
+      const status = task.status?.toLowerCase();
+      let pOrder = 5;
+      if (status === 'overdue') pOrder = 1;
+      else if (status === 'in progress') pOrder = 2;
+      else if (status === 'pending') pOrder = 3;
+      else if (status === 'completed') pOrder = 4;
+
+      return {
+        id: `task_${task.task_id}`,
+        title: task.name || 'Untitled Task',
+        start: task.start_time,
+        end: task.due_date,
+        allDay: false,
+        backgroundColor: colorSet.bg,
+        borderColor: colorSet.border,
+        textColor: colorSet.text,
+        priorityOrder: pOrder,
+        extendedProps: { isTask: true, taskData: task, priorityOrder: pOrder }
+      };
+    });
+  }, [rawTasks, getTaskColor]);
 
   // Initial fetch is now handled by datesSet
   useEffect(() => {
@@ -188,7 +201,7 @@ export default function MySchedule() {
       const newStart = newStartObj.toISOString();
       const newEnd = newEndObj.toISOString();
 
-      const updatedTaskData = { ...taskData, start_time: newStart, due_date: newEnd };
+
 
       try {
         await apiFetch(`/task/${taskId}`, {
@@ -199,14 +212,9 @@ export default function MySchedule() {
           })
         });
 
-        setTasks(prev => prev.map(t =>
-          t.id === event.id
-            ? {
-              ...t,
-              start: newStart,
-              end: newEnd,
-              extendedProps: { ...t.extendedProps, taskData: updatedTaskData }
-            }
+        setRawTasks(prev => prev.map(t =>
+          t.task_id.toString() === taskId.toString()
+            ? { ...t, start_time: newStart, due_date: newEnd }
             : t
         ));
       } catch (error) {
@@ -245,36 +253,18 @@ export default function MySchedule() {
       shift,
       tasks: dayTasks.map(t => t.extendedProps.taskData)
     });
-    
-    setModalStatusFilter('all');
     handleSelectDate(clickedDate);
   }, [workDays, workingHours, tasks]);
 
-  const filteredModalTasks = React.useMemo(() => {
-    if (!menuConfig) return [];
-    let list = menuConfig.tasks;
-    if (modalStatusFilter !== 'all') {
-      list = menuConfig.tasks.filter(t => {
-        const s = t.status?.toLowerCase();
-        if (modalStatusFilter === 'pending') {
-          return s === 'pending' || s === 'overdue';
-        }
-        return s === modalStatusFilter.toLowerCase();
-      });
-    }
-    return [...list].sort((a, b) => {
-      const getStatusOrder = (status) => {
-        const s = status?.toLowerCase();
-        if (s === 'overdue') return 1;
-        if (s === 'in progress') return 2;
-        if (s === 'pending') return 3;
-        if (s === 'completed') return 4;
-        return 5;
-      };
-      return getStatusOrder(a.status) - getStatusOrder(b.status);
-    });
-  }, [menuConfig, modalStatusFilter]);
 
+
+  if (!theme) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -384,144 +374,10 @@ export default function MySchedule() {
       </div>
 
       {/* Date Options Modal */}
-      {menuConfig && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{t('myschedule.details_for', { date: menuConfig.date })}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{t('myschedule.details_subtitle')}</p>
-              </div>
-              <button 
-                onClick={() => setMenuConfig(null)}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              {/* Work Shift Section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('myschedule.work_shift')}</h4>
-                  {!menuConfig.isWorkDay ? (
-                    <button
-                      onClick={() => navigate('/register/work', { state: { date: menuConfig.date } })}
-                      className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors"
-                    >
-                      {t('myschedule.register_now')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => navigate('/register/leave', { state: { date: menuConfig.date } })}
-                      className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded-md transition-colors"
-                    >
-                      {t('myschedule.request_leave')}
-                    </button>
-                  )}
-                </div>
-                {menuConfig.isWorkDay ? (
-                  <div className="flex items-center gap-4 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
-                      <BriefcaseIcon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-emerald-900">{t('myschedule.active_work_day')}</div>
-                      <div className="text-xs text-emerald-600">
-                      {menuConfig.shift ? `${formatTime(menuConfig.shift.start)} - ${formatTime(menuConfig.shift.end)}` : t('myschedule.standard_shift')}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 border border-gray-100 rounded-2xl">
-                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                      <UserMinusIcon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-gray-600">{t('myschedule.no_shift')}</div>
-                      <div className="text-xs text-gray-400">{t('myschedule.no_shift_subtitle')}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Tasks Section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('myschedule.tasks', { count: filteredModalTasks.length })}</h4>
-                  <div className="flex items-center gap-2">
-                    <select 
-                      value={modalStatusFilter}
-                      onChange={(e) => setModalStatusFilter(e.target.value)}
-                      className="text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded-md px-2 py-1 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-                    >
-                      <option value="all">{t('myschedule.all')}</option>
-                      <option value="pending">{t('myschedule.pending')}</option>
-                      <option value="in progress">{t('myschedule.in_progress')}</option>
-                      <option value="completed">{t('myschedule.completed')}</option>
-                    </select>
-                    <button
-                      onClick={() => navigate('/tasks/add', { state: { date: menuConfig.date } })}
-                      className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
-                    >
-                      <PlusCircleIcon className="w-3 h-3" /> {t('myschedule.add')}
-                    </button>
-                  </div>
-                </div>
-                
-                {filteredModalTasks.length > 0 ? (
-                  <div className="space-y-2">
-                    {filteredModalTasks.map((task) => {
-                      const colorSet = getTaskColor(task.status);
-                      return (
-                        <div 
-                          key={task.task_id}
-                          onClick={() => {
-                            navigate(`/tasks/${task.task_id}`, { state: { task } });
-                            setMenuConfig(null);
-                          }}
-                          className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-2 h-8 rounded-full" 
-                              style={{ backgroundColor: colorSet.bg }}
-                            />
-                            <div>
-                              <div className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors truncate max-w-[200px] sm:max-w-[360px]" title={task.name}>{task.name}</div>
-                              <div className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">
-                                {task.status === 'completed' ? t('myschedule.completed') : 
-                                 task.status === 'in progress' ? t('myschedule.in_progress') : 
-                                 task.status === 'overdue' ? t('status.overdue') : 
-                                 t('myschedule.pending')} • {task.priority === 'High' ? t('dashboard.priority_high') : task.priority === 'Medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
-                              </div>
-                            </div>
-                          </div>
-                          <EyeIcon className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-xs text-gray-400">{t('myschedule.no_tasks')}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
-              <button 
-                onClick={() => setMenuConfig(null)}
-                className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {t('myschedule.close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DateDetailsModal 
+        menuConfig={menuConfig}
+        onClose={() => setMenuConfig(null)}
+      />
 
     </div>
   );

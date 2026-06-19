@@ -553,10 +553,10 @@ export default function TaskDetails() {
                   {parentTask ? t('taskdetails.subtask_code') : t('taskdetails.task_code')}: REQ-{fullTask.task_id}
                 </div>
                 <span 
-                  data-custom-component={`TaskPriority-${fullTask.priority}`}
+                  data-custom-component={`TaskPriority-${fullTask.priority ? fullTask.priority.charAt(0).toUpperCase() + fullTask.priority.slice(1).toLowerCase() : ''}`}
                   className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold capitalize border ${getPriorityColor(fullTask.priority)}`}
                 >
-                  {t('taskdetails.priority_label')} {fullTask.priority === 'High' ? t('taskdetails.priority_high') : fullTask.priority === 'Medium' ? t('taskdetails.priority_medium') : fullTask.priority === 'Low' ? t('taskdetails.priority_low') : t('taskdetails.priority_normal')}
+                  {t('taskdetails.priority_label')} {fullTask.priority?.toLowerCase() === 'high' ? t('taskdetails.priority_high') : fullTask.priority?.toLowerCase() === 'medium' ? t('taskdetails.priority_medium') : fullTask.priority?.toLowerCase() === 'low' ? t('taskdetails.priority_low') : t('taskdetails.priority_normal')}
                 </span>
               </div>
               <div className="flex items-center gap-3">

@@ -56,6 +56,7 @@ export default function SubTaskModal({ isOpen, onClose, onAdd }) {
                   key={p}
                   type="button"
                   onClick={() => setNewSubTask({...newSubTask, priority: p})}
+                  data-custom-component={newSubTask.priority === p ? `TaskPriority-${p}` : undefined}
                   className={`py-3 rounded-xl text-xs font-bold border-2 transition-all ${
                     newSubTask.priority === p 
                       ? (p === 'High' ? 'border-red-500 bg-red-50 text-red-600' : p === 'Medium' ? 'border-amber-500 bg-amber-50 text-amber-600' : 'border-green-500 bg-green-50 text-green-600')

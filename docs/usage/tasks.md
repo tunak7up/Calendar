@@ -13,7 +13,7 @@ Module **Tasks** là trái tim của hệ thống Intern Management App, giúp n
    - **Hạn chót (Due Date):** Ngày giờ bắt buộc hoàn thành.
 4. Nhấn **Lưu** để hệ thống tạo task và tự động gửi email thông báo cho người nhận.
 
-<!-- ![Tạo công việc](/screenshots/tao-cong-viec.png) -->
+![Dashboard Overview](../public/screenshots/manager/tao-cong-viec.png)
 
 ## Công việc phụ (Sub-tasks)
 
@@ -21,6 +21,12 @@ Mỗi công việc lớn có thể được chia nhỏ thành các **Sub-tasks**
 - Trong trang Chi tiết công việc (Task Detail), cuộn xuống phần **Sub-tasks**.
 - Nhấn **Thêm Sub-task** và điền tên, thời hạn cho các công việc nhỏ.
 - Quản lý trạng thái từng Sub-task độc lập để biết tỷ lệ hoàn thành công việc lớn.
+
+![Dashboard Overview](../public/screenshots/manager/subtask.png)
+
+## Đính kèm tài liệu (Attachments)
+
+Người dùng có thể đính kèm các tập tin có định dạng được cho phép tại giao diện tạo Task mới hoặc tại trang thông tin chi tiết Task.
 
 ## Trạng thái Công việc
 
@@ -35,3 +41,6 @@ Có 4 trạng thái chính:
 Mỗi Task đều có khu vực bình luận để mọi người trong dự án trao đổi.
 - Nhập bình luận vào ô ở cuối trang chi tiết.
 - Bạn có thể tải lên tài liệu đính kèm cùng với bình luận.
+
+![Dashboard Overview](../public/screenshots/manager/comment.png)
+

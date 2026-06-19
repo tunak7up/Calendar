@@ -17,9 +17,9 @@ Hiện tại hệ thống cần một tài khoản có vai trò Quản lý (Mana
 Nếu hệ thống có chức năng Seeder, hãy chạy lệnh seed của Sequelize để tạo tài khoản mặc định. Nếu không, bạn có thể đăng ký một tài khoản mới qua giao diện Frontend hoặc chèn trực tiếp vào cơ sở dữ liệu:
 
 ```sql
-INSERT INTO persons (name, email, password, role) VALUES ('Admin', 'admin@example.com', 'your_hashed_password', 'Admin');
+INSERT INTO persons (name, email, password, role) VALUES ('Admin', 'admin@example.com', 'your_hashed_password', 'manager');
 ```
-*(Lưu ý: Mật khẩu thực tế được mã hóa bằng bcrypt, vui lòng dùng tính năng Đăng ký nếu có).*
+*(Lưu ý: Mật khẩu thực tế được mã hóa bằng bcrypt, vui lòng insert mật khẩu đã được hash trên web https://bcrypt-generator.com/ với round = 10).*
 
 ## 3. Cấu hình Email (Nodemailer)
 

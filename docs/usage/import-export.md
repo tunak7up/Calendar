@@ -22,6 +22,7 @@ Nếu bạn có danh sách hàng chục công việc cần giao, sử dụng Imp
 1. Tại trang danh sách **Tasks**.
 2. Nhấn nút **Download Template**.
 3. Mở file mẫu lên, bạn sẽ thấy các cột có sẵn (Title, Description, Start Time, Due Date, Status, Priority).
+![Import Tasks](../public/screenshots/manager/import-tasks.png)
 
 ### Điền dữ liệu và Tải lên
 1. Điền thông tin công việc vào file Excel (mỗi dòng 1 công việc).
@@ -30,7 +31,7 @@ Nếu bạn có danh sách hàng chục công việc cần giao, sử dụng Imp
    - Cột **Priority**: Chỉ nhận `low`, `medium`, `high`.
    - Cột **Title** là bắt buộc.
 3. Quay lại trang **Tasks**, nhấn **Import** và chọn file của bạn.
-4. Hệ thống sẽ hiển thị thông báo chi tiết: Bao nhiêu dòng thành công, bao nhiêu dòng thất bại và chỉ rõ lý do thất bại (nếu có).
+4. Giao diện mapping các trường sẽ được hiển thị. Các trường trong file excel có tên phù hợp sẽ tự động ghép nối với các trường dữ liệu tương ứng. Người dùng hoàn toàn có thể mapping tên các trường theo ý muốn.
+4. Hệ thống sẽ hiển thị thông báo chi tiết: Bao nhiêu dòng thành công, bao nhiêu dòng thất bại và chỉ rõ lý do thất bại tại dòng thất bại (nếu có).
 
-![Import Tasks](../public/screenshots/manager/import-tasks.png)
 ![Mapping Tasks](../public/screenshots/manager/mapping.png)

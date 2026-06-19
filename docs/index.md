@@ -6,7 +6,7 @@ hero:
   text: Quản lý thực tập sinh và giao việc
   tagline: Tự động hóa quy trình phân công công việc, báo cáo hàng ngày, lịch trình và duyệt yêu cầu.
   image:
-    src: /screenshots/dashboard.png
+    src: /screenshots/manager/dashboard.png
     alt: IMA Dashboard
   actions:
     - theme: brand

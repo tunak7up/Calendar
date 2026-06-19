@@ -7,7 +7,7 @@ Tài liệu này sẽ hướng dẫn bạn cách khởi chạy **Intern Manageme
 Sử dụng Docker là cách dễ dàng nhất để chạy cả Frontend, Backend và Database mà không phải lo cấu hình từng môi trường riêng lẻ.
 
 ### 1. Chuẩn bị
-- Đảm bảo bạn đã cài đặt [Docker](https://docs.docker.com/get-docker/) và [Docker Compose](https://docs.docker.com/compose/install/).
+- Đảm bảo bạn đã cài đặt [Docker](https://docs.docker.com/get-docker/).
 - Git để clone mã nguồn.
 
 ### 2. Tải mã nguồn
@@ -16,6 +16,7 @@ git clone https://github.com/your-repo/sern.git
 ```
 
 ### 3. Cấu hình biến môi trường
+Liên hệ team dev để được cấp `.env` cho folder fe và be.
 Tạo file `.env` đồng cấp với file docker-compose.yml, ví dụ:
 ```env
 BACKEND_PORT=12345
@@ -33,7 +34,7 @@ Hệ thống sẽ tự động build image cho Node.js API (Backend) và React V
 Nếu bạn muốn chạy môi trường dev để code, thực hiện các bước sau:
 
 ### 1. Yêu cầu
-- Node.js >= 16
+- Node.js >= 20
 - MySQL Server >= 8.0
 
 ### 2. Cài đặt Backend

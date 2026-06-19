@@ -30,6 +30,10 @@ export default function Profile() {
   const { user, isAdmin } = useAuth();
   const { theme } = useTheme();
 
+  const regTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' }, [theme]);
+  const unschedTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' }, [theme]);
+  const absentTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Absent"]'] || { bg: '#fee2e2', text: '#991b1b' }, [theme]);
+
   // If no ID is provided, assume viewing own profile
   const targetId = id || user?.person_id;
 
@@ -111,9 +115,6 @@ export default function Profile() {
       }
     });
 
-    const regTheme = theme?.['[data-custom-component="Schedule-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' };
-    const unschedTheme = theme?.['[data-custom-component="Schedule-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' };
-
     return Array.from(eventMap.values()).map(item => {
       const hasSchedule = !!item.schedule;
       const checkIn = item.report?.check_in || null;
@@ -124,6 +125,7 @@ export default function Profile() {
       let border = regTheme.bg; // blue-300
       let text = regTheme.text; // blue-800
       let title = '';
+      let customComponent = null;
 
       const checkInText = checkIn ? checkIn.slice(0, 5) : null;
       const checkOutText = checkOut ? checkOut.slice(0, 5) : null;
@@ -149,9 +151,10 @@ export default function Profile() {
             title = `${shiftStr} (${t('myschedule.legend_upcoming')})`;
           } else {
             // Có lịch nhưng vắng (Đỏ)
-            bg = '#fee2e2';
-            border = '#fca5a5';
-            text = '#991b1b';
+            bg = absentTheme.bg;
+            border = absentTheme.bg;
+            text = absentTheme.text;
+            customComponent = 'Schedule-User-Absent';
             title = `${shiftStr} (${t('myschedule.legend_absent')})`;
           }
         } else {
@@ -159,6 +162,7 @@ export default function Profile() {
           bg = regTheme.bg;
           border = regTheme.bg;
           text = regTheme.text;
+          customComponent = 'Schedule-User-Registered';
           title = `${shiftStr} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
         }
       } else {
@@ -166,6 +170,7 @@ export default function Profile() {
         bg = unschedTheme.bg; // amber-100
         border = unschedTheme.bg; // amber-300
         text = unschedTheme.text; // amber-800
+        customComponent = 'Schedule-User-Unscheduled';
         title = `${t('myschedule.unscheduled')} ${checkOutText ? `[${checkInText} - ${checkOutText}]` : `[In: ${checkInText}]`}`;
       }
 
@@ -178,11 +183,12 @@ export default function Profile() {
         borderColor: border,
         textColor: text,
         extendedProps: {
-          ...item
+          ...item,
+          customComponent
         }
       };
     });
-  }, [allSchedules, dailyReports, t, theme]);
+  }, [allSchedules, dailyReports, t, regTheme, unschedTheme]);
 
   const selectedDateDetail = React.useMemo(() => {
     const sched = allSchedules.find(s => s.working_date && s.working_date.split(/[T ]/)[0] === selectedDate);
@@ -368,16 +374,16 @@ export default function Profile() {
             {/* Color Legend Bar */}
             <div className="flex flex-wrap gap-3 mb-5 text-[10px] font-bold text-gray-500 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 shadow-inner">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span>
-                <span className="text-blue-800">{t('myschedule.legend_scheduled')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Schedule-User-Registered" style={{ backgroundColor: regTheme.bg, borderColor: regTheme.bg }}></span>
+                <span style={{ color: regTheme.text }}>{t('myschedule.legend_scheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-[#fef3c7] border border-[#fcd34d]"></span>
-                <span className="text-amber-800">{t('myschedule.legend_unscheduled')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Schedule-User-Unscheduled" style={{ backgroundColor: unschedTheme.bg, borderColor: unschedTheme.bg }}></span>
+                <span style={{ color: unschedTheme.text }}>{t('myschedule.legend_unscheduled')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-red-100 border border-red-200"></span>
-                <span className="text-red-800">{t('myschedule.legend_absent')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Schedule-User-Absent" style={{ backgroundColor: absentTheme.bg, borderColor: absentTheme.bg }}></span>
+                <span style={{ color: absentTheme.text }}>{t('myschedule.legend_absent')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-gray-100 border border-gray-300"></span>

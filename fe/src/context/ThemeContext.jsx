@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { themeSettingService } from '../services/themeSettingService';
 
 const ThemeContext = createContext(null);
@@ -165,4 +165,37 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
+}
+
+export function useTaskColor() {
+  const { theme } = useTheme();
+
+  const getTaskColor = useCallback((status) => {
+    const s = status?.toLowerCase();
+    let themeKey = 'TaskStatus-Pending';
+    let defaultColors = { bg: '#9ca3af', text: '#ffffff' };
+
+    if (s === 'overdue') {
+      themeKey = 'TaskStatus-Overdue';
+      defaultColors = { bg: '#ef4444', text: '#ffffff' };
+    } else if (s === 'in progress') {
+      themeKey = 'TaskStatus-InProgress';
+      defaultColors = { bg: '#3b82f6', text: '#ffffff' };
+    } else if (s === 'completed') {
+      themeKey = 'TaskStatus-Completed';
+      defaultColors = { bg: '#10b981', text: '#ffffff' };
+    }
+
+    const customColors = theme?.[`[data-custom-component="${themeKey}"]`];
+    const bg = customColors?.bg || defaultColors.bg;
+    const text = customColors?.text || defaultColors.text;
+
+    return {
+      bg,
+      border: bg,
+      text
+    };
+  }, [theme]);
+
+  return getTaskColor;
 }

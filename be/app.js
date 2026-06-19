@@ -152,6 +152,11 @@ async function startServer() {
         { component: '[data-custom-component="TaskStatus-Overdue"]', label: 'Trạng thái - Trễ hạn (Overdue)', bg: '#f3f4f6', text: '#b91c1c', defaultBg: '#f3f4f6', defaultText: '#b91c1c' },
         { component: '[data-custom-component="Schedule-Registered"]', label: 'Lịch biểu - Có đăng ký (Registered)', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
         { component: '[data-custom-component="Schedule-Unscheduled"]', label: 'Lịch biểu - Ngoài lịch (Unscheduled)', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+        { component: '[data-custom-component="Schedule-Admin-Registered"]', label: 'Lịch biểu Admin - Có đăng ký (Registered)', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
+        { component: '[data-custom-component="Schedule-Admin-Unscheduled"]', label: 'Lịch biểu Admin - Ngoài lịch (Unscheduled)', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+        { component: '[data-custom-component="Schedule-User-Registered"]', label: 'Lịch biểu Cá nhân - Có đăng ký (Registered)', bg: '#eff6ff', text: '#1e4ed8', defaultBg: '#eff6ff', defaultText: '#1e4ed8' },
+        { component: '[data-custom-component="Schedule-User-Unscheduled"]', label: 'Lịch biểu Cá nhân - Ngoài lịch (Unscheduled)', bg: '#fef3c7', text: '#92400e', defaultBg: '#fef3c7', defaultText: '#92400e' },
+        { component: '[data-custom-component="Schedule-User-Absent"]', label: 'Lịch biểu Cá nhân - Vắng (Absent)', bg: '#fee2e2', text: '#991b1b', defaultBg: '#fee2e2', defaultText: '#991b1b' },
         { component: '[data-custom-component="TaskPriority-High"]', label: 'Độ ưu tiên - Cao (High)', bg: '#fee2e2', text: '#b91c1c', defaultBg: '#fee2e2', defaultText: '#b91c1c' },
         { component: '[data-custom-component="TaskPriority-Medium"]', label: 'Độ ưu tiên - Trung bình (Medium)', bg: '#fef3c7', text: '#d97706', defaultBg: '#fef3c7', defaultText: '#d97706' },
         { component: '[data-custom-component="TaskPriority-Low"]', label: 'Độ ưu tiên - Thấp (Low)', bg: '#d1fae5', text: '#059669', defaultBg: '#d1fae5', defaultText: '#059669' }

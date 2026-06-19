@@ -59,7 +59,6 @@ export const DEFAULT_THEME = {
     defaultText: '#b91c1c'
   },
 
-  // Schedule page
   '[data-custom-component="Schedule-Registered"]': {
     bg: '#eff6ff',
     text: '#1e4ed8',
@@ -71,6 +70,36 @@ export const DEFAULT_THEME = {
     text: '#92400e',
     defaultBg: '#fef3c7',
     defaultText: '#92400e'
+  },
+  '[data-custom-component="Schedule-Admin-Registered"]': {
+    bg: '#eff6ff',
+    text: '#1e4ed8',
+    defaultBg: '#eff6ff',
+    defaultText: '#1e4ed8'
+  },
+  '[data-custom-component="Schedule-Admin-Unscheduled"]': {
+    bg: '#fef3c7',
+    text: '#92400e',
+    defaultBg: '#fef3c7',
+    defaultText: '#92400e'
+  },
+  '[data-custom-component="Schedule-User-Registered"]': {
+    bg: '#eff6ff',
+    text: '#1e4ed8',
+    defaultBg: '#eff6ff',
+    defaultText: '#1e4ed8'
+  },
+  '[data-custom-component="Schedule-User-Unscheduled"]': {
+    bg: '#fef3c7',
+    text: '#92400e',
+    defaultBg: '#fef3c7',
+    defaultText: '#92400e'
+  },
+  '[data-custom-component="Schedule-User-Absent"]': {
+    bg: '#fee2e2',
+    text: '#991b1b',
+    defaultBg: '#fee2e2',
+    defaultText: '#991b1b'
   },
 
   // Task Priorities

@@ -35,3 +35,29 @@ export const formatDateTime = (dateStr) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes} ${d}/${m}/${y}`;
 };
+
+// Parse datetime string from BE (assumes VN time and adds +07:00 if not present)
+export const parseVNTime = (str) => {
+  if (!str) return null;
+  if (str.includes('+') || str.includes('Z')) return new Date(str);
+  // Normalize space to T and append +07:00 offset
+  return new Date(str.replace(' ', 'T') + '+07:00');
+};
+
+// Formats value as YYYY-MM-DD in VN timezone
+export const getLocalYYYYMMDD = (val) => {
+  if (!val) return '';
+  const d = val instanceof Date ? val : parseVNTime(val);
+  if (!d || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Formats time portion of VN timezone date string to HH:MM
+export const formatVNTime = (str) => {
+  const d = parseVNTime(str);
+  if (!d) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};

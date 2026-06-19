@@ -57,7 +57,7 @@ export default function AdminThemeSettings() {
     if (activePage === 'dashboard') {
       setActiveTab('charts');
     } else if (activePage === 'schedule') {
-      setActiveTab('schedule');
+      setActiveTab('schedule-admin');
     } else if (activePage === 'tasks') {
       setActiveTab('status');
     }
@@ -65,19 +65,18 @@ export default function AdminThemeSettings() {
 
   // Set page title
   useEffect(() => {
-    document.title = `${t('nav.logo')} - ${i18n.language === 'vi' ? 'Cài đặt nhãn và màu sắc' : 'Theme Settings'}`;
+    document.title = `${t('nav.logo')} - ${t('themesettings.title')}`;
   }, [t, i18n.language]);
 
   if (loading || !localTheme) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056b3]"></div>
-        <p className="mt-4 text-[#0056b3] font-bold tracking-tight">{t('reporthistory.loading') || 'Đang tải...'}</p>
+        <p className="mt-4 text-[#0056b3] font-bold tracking-tight">{t('themesettings.loading')}</p>
       </div>
     );
   }
 
-  const isVi = i18n.language === 'vi';
 
   const handleFieldChange = (key, field, value) => {
     setLocalTheme(prev => ({
@@ -101,7 +100,7 @@ export default function AdminThemeSettings() {
   };
 
   const handleResetAll = () => {
-    if (window.confirm(isVi ? 'Bạn có chắc chắn muốn khôi phục toàn bộ màu mặc định?' : 'Are you sure you want to restore all default colors?')) {
+    if (window.confirm(t('themesettings.btn_reset_all_confirm'))) {
       const reseted = {};
       Object.keys(localTheme).forEach(key => {
         reseted[key] = {
@@ -115,7 +114,7 @@ export default function AdminThemeSettings() {
   };
 
   const handleSave = async () => {
-    setSaveStatus({ type: 'loading', message: isVi ? 'Đang lưu cấu hình...' : 'Saving configurations...' });
+    setSaveStatus({ type: 'loading', message: t('themesettings.saving') });
 
     // Map object back to API payload array structure
     const payload = Object.values(localTheme).map(item => ({
@@ -127,10 +126,10 @@ export default function AdminThemeSettings() {
 
     const result = await updateTheme(payload);
     if (result.success) {
-      setSaveStatus({ type: 'success', message: isVi ? 'Đã lưu cài đặt màu sắc và nhãn thành công!' : 'Saved theme and label configurations successfully!' });
+      setSaveStatus({ type: 'success', message: t('themesettings.save_success') });
       setTimeout(() => setSaveStatus({ type: '', message: '' }), 4000);
     } else {
-      setSaveStatus({ type: 'error', message: result.message || (isVi ? 'Lỗi khi cập nhật cài đặt!' : 'Failed to update configurations!') });
+      setSaveStatus({ type: 'error', message: result.message || t('themesettings.save_error') });
     }
   };
 
@@ -147,12 +146,10 @@ export default function AdminThemeSettings() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-            <span>{isVi ? 'Cài đặt nhãn và màu sắc' : 'Theme Settings'}</span>
+            <span>{t('themesettings.title')}</span>
           </h1>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">
-            {isVi
-              ? 'Tùy chỉnh tiêu đề hiển thị và phối màu giao diện toàn hệ thống cho cả Admin và User.'
-              : 'Customize component labels and brand theme colors across the entire website.'}
+            {t('themesettings.subtitle')}
           </p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
@@ -161,7 +158,7 @@ export default function AdminThemeSettings() {
             className="flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-300 hover:bg-gray-50 bg-white text-gray-700 rounded-xl text-sm font-bold shadow-sm transition-all flex-1 md:flex-initial"
           >
             <ArrowPathIcon className="w-5 h-5" />
-            <span>{isVi ? 'Mặc định toàn bộ' : 'Reset All Defaults'}</span>
+            <span>{t('themesettings.btn_reset_all')}</span>
           </button>
           <button
             onClick={handleSave}
@@ -173,7 +170,7 @@ export default function AdminThemeSettings() {
             ) : (
               <CheckIcon className="w-5 h-5" />
             )}
-            <span>{isVi ? 'Lưu thay đổi' : 'Save Changes'}</span>
+            <span>{t('themesettings.btn_save')}</span>
           </button>
         </div>
       </div>
@@ -197,7 +194,7 @@ export default function AdminThemeSettings() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
           >
-            {isVi ? 'Biểu đồ so sánh' : 'Comparison Charts'}
+            {t('themesettings.tab_charts')}
           </button>
           <button
             onClick={() => setActiveTab('attendance')}
@@ -206,7 +203,7 @@ export default function AdminThemeSettings() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
           >
-            {isVi ? 'Điểm danh hôm nay' : 'Today\'s Attendance'}
+            {t('themesettings.tab_attendance')}
           </button>
         </div>
       )}
@@ -220,7 +217,7 @@ export default function AdminThemeSettings() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
           >
-            {isVi ? 'Trạng thái công việc' : 'Task Statuses'}
+            {t('themesettings.tab_task_status')}
           </button>
           <button
             onClick={() => setActiveTab('priority')}
@@ -229,7 +226,7 @@ export default function AdminThemeSettings() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
           >
-            {isVi ? 'Mức độ ưu tiên' : 'Task Priorities'}
+            {t('themesettings.tab_task_priority')}
           </button>
         </div>
       )}
@@ -237,10 +234,22 @@ export default function AdminThemeSettings() {
       {activePage === 'schedule' && (
         <div className="flex border-b border-gray-200 gap-2 sm:gap-4 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
-            onClick={() => setActiveTab('schedule')}
-            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer border-blue-600 text-blue-600`}
+            onClick={() => setActiveTab('schedule-admin')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'schedule-admin'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
           >
-            {isVi ? 'Màu sắc lịch biểu' : 'Schedule Colors'}
+            {t('themesettings.tab_schedule_admin')}
+          </button>
+          <button
+            onClick={() => setActiveTab('schedule-user')}
+            className={`py-3 px-4 font-extrabold text-xs sm:text-sm border-b-2 transition-all cursor-pointer ${activeTab === 'schedule-user'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            {t('themesettings.tab_schedule_user')}
           </button>
         </div>
       )}
@@ -255,10 +264,10 @@ export default function AdminThemeSettings() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/80 border-b border-gray-100">
-                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[40%]">{isVi ? 'Cấu phần & Nhãn' : 'Component & Label'}</th>
-                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[20%]">{isVi ? 'Màu nền' : 'Background'}</th>
-                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[20%]">{isVi ? 'Màu chữ / Border' : 'Text / Border'}</th>
-                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[20%]">{isVi ? 'Thao tác' : 'Action'}</th>
+                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[40%]">{t('themesettings.col_component')}</th>
+                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[20%]">{t('themesettings.col_bg')}</th>
+                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[20%]">{t('themesettings.col_text')}</th>
+                    <th className="px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-[20%]">{t('themesettings.col_action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -269,7 +278,8 @@ export default function AdminThemeSettings() {
                         if (activeTab === 'attendance') return key.includes('Attendance-');
                       }
                       if (activePage === 'schedule') {
-                        return key.includes('Schedule-');
+                        if (activeTab === 'schedule-admin') return key.includes('Schedule-Admin-');
+                        if (activeTab === 'schedule-user') return key.includes('Schedule-User-');
                       }
                       if (activePage === 'tasks') {
                         if (activeTab === 'status') return key.includes('TaskStatus-');
@@ -289,8 +299,8 @@ export default function AdminThemeSettings() {
                             <input
                               type="text"
                               value={item.label}
-                              onChange={(e) => handleFieldChange(key, 'label', e.target.value)}
-                              className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-gray-700 font-bold text-xs"
+                              disabled
+                              className="w-full px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-400 font-bold text-xs cursor-not-allowed outline-none"
                             />
                           </div>
                         </td>
@@ -339,7 +349,7 @@ export default function AdminThemeSettings() {
                             className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1 shadow-sm border border-blue-100 hover:scale-105 active:scale-95"
                           >
                             <ArrowPathIcon className="w-3.5 h-3.5" />
-                            <span>{isVi ? 'Khôi phục' : 'Reset'}</span>
+                            <span>{t('themesettings.btn_reset')}</span>
                           </button>
                         </td>
 
@@ -357,13 +367,13 @@ export default function AdminThemeSettings() {
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
               <SparklesIcon className="w-5 h-5 text-amber-500" />
-              <span>{isVi ? 'Khung xem thử đồng bộ' : 'Consolidated Sandbox Preview'}</span>
+              <span>{t('themesettings.preview_title')}</span>
             </h3>
 
             {activePage === 'dashboard' && activeTab === 'charts' && (
               /* MOCK CHART PREVIEW */
               <div className="space-y-2">
-                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{isVi ? 'Biểu đồ giờ làm việc (Chart Legend & Bars)' : 'Work Hours Chart Previews'}</h4>
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">{t('themesettings.preview_chart')}</h4>
                 <div className="border border-gray-250 bg-white rounded-2xl p-4 flex flex-col gap-4 shadow-sm items-center">
                   {/* Mock Chart Legend */}
                   <div className="flex gap-4 p-1.5 rounded-xl bg-gray-50 border border-gray-100 shadow-sm w-full justify-center">
@@ -410,7 +420,7 @@ export default function AdminThemeSettings() {
               /* MOCK ATTENDANCE STATUS PREVIEW */
               <div className="space-y-2">
                 <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                  {isVi ? 'Điểm danh hôm nay (Attendance)' : 'Today\'s Attendance'}
+                  {t('themesettings.preview_attendance')}
                 </h4>
                 <div className="border border-gray-200 rounded-2xl p-4 bg-white flex flex-col gap-3 shadow-sm">
                   {/* Mock Legend Row */}
@@ -456,115 +466,197 @@ export default function AdminThemeSettings() {
               </div>
             )}
 
-            {activePage === 'schedule' && (
-              /* MOCK SCHEDULE PREVIEW */
+            {activePage === 'schedule' && activeTab === 'schedule-admin' && (
+              /* MOCK SCHEDULE ADMIN PREVIEW */
               <div className="space-y-2">
                 <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                  {isVi ? 'Xem thử lịch biểu (Schedule Preview)' : 'Schedule Preview'}
+                  {t('themesettings.preview_admin_calendar')}
                 </h4>
                 <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 shadow-sm">
                   {/* Mock Registered Card */}
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-gray-400 font-mono block">REGISTERED (CÓ ĐĂNG KÝ)</span>
+                    <span className="text-[9px] font-bold text-gray-400 font-mono block">{t('themesettings.registered_label')}</span>
                     <div
                       style={{
-                        backgroundColor: getVal('[data-custom-component="Schedule-Registered"]', 'bg'),
-                        color: getVal('[data-custom-component="Schedule-Registered"]', 'text'),
-                        borderColor: getVal('[data-custom-component="Schedule-Registered"]', 'bg')
+                        backgroundColor: getVal('[data-custom-component="Schedule-Admin-Registered"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-Admin-Registered"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-Admin-Registered"]', 'bg')
                       }}
                       className="flex items-center gap-1.5 truncate px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-l-4 w-full shadow-sm"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Registered"]', 'text') }} />
-                      <span className="truncate">{getVal('[data-custom-component="Schedule-Registered"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Registered"]', 'label')}: 3 người</span>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Admin-Registered"]', 'text') }} />
+                      <span className="truncate">{getVal('[data-custom-component="Schedule-Admin-Registered"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Admin-Registered"]', 'label')}: 3 {t('themesettings.unit_people')}</span>
                     </div>
                   </div>
 
                   {/* Mock Unscheduled Card */}
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-gray-400 font-mono block">UNSCHEDULED (NGOÀI LỊCH)</span>
+                    <span className="text-[9px] font-bold text-gray-400 font-mono block">{t('themesettings.unscheduled_label')}</span>
                     <div
                       style={{
-                        backgroundColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'bg'),
-                        color: getVal('[data-custom-component="Schedule-Unscheduled"]', 'text'),
-                        borderColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'bg')
+                        backgroundColor: getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'bg')
                       }}
                       className="flex items-center gap-1.5 truncate px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-l-4 w-full shadow-sm"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Unscheduled"]', 'text') }} />
-                      <span className="truncate">{getVal('[data-custom-component="Schedule-Unscheduled"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Unscheduled"]', 'label')}: 1 người</span>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'text') }} />
+                      <span className="truncate">{getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'label').split(' - ')[1] || getVal('[data-custom-component="Schedule-Admin-Unscheduled"]', 'label')}: 1 {t('themesettings.unit_people')}</span>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {activePage === 'tasks' && (
-              /* MOCK TASKS PREVIEW */
-              <div className="space-y-6">
-                {/* Task Statuses Preview */}
-                <div className="space-y-2">
-                  <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                    {isVi ? '1. Trạng thái công việc (Task Statuses)' : '1. Task Statuses'}
-                  </h4>
-                  <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
-                    {[
-                      { key: '[data-custom-component="TaskStatus-Pending"]', labelKey: 'Pending' },
-                      { key: '[data-custom-component="TaskStatus-InProgress"]', labelKey: 'In Progress' },
-                      { key: '[data-custom-component="TaskStatus-Completed"]', labelKey: 'Completed' },
-                      { key: '[data-custom-component="TaskStatus-Overdue"]', labelKey: 'Overdue' }
-                    ].map(item => {
-                      const bg = getVal(item.key, 'bg');
-                      const text = getVal(item.key, 'text');
-                      const label = getVal(item.key, 'label');
-                      const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
-                      return (
-                        <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
-                          <span className="text-[11px] font-bold text-gray-500 font-mono">
-                            {item.labelKey}
-                          </span>
-                          <div
-                            style={{ backgroundColor: bg, color: text, borderColor: bg }}
-                            className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[8.5px] shadow-sm pointer-events-none"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
-                            <span>{cleanLabel}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+            {activePage === 'schedule' && activeTab === 'schedule-user' && (
+              /* MOCK SCHEDULE USER PREVIEW */
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                  {t('themesettings.preview_user_calendar')}
+                </h4>
+                <div className="border border-gray-200 rounded-2xl p-4 bg-white flex flex-col gap-4 shadow-sm">
+                  {/* Mock Legend Bar */}
+                  <div className="flex flex-wrap gap-2 text-[8px] font-bold text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-100 shadow-inner justify-center">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-2.5 h-2.5 rounded border"
+                        style={{
+                          backgroundColor: getVal('[data-custom-component="Schedule-User-Registered"]', 'bg'),
+                          borderColor: getVal('[data-custom-component="Schedule-User-Registered"]', 'bg')
+                        }}
+                      />
+                      <span style={{ color: getVal('[data-custom-component="Schedule-User-Registered"]', 'text') }}>
+                        {t('themesettings.legend_registered')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-2.5 h-2.5 rounded border"
+                        style={{
+                          backgroundColor: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'bg'),
+                          borderColor: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'bg')
+                        }}
+                      />
+                      <span style={{ color: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'text') }}>
+                        {t('themesettings.legend_unscheduled')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-2.5 h-2.5 rounded border"
+                        style={{
+                          backgroundColor: getVal('[data-custom-component="Schedule-User-Absent"]', 'bg'),
+                          borderColor: getVal('[data-custom-component="Schedule-User-Absent"]', 'bg')
+                        }}
+                      />
+                      <span style={{ color: getVal('[data-custom-component="Schedule-User-Absent"]', 'text') }}>{t('themesettings.legend_absent')}</span>
+                    </div>
+                  </div>
+
+                  {/* Mock Events rendering */}
+                  <div className="space-y-1">
+                    <span className="text-[8px] font-bold text-gray-400 uppercase block font-mono">{t('themesettings.mock_calendar_day')}</span>
+                    <div
+                      style={{
+                        backgroundColor: getVal('[data-custom-component="Schedule-User-Registered"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-User-Registered"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-User-Registered"]', 'bg')
+                      }}
+                      className="truncate px-2 py-1 rounded-md text-[9px] font-bold border-l-4 w-full"
+                    >
+                      08:30 - 12:00 [08:29 - 12:02]
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-User-Unscheduled"]', 'bg')
+                      }}
+                      className="truncate px-2 py-1 rounded-md text-[9px] font-bold border-l-4 w-full"
+                    >
+                      {t('themesettings.mock_unscheduled_label')}
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: getVal('[data-custom-component="Schedule-User-Absent"]', 'bg'),
+                        color: getVal('[data-custom-component="Schedule-User-Absent"]', 'text'),
+                        borderColor: getVal('[data-custom-component="Schedule-User-Absent"]', 'bg')
+                      }}
+                      className="truncate px-2 py-1 rounded-md text-[9px] font-bold border-l-4 w-full"
+                    >
+                      {t('themesettings.mock_absent_label')}
+                    </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Task Priorities Preview */}
-                <div className="space-y-2">
-                  <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
-                    {isVi ? '2. Mức độ ưu tiên (Task Priorities)' : '2. Task Priorities'}
-                  </h4>
-                  <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
-                    {[
-                      { key: '[data-custom-component="TaskPriority-High"]', labelKey: 'High' },
-                      { key: '[data-custom-component="TaskPriority-Medium"]', labelKey: 'Medium' },
-                      { key: '[data-custom-component="TaskPriority-Low"]', labelKey: 'Low' }
-                    ].map(item => {
-                      const bg = getVal(item.key, 'bg');
-                      const text = getVal(item.key, 'text');
-                      const label = getVal(item.key, 'label');
-                      const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
-                      return (
-                        <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
-                          <span className="text-[11px] font-bold text-gray-500 font-mono">
-                            {item.labelKey}
-                          </span>
-                          <div
-                            style={{ backgroundColor: bg, color: text, borderColor: bg }}
-                            className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-sm pointer-events-none"
-                          >
-                            <span>{cleanLabel}</span>
-                          </div>
+            {activePage === 'tasks' && activeTab === 'status' && (
+              /* MOCK TASKS STATUS PREVIEW */
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                  {t('themesettings.preview_task_status')}
+                </h4>
+                <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
+                  {[
+                    { key: '[data-custom-component="TaskStatus-Pending"]', labelKey: 'Pending' },
+                    { key: '[data-custom-component="TaskStatus-InProgress"]', labelKey: 'In Progress' },
+                    { key: '[data-custom-component="TaskStatus-Completed"]', labelKey: 'Completed' },
+                    { key: '[data-custom-component="TaskStatus-Overdue"]', labelKey: 'Overdue' }
+                  ].map(item => {
+                    const bg = getVal(item.key, 'bg');
+                    const text = getVal(item.key, 'text');
+                    const label = getVal(item.key, 'label');
+                    const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
+                    return (
+                      <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
+                        <span className="text-[11px] font-bold text-gray-500 font-mono">
+                          {item.labelKey}
+                        </span>
+                        <div
+                          style={{ backgroundColor: bg, color: text, borderColor: bg }}
+                          className="flex items-center gap-1.5 font-black uppercase tracking-widest rounded-full border px-3 py-1 text-[8.5px] shadow-sm pointer-events-none"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: text }} />
+                          <span>{cleanLabel}</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activePage === 'tasks' && activeTab === 'priority' && (
+              /* MOCK TASKS PRIORITIES PREVIEW */
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest px-1">
+                  {t('themesettings.preview_task_priority')}
+                </h4>
+                <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 flex flex-col gap-2.5 shadow-sm">
+                  {[
+                    { key: '[data-custom-component="TaskPriority-High"]', labelKey: 'High' },
+                    { key: '[data-custom-component="TaskPriority-Medium"]', labelKey: 'Medium' },
+                    { key: '[data-custom-component="TaskPriority-Low"]', labelKey: 'Low' }
+                  ].map(item => {
+                    const bg = getVal(item.key, 'bg');
+                    const text = getVal(item.key, 'text');
+                    const label = getVal(item.key, 'label');
+                    const cleanLabel = label.includes(' - ') ? label.split(' - ')[1] : label;
+                    return (
+                      <div key={item.key} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-150 shadow-sm px-4">
+                        <span className="text-[11px] font-bold text-gray-500 font-mono">
+                          {item.labelKey}
+                        </span>
+                        <div
+                          style={{ backgroundColor: bg, color: text, borderColor: bg }}
+                          className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-sm pointer-events-none"
+                        >
+                          <span>{cleanLabel}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

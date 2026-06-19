@@ -19,8 +19,14 @@ const ScheduleCalendar = React.forwardRef(({
   initialDate,
   events,
   selectedDate,
+  workDays = [],
+  editable = false,
+  droppable = false,
+  headerToolbar,
+  views,
   onDateClick,
   onEventClick,
+  onEventDrop,
   onDatesSet
 }, ref) => {
   const { i18n } = useTranslation();
@@ -35,10 +41,15 @@ const ScheduleCalendar = React.forwardRef(({
         locales={LOCALES}
         locale={i18n.language === 'vi' ? 'vi' : 'en'}
         firstDay={0}
-        views={VIEWS}
+        views={views || VIEWS}
         events={events}
+        eventOrder="priorityOrder"
+        eventOrderStrict={true}
+        editable={editable}
+        droppable={droppable}
         height="auto"
         dayMaxEvents={true}
+        eventDrop={onEventDrop}
         dateClick={onDateClick}
         eventClick={(info) => {
           if (onEventClick) {
@@ -56,18 +67,27 @@ const ScheduleCalendar = React.forwardRef(({
           const classes = [];
           if (dateStr === selectedDate) classes.push('fc-selected-day');
 
+          if (workDays.includes(dateStr) && arg.view.type === 'dayGridMonth') {
+            classes.push('fc-work-day');
+          }
+
           return classes;
         }}
         eventContent={(arg) => {
-          const isSummary = arg.event.extendedProps.isSummary;
-          const isGroupSummary = arg.event.extendedProps.isGroupSummary;
+          if (arg.event.extendedProps?.isWorkHour) return null;
+
+          const isSummary = arg.event.extendedProps?.isSummary;
+          const isGroupSummary = arg.event.extendedProps?.isGroupSummary;
 
           if (isGroupSummary) {
             const groupType = arg.event.extendedProps.groupType;
+            const customComp = groupType === 'registered' ? 'Schedule-Admin-Registered' :
+                               groupType === 'unscheduled' ? 'Schedule-Admin-Unscheduled' :
+                               `CalendarCard-${groupType}`;
             return (
               <div
                 className="flex items-center gap-1.5 truncate px-2.5 py-1 rounded-lg text-[0.7rem] font-medium border-l-4 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
-                data-custom-component={`CalendarCard-${groupType}`}
+                data-custom-component={customComp}
                 style={{
                   backgroundColor: arg.event.backgroundColor,
                   color: arg.event.textColor,
@@ -89,10 +109,14 @@ const ScheduleCalendar = React.forwardRef(({
               </div>
             );
           }
+
+          const customComp = arg.event.extendedProps?.customComponent || 'CalendarCard-Individual';
+          const isTask = arg.event.extendedProps?.isTask;
+
           return (
             <div
-              className="truncate px-2 py-1 rounded-md text-[0.7rem] font-medium border-l-4 w-full cursor-pointer"
-              data-custom-component="CalendarCard-Individual"
+              className={`truncate px-2 py-1 rounded-md text-[0.7rem] border-l-4 w-full cursor-pointer ${isTask ? 'font-bold' : 'font-medium'}`}
+              data-custom-component={customComp}
               style={{
                 backgroundColor: arg.event.backgroundColor,
                 color: arg.event.textColor,
@@ -100,7 +124,10 @@ const ScheduleCalendar = React.forwardRef(({
               }}
               title={arg.event.title}
             >
-              {arg.event.title}
+              {arg.view.type?.startsWith('list') && arg.timeText && (
+                <span className="mr-1 opacity-75">{arg.timeText}</span>
+              )}
+              <span>{arg.event.title}</span>
             </div>
           );
         }}
@@ -108,5 +135,7 @@ const ScheduleCalendar = React.forwardRef(({
     </div>
   );
 });
+
+ScheduleCalendar.displayName = 'ScheduleCalendar';
 
 export default ScheduleCalendar;

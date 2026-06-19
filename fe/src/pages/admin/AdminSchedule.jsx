@@ -209,8 +209,8 @@ export default function AdminSchedule() {
       }
     });
 
-    const regTheme = theme?.['[data-custom-component="Schedule-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' };
-    const unschedTheme = theme?.['[data-custom-component="Schedule-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' };
+    const regTheme = theme?.['[data-custom-component="Schedule-Admin-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' };
+    const unschedTheme = theme?.['[data-custom-component="Schedule-Admin-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' };
 
     const groupEvents = [];
     Object.entries(aggregated).forEach(([date, counts]) => {

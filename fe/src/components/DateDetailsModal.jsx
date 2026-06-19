@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useTaskColor } from '../context/ThemeContext';
+import { formatVNTime } from '../utils/dateUtils';
 import {
   XMarkIcon,
   BriefcaseIcon,
@@ -10,50 +11,11 @@ import {
   EyeIcon
 } from '@heroicons/react/24/outline';
 
-const parseVNTime = (str) => {
-  if (!str) return null;
-  if (str.includes('+') || str.includes('Z')) return new Date(str);
-  return new Date(str.replace(' ', 'T') + '+07:00');
-};
-
-const formatTime = (str) => {
-  const d = parseVNTime(str);
-  if (!d) return '';
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
 export default function DateDetailsModal({ menuConfig, onClose }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const getTaskColor = useTaskColor();
   const [modalStatusFilter, setModalStatusFilter] = useState('all');
-
-  const getTaskColor = useCallback((status) => {
-    const s = status?.toLowerCase();
-    let themeKey = 'TaskStatus-Pending';
-    let defaultColors = { bg: '#9ca3af', text: '#ffffff' };
-
-    if (s === 'overdue') {
-      themeKey = 'TaskStatus-Overdue';
-      defaultColors = { bg: '#ef4444', text: '#ffffff' };
-    } else if (s === 'in progress') {
-      themeKey = 'TaskStatus-InProgress';
-      defaultColors = { bg: '#3b82f6', text: '#ffffff' };
-    } else if (s === 'completed') {
-      themeKey = 'TaskStatus-Completed';
-      defaultColors = { bg: '#10b981', text: '#ffffff' };
-    }
-
-    const customColors = theme?.[`[data-custom-component="${themeKey}"]`];
-    const bg = customColors?.bg || defaultColors.bg;
-    const text = customColors?.text || defaultColors.text;
-
-    return {
-      bg,
-      border: bg,
-      text
-    };
-  }, [theme]);
 
   const filteredModalTasks = useMemo(() => {
     if (!menuConfig) return [];
@@ -127,7 +89,7 @@ export default function DateDetailsModal({ menuConfig, onClose }) {
                 <div>
                   <div className="text-sm font-bold text-emerald-900">{t('myschedule.active_work_day')}</div>
                   <div className="text-xs text-emerald-600">
-                  {menuConfig.shift ? `${formatTime(menuConfig.shift.start)} - ${formatTime(menuConfig.shift.end)}` : t('myschedule.standard_shift')}
+                  {menuConfig.shift ? `${formatVNTime(menuConfig.shift.start)} - ${formatVNTime(menuConfig.shift.end)}` : t('myschedule.standard_shift')}
                   </div>
                 </div>
               </div>

@@ -354,6 +354,12 @@ export const vi = {
       col_task_name: "Tên công việc",
       col_date: "Hạn chót",
       col_status: "Trạng thái",
+      legend_registered_not_checkin: "Đăng ký nhưng chưa check-in",
+      legend_registered_checked_in: "Đang làm việc (Đã check-in)",
+      legend_registered_checked_out: "Đã hoàn thành (Đã check-out)",
+      status_not_checkin: "Chưa check-in",
+      status_checked_in: "Đang làm việc",
+      status_checked_out: "Hoàn thành",
     },
     workhours: {
       title: "Báo cáo giờ làm việc",

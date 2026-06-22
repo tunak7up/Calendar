@@ -355,6 +355,12 @@ export const en = {
       col_task_name: "Task Name",
       col_date: "Deadline",
       col_status: "Status",
+      legend_registered_not_checkin: "Registered but not checked-in",
+      legend_registered_checked_in: "Working (Checked-in)",
+      legend_registered_checked_out: "Completed (Checked-out)",
+      status_not_checkin: "Not checked-in",
+      status_checked_in: "Working",
+      status_checked_out: "Completed",
     },
     workhours: {
       title: "Work Hours Report",

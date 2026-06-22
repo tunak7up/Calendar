@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   ClipboardDocumentCheckIcon,
   ClockIcon,
@@ -6,7 +6,9 @@ import {
   ClipboardDocumentListIcon,
   PlusIcon,
   MagnifyingGlassIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
@@ -16,12 +18,23 @@ import { taskService } from '../../services/taskService';
 import SortableTable from '../../components/SortableTable';
 import WorkHoursChart from '../../components/WorkHoursChart';
 import DateRangeFilter from '../../components/DateRangeFilter';
+import MiniCalendar from '../../components/MiniCalendar';
 import { useTranslation } from 'react-i18next';
 
 const now = new Date();
 const todayStr = now.toISOString().split('T')[0];
 const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 const defaultChartEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+const formatDateDisplay = (isoStr) => {
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return '';
+  return [
+    String(d.getDate()).padStart(2, '0'),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    d.getFullYear(),
+  ].join('/');
+};
 
 const isOverdue = (task) => {
   if (task.status?.toLowerCase() === 'completed') return false;
@@ -89,29 +102,70 @@ export default function AdminDashboard() {
   const [allSchedules, setAllSchedules] = useState([]);
   const [allReports, setAllReports] = useState([]);
 
+  const [attendanceDate, setAttendanceDate] = useState(todayStr);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [showAttendanceCalendar, setShowAttendanceCalendar] = useState(false);
+  const [inputDateStr, setInputDateStr] = useState(() => formatDateDisplay(todayStr));
+
+  const applyInputDate = (raw) => {
+    const parts = raw.replace(/-/g, '/').split('/');
+    if (parts.length === 3) {
+      const [dd, mm, yyyy] = parts;
+      const iso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+      const d = new Date(iso);
+      if (!isNaN(d.getTime())) {
+        setAttendanceDate(iso);
+        setInputDateStr(formatDateDisplay(iso));
+        return;
+      }
+    }
+    setInputDateStr(formatDateDisplay(attendanceDate));
+  };
+
+  const handleDateOffset = (offset) => {
+    const current = new Date(attendanceDate);
+    if (isNaN(current.getTime())) return;
+    current.setDate(current.getDate() + offset);
+    const newDateStr = current.toISOString().split('T')[0];
+    setAttendanceDate(newDateStr);
+    setInputDateStr(formatDateDisplay(newDateStr));
+  };
+
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const [empRes, reqRes, repRes, schedRes, taskRes] = await Promise.all([
+      const [empRes, reqRes, taskRes] = await Promise.all([
         apiFetch('/person'),
         requestService.getAllRequests(),
-        apiFetch(`/daily-report/range?start=${todayStr}&end=${todayStr}`),
-        scheduleService.getSchedulesByRange
-          ? scheduleService.getSchedulesByRange(todayStr, todayStr)
-          : scheduleService.getAllSchedules(),
         taskService.getAllTasks()
       ]);
       if (empRes.success) setEmployees(empRes.data);
       if (reqRes.success) setRequests(reqRes.data);
-      if (repRes.success) setReports(repRes.data);
-      if (schedRes.success) {
-        setSchedules(schedRes.data.filter(s => s.working_date && s.working_date.startsWith(todayStr)));
-      }
       if (taskRes.success) setTasks(taskRes.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchAttendanceData = useCallback(async (date) => {
+    setAttendanceLoading(true);
+    try {
+      const [repRes, schedRes] = await Promise.all([
+        apiFetch(`/daily-report/range?start=${date}&end=${date}`),
+        scheduleService.getSchedulesByRange
+          ? scheduleService.getSchedulesByRange(date, date)
+          : scheduleService.getAllSchedules()
+      ]);
+      if (repRes.success) setReports(repRes.data);
+      if (schedRes.success) {
+        setSchedules(schedRes.data.filter(s => s.working_date && s.working_date.startsWith(date)));
+      }
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+    } finally {
+      setAttendanceLoading(false);
     }
   }, []);
 
@@ -134,6 +188,7 @@ export default function AdminDashboard() {
   }, [chartStartDate, chartEndDate]);
 
   useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+  useEffect(() => { fetchAttendanceData(attendanceDate); }, [attendanceDate, fetchAttendanceData]);
   useEffect(() => { fetchChartData(); }, [fetchChartData]);
 
   const pendingRequests = requests.filter(req => req.status?.toLowerCase() === 'pending');
@@ -308,14 +363,69 @@ export default function AdminDashboard() {
         {/* Attendance */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px] lg:h-full overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex flex-col gap-2.5">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-2">
               <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-blue-500" />
                 {t('admindashboard.attendance_title')}
+                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full ml-1">
+                  {t('admindashboard.attendance_count', { count: workingCount })}
+                </span>
               </h2>
-              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                {t('admindashboard.attendance_count', { count: workingCount })}
-              </span>
+              <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-xl border border-gray-200 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => handleDateOffset(-1)}
+                  title={t('common.previous_day') || 'Ngày trước'}
+                  className="p-1 rounded-lg text-gray-500 hover:bg-white hover:shadow-sm hover:text-gray-700 hover:border-gray-200/50 border border-transparent transition-all cursor-pointer"
+                >
+                  <ChevronLeftIcon className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={inputDateStr}
+                    placeholder="dd/mm/yyyy"
+                    onChange={(e) => setInputDateStr(e.target.value)}
+                    onBlur={(e) => applyInputDate(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    className="w-[90px] px-2 py-1 text-xs font-mono font-bold text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-gray-300 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAttendanceCalendar((v) => !v)}
+                    title="Chọn ngày"
+                    className="ml-1 p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/50 transition-all cursor-pointer"
+                  >
+                    <CalendarDaysIcon className="w-3.5 h-3.5" />
+                  </button>
+
+                  {showAttendanceCalendar && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAttendanceCalendar(false)} />
+                      <div className="absolute top-full right-0 z-50 mt-2 p-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-[280px]">
+                        <MiniCalendar
+                          selectedDate={attendanceDate}
+                          onSelectDate={(date) => {
+                            setAttendanceDate(date);
+                            setInputDateStr(formatDateDisplay(date));
+                            setShowAttendanceCalendar(false);
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDateOffset(1)}
+                  title={t('common.next_day') || 'Ngày tiếp theo'}
+                  className="p-1 rounded-lg text-gray-500 hover:bg-white hover:shadow-sm hover:text-gray-700 hover:border-gray-200/50 border border-transparent transition-all cursor-pointer"
+                >
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-gray-500 bg-white p-2 rounded-xl border border-gray-100 shadow-inner">
               <div className="flex items-center gap-1.5">
@@ -343,7 +453,16 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {todayAttendance.length === 0 ? (
+                {attendanceLoading ? (
+                  <tr>
+                    <td colSpan="4" className="px-5 py-12 text-center text-gray-400 font-medium">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+                        <span>{t('common.loading') || 'Đang tải...'}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : todayAttendance.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-5 py-8 text-center text-gray-400 font-medium">
                       {t('admindashboard.no_attendance')}

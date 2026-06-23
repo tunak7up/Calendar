@@ -115,8 +115,23 @@ export default function AdminThemeSettings() {
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex items-center">
+      <div className="flex items-center justify-between sm:justify-start gap-4">
         <BackButton />
+        <button
+          onClick={() => {
+            const sidebar = document.getElementById('theme-settings-sidebar');
+            if (sidebar) {
+              sidebar.classList.toggle('-translate-x-full');
+            }
+          }}
+          type="button"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-xl shadow-sm sm:hidden hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
+        >
+          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span>{i18n.language === 'vi' ? 'Menu cài đặt' : 'Settings Menu'}</span>
+        </button>
       </div>
 
       {/* Header */}

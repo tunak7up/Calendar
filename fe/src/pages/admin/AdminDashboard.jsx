@@ -389,7 +389,7 @@ export default function AdminDashboard() {
                   {t('admindashboard.attendance_count', { count: workingCount })}
                 </span>
               </h2>
-              <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-xl border border-gray-200 shadow-sm relative">
                 <button
                   type="button"
                   onClick={() => handleDateOffset(-1)}
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                   <ChevronLeftIcon className="w-3.5 h-3.5" />
                 </button>
 
-                <div className="relative flex items-center">
+                <div className="flex items-center">
                   <input
                     type="text"
                     value={inputDateStr}
@@ -421,7 +421,7 @@ export default function AdminDashboard() {
                   {showAttendanceCalendar && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowAttendanceCalendar(false)} />
-                      <div className="absolute top-full right-0 z-50 mt-2 p-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-[280px]">
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-0 z-50 mt-2 p-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-[280px]">
                         <MiniCalendar
                           selectedDate={attendanceDate}
                           onSelectDate={(date) => {

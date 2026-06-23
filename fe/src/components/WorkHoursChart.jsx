@@ -36,26 +36,50 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
   const parseScheduleHours = (start, end) => {
     if (!start || !end) return 0;
     try {
-      const s = new Date(start);
-      const e = new Date(end);
-      let rawHours;
-      let startSeconds;
-      let endSeconds;
-      if (!isNaN(s) && !isNaN(e)) {
-        rawHours = Math.max(0, (e - s) / 3_600_000);
-        startSeconds = s.getHours() * 3600 + s.getMinutes() * 60 + s.getSeconds();
-        endSeconds = e.getHours() * 3600 + e.getMinutes() * 60 + e.getSeconds();
-      } else {
-        const [sH, sM] = start.split(':').map(Number);
-        const [eH, eM] = end.split(':').map(Number);
-        rawHours = Math.max(0, (eH + eM / 60) - (sH + sM / 60));
-        startSeconds = sH * 3600 + sM * 60;
-        endSeconds = eH * 3600 + eM * 60;
+      const parseDateSafe = (str) => {
+        if (!str) return null;
+        let d = new Date(str);
+        if (!isNaN(d.getTime())) return d;
+        // Fallback for iOS/Safari: parse manually
+        const match = str.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:[T ](\d{2}):(\d{2}):(\d{2}))?/);
+        if (match) {
+          const [, y, m, day, h = '00', min = '00', s = '00'] = match;
+          const utcTime = Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10), parseInt(h, 10) - 7, parseInt(min, 10), parseInt(s, 10));
+          const target = new Date(utcTime);
+          if (!isNaN(target.getTime())) return target;
+        }
+        return null;
+      };
+
+      const s = parseDateSafe(start);
+      const e = parseDateSafe(end);
+
+      if (s && e) {
+        const rawHours = Math.max(0, (e - s) / 3_600_000);
+        const startSeconds = s.getHours() * 3600 + s.getMinutes() * 60 + s.getSeconds();
+        const endSeconds = e.getHours() * 3600 + e.getMinutes() * 60 + e.getSeconds();
+        const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+        const breakDeduction = spansLunch ? 1.0 : 0.0;
+        return Math.max(0, rawHours - breakDeduction);
       }
 
-      const spansLunch = startSeconds < 43200 && endSeconds > 46800;
-      const breakDeduction = spansLunch ? 1.0 : 0.0;
-      return Math.max(0, rawHours - breakDeduction);
+      // Fallback if strings are just "HH:MM"
+      const sMatch = start.match(/(\d{2}):(\d{2})/);
+      const eMatch = end.match(/(\d{2}):(\d{2})/);
+      if (sMatch && eMatch) {
+        const sH = parseInt(sMatch[1], 10);
+        const sM = parseInt(sMatch[2], 10);
+        const eH = parseInt(eMatch[1], 10);
+        const eM = parseInt(eMatch[2], 10);
+        const rawHours = Math.max(0, (eH + eM / 60) - (sH + sM / 60));
+        const startSeconds = sH * 3600 + sM * 60;
+        const endSeconds = eH * 3600 + eM * 60;
+        const spansLunch = startSeconds < 43200 && endSeconds > 46800;
+        const breakDeduction = spansLunch ? 1.0 : 0.0;
+        return Math.max(0, rawHours - breakDeduction);
+      }
+
+      return 0;
     } catch { return 0; }
   };
 

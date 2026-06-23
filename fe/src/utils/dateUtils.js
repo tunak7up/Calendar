@@ -39,9 +39,40 @@ export const formatDateTime = (dateStr) => {
 // Parse datetime string from BE (assumes VN time and adds +07:00 if not present)
 export const parseVNTime = (str) => {
   if (!str) return null;
-  if (str.includes('+') || str.includes('Z')) return new Date(str);
-  // Normalize space to T and append +07:00 offset
-  return new Date(str.replace(' ', 'T') + '+07:00');
+  if (str instanceof Date) return str;
+
+  // If it's not a string, try standard parsing
+  if (typeof str !== 'string') {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Check if it already has offset/UTC indicator
+  if (str.includes('Z') || /([+-]\d{2}:?\d{2})$/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // Otherwise, parse components manually to avoid iOS/Safari bugs
+  const match = str.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?)?/);
+  if (match) {
+    const [, y, m, d, h = '00', min = '00', s = '00'] = match;
+    const year = parseInt(y, 10);
+    const month = parseInt(m, 10) - 1;
+    const date = parseInt(d, 10);
+    const hours = parseInt(h, 10);
+    const minutes = parseInt(min, 10);
+    const seconds = parseInt(s, 10);
+
+    const utcTime = Date.UTC(year, month, date, hours, minutes, seconds);
+    const targetDate = new Date(utcTime - 7 * 60 * 60 * 1000); // VN offset is +7 hours
+    if (!isNaN(targetDate.getTime())) {
+      return targetDate;
+    }
+  }
+
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
 };
 
 // Formats value as YYYY-MM-DD in VN timezone

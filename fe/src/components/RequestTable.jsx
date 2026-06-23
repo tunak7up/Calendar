@@ -103,7 +103,7 @@ export default function RequestTable({
           >
             {/* Requester column (Admin only) */}
             {isAdmin && (
-              <td className="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+              <td className="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-gray-900 text-[15px]">
                 {requesterName}
               </td>
             )}
@@ -111,20 +111,19 @@ export default function RequestTable({
             {/* Type column */}
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className={`p-1.5 sm:p-2 rounded-lg ${
-                  item.type === 'leave' ? 'bg-orange-100 text-orange-500' :
+                <div className={`p-1.5 sm:p-2 rounded-lg ${item.type === 'leave' ? 'bg-orange-100 text-orange-500' :
                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? 'bg-purple-100 text-purple-500' :
-                  'bg-blue-100 text-blue-500'
-                }`}>
+                    'bg-blue-100 text-blue-500'
+                  }`}>
                   {item.type === 'leave' ? <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" /> :
-                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5" /> :
-                   <BriefcaseIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                      <BriefcaseIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </div>
                 <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                   {item.type === 'register' ? t('history.type_register') :
-                   item.type === 'leave' ? t('history.type_leave') :
-                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? t(`register.exception_${item.type}`) :
-                   item.type}
+                    item.type === 'leave' ? t('history.type_leave') :
+                      ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? t(`register.exception_${item.type}`) :
+                        item.type}
                 </span>
               </div>
             </td>

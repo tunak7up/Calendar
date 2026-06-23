@@ -1,5 +1,5 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -56,8 +56,8 @@ export default function HeaderPage({ isAdmin }) {
             </div>
 
             {/* Logo */}
-            <div className="flex shrink-0 items-center mr-8">
-              <Link to="/" className="text-[#0056b3] font-[800] text-[1.15rem] tracking-tight hover:text-[#004494]" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
+            <div className="flex shrink-0 items-center mr-2 sm:mr-8">
+              <Link to="/" className="text-[#0056b3] font-[800] text-base sm:text-[1.15rem] tracking-tight hover:text-[#004494]" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
             </div>
 
             {/* Desktop Nav */}
@@ -83,7 +83,7 @@ export default function HeaderPage({ isAdmin }) {
           </div>
 
           {/* Right side items */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3">
             {/* Language Selector */}
             <LanguageSelector />
 
@@ -114,11 +114,9 @@ export default function HeaderPage({ isAdmin }) {
             <Menu as="div" className="relative ml-1">
               <MenuButton className="flex items-center gap-2 rounded-md bg-white px-2 py-1 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe] focus:ring-offset-1">
                 <span className="sr-only">Mở menu người dùng</span>
-                <img
-                  alt="User Avatar"
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.username || 'U')}&background=101c23&color=12a4d9&rounded=true&size=32`}
-                  className="h-8 w-8 rounded-md"
-                />
+                <div className="h-8 w-8 rounded-md bg-blue-50 flex items-center justify-center text-[#0056b3] flex-shrink-0">
+                  <UserIcon className="h-5 w-5" aria-hidden="true" />
+                </div>
                 <span className="hidden sm:block text-sm font-semibold text-gray-700">{user?.name || user?.username}</span>
               </MenuButton>
               <MenuItems

@@ -60,7 +60,7 @@ const EmployeeMultiFilter = ({ employees = [], selectedIds = [], onSelectionChan
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
-      <div ref={containerRef} className="relative group min-w-[220px] sm:max-w-[260px] flex-shrink-0">
+      <div ref={containerRef} className="relative group w-full sm:min-w-[220px] sm:max-w-[260px] flex-shrink-0">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
           <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 group-focus-within:text-[#0056b3] transition-colors" />
         </div>

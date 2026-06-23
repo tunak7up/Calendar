@@ -436,7 +436,7 @@ export default function AdminSchedule() {
           </div>
 
           {/* Legend Section (Mobile only) */}
-          <div className="flex sm:hidden flex-wrap items-center gap-x-5 gap-y-2 mb-4 bg-gray-50/60 px-4 py-2 rounded-xl border border-gray-200/60 w-full shadow-sm">
+          <div className="flex sm:hidden flex-wrap items-center gap-x-5 gap-y-2 mb-4 bg-white px-4 py-2 rounded-xl border border-gray-150/80 w-full shadow-sm">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
               {t('adminschedule.legend_title', { defaultValue: 'Chú thích' })}
             </span>

@@ -421,7 +421,7 @@ export default function AdminDashboard() {
                   {showAttendanceCalendar && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowAttendanceCalendar(false)} />
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-0 z-50 mt-2 p-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-[280px]">
+                      <div className="absolute top-full left-0 sm:left-auto sm:right-0 z-50 mt-2 p-4 bg-white border border-gray-200 shadow-2xl rounded-2xl w-[280px]">
                         <MiniCalendar
                           selectedDate={attendanceDate}
                           onSelectDate={(date) => {

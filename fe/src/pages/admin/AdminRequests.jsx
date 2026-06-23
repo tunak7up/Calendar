@@ -127,6 +127,33 @@ export default function AdminRequests() {
     return list;
   }, [requests, filterStatus, filterType, selectedEmployeeIds, searchTerm, sortKey, sortDir]);
 
+  const handleApproveAll = async () => {
+    const pendingRequests = filteredRequests.filter(req => req.status?.toLowerCase() === 'pending');
+    if (pendingRequests.length === 0) {
+      alert(t('requests.no_pending', { defaultValue: 'Không có yêu cầu nào đang chờ duyệt' }));
+      return;
+    }
+    if (!window.confirm(t('requests.confirm_approve_all', { defaultValue: `Bạn có chắc muốn duyệt nhanh ${pendingRequests.length} yêu cầu?` }))) {
+      return;
+    }
+    
+    setLoading(true);
+    let successCount = 0;
+    for (const req of pendingRequests) {
+      try {
+        const result = await apiFetch(`/request/${req.request_id || req.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: 'approved' })
+        });
+        if (result.success) successCount++;
+      } catch (error) {
+        console.error('Error approving request:', req.request_id || req.id, error);
+      }
+    }
+    alert(t('requests.approve_all_success', { defaultValue: `Đã duyệt thành công ${successCount}/${pendingRequests.length} yêu cầu.` }));
+    fetchRequests();
+  };
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header Section */}
@@ -136,6 +163,13 @@ export default function AdminRequests() {
           <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="admin-requests-subtitle" data-customizable-type="text">{t('requests.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={handleApproveAll}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-bold rounded-xl shadow-sm border border-emerald-200 transition-all active:scale-95 flex-1 md:flex-none justify-center"
+          >
+            <ClipboardDocumentCheckIcon className="w-5 h-5" />
+            <span>{t('requests.approve_all', { defaultValue: 'Duyệt nhanh' })}</span>
+          </button>
           <button
             onClick={() => navigate('/admin/preset-reasons')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold rounded-xl shadow-sm border border-blue-200 transition-all active:scale-95 flex-1 md:flex-none justify-center"
@@ -152,8 +186,8 @@ export default function AdminRequests() {
       </div>
 
       {/* Filters Section */}
-      <div className="flex flex-col md:flex-row flex-wrap items-center gap-4 mb-6">
-        <div className="relative w-full md:flex-1 min-w-[200px]">
+      <div className="grid grid-cols-2 md:flex md:flex-row md:flex-wrap items-center gap-3 mb-6">
+        <div className="col-span-2 md:flex-1 relative md:min-w-[200px]">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
           </div>
@@ -169,7 +203,7 @@ export default function AdminRequests() {
           />
         </div>
         
-        <div className="relative w-full md:w-auto min-w-[140px] group">
+        <div className="relative col-span-1 md:w-auto md:min-w-[140px] group">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 group-hover:text-blue-500 transition-colors z-10">
             <CalendarIcon className="w-4 h-4" />
           </div>
@@ -185,7 +219,7 @@ export default function AdminRequests() {
           />
         </div>
 
-        <div className="w-full md:w-auto min-w-[150px]">
+        <div className="col-span-1 md:w-auto md:min-w-[150px]">
           <select
             value={filterType}
             onChange={(e) => {
@@ -204,7 +238,7 @@ export default function AdminRequests() {
           </select>
         </div>
 
-        <div className="w-full md:w-auto min-w-[150px]">
+        <div className="col-span-1 md:w-auto md:min-w-[150px]">
           <select
             value={filterStatus}
             onChange={(e) => {
@@ -220,7 +254,7 @@ export default function AdminRequests() {
           </select>
         </div>
         
-        <div className="w-full md:w-auto min-w-[200px]">
+        <div className="col-span-1 md:w-auto md:min-w-[200px]">
           <EmployeeMultiFilter
             employees={employees}
             selectedIds={selectedEmployeeIds}

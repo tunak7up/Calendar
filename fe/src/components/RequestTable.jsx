@@ -53,10 +53,10 @@ export default function RequestTable({
   const columns = [
     isAdmin && { key: 'requester', label: t('requests.col_requester'), sortable: true },
     { key: 'type', label: t('register.exception_type'), sortable: true },
-    { key: 'reason', label: t('register.leave_reason'), sortable: true },
-    { key: 'date', label: isAdmin ? t('requests.col_sent_date') : t('history.col_date'), sortable: true },
+    { key: 'reason', label: t('register.leave_reason'), sortable: true, className: 'hidden md:table-cell' },
+    { key: 'date', label: isAdmin ? t('requests.col_sent_date') : t('history.col_date'), sortable: true, className: 'hidden sm:table-cell' },
     { key: 'status', label: t('history.col_status'), sortable: true, align: 'center' },
-    !isAdmin && { key: 'approver', label: t('history.col_approver'), sortable: true },
+    !isAdmin && { key: 'approver', label: t('history.col_approver'), sortable: true, className: 'hidden md:table-cell' },
     isAdmin && { key: 'actions', label: t('requests.col_actions'), sortable: false, align: 'center' },
   ].filter(Boolean);
 
@@ -71,7 +71,7 @@ export default function RequestTable({
       totalItems={totalItems}
       onPageChange={onPageChange}
       onSortChange={onSortChange}
-      tableClassName="min-w-[700px]"
+      tableClassName="w-full md:min-w-[700px]"
       stickyHeader
       containerHeight="h-[500px]"
       renderRow={(item) => {
@@ -103,24 +103,24 @@ export default function RequestTable({
           >
             {/* Requester column (Admin only) */}
             {isAdmin && (
-              <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+              <td className="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
                 {requesterName}
               </td>
             )}
 
             {/* Type column */}
-            <td className="px-6 py-4 whitespace-nowrap">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className={`p-1.5 sm:p-2 rounded-lg ${
                   item.type === 'leave' ? 'bg-orange-100 text-orange-500' :
                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? 'bg-purple-100 text-purple-500' :
                   'bg-blue-100 text-blue-500'
                 }`}>
-                  {item.type === 'leave' ? <CalendarIcon className="w-5 h-5" /> :
-                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-5 h-5" /> :
-                   <BriefcaseIcon className="w-5 h-5" />}
+                  {item.type === 'leave' ? <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                   ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                   <BriefcaseIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </div>
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                   {item.type === 'register' ? t('history.type_register') :
                    item.type === 'leave' ? t('history.type_leave') :
                    ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'].includes(item.type) ? t(`register.exception_${item.type}`) :
@@ -130,32 +130,32 @@ export default function RequestTable({
             </td>
 
             {/* Reason column */}
-            <td className="px-6 py-4 max-w-[200px] truncate font-medium text-gray-600" title={item.reason || ''}>
+            <td className="hidden md:table-cell px-6 py-4 max-w-[200px] truncate font-medium text-gray-600" title={item.reason || ''}>
               {item.reason || '—'}
             </td>
 
             {/* Date column */}
-            <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">
+            <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap font-medium text-gray-600">
               {displayDate}
             </td>
 
             {/* Status column */}
-            <td className="px-6 py-4 whitespace-nowrap text-center">
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
               {getStatusBadge(item.status)}
             </td>
 
             {/* Approver column (User only) */}
             {!isAdmin && (
-              <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+              <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-gray-600">
                 {approverName}
               </td>
             )}
 
             {/* Actions column (Admin only) */}
             {isAdmin && (
-              <td className="px-6 py-4 whitespace-nowrap text-center">
+              <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
                 {item.status?.toLowerCase() === 'pending' && (
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center gap-1 sm:gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -164,7 +164,7 @@ export default function RequestTable({
                       title={t('requests.title_approve')}
                       className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
                     >
-                      <CheckIcon className="w-5 h-5" />
+                      <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     <button
                       onClick={(e) => {
@@ -174,7 +174,7 @@ export default function RequestTable({
                       title={t('requests.title_reject')}
                       className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
                     >
-                      <XMarkIcon className="w-5 h-5" />
+                      <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 )}

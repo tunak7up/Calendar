@@ -6,6 +6,7 @@ export const vi = {
       schedule: "Lịch của tôi",
       register: "Đăng ký",
       tasks: "Công việc",
+      reports: "Báo cáo",
       admin_dashboard: "Bảng điều khiển ",
       admin_schedule: "Lịch biểu ",
       admin_employees: "Nhân viên",
@@ -457,6 +458,7 @@ export const vi = {
     reporthistory: {
       title: "Lịch sử báo cáo hàng ngày",
       subtitle: "Xem nội dung báo cáo và thời gian làm việc hàng ngày của nhân viên",
+      subtitle_user: "Xem nội dung báo cáo và thời gian làm việc hàng ngày của bạn",
       col_date: "Ngày làm việc",
       col_employee: "Nhân viên",
       col_checkin: "Giờ Check In",

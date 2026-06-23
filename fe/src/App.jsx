@@ -23,6 +23,7 @@ import AdminSchedule from './pages/admin/AdminSchedule'
 import AdminWorkHours from './pages/admin/AdminWorkHours'
 import Profile from './pages/user/Profile'
 import Dashboard from './pages/user/Dashboard'
+import ReportHistory from './pages/user/ReportHistory'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportHistory from './pages/admin/AdminReportHistory'
 import AdminPresetReasons from './pages/admin/AdminPresetReasons'
@@ -132,6 +133,7 @@ function App() {
             <Route path="/register/exception" element={<RegisterException />} />
             <Route path="/history" element={<RegistrationHistory />} />
             <Route path="/history/:id" element={<RegistrationHistoryDetails />} />
+            <Route path="/reports" element={<ReportHistory />} />
 
             <Route path="/tasks" element={<TaskList isAdmin={isAdmin} />} />
             <Route path="/tasks/add" element={<AddTask />} />

@@ -27,6 +27,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 export default function WorkHoursChart({ employees = [], schedules = [], dailyReports = [], startDate, endDate }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const [visibleDatasets, setVisibleDatasets] = useState({
+    registered: true,
+    actual: true,
+  });
 
   const registeredBg = theme?.['[data-custom-component="ChartColor-Registered"]']?.bg || 'rgba(59, 130, 246, 0.75)';
   const actualBg = theme?.['[data-custom-component="ChartColor-Actual"]']?.bg || 'rgba(16, 185, 129, 0.75)';
@@ -139,6 +143,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
         borderWidth: 1.5,
         borderRadius: 6,
         borderSkipped: false,
+        hidden: !visibleDatasets.registered,
       },
       {
         label: t('dashboard.reality'),
@@ -148,6 +153,7 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
         borderWidth: 1.5,
         borderRadius: 6,
         borderSkipped: false,
+        hidden: !visibleDatasets.actual,
       },
     ],
   };
@@ -206,18 +212,30 @@ export default function WorkHoursChart({ employees = [], schedules = [], dailyRe
       <div className="flex-none h-[250px] lg:h-auto lg:flex-[2] relative lg:min-h-0 flex flex-col">
         {/* Custom Legend */}
         <div className="flex justify-center gap-6 mb-3 border border-gray-100 p-2 rounded-xl bg-gray-50/50 shadow-inner w-fit mx-auto select-none">
-          <div 
-            className="flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-100"
-            data-custom-component="ChartColor-Registered"
+          <div
+            onClick={() => setVisibleDatasets(prev => ({ ...prev, registered: !prev.registered }))}
+            className={`flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all border border-transparent hover:border-gray-100 ${
+              visibleDatasets.registered ? 'opacity-100 shadow-sm' : 'opacity-40 bg-gray-100/50'
+            }`}
           >
-            <span className="w-3.5 h-3.5 rounded shadow-sm border" style={{ backgroundColor: registeredBg, borderColor: registeredBg }}></span>
+            <span 
+              className="w-3.5 h-3.5 rounded shadow-sm border" 
+              style={{ backgroundColor: registeredBg, borderColor: registeredBg }}
+              data-custom-component="ChartColor-Registered"
+            ></span>
             <span className="text-xs font-bold text-gray-700">{t('dashboard.registered')}</span>
           </div>
-          <div 
-            className="flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-100"
-            data-custom-component="ChartColor-Actual"
+          <div
+            onClick={() => setVisibleDatasets(prev => ({ ...prev, actual: !prev.actual }))}
+            className={`flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-white transition-all border border-transparent hover:border-gray-100 ${
+              visibleDatasets.actual ? 'opacity-100 shadow-sm' : 'opacity-40 bg-gray-100/50'
+            }`}
           >
-            <span className="w-3.5 h-3.5 rounded shadow-sm border" style={{ backgroundColor: actualBg, borderColor: actualBg }}></span>
+            <span 
+              className="w-3.5 h-3.5 rounded shadow-sm border" 
+              style={{ backgroundColor: actualBg, borderColor: actualBg }}
+              data-custom-component="ChartColor-Actual"
+            ></span>
             <span className="text-xs font-bold text-gray-700">{t('dashboard.reality')}</span>
           </div>
         </div>

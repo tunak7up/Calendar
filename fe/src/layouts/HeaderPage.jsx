@@ -9,6 +9,7 @@ const userNavigation = [
   { key: 'dashboard', path: '/dashboard', id: 'dashboard' },
   { key: 'schedule', path: '/schedule', id: 'schedule' },
   { key: 'register', path: '/history', id: 'work' }, // Point to history/list as entry point
+  { key: 'reports', path: '/reports', id: 'reports' },
   { key: 'tasks', path: '/tasks', id: 'task' },
 ];
 

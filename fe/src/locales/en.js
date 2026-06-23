@@ -6,6 +6,7 @@ export const en = {
       schedule: "My Schedule",
       register: "Registration",
       tasks: "Tasks",
+      reports: "Reports",
       admin_dashboard: "Admin Dashboard",
       admin_schedule: "Admin Schedule",
       admin_employees: "Employees",
@@ -458,6 +459,7 @@ export const en = {
     reporthistory: {
       title: "Daily Report History",
       subtitle: "View daily report content and employee working hours",
+      subtitle_user: "View daily report content and your working hours",
       col_date: "Working Date",
       col_employee: "Employee",
       col_checkin: "Check In Time",

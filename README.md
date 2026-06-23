@@ -1,6 +1,7 @@
 # Intern Management App (IMA)
 
 Hệ thống quản lý thực tập sinh và phân công công việc nội bộ. Tối ưu hóa quá trình giao việc, báo cáo hằng ngày, quản lý lịch làm việc và xử lý các yêu cầu/đề xuất một cách tự động và trực quan.
+Hướng dẫn sử dụng: https://docs-qltt.kis-v.com/
 
 ## Tính năng nổi bật
 

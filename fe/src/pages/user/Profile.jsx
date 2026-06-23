@@ -221,7 +221,9 @@ export default function Profile() {
     navigate('/tasks/add', {
       state: {
         assignee: {
+          person_id: profileData.person_id,
           username: profileData.username,
+          name: profileData.name,
           role: 'assignee'
         }
       }

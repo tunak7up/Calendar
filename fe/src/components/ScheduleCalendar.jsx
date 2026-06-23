@@ -81,12 +81,13 @@ const ScheduleCalendar = React.forwardRef(({
 
           if (isGroupSummary) {
             const groupType = arg.event.extendedProps.groupType;
+            const count = arg.event.extendedProps.count;
             const customComp = groupType === 'registered' ? 'Schedule-Admin-Registered' :
                                groupType === 'unscheduled' ? 'Schedule-Admin-Unscheduled' :
                                `CalendarCard-${groupType}`;
             return (
               <div
-                className="flex items-center gap-1.5 truncate px-2.5 py-1 rounded-lg text-[0.7rem] font-medium border-l-4 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
+                className="flex items-center justify-center gap-1 truncate px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[0.65rem] sm:text-[0.7rem] font-extrabold sm:font-medium border-l-2 sm:border-l-4 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
                 data-custom-component={customComp}
                 style={{
                   backgroundColor: arg.event.backgroundColor,
@@ -95,8 +96,9 @@ const ScheduleCalendar = React.forwardRef(({
                 }}
                 title={arg.event.title}
               >
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: arg.event.textColor }}></span>
-                <span className="truncate">{arg.event.title}</span>
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full shrink-0" style={{ backgroundColor: arg.event.textColor }}></span>
+                <span className="hidden sm:inline truncate">{arg.event.title}</span>
+                <span className="inline sm:hidden">{count}</span>
               </div>
             );
           }

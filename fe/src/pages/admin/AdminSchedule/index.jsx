@@ -47,6 +47,20 @@ export default function AdminSchedule() {
     });
   }, []);
 
+  const regTheme = useMemo(() => {
+    return theme?.['[data-custom-component="Schedule-Admin-Registered"]'] || {
+      bg: '#eff6ff',
+      text: '#1e4ed8'
+    };
+  }, [theme]);
+
+  const unschedTheme = useMemo(() => {
+    return theme?.['[data-custom-component="Schedule-Admin-Unscheduled"]'] || {
+      bg: '#fef3c7',
+      text: '#92400e'
+    };
+  }, [theme]);
+
   // Collect all dates that have at least one schedule
   const scheduleDays = [
     ...new Set(
@@ -213,15 +227,6 @@ export default function AdminSchedule() {
       }
     });
 
-    const regTheme = theme?.['[data-custom-component="Schedule-Admin-Registered"]'] || {
-      bg: '#eff6ff',
-      text: '#1e4ed8'
-    };
-    const unschedTheme = theme?.['[data-custom-component="Schedule-Admin-Unscheduled"]'] || {
-      bg: '#fef3c7',
-      text: '#92400e'
-    };
-
     const groupEvents = [];
     Object.entries(aggregated).forEach(([date, counts]) => {
       if (counts.registered > 0) {
@@ -230,9 +235,8 @@ export default function AdminSchedule() {
           title:
             i18n.language === 'vi'
               ? `Đăng ký: ${counts.registered} người`
-              : `Registered: ${counts.registered} ${
-                  counts.registered === 1 ? 'person' : 'people'
-                }`,
+              : `Registered: ${counts.registered} ${counts.registered === 1 ? 'person' : 'people'
+              }`,
           start: date,
           allDay: true,
           backgroundColor: regTheme.bg,
@@ -252,9 +256,8 @@ export default function AdminSchedule() {
           title:
             i18n.language === 'vi'
               ? `Ngoài lịch: ${counts.unscheduled} người`
-              : `Unscheduled: ${counts.unscheduled} ${
-                  counts.unscheduled === 1 ? 'person' : 'people'
-                }`,
+              : `Unscheduled: ${counts.unscheduled} ${counts.unscheduled === 1 ? 'person' : 'people'
+              }`,
           start: date,
           allDay: true,
           backgroundColor: unschedTheme.bg,
@@ -271,7 +274,7 @@ export default function AdminSchedule() {
     });
 
     return groupEvents;
-  }, [enrichedSchedules, selectedEmployeeIds, i18n.language, theme]);
+  }, [enrichedSchedules, selectedEmployeeIds, i18n.language, regTheme, unschedTheme]);
 
   const handleSelectDate = (dateStr) => {
     setSelectedDate(dateStr);
@@ -429,6 +432,29 @@ export default function AdminSchedule() {
                   onSelectionChange={(ids) => setSelectedEmployeeIds(ids)}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Legend Section (Mobile only) */}
+          <div className="flex sm:hidden flex-wrap items-center gap-x-5 gap-y-2 mb-4 bg-gray-50/60 px-4 py-2 rounded-xl border border-gray-200/60 w-full shadow-sm">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              {t('adminschedule.legend_title', { defaultValue: 'Chú thích' })}
+            </span>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md border-l-2 flex-shrink-0 animate-fade-in"
+                data-custom-component="Schedule-Admin-Registered"
+                style={{ backgroundColor: regTheme.bg, borderColor: regTheme.text }} />
+              <span className="text-xs font-bold text-gray-700">
+                {t('adminschedule.legend_registered', { defaultValue: 'Đăng ký lịch' })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md border-l-2 flex-shrink-0 animate-fade-in"
+                data-custom-component="Schedule-Admin-Unscheduled"
+                style={{ backgroundColor: unschedTheme.bg, borderColor: unschedTheme.text }} />
+              <span className="text-xs font-bold text-gray-700">
+                {t('adminschedule.legend_unscheduled', { defaultValue: 'Ngoài lịch' })}
+              </span>
             </div>
           </div>
 

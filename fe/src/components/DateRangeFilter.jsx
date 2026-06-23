@@ -117,7 +117,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
       return;
     }
     const [year, month] = val.split('-').map(Number);
-    
+
     const first = new Date(year, month, 1);
     const firstY = first.getFullYear();
     const firstM = String(first.getMonth() + 1).padStart(2, '0');
@@ -145,15 +145,38 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
     return options;
   };
 
+  const getSelectedMonthValue = () => {
+    if (!startDate || !endDate) return "";
+    const startParts = startDate.split('-');
+    const endParts = endDate.split('-');
+    if (startParts.length !== 3 || endParts.length !== 3) return "";
+    
+    const sYear = parseInt(startParts[0], 10);
+    const sMonth = parseInt(startParts[1], 10);
+    const sDay = parseInt(startParts[2], 10);
+    
+    const eYear = parseInt(endParts[0], 10);
+    const eMonth = parseInt(endParts[1], 10);
+    const eDay = parseInt(endParts[2], 10);
+    
+    if (sYear === eYear && sMonth === eMonth && sDay === 1) {
+      const lastDayDate = new Date(eYear, eMonth, 0);
+      if (eDay === lastDayDate.getDate()) {
+        return `${sYear}-${sMonth - 1}`;
+      }
+    }
+    return "";
+  };
+
   return (
     <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 p-2 sm:p-1.5 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto relative overflow-visible">
       {/* Month selection */}
       <div className="flex items-center gap-2 border-b sm:border-b-0 sm:border-r border-gray-200 pb-2 sm:pb-0 sm:pr-3">
         <CalendarDaysIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
         <select
+          value={getSelectedMonthValue()}
           onChange={handleQuickMonthChange}
           className="bg-transparent border-none text-xs font-bold text-blue-600 outline-none cursor-pointer hover:text-blue-700 transition-colors w-full"
-          defaultValue=""
         >
           <option value="">Chọn tháng...</option>
           {getMonthOptions()}
@@ -162,7 +185,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
 
       {/* Date inputs wrapper */}
       <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-start flex-1 sm:flex-none w-full sm:w-auto">
-        
+
         {/* From Date field */}
         <div className="flex items-center gap-1 sm:gap-1.5 relative flex-1 sm:flex-initial">
           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex-shrink-0">{t('dashboard.from')}</span>
@@ -186,7 +209,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
               <CalendarDaysIcon className="w-3.5 h-3.5" />
             </button>
           </div>
-          
+
           {showFromCalendar && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowFromCalendar(false)} />
@@ -226,7 +249,7 @@ export default function DateRangeFilter({ startDate, endDate, onRangeChange }) {
               <CalendarDaysIcon className="w-3.5 h-3.5" />
             </button>
           </div>
-          
+
           {showToCalendar && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowToCalendar(false)} />

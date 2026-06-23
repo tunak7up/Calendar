@@ -27,12 +27,14 @@ const MONTH_NAMES_EN = [
 export default function AdminWorkHours() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1, 12);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12);
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-  const [startDate, setStartDate] = useState(firstDay.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(lastDay.toISOString().split('T')[0]);
+  const formatLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const [startDate, setStartDate] = useState(formatLocal(firstDay));
+  const [endDate, setEndDate] = useState(formatLocal(lastDay));
   const [employees, setEmployees] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [dailyReports, setDailyReports] = useState([]);

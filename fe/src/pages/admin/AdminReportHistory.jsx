@@ -21,8 +21,9 @@ export default function AdminReportHistory() {
 
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1, 12);
-  const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+  const formatLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const [startDate, setStartDate] = useState(formatLocal(firstDayOfMonth));
+  const [endDate, setEndDate] = useState(formatLocal(today));
 
   const [selectedReport, setSelectedReport] = useState(null);
 

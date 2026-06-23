@@ -24,7 +24,8 @@ import { useTranslation } from 'react-i18next';
 const now = new Date();
 const todayStr = now.toISOString().split('T')[0];
 const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-const defaultChartEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+const defaultChartEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
 
 const formatDateDisplay = (isoStr) => {
   const d = new Date(isoStr);
@@ -172,16 +173,33 @@ export default function AdminDashboard() {
   const fetchChartData = useCallback(async () => {
     setChartLoading(true);
     try {
+      if (!chartStartDate || !chartEndDate) {
+        setAllSchedules([]);
+        setAllReports([]);
+        setChartLoading(false);
+        return;
+      }
+
       const [schedRes, repRes] = await Promise.all([
-        scheduleService.getSchedulesByRange
-          ? scheduleService.getSchedulesByRange(chartStartDate, chartEndDate)
-          : scheduleService.getAllSchedules(),
+        scheduleService.getSchedulesByRange(chartStartDate, chartEndDate),
         apiFetch(`/daily-report/range?start=${chartStartDate}&end=${chartEndDate}`)
       ]);
-      if (schedRes.success) setAllSchedules(schedRes.data);
-      if (repRes.success) setAllReports(repRes.data);
+
+      if (schedRes.success) {
+        setAllSchedules(schedRes.data);
+      } else {
+        setAllSchedules([]);
+      }
+      
+      if (repRes.success) {
+        setAllReports(repRes.data);
+      } else {
+        setAllReports([]);
+      }
     } catch (error) {
       console.error('Error fetching chart data:', error);
+      setAllSchedules([]);
+      setAllReports([]);
     } finally {
       setChartLoading(false);
     }

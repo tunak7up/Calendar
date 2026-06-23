@@ -87,7 +87,7 @@ const ScheduleCalendar = React.forwardRef(({
                                `CalendarCard-${groupType}`;
             return (
               <div
-                className="flex items-center justify-center gap-1 truncate px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[0.65rem] sm:text-[0.7rem] font-extrabold sm:font-medium border-l-2 sm:border-l-4 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
+                className="flex items-center justify-center gap-1 truncate px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[0.65rem] sm:text-[0.7rem] font-extrabold sm:font-medium border-2 w-full shadow-sm cursor-pointer select-none transition-all hover:brightness-95 active:scale-95"
                 data-custom-component={customComp}
                 style={{
                   backgroundColor: arg.event.backgroundColor,

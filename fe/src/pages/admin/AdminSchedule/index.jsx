@@ -441,7 +441,7 @@ export default function AdminSchedule() {
               {t('adminschedule.legend_title', { defaultValue: 'Chú thích' })}
             </span>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md border-l-2 flex-shrink-0 animate-fade-in"
+              <div className="w-5 h-5 rounded-md border-2 flex-shrink-0 animate-fade-in"
                 data-custom-component="Schedule-Admin-Registered"
                 style={{ backgroundColor: regTheme.bg, borderColor: regTheme.text }} />
               <span className="text-xs font-bold text-gray-700">
@@ -449,7 +449,7 @@ export default function AdminSchedule() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md border-l-2 flex-shrink-0 animate-fade-in"
+              <div className="w-5 h-5 rounded-md border-2 flex-shrink-0 animate-fade-in"
                 data-custom-component="Schedule-Admin-Unscheduled"
                 style={{ backgroundColor: unschedTheme.bg, borderColor: unschedTheme.text }} />
               <span className="text-xs font-bold text-gray-700">

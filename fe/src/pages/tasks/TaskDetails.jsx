@@ -185,12 +185,24 @@ const CommentItem = ({ comment, persons }) => {
   );
 };
 
+const formatForDatetimeLocal = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+};
+
 export default function TaskDetails() {
   const { t } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const taskFromState = location.state?.task;
 
   const [fullTask, setFullTask] = useState(taskFromState || {});
@@ -204,11 +216,18 @@ export default function TaskDetails() {
   const [commentFiles, setCommentFiles] = useState([]);
   const taskFileInputRef = useRef(null);
   const commentFileInputRef = useRef(null);
+  const startInputRef = useRef(null);
+  const dueInputRef = useRef(null);
   // Edit Title/Description State
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
+  // Edit Start Date/Due Date State
+  const [isEditingStartTime, setIsEditingStartTime] = useState(false);
+  const [editedStartTime, setEditedStartTime] = useState('');
+  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
+  const [editedDueDate, setEditedDueDate] = useState('');
 
   const fetchTaskData = useCallback(() => {
     taskService.getTaskById(id)
@@ -377,6 +396,30 @@ export default function TaskDetails() {
       }
     } catch (error) {
       console.error('Error updating description:', error);
+    }
+  };
+
+  const handleUpdateStartTime = async () => {
+    try {
+      const res = await taskService.updateTask(id, { start_time: editedStartTime });
+      if (res.success) {
+        setFullTask(prev => ({ ...prev, start_time: editedStartTime }));
+        setIsEditingStartTime(false);
+      }
+    } catch (error) {
+      console.error('Error updating start time:', error);
+    }
+  };
+
+  const handleUpdateDueDate = async () => {
+    try {
+      const res = await taskService.updateTask(id, { due_date: editedDueDate });
+      if (res.success) {
+        setFullTask(prev => ({ ...prev, due_date: editedDueDate }));
+        setIsEditingDueDate(false);
+      }
+    } catch (error) {
+      console.error('Error updating due date:', error);
     }
   };
 
@@ -637,24 +680,104 @@ export default function TaskDetails() {
         <div className="px-5 py-3 sm:px-8 sm:py-4 bg-gray-50/50 border-b border-gray-100">
           <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <UserIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">{t('taskdetails.assigner')}</span>
-              <span className="text-gray-900 font-semibold">{fullTask.assigner || t('taskdetails.not_assigned')}</span>
+              <UserIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700 font-semibold">{t('taskdetails.assigner')}</span>
+              <span className="text-gray-900 font-bold">{fullTask.assigner || t('taskdetails.not_assigned')}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <ClockIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">{t('taskdetails.start')}</span>
-              <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.start_time)}</span>
+              <ClockIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700 font-semibold">{t('taskdetails.start')}</span>
+              {isEditingStartTime ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    ref={startInputRef}
+                    type="datetime-local"
+                    value={editedStartTime}
+                    onChange={(e) => setEditedStartTime(e.target.value)}
+                    className="border border-indigo-300 rounded-lg px-2 py-1 text-xs font-bold text-gray-900 bg-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => startInputRef.current?.showPicker?.()}
+                    className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                    title="Mở lịch chọn"
+                  >
+                    <CalendarDaysIcon className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleUpdateStartTime} className="p-1 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-600 hover:text-white transition-all">
+                    <CheckCircleIcon className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setIsEditingStartTime(false)} className="p-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-600 hover:text-white transition-all">
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-900 font-bold">{formatDateTime(fullTask.start_time)}</span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setEditedStartTime(formatForDatetimeLocal(fullTask.start_time));
+                        setIsEditingStartTime(true);
+                      }}
+                      className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                      title={t('taskdetails.edit_start_time') || 'Sửa ngày bắt đầu'}
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">{t('taskdetails.deadline')}</span>
-              <span className="text-gray-900 font-semibold">{formatDateTime(fullTask.due_date)}</span>
+              <CalendarDaysIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700 font-semibold">{t('taskdetails.deadline')}</span>
+              {isEditingDueDate ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    ref={dueInputRef}
+                    type="datetime-local"
+                    value={editedDueDate}
+                    onChange={(e) => setEditedDueDate(e.target.value)}
+                    className="border border-indigo-300 rounded-lg px-2 py-1 text-xs font-bold text-gray-900 bg-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => dueInputRef.current?.showPicker?.()}
+                    className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                    title="Mở lịch chọn"
+                  >
+                    <CalendarDaysIcon className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleUpdateDueDate} className="p-1 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-600 hover:text-white transition-all">
+                    <CheckCircleIcon className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setIsEditingDueDate(false)} className="p-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-600 hover:text-white transition-all">
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-900 font-bold">{formatDateTime(fullTask.due_date)}</span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setEditedDueDate(formatForDatetimeLocal(fullTask.due_date));
+                        setIsEditingDueDate(true);
+                      }}
+                      className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                      title={t('taskdetails.edit_due_date') || 'Sửa hạn chót'}
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <UserIcon className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-500 font-medium">Người tạo:</span>
-              <span className="text-gray-900 font-semibold">{persons[fullTask.created_by] || 'N/A'}</span>
+              <UserIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700 font-semibold">Người tạo:</span>
+              <span className="text-gray-900 font-bold">{persons[fullTask.created_by] || 'N/A'}</span>
             </div>
           </div>
         </div>

@@ -663,10 +663,19 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
             return isNaN(d.getTime()) ? null : d;
         };
 
+        const startTime = parseDate(entry.start_time);
+        const dueDate = parseDate(entry.due_date);
+
+        if (startTime && dueDate && dueDate < startTime) {
+            results.errors.push({ row: rowNumber, reason: `Ngày hạn chót (due_date) không được trước Ngày bắt đầu (start_time)` });
+            results.failed++;
+            return;
+        }
+
         rowsToInsert.push({
             title: entry.title,
-            start_time: parseDate(entry.start_time),
-            due_date: parseDate(entry.due_date),
+            start_time: startTime,
+            due_date: dueDate,
             status: entry.status?.toLowerCase() || 'pending',
             priority: entry.priority?.toLowerCase() || 'medium',
             ended_at: parseDate(entry.ended_at),
@@ -712,6 +721,26 @@ const exportTemplate = async () => {
         status: 'pending',
         priority: 'medium',
     });
+
+    // Add list data validations for Status and Priority columns (up to row 100)
+    for (let i = 2; i <= 100; i++) {
+        sheet.getCell(`E${i}`).dataValidation = {
+            type: 'list',
+            allowBlank: true,
+            formulae: ['"pending,completed,in progress,overdue"'],
+            showErrorMessage: true,
+            errorTitle: 'Trạng thái không hợp lệ',
+            error: 'Vui lòng chọn trạng thái từ danh sách.'
+        };
+        sheet.getCell(`F${i}`).dataValidation = {
+            type: 'list',
+            allowBlank: true,
+            formulae: ['"low,medium,high"'],
+            showErrorMessage: true,
+            errorTitle: 'Mức độ ưu tiên không hợp lệ',
+            error: 'Vui lòng chọn mức độ ưu tiên từ danh sách.'
+        };
+    }
 
     const headerRow = sheet.getRow(1);
     headerRow.font = { bold: true };

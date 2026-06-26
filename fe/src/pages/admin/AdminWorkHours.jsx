@@ -193,7 +193,7 @@ export default function AdminWorkHours() {
   const employeeSummary = employeeList.map(emp => {
     const empSchedules = filteredSchedules.filter(s => s.person_id === emp.person_id);
     const empReports = dailyReports.filter(r => r.person_id === emp.person_id);
-    const totalDays = empSchedules.length;
+    const totalDays = empReports.length;
     const registeredHours = empSchedules.reduce((sum, s) => sum + parseTimeToHours(s.start_time, s.end_time), 0);
     const actualHours = empReports.reduce((sum, r) => {
       if (!r.check_in || !r.check_out) return sum;

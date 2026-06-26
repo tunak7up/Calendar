@@ -106,6 +106,33 @@ export default function DateDetailsModal({ menuConfig, onClose }) {
             )}
           </div>
 
+          {/* Daily Report Section */}
+          {menuConfig.report && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.daily_report')}</h4>
+              <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 block mb-0.5">{t('reporthistory.col_checkin')}</span>
+                    <span className="text-sm font-semibold text-emerald-600">{menuConfig.report.check_in || '--:--'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 block mb-0.5">{t('reporthistory.col_checkout')}</span>
+                    <span className="text-sm font-semibold text-indigo-600">{menuConfig.report.check_out || '--:--'}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-gray-400 block mb-1">{t('reporthistory.modal_content')}</span>
+                  <div className="bg-white border border-gray-100 rounded-xl p-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[60px]">
+                    {menuConfig.report.description || (
+                      <span className="text-gray-400 italic">{t('reporthistory.modal_no_content')}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Tasks Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">

@@ -306,7 +306,8 @@ export const vi = {
       legend_unscheduled: "Đi làm ngoài lịch",
       legend_absent: "Đăng ký nhưng vắng",
       unscheduled: "Ngoài lịch",
-      legend_upcoming: "Chưa đến giờ"
+      legend_upcoming: "Chưa bắt đầu",
+      legend_title: "Chú thích màu sắc"
     },
     profile: {
       loading: "Đang tải hồ sơ...",

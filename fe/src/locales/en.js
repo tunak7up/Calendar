@@ -307,7 +307,8 @@ export const en = {
       legend_unscheduled: "Unscheduled Work",
       legend_absent: "Absent",
       unscheduled: "Unscheduled",
-      legend_upcoming: "Upcoming"
+      legend_upcoming: "Upcoming",
+      legend_title: "Color Legend"
     },
     profile: {
       loading: "Loading profile...",

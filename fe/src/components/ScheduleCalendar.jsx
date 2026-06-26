@@ -20,6 +20,7 @@ const ScheduleCalendar = React.forwardRef(({
   events,
   selectedDate,
   workDays = [],
+  dayStatusMap = {},
   editable = false,
   droppable = false,
   headerToolbar,
@@ -67,8 +68,13 @@ const ScheduleCalendar = React.forwardRef(({
           const classes = [];
           if (dateStr === selectedDate) classes.push('fc-selected-day');
 
-          if (workDays.includes(dateStr) && arg.view.type === 'dayGridMonth') {
-            classes.push('fc-work-day');
+          if (arg.view.type === 'dayGridMonth') {
+            const status = dayStatusMap[dateStr];
+            if (status) {
+              classes.push(`fc-day-${status}`);
+            } else if (workDays.includes(dateStr)) {
+              classes.push('fc-work-day');
+            }
           }
 
           return classes;

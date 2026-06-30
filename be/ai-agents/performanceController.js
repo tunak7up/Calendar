@@ -135,7 +135,8 @@ const analyzePerformance = async (req, res) => {
         }));
 
         // 5. Build AI Context Prompt
-        const systemInstruction = agent.systemPrompt;
+        let systemInstruction = agent.systemPrompt;
+        systemInstruction += "\nYêu cầu quan trọng: Bản phân tích hiệu suất nhân viên phải cực kỳ ngắn gọn, súc tích, tóm tắt các điểm then chốt nhất, không viết rườm rà hay dài dòng lê thê.";
         const preferredModel = agent.modelName || 'gemini-2.5-flash';
         const candidateModels = [preferredModel, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
             .filter((val, index, self) => self.indexOf(val) === index);
@@ -348,7 +349,8 @@ const analyzeCompanyMonthly = async (req, res) => {
             return `- ${s.name} (@${s.username}): Đi làm ${s.daysWorked} ngày | Tích lũy ${s.totalHours} giờ | Đi muộn ${s.lateCount} lần | Task: ${s.tasks.completed}/${s.tasks.total} đã xong, ${s.tasks.overdue} trễ hạn`;
         }).join('\n');
 
-        const systemInstruction = agent.systemPrompt;
+        let systemInstruction = agent.systemPrompt;
+        systemInstruction += "\nYêu cầu quan trọng: Báo cáo phân tích hiệu suất công ty phải cực kỳ ngắn gọn, súc tích, tóm gọn trực tiếp vào các điểm chính, không viết dài dòng lê thê hoặc rườm rà.";
         const preferredModel = agent.modelName || 'gemini-2.5-flash';
         const candidateModels = [preferredModel, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
             .filter((val, index, self) => self.indexOf(val) === index);

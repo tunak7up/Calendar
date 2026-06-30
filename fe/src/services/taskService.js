@@ -130,4 +130,9 @@ export const taskService = {
     method: 'POST',
     body: formData,
   }),
+
+  importDirectTasks: (tasks) => apiFetch('/task/import-direct', {
+    method: 'POST',
+    body: JSON.stringify({ tasks }),
+  }),
 };

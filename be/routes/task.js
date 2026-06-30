@@ -18,6 +18,7 @@ router.get('/export', taskController.exportTasks);
 router.get('/import-template', taskController.exportTemplate);
 router.post('/import-preview', upload.single('file'), taskController.previewImport);
 router.post('/import', upload.single('file'), taskController.importTasks);
+router.post('/import-direct', taskController.importDirectTasks);
 router.get('/person/:personId', taskController.getAllTasksByPersonId);
 router.put('/update-title-description/:id', taskController.updateTaskTitleOrDescription);
 router.get('/:id', taskController.getTaskById);

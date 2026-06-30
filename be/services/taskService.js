@@ -565,15 +565,39 @@ const exportTasks = async (taskIds = null) => {
 
 const HEADER_MAP = {
     'title': 'title',
+    'tiêu đề': 'title',
+    'tên công việc': 'title',
+
     'start time': 'start_time',
     'start_time': 'start_time',
+    'start date': 'start_time',
+    'start_date': 'start_time',
+    'thời gian bắt đầu': 'start_time',
+    'ngày bắt đầu': 'start_time',
+
     'due date': 'due_date',
     'due_date': 'due_date',
+    'due time': 'due_date',
+    'due_time': 'due_date',
+    'due_time/due_date': 'due_date',
+    'hạn chót': 'due_date',
+    'hạn hoàn thành': 'due_date',
+    'ngày hết hạn': 'due_date',
+    'thời gian hoàn thành': 'due_date',
+
     'status': 'status',
+    'trạng thái': 'status',
+
     'priority': 'priority',
+    'độ ưu tiên': 'priority',
+    'mức độ ưu tiên': 'priority',
+
     'ended at': 'ended_at',
     'ended_at': 'ended_at',
+    'kết thúc lúc': 'ended_at',
+
     'description': 'description',
+    'mô tả': 'description',
 };
 
 const VALID_STATUS = ['pending', 'completed', 'in progress', 'overdue'];
@@ -585,16 +609,156 @@ const previewImportTasks = async (fileBuffer) => {
     const sheet = workbook.worksheets[0];
     if (!sheet) throw new Error('File Excel không có sheet nào.');
 
-    const headerRow = sheet.getRow(1).values;
     const headers = [];
-    if (headerRow) {
-        headerRow.forEach((header, index) => {
-            if (header) {
-                headers.push({ index, name: header.toString().trim() });
-            }
+    const colMap = {};
+    sheet.getRow(1).eachCell((cell, colNumber) => {
+        const rawVal = extractCellValue(cell.value);
+        if (rawVal !== undefined && rawVal !== null) {
+            const headerName = rawVal.toString().trim();
+            headers.push({ index: colNumber, name: headerName });
+            const normalized = headerName.toLowerCase();
+            const key = HEADER_MAP[normalized];
+            if (key) colMap[colNumber] = key;
+        }
+    });
+
+    const formatDateString = (d) => {
+        if (!d || isNaN(d.getTime())) return '';
+        const pad = n => n < 10 ? '0' + n : n;
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+
+    const parsedRows = [];
+    sheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // bỏ qua header
+
+        const entry = {};
+        Object.entries(colMap).forEach(([colIndex, key]) => {
+            const cell = row.getCell(parseInt(colIndex, 10));
+            entry[key] = extractCellValue(cell.value);
         });
+
+        const titleStr = entry.title ? entry.title.toString().trim() : '';
+        const descStr = entry.description ? entry.description.toString().trim() : '';
+        const statusStr = entry.status ? entry.status.toString().trim().toLowerCase() : 'pending';
+        const priorityStr = entry.priority ? entry.priority.toString().trim().toLowerCase() : 'medium';
+
+        const rawStartTimeStr = entry.start_time !== undefined && entry.start_time !== null ? entry.start_time.toString().replace(/^['"]+/, '').trim() : '';
+        const rawDueDateStr = entry.due_date !== undefined && entry.due_date !== null ? entry.due_date.toString().replace(/^['"]+/, '').trim() : '';
+
+        const startTime = parseDateValue(entry.start_time);
+        const dueDate = parseDateValue(entry.due_date);
+
+        const errors = [];
+        if (!titleStr) {
+            errors.push('Vui lòng nhập tên công việc');
+        }
+        if (rawStartTimeStr && !startTime) {
+            errors.push(`Thời gian bắt đầu "${rawStartTimeStr}" không hợp lệ (ngày không tồn tại trên lịch)`);
+        }
+        if (rawDueDateStr && !dueDate) {
+            errors.push(`Thời gian hạn chót "${rawDueDateStr}" không hợp lệ (ngày không tồn tại trên lịch)`);
+        }
+        if (startTime && dueDate && dueDate < startTime) {
+            errors.push('Ngày hạn chót không được trước Ngày bắt đầu');
+        }
+        if (statusStr && !VALID_STATUS.includes(statusStr)) {
+            errors.push(`Trạng thái "${statusStr}" không hợp lệ`);
+        }
+        if (priorityStr && !VALID_PRIORITY.includes(priorityStr)) {
+            errors.push(`Độ ưu tiên "${priorityStr}" không hợp lệ`);
+        }
+
+        parsedRows.push({
+            rowNumber,
+            title: titleStr,
+            description: descStr,
+            start_time: startTime ? formatDateString(startTime) : rawStartTimeStr,
+            due_date: dueDate ? formatDateString(dueDate) : rawDueDateStr,
+            status: VALID_STATUS.includes(statusStr) ? statusStr : 'pending',
+            priority: VALID_PRIORITY.includes(priorityStr) ? priorityStr : 'medium',
+            isValid: errors.length === 0,
+            errors
+        });
+    });
+
+    return { headers, rows: parsedRows };
+};
+
+const extractCellValue = (raw) => {
+    if (raw === undefined || raw === null) return null;
+    if (raw instanceof Date) return raw;
+    if (typeof raw === 'object') {
+        if (raw.result !== undefined && raw.result !== null) {
+            if (raw.result instanceof Date) return raw.result;
+            return raw.result;
+        }
+        if (raw.text !== undefined && raw.text !== null) {
+            return raw.text;
+        }
+        if (raw.richText && Array.isArray(raw.richText)) {
+            return raw.richText.map(rt => rt.text).join('');
+        }
     }
-    return headers;
+    return raw;
+};
+
+const parseDateValue = (val) => {
+    if (val === undefined || val === null || val === '') return null;
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+
+    if (typeof val === 'number') {
+        // Excel serial date format (typically between 30000 and 60000)
+        if (val > 30000 && val < 60000) {
+            const jsDate = new Date(Math.round((val - 25569) * 86400 * 1000));
+            return isNaN(jsDate.getTime()) ? null : jsDate;
+        }
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Strip leading single or double quotes (e.g. '2026-06-29)
+    const strVal = val.toString().replace(/^['"]+/, '').trim();
+    if (!strVal) return null;
+
+    // Try format YYYY-MM-DD or YYYY/MM/DD (Local Time to prevent UTC timezone shifts)
+    const ymdMatch = strVal.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[\sT]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if (ymdMatch) {
+        const year = parseInt(ymdMatch[1], 10);
+        const month = parseInt(ymdMatch[2], 10) - 1;
+        const day = parseInt(ymdMatch[3], 10);
+        const hour = ymdMatch[4] ? parseInt(ymdMatch[4], 10) : 0;
+        const minute = ymdMatch[5] ? parseInt(ymdMatch[5], 10) : 0;
+        const second = ymdMatch[6] ? parseInt(ymdMatch[6], 10) : 0;
+        const d = new Date(year, month, day, hour, minute, second);
+        // Strict calendar check: ensure day/month did not roll over (e.g. June 31 -> July 1)
+        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) {
+            return d;
+        }
+        return null;
+    }
+
+    // Try format DD/MM/YYYY or DD-MM-YYYY
+    const dmyMatch = strVal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[\sT]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if (dmyMatch) {
+        const day = parseInt(dmyMatch[1], 10);
+        const month = parseInt(dmyMatch[2], 10) - 1;
+        const year = parseInt(dmyMatch[3], 10);
+        const hour = dmyMatch[4] ? parseInt(dmyMatch[4], 10) : 0;
+        const minute = dmyMatch[5] ? parseInt(dmyMatch[5], 10) : 0;
+        const second = dmyMatch[6] ? parseInt(dmyMatch[6], 10) : 0;
+        const d = new Date(year, month, day, hour, minute, second);
+        // Strict calendar check
+        if (!isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) {
+            return d;
+        }
+        return null;
+    }
+
+    let d = new Date(strVal);
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
 };
 
 const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => {
@@ -606,7 +770,6 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
     if (!sheet) throw new Error('File Excel không có sheet nào.');
 
     // Đọc header từ dòng 1
-    const headerRow = sheet.getRow(1).values; // index bắt đầu từ 1
     const colMap = {}; // colIndex -> key chuẩn
 
     if (customMapping && Object.keys(customMapping).length > 0) {
@@ -614,9 +777,10 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
             if (key) colMap[colIndex] = key;
         });
     } else {
-        headerRow.forEach((header, colIndex) => {
-            if (!header) return;
-            const normalized = header.toString().trim().toLowerCase();
+        sheet.getRow(1).eachCell((cell, colIndex) => {
+            const rawVal = extractCellValue(cell.value);
+            if (!rawVal) return;
+            const normalized = rawVal.toString().trim().toLowerCase();
             const key = HEADER_MAP[normalized];
             if (key) colMap[colIndex] = key;
         });
@@ -628,43 +792,40 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
     sheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // bỏ header
 
-        const values = row.values; // 1-indexed
         const entry = {};
 
         Object.entries(colMap).forEach(([colIndex, key]) => {
-            const raw = values[colIndex];
-            entry[key] = raw !== undefined && raw !== null ? raw.toString().trim() : null;
+            const cell = row.getCell(parseInt(colIndex, 10));
+            const raw = extractCellValue(cell.value);
+            entry[key] = raw;
         });
 
         // Bỏ qua dòng trống
-        if (!entry.title) {
+        const titleStr = entry.title ? entry.title.toString().trim() : null;
+        if (!titleStr) {
             results.errors.push({ row: rowNumber, reason: 'Vui lòng nhập title' });
             results.failed++;
             return;
         }
 
+        const statusStr = entry.status ? entry.status.toString().trim() : null;
+        const priorityStr = entry.priority ? entry.priority.toString().trim() : null;
+
         // Validate enums
-        if (entry.status && !VALID_STATUS.includes(entry.status.toLowerCase())) {
-            results.errors.push({ row: rowNumber, reason: `status không hợp lệ: "${entry.status}", chỉ chấp nhận các giá trị pending, completed, in progress, overdue` });
+        if (statusStr && !VALID_STATUS.includes(statusStr.toLowerCase())) {
+            results.errors.push({ row: rowNumber, reason: `status không hợp lệ: "${statusStr}", chỉ chấp nhận các giá trị pending, completed, in progress, overdue` });
             results.failed++;
             return;
         }
 
-        if (entry.priority && !VALID_PRIORITY.includes(entry.priority.toLowerCase())) {
-            results.errors.push({ row: rowNumber, reason: `priority không hợp lệ: "${entry.priority}", chỉ chấp nhận các giá trị low, medium, high` });
+        if (priorityStr && !VALID_PRIORITY.includes(priorityStr.toLowerCase())) {
+            results.errors.push({ row: rowNumber, reason: `priority không hợp lệ: "${priorityStr}", chỉ chấp nhận các giá trị low, medium, high` });
             results.failed++;
             return;
         }
 
-        // Parse dates — chấp nhận cả chuỗi ISO lẫn Date object từ Excel
-        const parseDate = (val) => {
-            if (!val) return null;
-            const d = new Date(val);
-            return isNaN(d.getTime()) ? null : d;
-        };
-
-        const startTime = parseDate(entry.start_time);
-        const dueDate = parseDate(entry.due_date);
+        const startTime = parseDateValue(entry.start_time);
+        const dueDate = parseDateValue(entry.due_date);
 
         if (startTime && dueDate && dueDate < startTime) {
             results.errors.push({ row: rowNumber, reason: `Ngày hạn chót (due_date) không được trước Ngày bắt đầu (start_time)` });
@@ -672,14 +833,17 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
             return;
         }
 
+        const startTimeFormatted = formatForDatabase(startTime);
+        const dueDateFormatted = formatForDatabase(dueDate);
+
         rowsToInsert.push({
-            title: entry.title,
-            start_time: startTime,
-            due_date: dueDate,
-            status: entry.status?.toLowerCase() || 'pending',
-            priority: entry.priority?.toLowerCase() || 'medium',
-            ended_at: parseDate(entry.ended_at),
-            description: entry.description || null,
+            title: titleStr,
+            start_time: startTimeFormatted,
+            due_date: dueDateFormatted,
+            status: statusStr?.toLowerCase() || 'pending',
+            priority: priorityStr?.toLowerCase() || 'medium',
+            ended_at: formatForDatabase(parseDateValue(entry.ended_at)),
+            description: entry.description ? entry.description.toString().trim() : null,
             assigner_id: assignerId,
             created_by: createdBy,
             created_at: new Date(),
@@ -697,6 +861,50 @@ const importTasks = async (fileBuffer, assignerId, createdBy, customMapping) => 
     }
 
     return results;
+};
+
+const formatForDatabase = (val) => {
+    if (!val) return null;
+    let d = val instanceof Date ? val : parseDateValue(val);
+    if (!d || isNaN(d.getTime())) return null;
+    const pad = n => n < 10 ? '0' + n : n;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+const importDirectTasks = async (taskList, assignerId, createdBy) => {
+    if (!Array.isArray(taskList) || taskList.length === 0) {
+        throw new Error('Danh sách công việc rỗng');
+    }
+
+    const rowsToInsert = [];
+    taskList.forEach(item => {
+        const title = item.title ? item.title.toString().trim() : '';
+        if (!title) return;
+
+        const startTime = parseDateValue(item.start_time);
+        const dueDate = parseDateValue(item.due_date);
+        const status = VALID_STATUS.includes(item.status?.toLowerCase()) ? item.status.toLowerCase() : 'pending';
+        const priority = VALID_PRIORITY.includes(item.priority?.toLowerCase()) ? item.priority.toLowerCase() : 'medium';
+
+        rowsToInsert.push({
+            title,
+            start_time: formatForDatabase(startTime),
+            due_date: formatForDatabase(dueDate),
+            status,
+            priority,
+            description: item.description ? item.description.toString().trim() : null,
+            assigner_id: assignerId,
+            created_by: createdBy,
+            created_at: new Date()
+        });
+    });
+
+    if (rowsToInsert.length === 0) {
+        throw new Error('Không có dòng hợp lệ nào để import');
+    }
+
+    await task.bulkCreate(rowsToInsert);
+    return { success: rowsToInsert.length };
 };
 
 const exportTemplate = async () => {
@@ -775,5 +983,6 @@ module.exports = {
     exportTasks,
     previewImportTasks,
     importTasks,
+    importDirectTasks,
     exportTemplate
 };

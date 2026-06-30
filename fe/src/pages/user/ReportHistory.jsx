@@ -6,12 +6,14 @@ import DateRangeFilter from '../../components/DateRangeFilter';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
+import AIReportModal from '../../components/AIReportModal/AIReportModal';
 
 export default function ReportHistory() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1, 12);
@@ -100,7 +102,14 @@ export default function ReportHistory() {
           </p>
         </div>
 
-        <div className="w-full md:w-auto">
+        <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+          >
+            <span>✨ Tạo báo cáo bằng AI</span>
+          </button>
+
           <DateRangeFilter
             startDate={startDate}
             endDate={endDate}
@@ -262,6 +271,12 @@ export default function ReportHistory() {
           </div>
         </Dialog>
       </Transition>
+
+      {/* AI Daily Report Generator Modal */}
+      <AIReportModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+      />
     </div>
   );
 }

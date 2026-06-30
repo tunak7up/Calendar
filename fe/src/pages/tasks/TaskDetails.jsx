@@ -808,7 +808,7 @@ export default function TaskDetails() {
               <textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
-                className="w-full bg-gray-50 border border-indigo-100 rounded-2xl p-4 sm:p-6 text-sm sm:text-base text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px] resize-y"
+                className="w-full bg-white border border-indigo-300 rounded-2xl p-4 sm:p-6 text-sm sm:text-base font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px] resize-y"
                 placeholder={t('taskdetails.desc_placeholder')}
                 autoFocus
               />

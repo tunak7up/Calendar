@@ -9,5 +9,11 @@ export const dailyReportService = {
   },
   getDailyReportByPersonId: async (personId) => {
     return apiFetch(`/daily-report/person/${personId}`);
+  },
+  generateAIReport: async (rawNotes, userName, dateStr) => {
+    return apiFetch('/ai-report/generate', {
+      method: 'POST',
+      body: JSON.stringify({ rawNotes, userName, dateStr })
+    });
   }
 };

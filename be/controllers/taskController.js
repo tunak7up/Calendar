@@ -252,6 +252,25 @@ const importTasks = async (req, res) => {
         sendRes(res, 500, 'Error importing tasks', null, err.message);
     }
 };
+
+const importDirectTasks = async (req, res) => {
+    try {
+        const { tasks } = req.body;
+        if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+            return sendRes(res, 400, 'Danh sách công việc import rỗng', null, 'Empty task array');
+        }
+
+        const assignerId = req.user ? req.user.person_id : 2;
+        const createdBy = req.user ? req.user.person_id : 2;
+
+        const result = await taskService.importDirectTasks(tasks, assignerId, createdBy);
+        return sendRes(res, 201, `Import thành công ${result.success} công việc!`, result);
+    } catch (err) {
+        console.error('Error in importDirectTasks:', err);
+        return sendRes(res, 500, 'Error importing tasks directly', null, err.message);
+    }
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -274,5 +293,6 @@ module.exports = {
     exportTasks,
     previewImport,
     importTasks,
+    importDirectTasks,
     exportTemplate
 };

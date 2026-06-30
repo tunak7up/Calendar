@@ -19,5 +19,6 @@ router.use('/mail', authenticate, require('./mail'));
 router.use('/file-attachment', authenticate, require('./fileAttachment'));
 router.use('/preset-reason', authenticate, require('./presetReason'));
 router.use('/theme-setting', require('./themeSetting'));
+router.use('/ai-report', authenticate, require('./aiReport'));
 
 module.exports = router;

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
+import AIReportModal from '../../components/AIReportModal/AIReportModal';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState({}); // { task_id: 'status' }
   const [checkingReport, setCheckingReport] = useState(true);
   const [reportAttachments, setReportAttachments] = useState([]);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   // Get YYYY-MM-DD for local timezone
@@ -445,9 +447,18 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6" data-customizable-id="card-daily-report" data-customizable-type="bg">
-            <div className="flex items-center gap-2 mb-4">
-              <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-bold text-gray-800">{t('dashboard.daily_report')}</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-bold text-gray-800">{t('dashboard.daily_report')}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
+              >
+                <span>✨ Tạo báo cáo bằng AI</span>
+              </button>
             </div>
             <textarea
               value={reportText}
@@ -554,6 +565,13 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* AI Daily Report Generator Modal */}
+      <AIReportModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onApplyReport={(aiReport) => setReportText(aiReport)}
+      />
     </div>
   );
 }

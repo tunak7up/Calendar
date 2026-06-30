@@ -1,5 +1,5 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -87,6 +87,17 @@ export default function HeaderPage({ isAdmin }) {
           <div className="flex items-center space-x-1.5 sm:space-x-3">
             {/* Language Selector */}
             <LanguageSelector />
+
+            {/* Admin AI Agents Icon */}
+            {isAdmin && (
+              <Link
+                to="/admin/ai-agents"
+                title={t('nav.admin_ai_agents') || 'Quản lý AI Agent'}
+                className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
+              >
+                <SparklesIcon className="h-6 w-6 text-purple-600 hover:text-purple-800 transition-colors" aria-hidden="true" />
+              </Link>
+            )}
 
             {/* Admin Theme Settings Icon */}
             {isAdmin && (

@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { SunIcon, CloudIcon, CalendarDaysIcon, ClockIcon, TrashIcon, ChevronDownIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import {
+  SunIcon,
+  CloudIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+  TrashIcon,
+  ChevronDownIcon,
+  ArrowLeftIcon,
+  SparklesIcon,
+  ArrowPathIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import WeekDatePicker from '../../components/WeekDatePicker';
 import { getFullDateStr } from '../../utils/dateUtils';
 import { scheduleService } from '../../services/scheduleService';
 import { requestService } from '../../services/requestService';
+import { aiAgentService } from '../../services/aiAgentService';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
@@ -35,6 +47,8 @@ export default function RegisterWork() {
   const [shiftEndTime, setShiftEndTime] = useState('17:30');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+
+
 
   const handleShiftChange = (shift) => {
     setSelectedShift(shift);
@@ -201,7 +215,7 @@ export default function RegisterWork() {
     const requestDetails = schedule.map(item => {
       const start = item.startTime || '08:30';
       const end = item.endTime || '17:30';
-      
+
       const startTime = `${item.date}T${start}:00+07:00`;
       const endTime = `${item.date}T${end}:00+07:00`;
 
@@ -255,6 +269,8 @@ export default function RegisterWork() {
         <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="register-work-subtitle" data-customizable-type="text">{t('register.work_subtitle')}</p>
       </div>
 
+
+
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
         {/* Select Date */}
         <div className="mb-10">
@@ -280,121 +296,121 @@ export default function RegisterWork() {
           />
         </div>
 
-          {/* Container 1: Repeat controls */}
-          <div className="mt-6 border-t border-gray-100 pt-5">
-            <div className="flex flex-row items-center gap-3 flex-nowrap">
+        {/* Container 1: Repeat controls */}
+        <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="flex flex-row items-center gap-3 flex-nowrap">
 
-              {/* Step 1: Dropdown lặp lại */}
-              <div className="relative flex-shrink-0">
-                <button
-                  onClick={() => setIsRepeatDropdownOpen(!isRepeatDropdownOpen)}
-                  className="flex items-center justify-between gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm text-[14px] font-semibold text-gray-900 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[155px]"
-                >
-                  <span>
-                    {repeatOption === 'none' && t('register.repeat_none')}
-                    {repeatOption === 'weekly' && t('register.repeat_weekly')}
-                    {repeatOption === 'yearly' && t('register.repeat_yearly')}
-                  </span>
-                  <ChevronDownIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                </button>
+            {/* Step 1: Dropdown lặp lại */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setIsRepeatDropdownOpen(!isRepeatDropdownOpen)}
+                className="flex items-center justify-between gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm text-[14px] font-semibold text-gray-900 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[155px]"
+              >
+                <span>
+                  {repeatOption === 'none' && t('register.repeat_none')}
+                  {repeatOption === 'weekly' && t('register.repeat_weekly')}
+                  {repeatOption === 'yearly' && t('register.repeat_yearly')}
+                </span>
+                <ChevronDownIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+              </button>
 
-                {isRepeatDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[100]" onClick={() => setIsRepeatDropdownOpen(false)}></div>
-                    <div
-                      className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[101] overflow-hidden"
-                    >
-                      {['none', 'weekly', 'yearly'].map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setRepeatOption(opt);
-                            setIsRepeatDropdownOpen(false);
-                            if (opt === 'none') setEndOption('never');
-                          }}
-                          className={`w-full text-left px-5 py-2.5 text-[14px] hover:bg-blue-50/60 hover:text-blue-600 transition-colors ${repeatOption === opt ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 font-medium'}`}
-                        >
-                          {opt === 'none' && t('register.repeat_none')}
-                          {opt === 'weekly' && t('register.repeat_weekly')}
-                          {opt === 'yearly' && t('register.repeat_yearly')}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Step 2: Kết thúc */}
-              {(repeatOption === 'weekly' || repeatOption === 'yearly') && (
+              {isRepeatDropdownOpen && (
                 <>
-                  <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
-                  <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
-                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.end_label')}</span>
-                    <select
-                      className="text-[14px] font-semibold text-gray-900 border-0 focus:ring-0 p-0 cursor-pointer bg-transparent"
-                      value={endOption}
-                      onChange={(e) => setEndOption(e.target.value)}
-                    >
-                      <option value="never">{t('register.end_never')}</option>
-                      <option value="date">{t('register.end_date')}</option>
-                      <option value="count">{t('register.end_count')}</option>
-                    </select>
-                    {endOption === 'date' && (
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="text-[14px] border border-gray-200 bg-gray-50 rounded-lg py-1 px-2 focus:ring-0 text-gray-700 w-[132px] ml-1"
-                      />
-                    )}
-                    {endOption === 'count' && (
-                      <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 ml-1">
-                        <input
-                          type="number"
-                          value={endCount}
-                          onChange={(e) => setEndCount(Number(e.target.value))}
-                          className="text-[14px] border-none bg-transparent py-1 px-0 focus:ring-0 text-gray-700 w-10 text-center"
-                          min={1}
-                        />
-                        <span className="text-[13px] text-gray-500 whitespace-nowrap">{t('register.end_count_times')}</span>
-                      </div>
-                    )}
+                  <div className="fixed inset-0 z-[100]" onClick={() => setIsRepeatDropdownOpen(false)}></div>
+                  <div
+                    className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[101] overflow-hidden"
+                  >
+                    {['none', 'weekly', 'yearly'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setRepeatOption(opt);
+                          setIsRepeatDropdownOpen(false);
+                          if (opt === 'none') setEndOption('never');
+                        }}
+                        className={`w-full text-left px-5 py-2.5 text-[14px] hover:bg-blue-50/60 hover:text-blue-600 transition-colors ${repeatOption === opt ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 font-medium'}`}
+                      >
+                        {opt === 'none' && t('register.repeat_none')}
+                        {opt === 'weekly' && t('register.repeat_weekly')}
+                        {opt === 'yearly' && t('register.repeat_yearly')}
+                      </button>
+                    ))}
                   </div>
                 </>
               )}
+            </div>
 
-              {/* Step 3: Lặp lại mỗi */}
-              {(repeatOption === 'weekly' || repeatOption === 'yearly') && endOption !== 'never' && (
-                <>
-                  <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
-                  <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
-                    <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.repeat_every')}</span>
-                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2">
+            {/* Step 2: Kết thúc */}
+            {(repeatOption === 'weekly' || repeatOption === 'yearly') && (
+              <>
+                <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
+                <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
+                  <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.end_label')}</span>
+                  <select
+                    className="text-[14px] font-semibold text-gray-900 border-0 focus:ring-0 p-0 cursor-pointer bg-transparent"
+                    value={endOption}
+                    onChange={(e) => setEndOption(e.target.value)}
+                  >
+                    <option value="never">{t('register.end_never')}</option>
+                    <option value="date">{t('register.end_date')}</option>
+                    <option value="count">{t('register.end_count')}</option>
+                  </select>
+                  {endOption === 'date' && (
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="text-[14px] border border-gray-200 bg-gray-50 rounded-lg py-1 px-2 focus:ring-0 text-gray-700 w-[132px] ml-1"
+                    />
+                  )}
+                  {endOption === 'count' && (
+                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 ml-1">
                       <input
                         type="number"
-                        value={repeatInterval}
-                        onChange={(e) => setRepeatInterval(Number(e.target.value) || 1)}
+                        value={endCount}
+                        onChange={(e) => setEndCount(Number(e.target.value))}
                         className="text-[14px] border-none bg-transparent py-1 px-0 focus:ring-0 text-gray-700 w-10 text-center"
                         min={1}
                       />
-                      <span className="text-[13px] text-gray-500">{repeatOption === 'weekly' ? t('register.repeat_week') : t('register.repeat_year')}</span>
+                      <span className="text-[13px] text-gray-500 whitespace-nowrap">{t('register.end_count_times')}</span>
                     </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Step 3: Lặp lại mỗi */}
+            {(repeatOption === 'weekly' || repeatOption === 'yearly') && endOption !== 'never' && (
+              <>
+                <span className="text-gray-400 text-[13px] flex-shrink-0">›</span>
+                <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
+                  <span className="text-[14px] font-medium text-gray-600 whitespace-nowrap">{t('register.repeat_every')}</span>
+                  <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2">
+                    <input
+                      type="number"
+                      value={repeatInterval}
+                      onChange={(e) => setRepeatInterval(Number(e.target.value) || 1)}
+                      className="text-[14px] border-none bg-transparent py-1 px-0 focus:ring-0 text-gray-700 w-10 text-center"
+                      min={1}
+                    />
+                    <span className="text-[13px] text-gray-500">{repeatOption === 'weekly' ? t('register.repeat_week') : t('register.repeat_year')}</span>
                   </div>
-                </>
-              )}
+                </div>
+              </>
+            )}
 
-            </div>
           </div>
+        </div>
 
-          {/* Container 2: Add to Schedule button */}
-          <div className="flex justify-end mt-4">
-            <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0} data-customizable-id="btn-add-schedule" data-customizable-type="bg">
-              <span>{t('register.add_to_schedule')}</span>
-              {draftDates.length > 0 && (
-                <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
-              )}
-            </Button>
-          </div>
+        {/* Container 2: Add to Schedule button */}
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleAddToSchedule} disabled={draftDates.length === 0} data-customizable-id="btn-add-schedule" data-customizable-type="bg">
+            <span>{t('register.add_to_schedule')}</span>
+            {draftDates.length > 0 && (
+              <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">{draftDates.length}</span>
+            )}
+          </Button>
+        </div>
 
         {/* Selected Dates Table */}
         {schedule.length > 0 && (

@@ -4,7 +4,8 @@ import {
   PlusIcon,
   EyeIcon,
   CalendarIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
@@ -12,11 +13,12 @@ import { requestService } from '../../services/requestService';
 import { useAuth } from '../../context/AuthContext';
 import RequestTable from '../../components/RequestTable';
 import { useTranslation } from 'react-i18next';
+import AiRequestModal from '../../components/AiRequestModal';
 
 export default function RegistrationHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -25,6 +27,34 @@ export default function RegistrationHistory() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+
+  // AI Assistant States
+  const [isAiRequestModalOpen, setIsAiRequestModalOpen] = useState(false);
+
+  const isVi = i18n.language === 'vi';
+
+  const handleAiSuccess = async () => {
+    if (!user?.person_id) return;
+    try {
+      const result = await requestService.getRequestsByRequester(user.person_id);
+      if (result.success) {
+        const mappedData = result.data.map(item => ({
+          id: item.request_id,
+          type: item.type,
+          date: item.created_at,
+          refId: `#REQ-${item.request_id}`,
+          status: item.status,
+          approver: item.approver ? item.approver.name : 'N/A',
+          details: item.details,
+          reason: item.reason,
+          approverRole: item.approver ? item.approver.role : ''
+        }));
+        setRequests(mappedData);
+      }
+    } catch (error) {
+      console.error('Error refreshing requests after AI success:', error);
+    }
+  };
 
   React.useEffect(() => {
     const fetchRequests = async () => {
@@ -105,6 +135,13 @@ export default function RegistrationHistory() {
         </div>
 
         <div className="hidden sm:flex items-center gap-3">
+          <button
+            onClick={() => setIsAiRequestModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-500/20 transition-all cursor-pointer active:scale-95"
+          >
+            <SparklesIcon className="w-5 h-5 text-white animate-pulse" />
+            <span>{isVi ? 'AI Đăng ký nhanh' : 'AI Quick Request'}</span>
+          </button>
           <button
             onClick={() => navigate('/register/work')}
             data-customizable-id="btn-history-register-work"
@@ -196,6 +233,16 @@ export default function RegistrationHistory() {
                     <button
                       onClick={() => {
                         setIsNewRequestOpen(false);
+                        setIsAiRequestModalOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-semibold text-purple-700 hover:bg-purple-50 hover:text-purple-900 rounded-lg transition-colors text-left"
+                    >
+                      <SparklesIcon className="w-4 h-4 text-purple-600 animate-pulse" />
+                      <span>{isVi ? 'AI Đăng ký nhanh' : 'AI Quick Request'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsNewRequestOpen(false);
                         navigate('/register/work');
                       }}
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left"
@@ -220,7 +267,6 @@ export default function RegistrationHistory() {
           </div>
         </div>
       </div>
-
       <RequestTable
         data={filteredData}
         loading={loading}
@@ -230,6 +276,14 @@ export default function RegistrationHistory() {
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
         onRowClick={handleRowClick}
+      />
+
+      {/* AI Quick Request Assistant Modal */}
+      <AiRequestModal
+        isOpen={isAiRequestModalOpen}
+        onClose={() => setIsAiRequestModalOpen(false)}
+        onSuccess={handleAiSuccess}
+        requesterId={user?.person_id}
       />
     </div>
   );

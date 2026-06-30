@@ -15,6 +15,7 @@ export const en = {
       admin_reports: "Reports",
       admin_preset_reasons: "Preset Reasons",
       theme_settings: "Theme Settings",
+      admin_ai_agents: "AI Agents",
       docs: "Guide lines",
       profile: "Your Profile",
       logout: "Log Out"

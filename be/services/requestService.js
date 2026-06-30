@@ -43,11 +43,10 @@ const createBulkRequest = async (data) => {
             }
         }
     }
-
-    const exceptionTypes = ['arrive_early', 'arrive_late', 'leave_early', 'leave_late'];
-    if (exceptionTypes.includes(data.type)) {
+    const needScheduleTypes = ['leave', 'arrive_early', 'arrive_late', 'leave_early', 'leave_late'];
+    if (needScheduleTypes.includes(data.type)) {
         for (const detail of data.request_details) {
-            // Đối với đăng ký đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
+            // Đối với đăng ký nghỉ làm, đi sớm, đi muộn, về sớm, về muộn: yêu cầu phải CÓ lịch làm việc được duyệt trước đó!
             const existingSchedule = await schedule.findOne({
                 where: {
                     person_id: data.requester_id,
@@ -55,10 +54,10 @@ const createBulkRequest = async (data) => {
                 }
             });
             if (!existingSchedule) {
-                throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể điều chỉnh lịch cho ngày đã được xếp lịch.`);
+                throw new Error(`Ngày ${detail.date} chưa có lịch làm việc được duyệt. Bạn chỉ có thể đăng ký nghỉ hoặc điều chỉnh cho ngày đã được xếp lịch.`);
             }
 
-            // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa (của bất kỳ loại điều chỉnh nào)
+            // Kiểm tra xem đã có request đang chờ duyệt cho ngày này chưa
             const pendingDetail = await request_detail.findOne({
                 include: [{
                     model: request,
@@ -73,7 +72,8 @@ const createBulkRequest = async (data) => {
                 where: { date: detail.date }
             });
             if (pendingDetail) {
-                throw new Error(`Ngày ${detail.date} đã có yêu cầu điều chỉnh đang chờ duyệt.`);
+                const label = data.type === 'leave' ? 'nghỉ làm' : 'điều chỉnh';
+                throw new Error(`Ngày ${detail.date} đã có yêu cầu đăng ký ${label} đang chờ duyệt.`);
             }
         }
     }

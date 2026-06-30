@@ -1,42 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { task, task_participant } = require('../models');
+const { task, task_participant, ai_agent } = require('../models');
 const { Op } = require('sequelize');
-
-const SYSTEM_PROMPT = `# VAI TRÒ (ROLE)
-Bạn là một AI Agent chuyên nghiệp đóng vai trò Chuyên viên Quản lý Tiến độ kiêm Trợ lý Vận hành Cao cấp. Nhiệm vụ của bạn là tiếp nhận dữ liệu công việc từ cơ sở dữ liệu hệ thống (các task hoàn thành có ended_at, các task đang làm dở còn hạn) cùng ghi chú bổ sung từ người dùng để xử lý, phân loại và đóng gói thành một bản Báo cáo Công việc Hàng ngày (Daily Report) chuẩn chỉnh, chuyên nghiệp và scannable (dễ đọc lướt).
-
-# KIẾN THỨC NỀN TẢNG (CONTEXT & PHILOSOPHY)
-- Báo cáo công việc tốt không chỉ là liệt kê danh sách hành động, mà phải thể hiện được: GIÁ TRỊ TẠO RA, TIẾN ĐỘ THỰC TẾ và CÁC ĐIỂM NGHỄN (Blockers).
-- Sử dụng ngôn từ chủ động, tập trung vào kết quả (Ví dụ: Thay vì nói "Tìm hiểu về X", hãy viết "Nghiên cứu tài liệu X để ứng dụng giải quyết vấn đề Y").
-
-# QUY TRÌNH XỬ LÝ DỮ LIỆU (AGENT WORKFLOW)
-1. Phân tích Đầu vào: Tổng hợp dữ liệu task thực tế từ hệ thống DB và dòng ghi chú bổ sung của người dùng. Lọc ra các thông tin chính: Task đã xong (dựa trên ended_at / completed), Task đang làm dở/còn hạn, Lỗi/Vướng mắc, Kế hoạch tiếp theo.
-2. Chuẩn hóa Ngôn từ: Chuyển các tiêu đề, mô tả hoặc ghi chú nhanh thành ngôn ngữ công sở lịch sự, rõ ràng nhưng không bị quá trang nghiêm, cứng nhắc.
-3. Phân loại Độ ưu tiên: Sắp xếp các đầu việc quan trọng lên đầu dựa trên tác động của nó tới dự án.
-4. Định dạng Đầu ra: Xuất báo cáo theo cấu trúc chuẩn văn bản thuần sau (tuyệt đối KHÔNG sử dụng các ký tự Markdown như #, ##, ### hay **):
-
-📋 BÁO CÁO CÔNG VIỆC HÀNG NGÀY - [Ngày/Tháng/Năm]
-Người thực hiện: [Tên người dùng nếu có, nếu không thì để trống]
-
-1. Công việc đã hoàn thành (Accomplishments)
-*(Liệt kê các việc đã xong kèm theo kết quả cụ thể nếu có. Định dạng gạch đầu dòng)*
-- [Tên Module/Dự án]: [Nội dung công việc] -> Kết quả đạt được (ví dụ: đã tối ưu, đã fix xong, đã bàn giao).
-
-2. Công việc đang thực hiện & Kế hoạch ngày mai (In Progress & Next Steps)
-*(Liệt kê các việc chưa xong hoặc sẽ làm vào ngày mai để đảm bảo tính liên tục)*
-- [Tên việc]: Hiện tại đã đạt [X]% tiến độ. Dự kiến ngày mai sẽ tiếp tục xử lý phần [Nội dung].
-
-3. Vướng mắc & Đề xuất giải pháp (Blockers & Impediments)
-*(Chỉ ghi nếu dữ liệu đầu vào có lỗi, delay hoặc vấn đề cần hỗ trợ. Nếu không có vướng mắc, hãy ghi "Không có")*
-- Vấn đề: [Mô tả ngắn gọn lỗi hoặc điểm nghẽn]
-- Hướng xử lý/Đề xuất: [Cách đang tự fix hoặc cần ai hỗ trợ]
-
----
-
-# NGUYÊN TẮC QUAN TRỌNG (CONSTRAINTS)
-- Tuyệt đối KHÔNG dùng ký tự dau thang #, ##, ### ở các tiêu đề và KHÔNG dùng dấu sao ** ở nội dung.
-- Trực quan hóa bằng biểu tượng emoji (như 📋, ✅, ⏳, ⚠️) một cách tinh tế ở các tiêu đề để báo cáo trực quan, không lạm dụng ở các dòng nội dung chi tiết.
-- Nếu người dùng nhập dữ liệu bằng ngôn ngữ nào (Tiếng Việt/Tiếng Anh), hãy xuất báo cáo bằng ngôn ngữ đó.`;
 
 const generateDailyReportAI = async (req, res) => {
     const { rawNotes, userName, dateStr } = req.body;
@@ -51,6 +15,26 @@ const generateDailyReportAI = async (req, res) => {
     }
 
     try {
+        // Fetch AI Agent configuration from DB
+        const agent = await ai_agent.findOne({ where: { code: 'daily_report' } });
+        if (!agent) {
+            return res.status(404).json({
+                message: 'Không tìm thấy cấu hình cho AI Agent Báo cáo hàng ngày trong cơ sở dữ liệu.',
+                error: 'Không tìm thấy cấu hình cho AI Agent Báo cáo hàng ngày trong cơ sở dữ liệu.'
+            });
+        }
+        if (!agent.isActive) {
+            return res.status(400).json({
+                message: 'Chức năng tự động tạo báo cáo bằng AI hiện đã bị tắt bởi Quản trị viên.',
+                error: 'Chức năng tự động tạo báo cáo bằng AI hiện đã bị tắt bởi Quản trị viên.'
+            });
+        }
+
+        const systemInstruction = agent.systemPrompt;
+        const preferredModel = agent.modelName || 'gemini-2.5-flash';
+        const candidateModels = [preferredModel, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
+            .filter((val, index, self) => self.indexOf(val) === index);
+
         let dbTasksText = '';
 
         if (personId) {
@@ -133,7 +117,6 @@ ${todayUncompletedTasks.length > 0
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
         let reportContent = '';
         let lastErr = null;
 
@@ -154,7 +137,7 @@ Hãy đóng vai Chuyên viên Quản lý Tiến độ kiêm Trợ lý Vận hàn
             try {
                 const model = genAI.getGenerativeModel({
                     model: modelName,
-                    systemInstruction: SYSTEM_PROMPT
+                    systemInstruction: systemInstruction
                 });
                 const result = await model.generateContent(prompt);
                 const response = await result.response;

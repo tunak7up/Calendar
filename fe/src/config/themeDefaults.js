@@ -60,10 +60,10 @@ export const DEFAULT_THEME = {
   },
 
   '[data-custom-component="Schedule-Registered"]': {
-    bg: '#eff6ff',
-    text: '#1e4ed8',
-    defaultBg: '#eff6ff',
-    defaultText: '#1e4ed8'
+    bg: '#e0f2fe',
+    text: '#0369a1',
+    defaultBg: '#e0f2fe',
+    defaultText: '#0369a1'
   },
   '[data-custom-component="Schedule-Unscheduled"]': {
     bg: '#fef3c7',
@@ -72,10 +72,10 @@ export const DEFAULT_THEME = {
     defaultText: '#92400e'
   },
   '[data-custom-component="Schedule-Admin-Registered"]': {
-    bg: '#eff6ff',
-    text: '#1e4ed8',
-    defaultBg: '#eff6ff',
-    defaultText: '#1e4ed8'
+    bg: '#e0f2fe',
+    text: '#0369a1',
+    defaultBg: '#e0f2fe',
+    defaultText: '#0369a1'
   },
   '[data-custom-component="Schedule-Admin-Unscheduled"]': {
     bg: '#fef3c7',
@@ -84,10 +84,10 @@ export const DEFAULT_THEME = {
     defaultText: '#92400e'
   },
   '[data-custom-component="Schedule-User-Registered"]': {
-    bg: '#eff6ff',
-    text: '#1e4ed8',
-    defaultBg: '#eff6ff',
-    defaultText: '#1e4ed8'
+    bg: '#e0f2fe',
+    text: '#0369a1',
+    defaultBg: '#e0f2fe',
+    defaultText: '#0369a1'
   },
   '[data-custom-component="Schedule-User-Unscheduled"]': {
     bg: '#fef3c7',
@@ -96,10 +96,10 @@ export const DEFAULT_THEME = {
     defaultText: '#92400e'
   },
   '[data-custom-component="Schedule-User-Absent"]': {
-    bg: '#fee2e2',
-    text: '#991b1b',
-    defaultBg: '#fee2e2',
-    defaultText: '#991b1b'
+    bg: '#ffe4e6',
+    text: '#9f1239',
+    defaultBg: '#ffe4e6',
+    defaultText: '#9f1239'
   },
 
   // Task Priorities

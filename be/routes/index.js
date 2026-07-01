@@ -19,6 +19,7 @@ router.use('/mail', authenticate, require('./mail'));
 router.use('/file-attachment', authenticate, require('./fileAttachment'));
 router.use('/preset-reason', authenticate, require('./presetReason'));
 router.use('/theme-setting', require('./themeSetting'));
+router.use('/task-status', authenticate, require('./taskStatus'));
 router.use('/ai-report', authenticate, require('../ai-agents/dailyReportRoutes'));
 router.use('/ai-agent', authenticate, require('../ai-agents/adminRoutes'));
 router.use('/ai-performance', authenticate, require('../ai-agents/performanceRoutes'));

@@ -8,7 +8,7 @@ const statuses = (t) => [
   { id: 'completed', label: t('status.completed'), bg: 'bg-emerald-500', text: 'text-emerald-800', light: 'bg-emerald-100', dot: 'bg-emerald-500', border: 'border-emerald-200' },
 ];
 
-export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDate, size = 'md', disabled = false }) {
+export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDate, size = 'md', disabled = false, statusesList }) {
   const { t } = useTranslation();
 
   const isOverdue = (status, date) => {
@@ -18,8 +18,33 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
   };
 
   const overdue = isOverdue(currentStatus, dueDate);
-  const list = statuses(t);
-  const statusInfo = list.find(s => s.id === currentStatus?.toLowerCase()) || list[0];
+  
+  const getStatusLabel = (name, defaultLabel) => {
+    const key = `status.${name.toLowerCase().replace(' ', '_')}`;
+    const translation = t(key);
+    return translation && translation !== key ? translation : defaultLabel;
+  };
+
+  // Build normalized list from statusesList (if provided) or fallback to default
+  const list = statusesList ? statusesList.map(s => ({
+    id: s.name,
+    label: getStatusLabel(s.name, s.label),
+    dot: s.color_text || '#374151',
+    light: s.color_bg || '#f3f4f6',
+    text: s.color_text || '#374151',
+    border: s.color_text || '#e2e8f0',
+    isCustom: true
+  })) : statuses(t);
+
+  const statusInfo = list.find(s => s.id === currentStatus?.toLowerCase()) || list[0] || {
+    id: 'pending',
+    label: currentStatus || 'Pending',
+    dot: '#374151',
+    light: '#f3f4f6',
+    text: '#374151',
+    border: '#e2e8f0',
+    isCustom: true
+  };
 
   const statusKey = overdue ? 'TaskStatus-Overdue' : (
     currentStatus?.toLowerCase() === 'in progress' ? 'TaskStatus-InProgress' :
@@ -33,7 +58,11 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       value: s.id,
       label: (
         <>
-          <span className={`w-1.5 h-1.5 rounded-full status-dot ${s.dot}`} data-custom-component={sKey} />
+          <span 
+            className="w-1.5 h-1.5 rounded-full status-dot" 
+            style={s.isCustom ? { backgroundColor: s.dot } : {}}
+            data-custom-component={s.isCustom ? undefined : sKey} 
+          />
           {s.label}
         </>
       )
@@ -42,10 +71,19 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
 
   const buttonLabel = (
     <>
-      <span className={`w-1.5 h-1.5 rounded-full status-dot ${overdue ? 'bg-red-500 animate-pulse' : statusInfo.dot} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`} />
+      <span 
+        className={`w-1.5 h-1.5 rounded-full status-dot ${overdue ? 'bg-red-500 animate-pulse' : ''} ${currentStatus === 'in progress' ? 'animate-pulse' : ''}`}
+        style={!overdue && statusInfo.isCustom ? { backgroundColor: statusInfo.dot } : {}}
+      />
       {overdue ? t('status.overdue') : statusInfo.label}
     </>
   );
+
+  const customStyle = !overdue && statusInfo.isCustom ? {
+    backgroundColor: statusInfo.light,
+    color: statusInfo.text,
+    borderColor: statusInfo.border
+  } : {};
 
   return (
     <CustomSelect
@@ -53,10 +91,11 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       onChange={onStatusChange}
       options={options}
       size={size === 'sm' ? 'sm' : 'md'}
+      style={customStyle}
       buttonClassName={`
         font-black uppercase tracking-widest rounded-full border shadow-sm whitespace-nowrap
         ${size === 'sm' ? 'px-2.5 py-0.5 text-[8.5px]' : 'px-4 py-1.5 text-[10px]'}
-        ${overdue ? 'bg-gray-100 text-red-700 border-gray-200 shadow-sm' : `${statusInfo.light} ${statusInfo.text} ${statusInfo.border}`}
+        ${overdue ? 'bg-gray-100 text-red-700 border-gray-200 shadow-sm' : (statusInfo.isCustom ? '' : `${statusInfo.light} ${statusInfo.text} ${statusInfo.border}`)}
         ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105 active:scale-95 hover:shadow-md'}
       `}
       activeOptionClassName=""

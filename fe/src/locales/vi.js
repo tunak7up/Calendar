@@ -91,6 +91,7 @@ export const vi = {
     status: {
       pending: "Chờ xử lý",
       in_progress: "Đang thực hiện",
+      in_review: "Đang đánh giá",
       completed: "Hoàn thành",
       overdue: "Quá hạn",
       req_pending: "Đang chờ",

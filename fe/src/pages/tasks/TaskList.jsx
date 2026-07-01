@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import { taskService } from '../../services/taskService';
+import { taskStatusService } from '../../services/taskStatusService';
 import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import { FunnelIcon, MagnifyingGlassIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import SortableTable from '../../components/SortableTable';
@@ -51,7 +52,7 @@ function StatusBadge({ status }) {
   return null;
 }
 
-function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) {
+function StatCard({ icon, label, value, iconBg, iconColor, iconStyle, isActive, onClick }) {
   return (
     <div
       onClick={onClick}
@@ -60,8 +61,11 @@ function StatCard({ icon, label, value, iconBg, iconColor, isActive, onClick }) 
         ${isActive ? 'ring-2 ring-blue-500 border-transparent scale-105 shadow-lg' : 'border-gray-300 hover:border-blue-300'}
       `}
     >
-      <div className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${iconBg}`}>
-        <span className={`${iconColor} [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6`}>{icon}</span>
+      <div 
+        className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${iconBg || ''}`}
+        style={iconStyle}
+      >
+        <span className={`${iconColor || ''} [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6`}>{icon}</span>
       </div>
       <div>
         <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
@@ -88,6 +92,7 @@ export default function TaskList({ isAdmin }) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [tasks, setTasks] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -133,6 +138,14 @@ export default function TaskList({ isAdmin }) {
 
   React.useEffect(() => {
     fetchTasks();
+
+    taskStatusService.getAllStatuses()
+      .then(res => {
+        if (res.success) {
+          setStatuses(res.data);
+        }
+      })
+      .catch(err => console.error('Error fetching statuses:', err));
 
     if (isAdmin) {
       apiFetch('/person')
@@ -411,7 +424,7 @@ export default function TaskList({ isAdmin }) {
       {/* Employee filter moved and merged into the unified filter card below */}
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
           label={t('tasks.stat_total')}
           value={baseFilteredTasks.length}
@@ -421,33 +434,33 @@ export default function TaskList({ isAdmin }) {
           isActive={filterStatus === 'all'}
           onClick={() => setFilterStatus('all')}
         />
-        <StatCard
-          label={t('tasks.stat_pending')}
-          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'pending').length}
-          icon={<ClockIcon />}
-          iconBg="bg-gray-100"
-          iconColor="text-gray-400"
-          isActive={filterStatus === 'pending'}
-          onClick={() => setFilterStatus('pending')}
-        />
-        <StatCard
-          label={t('tasks.stat_in_progress')}
-          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'in progress').length}
-          icon={<ClockIcon className="animate-spin-slow" />}
-          iconBg="bg-blue-50"
-          iconColor="text-blue-500"
-          isActive={filterStatus === 'in progress'}
-          onClick={() => setFilterStatus('in progress')}
-        />
-        <StatCard
-          label={t('tasks.stat_completed')}
-          value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'completed').length}
-          icon={<CheckCircleIcon />}
-          iconBg="bg-emerald-100"
-          iconColor="text-emerald-600"
-          isActive={filterStatus === 'completed'}
-          onClick={() => setFilterStatus('completed')}
-        />
+        {statuses.map(status => {
+          const isActive = filterStatus === status.name;
+          const count = baseFilteredTasks.filter(t => getEffectiveStatus(t) === status.name).length;
+          
+          const labelKey = `status.${status.name.toLowerCase().replace(' ', '_')}`;
+          const transLabel = t(labelKey);
+          const finalLabel = transLabel && transLabel !== labelKey ? transLabel : status.label;
+
+          const isCompleted = status.name === 'completed';
+          const icon = isCompleted ? (
+            <CheckCircleIcon />
+          ) : (
+            <ClockIcon className={status.name === 'in progress' ? 'animate-spin-slow' : ''} />
+          );
+
+          return (
+            <StatCard
+              key={status.status_id}
+              label={finalLabel}
+              value={count}
+              icon={icon}
+              iconStyle={{ backgroundColor: status.color_bg || '#f3f4f6', color: status.color_text || '#374151' }}
+              isActive={isActive}
+              onClick={() => setFilterStatus(status.name)}
+            />
+          );
+        })}
         <StatCard
           label={t('tasks.stat_overdue')}
           value={baseFilteredTasks.filter(t => getEffectiveStatus(t) === 'overdue').length}
@@ -578,6 +591,7 @@ export default function TaskList({ isAdmin }) {
                 currentStatus={task.status}
                 dueDate={task.due_date}
                 onStatusChange={(newStatus) => handleStatusChange(task.task_id, newStatus)}
+                statusesList={statuses}
                 size="sm"
               />
             </td>

@@ -109,51 +109,54 @@ body,
 
 /* Working day highlight */
 .fc-work-day {
-  background-color: #bae6fd !important;
-  /* sky-200 */
-  border-left: 4px solid #0284c7 !important;
+  background-color: #e0f2fe !important; /* sky-100 */
+  border-left: 4px solid #0ea5e9 !important; /* sky-500 */
+  color: #0369a1;
 }
 
 .fc-work-day .fc-daygrid-day-number {
-  color: #0369a1 !important;
-  /* sky-700 */
+  color: inherit;
   font-weight: 800;
 }
 
 /* Color-coded calendar days */
 .fc-day-scheduled {
-  background-color: #bae6fd !important; /* sky-200 */
-  border-left: 4px solid #0284c7 !important;
+  background-color: #e0f2fe !important; /* sky-100 */
+  border-left: 4px solid #0ea5e9 !important; /* sky-500 */
+  color: #0369a1;
 }
 .fc-day-scheduled .fc-daygrid-day-number {
-  color: #0369a1 !important;
+  color: inherit;
   font-weight: 800;
 }
 
 .fc-day-unscheduled {
-  background-color: #fef08a !important; /* yellow-200 */
-  border-left: 4px solid #ca8a04 !important;
+  background-color: #fef3c7 !important; /* amber-100 */
+  border-left: 4px solid #f59e0b !important; /* amber-500 */
+  color: #92400e;
 }
 .fc-day-unscheduled .fc-daygrid-day-number {
-  color: #854d0e !important;
+  color: inherit;
   font-weight: 800;
 }
 
 .fc-day-absent {
-  background-color: #fecaca !important; /* red-200 */
-  border-left: 4px solid #dc2626 !important;
+  background-color: #ffe4e6 !important; /* rose-100 */
+  border-left: 4px solid #f43f5e !important; /* rose-500 */
+  color: #9f1239;
 }
 .fc-day-absent .fc-daygrid-day-number {
-  color: #991b1b !important;
+  color: inherit;
   font-weight: 800;
 }
 
 .fc-day-upcoming {
-  background-color: #f1f5f9 !important; /* gray-100 */
-  border-left: 4px solid #cbd5e1 !important; /* gray-300 */
+  background-color: #ede9fe !important; /* violet-100 */
+  border-left: 4px solid #a78bfa !important; /* violet-400 */
+  color: #6d28d9;
 }
 .fc-day-upcoming .fc-daygrid-day-number {
-  color: #64748b !important;
+  color: inherit;
   font-weight: 800;
 }
 
@@ -190,8 +193,7 @@ body,
 
 /* Sync background events (work shifts in week/day view) with month view style */
 .fc-bg-event {
-  background-color: #bae6fd !important;
-  opacity: 1 !important;
+  opacity: 0.8 !important;
 }
 
 /* Show pointer cursor on day cells */

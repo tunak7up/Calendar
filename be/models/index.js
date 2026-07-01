@@ -16,6 +16,7 @@ const refresh_token = require('./refresh_token');
 const preset_reason = require('./preset_reason');
 const theme_setting = require('./theme_setting');
 const ai_agent = require('./ai_agent');
+const task_status = require('./task_status');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -89,5 +90,6 @@ module.exports = {
     refresh_token,
     preset_reason,
     theme_setting,
-    ai_agent
+    ai_agent,
+    task_status
 };

@@ -35,9 +35,10 @@ export default function Profile() {
   const { user, isAdmin } = useAuth();
   const { theme } = useTheme();
 
-  const regTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Registered"]'] || { bg: '#eff6ff', text: '#1e4ed8' }, [theme]);
+  const regTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Registered"]'] || { bg: '#e0f2fe', text: '#0369a1' }, [theme]);
   const unschedTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' }, [theme]);
-  const absentTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Absent"]'] || { bg: '#fee2e2', text: '#991b1b' }, [theme]);
+  const absentTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Absent"]'] || { bg: '#ffe4e6', text: '#9f1239' }, [theme]);
+  const upcomingTheme = React.useMemo(() => theme?.['[data-custom-component="Schedule-User-Upcoming"]'] || { bg: '#ede9fe', text: '#6d28d9' }, [theme]);
 
   // If no ID is provided, assume viewing own profile
   const targetId = id || user?.person_id;
@@ -157,9 +158,9 @@ export default function Profile() {
 
           if (isFuture) {
             // Lịch tương lai chưa đến giờ làm -> Màu xám
-            bg = '#f3f4f6'; // gray-100
-            border = '#d1d5db'; // gray-300
-            text = '#4b5563'; // gray-600
+            bg = upcomingTheme.bg;
+            border = upcomingTheme.bg;
+            text = upcomingTheme.text;
             title = `${shiftStr} (${t('myschedule.legend_upcoming')})`;
           } else {
             // Có lịch nhưng vắng (Đỏ)
@@ -440,8 +441,8 @@ export default function Profile() {
                 <span style={{ color: absentTheme.text }}>{t('myschedule.legend_absent')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-gray-100 border border-gray-300"></span>
-                <span className="text-gray-600">{t('myschedule.legend_upcoming')}</span>
+                <span className="w-3 h-3 rounded border" data-custom-component="Schedule-User-Upcoming" style={{ backgroundColor: upcomingTheme.bg, borderColor: upcomingTheme.bg }}></span>
+                <span style={{ color: upcomingTheme.text }}>{t('myschedule.legend_upcoming')}</span>
               </div>
             </div>
 

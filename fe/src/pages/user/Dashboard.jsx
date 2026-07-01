@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
+import { taskStatusService } from '../../services/taskStatusService';
 import { formatDateTime } from '../../utils/dateUtils';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIcon, DocumentCheckIcon, PaperClipIcon, TrashIcon, CalendarIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
 import AIReportModal from '../../components/AIReportModal/AIReportModal';
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportId, setReportId] = useState(null);
@@ -26,6 +28,8 @@ export default function Dashboard() {
   const [checkingReport, setCheckingReport] = useState(true);
   const [reportAttachments, setReportAttachments] = useState([]);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [newStatusLabel, setNewStatusLabel] = useState('');
+  const [showAddStatusInput, setShowAddStatusInput] = useState(false);
   const fileInputRef = useRef(null);
 
   // Get YYYY-MM-DD for local timezone
@@ -98,22 +102,33 @@ export default function Dashboard() {
     }
   }, [reportId, fetchReportAttachments]);
 
+  const fetchStatuses = useCallback(async () => {
+    try {
+      const res = await taskStatusService.getAllStatuses();
+      if (res.success) {
+        setStatuses(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching statuses:', error);
+    }
+  }, []);
+
   const fetchTasks = useCallback(async () => {
     if (!user?.person_id) return;
     setLoading(true);
     try {
       const response = await taskService.getAllTasksByParticipantId(user.person_id);
       if (response.success) {
-        let pendingTasks = response.data.filter(t => t.status?.toLowerCase() !== 'completed');
+        let allTasks = response.data;
         
-        pendingTasks.sort((a, b) => {
+        allTasks.sort((a, b) => {
           const pA = priorityWeight[a.priority] || 0;
           const pB = priorityWeight[b.priority] || 0;
           if (pA !== pB) return pB - pA;
           return new Date(a.due_date) - new Date(b.due_date);
         });
 
-        setTasks(pendingTasks);
+        setTasks(allTasks);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -124,7 +139,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+    fetchStatuses();
+  }, [fetchTasks, fetchStatuses]);
 
   const handleCheckIn = async () => {
     try {
@@ -219,12 +235,97 @@ export default function Dashboard() {
     }
   };
 
-  const handleStatusChange = (newStatus, taskId) => {
+  const handleStatusChange = async (newStatus, taskId) => {
+    setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, status: newStatus } : t));
     setPendingStatusUpdates(prev => ({
       ...prev,
       [taskId]: newStatus
     }));
+
+    try {
+      await taskService.updateTask(taskId, { status: newStatus });
+    } catch (error) {
+      console.error('Error updating task status on backend:', error);
+      alert('Không thể cập nhật trạng thái công việc trên máy chủ.');
+      fetchTasks();
+    }
   };
+
+  const handleDragStart = (e, taskId) => {
+    e.dataTransfer.setData('text/plain', taskId.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, targetStatus) => {
+    e.preventDefault();
+    const taskIdStr = e.dataTransfer.getData('text/plain');
+    if (!taskIdStr) return;
+    const taskId = parseInt(taskIdStr, 10);
+    handleStatusChange(targetStatus, taskId);
+  };
+
+  const handleAddStatus = async () => {
+    if (!newStatusLabel.trim()) return;
+    try {
+      const name = newStatusLabel.trim().toLowerCase();
+      const label = newStatusLabel.trim();
+      const res = await taskStatusService.createStatus({ name, label });
+      if (res.success) {
+        setNewStatusLabel('');
+        setShowAddStatusInput(false);
+        await fetchStatuses();
+      }
+    } catch (error) {
+      alert('Không thể tạo trạng thái mới: ' + error.message);
+    }
+  };
+
+  const handleDeleteStatus = async (statusName) => {
+    if (['pending', 'in progress', 'completed'].includes(statusName)) {
+      alert('Không thể xóa trạng thái mặc định.');
+      return;
+    }
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa cột trạng thái này? Các công việc trong cột này sẽ được chuyển về "Chưa bắt đầu".`)) {
+      return;
+    }
+    try {
+      const res = await taskStatusService.deleteStatus(statusName);
+      if (res.success) {
+        await fetchStatuses();
+        await fetchTasks();
+      }
+    } catch (error) {
+      alert('Lỗi xóa trạng thái: ' + error.message);
+    }
+  };
+
+  const tasksByStatus = useMemo(() => {
+    const groups = {};
+    statuses.forEach(s => {
+      groups[s.name] = [];
+    });
+    tasks.forEach(task => {
+      const currentStatus = task.status?.toLowerCase() || 'pending';
+      
+      // Do not show completed tasks that are past their due date
+      if (currentStatus === 'completed' && task.due_date) {
+        if (new Date(task.due_date) < new Date()) {
+          return;
+        }
+      }
+
+      if (!groups[currentStatus]) {
+        groups[currentStatus] = [];
+      }
+      groups[currentStatus].push(task);
+    });
+    return groups;
+  }, [tasks, statuses]);
 
   const handleUploadReportFiles = async (e) => {
     const files = Array.from(e.target.files);
@@ -367,83 +468,167 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col" data-customizable-id="card-pending-tasks" data-customizable-type="bg">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
-              <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{t('dashboard.tasks_count', { count: tasks.length })}</span>
+          {/* Kanban Board Container */}
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Kéo thả các thẻ công việc để cập nhật trạng thái</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {showAddStatusInput ? (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <input
+                      type="text"
+                      placeholder="Tên cột mới..."
+                      value={newStatusLabel}
+                      onChange={(e) => setNewStatusLabel(e.target.value)}
+                      className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    <button
+                      onClick={handleAddStatus}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
+                    >
+                      Lưu
+                    </button>
+                    <button
+                      onClick={() => { setShowAddStatusInput(false); setNewStatusLabel(''); }}
+                      className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAddStatusInput(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    Thêm cột
+                  </button>
+                )}
+              </div>
             </div>
-            
-            <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar">
-              <table className="w-full text-left border-collapse relative min-w-[600px]">
-                <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                  <tr>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_title')}</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_priority')}</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('dashboard.th_deadline')}</th>
-                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">{t('dashboard.th_status')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">{t('dashboard.loading_tasks')}</td>
-                    </tr>
-                  ) : tasks.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="text-center py-12 text-gray-400 font-medium">
-                        {t('dashboard.no_tasks')}
-                      </td>
-                    </tr>
-                  ) : (
-                    tasks.map((task) => {
-                      const currentStatus = pendingStatusUpdates[task.task_id] || task.status?.toLowerCase() || 'pending';
-                      
-                      return (
-                      <tr 
-                        key={task.task_id}
-                        onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
-                        className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
-                      >
-                        <td className="py-4 px-6">
-                          <p className="font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={task.name || task.title}>{task.name || task.title}</p>
-                          {task.parent_id && (
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                              <div className="w-2 h-2 border-b border-l border-gray-400 inline-block"></div>
-                              {t('dashboard.subtask_of', { id: task.parent_id })}
-                            </p>
-                          )}
-                        </td>
-                        <td className="py-4 px-6">
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4 items-start">
+                {statuses.map(status => {
+                  const groupedList = tasksByStatus[status.name] || [];
+                  const isSystemDefault = ['pending', 'in progress', 'completed'].includes(status.name);
+                  const labelKey = `status.${status.name.toLowerCase().replace(' ', '_')}`;
+                  const transLabel = t(labelKey);
+                  const finalLabel = transLabel && transLabel !== labelKey ? transLabel : status.label;
+                  
+                  return (
+                    <div 
+                      key={status.status_id}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, status.name)}
+                      className="bg-gray-50/50 rounded-2xl border border-gray-150 p-4 min-h-[450px] flex flex-col flex-shrink-0"
+                    >
+                      {/* Column Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
                           <span 
-                            data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}`}
-                            className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border uppercase tracking-wider ${
-                              task.priority?.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
-                              task.priority?.toLowerCase() === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                              'bg-emerald-100 text-emerald-700 border-emerald-200'
-                            }`}
-                          >
-                            {task.priority?.toLowerCase() === 'high' ? t('dashboard.priority_high') : task.priority?.toLowerCase() === 'medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-600">
-                          {formatDateTime(task.due_date)}
-                        </td>
-                        <td className="py-4 px-6 text-center" onClick={e => e.stopPropagation()}>
-                          <TaskStatusSelect 
-                            currentStatus={currentStatus}
-                            onStatusChange={(newStatus) => handleStatusChange(newStatus, task.task_id)}
-                            disabled={!!checkOutTime}
-                            dueDate={task.due_date}
-                            size="sm"
+                            className="w-2.5 h-2.5 rounded-full" 
+                            style={{ backgroundColor: status.color_text || '#6b7280' }}
                           />
-                        </td>
-                      </tr>
-                    );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          <h3 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider">{finalLabel}</h3>
+                          <span className="text-xs bg-gray-200/80 text-gray-700 font-bold px-2 py-0.5 rounded-full">
+                            {groupedList.length}
+                          </span>
+                        </div>
+                        {!isSystemDefault && (
+                          <button
+                            onClick={() => handleDeleteStatus(status.name)}
+                            className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                            title="Xóa cột"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Column Cards List */}
+                      <div className="flex-1 space-y-3 overflow-y-auto max-h-[500px] pr-1 custom-scrollbar">
+                        {groupedList.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-xl text-center">
+                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Kéo thẻ vào đây</span>
+                          </div>
+                        ) : (
+                          groupedList.map(task => {
+                            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+                            
+                            return (
+                              <div
+                                key={task.task_id}
+                                draggable={!checkOutTime}
+                                onDragStart={(e) => handleDragStart(e, task.task_id)}
+                                onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
+                                className="bg-white border border-gray-150 hover:border-blue-200 p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-grab active:cursor-grabbing group space-y-3 relative overflow-hidden"
+                              >
+                                {isOverdue && (
+                                  <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />
+                                )}
+                                <div>
+                                  <h4 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2" title={task.name || task.title}>
+                                    {task.name || task.title}
+                                  </h4>
+                                  {task.parent_id && (
+                                    <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 border-b border-l border-gray-400 inline-block"></div>
+                                      <span>Subtask of REQ-{task.parent_id}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span 
+                                    data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}`}
+                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${
+                                      task.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-100' :
+                                      task.priority?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                      'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                    }`}
+                                  >
+                                    {task.priority?.toLowerCase() === 'high' ? t('dashboard.priority_high') : task.priority?.toLowerCase() === 'medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
+                                  </span>
+                                  
+                                  {task.due_date && (
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${
+                                      isOverdue ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-200'
+                                    }`}>
+                                      <CalendarIcon className="w-3.5 h-3.5" />
+                                      {new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[10px] text-gray-400">
+                                  <span className="font-bold text-gray-500">REQ-{task.task_id}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
+                                      <UserIcon className="w-3 h-3 text-blue-600" />
+                                    </div>
+                                    <span className="font-semibold text-gray-600 max-w-[80px] truncate">
+                                      {task.assigner || 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6" data-customizable-id="card-daily-report" data-customizable-type="bg">

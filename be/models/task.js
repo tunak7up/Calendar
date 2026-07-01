@@ -41,7 +41,7 @@ const task = sequelize.define(
             type: DataTypes.DATE,
         },
         status: {
-            type: DataTypes.ENUM('pending', 'completed', 'in progress', 'overdue'),
+            type: DataTypes.STRING(128),
         }, 
         created_at: {
             type: DataTypes.DATE,

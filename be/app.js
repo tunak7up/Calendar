@@ -137,6 +137,20 @@ async function startServer() {
     // Setup cron jobs for attendance notifications
     setupAttendanceNotificationCrons();
 
+    // Seed default task statuses if table is empty
+    const { task_status } = require('./models');
+    const count = await task_status.count();
+    if (count === 0) {
+      console.log('Seeding default task statuses...');
+      await task_status.bulkCreate([
+        { name: 'pending', label: 'To Do', color_bg: '#f3f4f6', color_text: '#374151' },
+        { name: 'in progress', label: 'In Progress', color_bg: '#dbeafe', color_text: '#1e40af' },
+        { name: 'in review', label: 'In Review', color_bg: '#f3e8ff', color_text: '#6b21a8' },
+        { name: 'completed', label: 'Done', color_bg: '#d1fae5', color_text: '#065f46' }
+      ]);
+      console.log('Task statuses seeded successfully.');
+    }
+
 
 
   } catch (error) {

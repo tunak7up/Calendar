@@ -17,12 +17,16 @@ import {
   EyeIcon,
   UserGroupIcon,
   TrashIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  SparklesIcon,
+  CpuChipIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
 import { apiFetch, BASE_URL, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
+import { aiAgentService } from '../../services/aiAgentService';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
@@ -214,6 +218,28 @@ export default function TaskDetails() {
   const [allUsers, setAllUsers] = useState([]); // Matching AddTask
   const [taskAttachments, setTaskAttachments] = useState([]);
   const [commentFiles, setCommentFiles] = useState([]);
+  const [aiAnalysis, setAiAnalysis] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  const handleAIAnalyze = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const res = await aiAgentService.analyzeTask(id);
+      if (res.success && res.analysis) {
+        setAiAnalysis(res.analysis);
+      } else {
+        setAiError(res.message || 'Không thể tạo bản phân tích công việc từ AI.');
+      }
+    } catch (err) {
+      console.error(err);
+      setAiError(err.message || 'Có lỗi xảy ra khi kết nối tới AI Agent.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const taskFileInputRef = useRef(null);
   const commentFileInputRef = useRef(null);
   const startInputRef = useRef(null);
@@ -790,16 +816,26 @@ export default function TaskDetails() {
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.description')}</h2>
             </div>
             {!isEditingDescription && (
-              <button
-                onClick={() => {
-                  setEditedDescription(fullTask.description || '');
-                  setIsEditingDescription(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
-              >
-                <PencilSquareIcon className="w-3.5 h-3.5" />
-                {t('taskdetails.edit_desc')}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAIAnalyze}
+                  disabled={aiLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-600 hover:text-white transition-all uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  🪄 AI Phân tích
+                </button>
+                <button
+                  onClick={() => {
+                    setEditedDescription(fullTask.description || '');
+                    setIsEditingDescription(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"
+                >
+                  <PencilSquareIcon className="w-3.5 h-3.5" />
+                  {t('taskdetails.edit_desc')}
+                </button>
+              </div>
             )}
           </div>
 
@@ -833,6 +869,44 @@ export default function TaskDetails() {
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
                 {fullTask.description || t('taskdetails.no_description')}
               </p>
+            </div>
+          )}
+
+          {/* AI Analysis Section */}
+          {aiLoading && (
+            <div className="mt-4 p-5 bg-purple-50/30 border border-purple-100 rounded-2xl flex items-center justify-center gap-3">
+              <ArrowPathIcon className="animate-spin h-5 w-5 text-purple-600" />
+              <span className="text-xs font-semibold text-purple-800">AI đang đọc yêu cầu & phân tích checklist công việc...</span>
+            </div>
+          )}
+
+          {aiError && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 flex items-center justify-between">
+              <span>❌ {aiError}</span>
+              <button onClick={() => setAiError('')} className="text-red-500 hover:text-red-700">
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {aiAnalysis && (
+            <div className="mt-4 p-5 bg-purple-50/50 border border-purple-100 rounded-2xl relative overflow-hidden group shadow-inner">
+              <div className="absolute top-0 right-0 p-3 text-purple-200/50 pointer-events-none">
+                <SparklesIcon className="w-12 h-12 rotate-12" />
+              </div>
+              <div className="flex items-center gap-2 mb-3 relative z-10">
+                <CpuChipIcon className="w-5 h-5 text-purple-600" />
+                <h3 className="text-sm font-extrabold text-purple-900">🪄 Trợ lý AI - Phân tích yêu cầu & Checklist đề xuất</h3>
+                <button 
+                  onClick={() => setAiAnalysis('')} 
+                  className="ml-auto text-gray-400 hover:text-gray-600 p-1 hover:bg-purple-100/50 rounded-lg transition-all"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed relative z-10 font-medium">
+                {aiAnalysis}
+              </div>
             </div>
           )}
         </div>

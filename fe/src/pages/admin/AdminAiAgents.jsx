@@ -4,13 +4,22 @@ import {
   CheckCircleIcon,
   XMarkIcon,
   CpuChipIcon,
-  CodeBracketIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { aiAgentService } from '../../services/aiAgentService';
 import Button from '../../components/Button';
 import BackButton from '../../components/BackButton';
 import { useTranslation } from 'react-i18next';
+
+const STANDARD_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash'
+];
 
 export default function AdminAiAgents() {
   const { t, i18n } = useTranslation();
@@ -60,8 +69,7 @@ export default function AdminAiAgents() {
 
   const handleSelectAgent = (agent) => {
     setSelectedAgent(agent);
-    const standardModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-    const isCustom = !standardModels.includes(agent.modelName || 'gemini-3.1-flash-lite');
+    const isCustom = !STANDARD_MODELS.includes(agent.modelName || 'gemini-3.1-flash-lite');
     setIsCustomModel(isCustom);
     setFormData({
       name: agent.name,

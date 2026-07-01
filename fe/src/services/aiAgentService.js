@@ -17,14 +17,14 @@ export const aiAgentService = {
   },
 
   analyzePerformance: async (personId) => {
-    return await apiFetch('/ai-performance/analyze', {
+    return await apiFetch('/ai-performance-analysis/analyze', {
       method: 'POST',
       body: JSON.stringify({ personId })
     });
   },
 
   analyzeCompanyMonthly: async (month, year) => {
-    return await apiFetch('/ai-performance/analyze-company', {
+    return await apiFetch('/ai-monthly-company-analysis/analyze-company', {
       method: 'POST',
       body: JSON.stringify({ month, year })
     });
@@ -34,6 +34,13 @@ export const aiAgentService = {
     return await apiFetch('/ai-request-parser/parse-schedule', {
       method: 'POST',
       body: JSON.stringify({ inputText })
+    });
+  },
+
+  analyzeTask: async (taskId) => {
+    return await apiFetch('/ai-task-analysis/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ taskId })
     });
   }
 };

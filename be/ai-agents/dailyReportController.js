@@ -134,6 +134,7 @@ ${rawNotes && rawNotes.trim() ? `Ghi chú / Nhật ký bổ sung từ người d
 
 Hãy đóng vai Chuyên viên Quản lý Tiến độ kiêm Trợ lý Vận hành Cao cấp để tổng hợp dữ liệu công việc tự động từ hệ thống DB (các task đã hoàn thành có ended_at và các task đang thực hiện) cùng ghi chú bổ sung (nếu có), xử lý và xuất ra bản Báo cáo Công việc Hàng ngày (Daily Report) chuẩn chỉnh theo đúng cấu trúc yêu cầu. Tuyệt đối KHÔNG dùng ký tự dau thang #, ##, ### ở tiêu đề và KHÔNG dùng dấu sao **.`;
 
+        const errors = [];
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
@@ -146,12 +147,17 @@ Hãy đóng vai Chuyên viên Quản lý Tiến độ kiêm Trợ lý Vận hàn
                 if (reportContent) break;
             } catch (err) {
                 console.warn(`Model ${modelName} failed, trying next candidate...`, err.message);
+                errors.push({ model: modelName, message: err.message, status: err.status });
                 lastErr = err;
             }
         }
 
-        if (!reportContent && lastErr) {
-            throw lastErr;
+        if (!reportContent) {
+            const quotaErr = errors.find(e => e.status === 429 || (e.message && (e.message.includes('429') || e.message.toLowerCase().includes('quota') || e.message.toLowerCase().includes('too many requests'))));
+            if (quotaErr) {
+                throw new Error(`Hết hạn mức cuộc gọi (Quota Exceeded / 429) cho mô hình ${quotaErr.model}. Vui lòng thử lại sau hoặc cấu hình chuyển sang mô hình khác có hạn mức cao hơn (như Gemini 3.1 Flash Lite).`);
+            }
+            throw lastErr || new Error('Không thể tạo báo cáo bằng Gemini AI.');
         }
 
         if (reportContent) {

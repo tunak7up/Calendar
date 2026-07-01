@@ -176,6 +176,7 @@ Hãy đóng vai Chuyên viên Nhân sự cấp cao kiêm Giám đốc Vận hàn
         let analysisContent = '';
         let lastErr = null;
 
+        const errors = [];
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
@@ -188,12 +189,17 @@ Hãy đóng vai Chuyên viên Nhân sự cấp cao kiêm Giám đốc Vận hàn
                 if (analysisContent) break;
             } catch (err) {
                 console.warn(`Model ${modelName} failed to analyze, trying next candidate...`, err.message);
+                errors.push({ model: modelName, message: err.message, status: err.status });
                 lastErr = err;
             }
         }
 
-        if (!analysisContent && lastErr) {
-            throw lastErr;
+        if (!analysisContent) {
+            const quotaErr = errors.find(e => e.status === 429 || (e.message && (e.message.includes('429') || e.message.toLowerCase().includes('quota') || e.message.toLowerCase().includes('too many requests'))));
+            if (quotaErr) {
+                throw new Error(`Hết hạn mức cuộc gọi (Quota Exceeded / 429) cho mô hình ${quotaErr.model}. Vui lòng thử lại sau hoặc cấu hình chuyển sang mô hình khác có hạn mức cao hơn (như Gemini 3.1 Flash Lite).`);
+            }
+            throw lastErr || new Error('Không thể tạo bản đánh giá hiệu suất bằng Gemini AI.');
         }
 
         if (analysisContent) {
@@ -366,6 +372,7 @@ Hãy đóng vai Giám đốc Nhân sự kiêm Cố vấn Chiến lược Vận h
         let analysisContent = '';
         let lastErr = null;
 
+        const errors = [];
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
@@ -378,12 +385,17 @@ Hãy đóng vai Giám đốc Nhân sự kiêm Cố vấn Chiến lược Vận h
                 if (analysisContent) break;
             } catch (err) {
                 console.warn(`Model ${modelName} failed to analyze company monthly, trying next candidate...`, err.message);
+                errors.push({ model: modelName, message: err.message, status: err.status });
                 lastErr = err;
             }
         }
 
-        if (!analysisContent && lastErr) {
-            throw lastErr;
+        if (!analysisContent) {
+            const quotaErr = errors.find(e => e.status === 429 || (e.message && (e.message.includes('429') || e.message.toLowerCase().includes('quota') || e.message.toLowerCase().includes('too many requests'))));
+            if (quotaErr) {
+                throw new Error(`Hết hạn mức cuộc gọi (Quota Exceeded / 429) cho mô hình ${quotaErr.model}. Vui lòng thử lại sau hoặc cấu hình chuyển sang mô hình khác có hạn mức cao hơn (như Gemini 3.1 Flash Lite).`);
+            }
+            throw lastErr || new Error('Không thể tạo bản đánh giá tháng doanh nghiệp bằng Gemini AI.');
         }
 
         if (analysisContent) {

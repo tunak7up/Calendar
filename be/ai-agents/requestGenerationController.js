@@ -84,6 +84,7 @@ Hãy tiến hành trích xuất danh sách ca làm việc và trả về chuỗi
         let responseText = '';
         let lastErr = null;
 
+        const errors = [];
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
@@ -96,12 +97,17 @@ Hãy tiến hành trích xuất danh sách ca làm việc và trả về chuỗi
                 if (responseText) break;
             } catch (err) {
                 console.warn(`Model ${modelName} failed to parse schedule request, trying next candidate...`, err.message);
+                errors.push({ model: modelName, message: err.message, status: err.status });
                 lastErr = err;
             }
         }
 
-        if (!responseText && lastErr) {
-            throw lastErr;
+        if (!responseText) {
+            const quotaErr = errors.find(e => e.status === 429 || (e.message && (e.message.includes('429') || e.message.toLowerCase().includes('quota') || e.message.toLowerCase().includes('too many requests'))));
+            if (quotaErr) {
+                throw new Error(`Hết hạn mức cuộc gọi (Quota Exceeded / 429) cho mô hình ${quotaErr.model}. Vui lòng thử lại sau hoặc cấu hình chuyển sang mô hình khác có hạn mức cao hơn (như Gemini 3.1 Flash Lite).`);
+            }
+            throw lastErr || new Error('Không thể phân tích dữ liệu lịch trình bằng Gemini AI.');
         }
 
         // Clean JSON formatting if Gemini included markdown code blocks

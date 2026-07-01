@@ -32,8 +32,8 @@ const generateDailyReportAI = async (req, res) => {
 
         let systemInstruction = agent.systemPrompt;
         systemInstruction += "\nYêu cầu quan trọng: Báo cáo công việc hàng ngày phải cực kỳ ngắn gọn, súc tích, tóm gọn các ý chính, không viết dài dòng lê thê hoặc rườm rà.";
-        const preferredModel = agent.modelName || 'gemini-2.5-flash';
-        const candidateModels = [preferredModel, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
+        const preferredModel = agent.modelName || 'gemini-3.1-flash-lite';
+        const candidateModels = [preferredModel, 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
             .filter((val, index, self) => self.indexOf(val) === index);
 
         let dbTasksText = '';

@@ -28,7 +28,7 @@ export default function AdminAiAgents() {
     name: '',
     description: '',
     isActive: true,
-    modelName: 'gemini-2.5-flash',
+    modelName: 'gemini-3.1-flash-lite',
     systemPrompt: ''
   });
 
@@ -60,14 +60,14 @@ export default function AdminAiAgents() {
 
   const handleSelectAgent = (agent) => {
     setSelectedAgent(agent);
-    const standardModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
-    const isCustom = !standardModels.includes(agent.modelName || 'gemini-2.5-flash');
+    const standardModels = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    const isCustom = !standardModels.includes(agent.modelName || 'gemini-3.1-flash-lite');
     setIsCustomModel(isCustom);
     setFormData({
       name: agent.name,
       description: agent.description || '',
       isActive: agent.isActive,
-      modelName: agent.modelName || 'gemini-2.5-flash',
+      modelName: agent.modelName || 'gemini-3.1-flash-lite',
       systemPrompt: agent.systemPrompt
     });
     setSuccessMsg(null);
@@ -234,7 +234,7 @@ export default function AdminAiAgents() {
 
               <div className="border-t border-gray-50 pt-4 mt-5 flex items-center justify-between relative z-10 text-[10px]">
                 <div className="text-gray-400 font-semibold">
-                  {isVi ? 'Mô hình:' : 'Model:'} <span className="font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md font-bold">{agent.modelName || 'gemini-2.5-flash'}</span>
+                  {isVi ? 'Mô hình:' : 'Model:'} <span className="font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md font-bold">{agent.modelName || 'gemini-3.1-flash-lite'}</span>
                 </div>
                 <span className="text-purple-600 font-bold group-hover:translate-x-1.5 transition-transform flex items-center gap-1">
                   {isVi ? 'Xem cấu hình' : 'Configure'} &rarr;
@@ -366,10 +366,13 @@ export default function AdminAiAgents() {
                     }}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all text-gray-800 font-bold text-xs appearance-none cursor-pointer"
                   >
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</option>
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Recommended - 500 RPD)</option>
+                    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                    <option value="gemini-3-flash">Gemini 3 Flash</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
                     <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                     <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                    <option value="gemini-pro">Gemini Pro</option>
                     <option value="custom">{isVi ? 'Tự nhập tên mô hình khác...' : 'Enter custom model name...'}</option>
                   </select>
                   {isCustomModel && (

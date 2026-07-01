@@ -35,7 +35,7 @@ const ai_agent = sequelize.define(
         modelName: {
             type: DataTypes.STRING(128),
             allowNull: true,
-            defaultValue: 'gemini-2.5-flash',
+            defaultValue: 'gemini-3.1-flash-lite',
             field: 'ModelName'
         },
         description: {

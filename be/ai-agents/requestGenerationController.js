@@ -76,8 +76,8 @@ Thứ 2 Tuần sau: ${boundaries.nextMonday}.
 
 Hãy tiến hành trích xuất danh sách ca làm việc và trả về chuỗi JSON chính xác theo cấu trúc yêu cầu.`;
 
-        const preferredModel = agent.modelName || 'gemini-2.5-flash';
-        const candidateModels = [preferredModel, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
+        const preferredModel = agent.modelName || 'gemini-3.1-flash-lite';
+        const candidateModels = [preferredModel, 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
             .filter((val, index, self) => self.indexOf(val) === index);
 
         const genAI = new GoogleGenerativeAI(apiKey);

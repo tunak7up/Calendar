@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { task, task_participant, ai_agent } = require('../models');
+const { task, task_participant, ai_agent } = require('../../models');
 const { Op } = require('sequelize');
 
 const generateDailyReportAI = async (req, res) => {

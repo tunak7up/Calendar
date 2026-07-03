@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { ai_agent, schedule } = require('../models');
+const { ai_agent, schedule } = require('../../models');
 
 const getWeekBoundaries = (baseDate = new Date()) => {
     const day = baseDate.getDay();

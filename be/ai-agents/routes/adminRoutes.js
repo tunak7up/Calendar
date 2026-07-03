@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('./adminController');
-const { authorize } = require('../middleware/auth');
+const adminController = require('../controllers/adminController');
+const { authorize } = require('../../middleware/auth');
 
 // Chỉ manager (admin) mới được quản lý AI Agents
 router.get('/', authorize('manager'), adminController.getAllAgents);

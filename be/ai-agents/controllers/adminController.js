@@ -1,4 +1,4 @@
-const { ai_agent } = require('../models');
+const { ai_agent } = require('../../models');
 
 // GET /api/ai-agent
 const getAllAgents = async (req, res) => {

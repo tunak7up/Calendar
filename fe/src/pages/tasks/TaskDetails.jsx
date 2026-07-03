@@ -102,9 +102,9 @@ const CommentItem = ({ comment, persons }) => {
     <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
       <div className="flex justify-between items-center mb-2">
         <span className="text-xs font-bold text-indigo-600">{persons[comment.person_id] || 'Unknown User'}</span>
-        <span className="text-[10px] text-gray-400">{formatDateTime(comment.created_at || comment.time)}</span>
+        <span className="text-[10px] text-gray-500">{formatDateTime(comment.created_at || comment.time)}</span>
       </div>
-      <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content || comment.text}</p>
+      <p className="text-sm text-gray-900 whitespace-pre-wrap">{comment.content || comment.text}</p>
 
       {files.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
@@ -1036,7 +1036,16 @@ export default function TaskDetails() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={t('taskdetails.comment_placeholder')}
-              className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-28"
+              className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-28 text-gray-900"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  const val = e.target.value;
+                  if (val.length === 0 || val.endsWith('\n')) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }
+              }}
             />
             <div className="absolute bottom-4 left-4 flex gap-2 items-center">
               <input
@@ -1144,24 +1153,31 @@ export default function TaskDetails() {
                             <div key={sc.comment_id || sc.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 text-xs">
                               <div className="flex justify-between items-center mb-1">
                                 <span className="font-bold text-indigo-600">{persons[sc.person_id] || 'Unknown User'}</span>
-                                <span className="text-[8px] text-gray-400">{formatDateTime(sc.created_at || sc.time)}</span>
+                                <span className="text-[10px] text-gray-500">{formatDateTime(sc.created_at || sc.time)}</span>
                               </div>
-                              <p className="text-gray-700 whitespace-pre-wrap">{sc.content || sc.text}</p>
+                              <p className="text-gray-900 whitespace-pre-wrap">{sc.content || sc.text}</p>
                             </div>
                           ))}
                         </div>
                         <div className="relative">
-                          <input
-                            type="text"
+                          <textarea
                             value={sub.newComment || ''}
                             onChange={(e) => setSubTasks(prev => prev.map(item => item.task_id === sub.task_id ? { ...item, newComment: e.target.value } : item))}
                             placeholder={t('taskdetails.subtask_comment_placeholder')}
-                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddSubTaskComment(sub.task_id)}
+                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 pb-8 text-xs text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none h-16 pr-10"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                const val = e.target.value;
+                                if (val.length === 0 || val.endsWith('\n')) {
+                                  e.preventDefault();
+                                  handleAddSubTaskComment(sub.task_id);
+                                }
+                              }
+                            }}
                           />
                           <button
                             onClick={() => handleAddSubTaskComment(sub.task_id)}
-                            className="absolute right-2 top-1.5 p-1.5 text-indigo-500 hover:text-indigo-700"
+                            className="absolute right-2 top-4 p-1.5 text-indigo-500 hover:text-indigo-700"
                           >
                             <PaperAirplaneIcon className="w-4 h-4" />
                           </button>

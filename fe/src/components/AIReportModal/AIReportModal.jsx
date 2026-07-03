@@ -77,6 +77,15 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                             placeholder="Nhập thêm ghi chú bổ sung hoặc lỗi vướng mắc nếu có (hoặc để trống để AI tự động lấy toàn bộ task từ hệ thống)..."
                             value={rawNotes}
                             onChange={(e) => setRawNotes(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    const val = e.target.value;
+                                    if (val.length === 0 || val.endsWith('\n')) {
+                                        e.preventDefault();
+                                        handleGenerate();
+                                    }
+                                }
+                            }}
                         />
                     </div>
 

@@ -15,7 +15,7 @@ const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
@@ -49,7 +49,7 @@ export default function Dashboard() {
           const report = response.data;
           setReportId(report.report_id || report.id);
           setIsCheckedIn(true);
-          
+
           const parseDate = (dateStr, fallbackDate) => {
             if (!dateStr) return null;
             let d = new Date(dateStr);
@@ -57,8 +57,8 @@ export default function Dashboard() {
               // Try prepending the working date if it's just a time string
               d = new Date(`${fallbackDate}T${dateStr}`);
               if (isNaN(d.getTime())) {
-                 // Try with a space instead of T for older browsers
-                 d = new Date(`${fallbackDate} ${dateStr}`);
+                // Try with a space instead of T for older browsers
+                d = new Date(`${fallbackDate} ${dateStr}`);
               }
             }
             return isNaN(d.getTime()) ? null : d;
@@ -66,7 +66,7 @@ export default function Dashboard() {
 
           const cIn = parseDate(report.check_in, report.working_date);
           if (cIn) setCheckInTime(cIn);
-          
+
           const cOut = parseDate(report.check_out, report.working_date);
           if (cOut) setCheckOutTime(cOut);
           if (report.description) {
@@ -120,7 +120,7 @@ export default function Dashboard() {
       const response = await taskService.getAllTasksByParticipantId(user.person_id);
       if (response.success) {
         let allTasks = response.data;
-        
+
         allTasks.sort((a, b) => {
           const pA = priorityWeight[a.priority] || 0;
           const pB = priorityWeight[b.priority] || 0;
@@ -152,7 +152,7 @@ export default function Dashboard() {
           working_date: workingDate
         })
       });
-      
+
       if (response.success && response.data) {
         const report = response.data;
         const now = new Date();
@@ -179,7 +179,7 @@ export default function Dashboard() {
       const taskUpdates = Object.keys(pendingStatusUpdates).map(taskId => {
         return taskService.updateTask(taskId, { status: pendingStatusUpdates[taskId] });
       });
-      
+
       await Promise.all(taskUpdates);
 
       // 2. Submit Daily Report & Checkout
@@ -188,7 +188,7 @@ export default function Dashboard() {
           method: 'PUT',
           body: JSON.stringify({ description: reportText })
         });
-        
+
         if (response.success) {
           const now = new Date();
           const isUpdating = !!checkOutTime;
@@ -222,7 +222,7 @@ export default function Dashboard() {
           method: 'PUT',
           body: JSON.stringify({ description: reportText })
         });
-        
+
         if (response.success) {
           alert(t('dashboard.alert_draft_success'));
         }
@@ -311,7 +311,7 @@ export default function Dashboard() {
     });
     tasks.forEach(task => {
       const currentStatus = task.status?.toLowerCase() || 'pending';
-      
+
       // Do not show completed tasks that are past their due date
       if (currentStatus === 'completed' && task.due_date) {
         if (new Date(task.due_date) < new Date()) {
@@ -409,7 +409,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-500 mt-1 text-sm sm:text-base" data-customizable-id="dashboard-welcome-sub" data-customizable-type="text">{t('dashboard.subtitle')}</p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {checkInTime && (
             <div className="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-emerald-100 flex items-center gap-3 flex-1 md:flex-none">
@@ -419,8 +419,8 @@ export default function Dashboard() {
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">{t('dashboard.checked_in')}</span>
                 <span className="text-sm font-bold text-gray-900">
-                  {checkInTime instanceof Date && !isNaN(checkInTime) 
-                    ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                  {checkInTime instanceof Date && !isNaN(checkInTime)
+                    ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : '--:--'}
                 </span>
               </div>
@@ -434,8 +434,8 @@ export default function Dashboard() {
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">{t('dashboard.checked_out')}</span>
                 <span className="text-sm font-bold text-gray-900">
-                  {checkOutTime instanceof Date && !isNaN(checkOutTime) 
-                    ? checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                  {checkOutTime instanceof Date && !isNaN(checkOutTime)
+                    ? checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : '--:--'}
                 </span>
               </div>
@@ -473,14 +473,14 @@ export default function Dashboard() {
             <div className="flex justify-between items-center bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 shadow-sm">
               <div>
                 <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Kéo thả các thẻ công việc để cập nhật trạng thái</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('dashboard.tasks_pending_subtitle')}</p>
               </div>
               <div className="flex items-center gap-2">
                 {showAddStatusInput ? (
                   <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
                     <input
                       type="text"
-                      placeholder="Tên cột mới..."
+                      placeholder={t('dashboard.add_column_placeholder')}
                       value={newStatusLabel}
                       onChange={(e) => setNewStatusLabel(e.target.value)}
                       className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -489,7 +489,7 @@ export default function Dashboard() {
                       onClick={handleAddStatus}
                       className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
                     >
-                      Lưu
+                      {t('dashboard.save')}
                     </button>
                     <button
                       onClick={() => { setShowAddStatusInput(false); setNewStatusLabel(''); }}
@@ -504,7 +504,7 @@ export default function Dashboard() {
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
                   >
                     <PlusIcon className="w-3.5 h-3.5" />
-                    Thêm cột
+                    {t('dashboard.add_column')}
                   </button>
                 )}
               </div>
@@ -522,9 +522,9 @@ export default function Dashboard() {
                   const labelKey = `status.${status.name.toLowerCase().replace(' ', '_')}`;
                   const transLabel = t(labelKey);
                   const finalLabel = transLabel && transLabel !== labelKey ? transLabel : status.label;
-                  
+
                   return (
-                    <div 
+                    <div
                       key={status.status_id}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, status.name)}
@@ -533,8 +533,8 @@ export default function Dashboard() {
                       {/* Column Header */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full" 
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: status.color_text || '#6b7280' }}
                           />
                           <h3 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider">{finalLabel}</h3>
@@ -562,7 +562,7 @@ export default function Dashboard() {
                         ) : (
                           groupedList.map(task => {
                             const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
-                            
+
                             return (
                               <div
                                 key={task.task_id}
@@ -587,23 +587,21 @@ export default function Dashboard() {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  <span 
+                                  <span
                                     data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}`}
-                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${
-                                      task.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-100' :
+                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${task.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-100' :
                                       task.priority?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                      'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                    }`}
+                                        'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                      }`}
                                   >
                                     {task.priority?.toLowerCase() === 'high' ? t('dashboard.priority_high') : task.priority?.toLowerCase() === 'medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
                                   </span>
-                                  
+
                                   {task.due_date && (
-                                    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${
-                                      isOverdue ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-200'
-                                    }`}>
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${isOverdue ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-200'
+                                      }`}>
                                       <CalendarIcon className="w-3.5 h-3.5" />
-                                      {new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                      {new Date(task.due_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' })}
                                     </span>
                                   )}
                                 </div>
@@ -651,8 +649,17 @@ export default function Dashboard() {
               placeholder={t('dashboard.report_placeholder')}
               rows={4}
               className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  const val = e.target.value;
+                  if (val.length === 0 || val.endsWith('\n')) {
+                    e.preventDefault();
+                    handleSubmitReport();
+                  }
+                }
+              }}
             />
-            
+
             {/* Attachment Section */}
             <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div className="flex items-center justify-between mb-3">
@@ -685,7 +692,7 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
-              
+
               {reportAttachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {reportAttachments.map(att => {
@@ -727,8 +734,8 @@ export default function Dashboard() {
               <button
                 onClick={handleSubmitReport}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
-                  ${checkOutTime 
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' 
+                  ${checkOutTime
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
                     : 'bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20'
                   }`}
                 data-customizable-id="btn-submit-report"

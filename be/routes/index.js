@@ -19,11 +19,10 @@ router.use('/mail', authenticate, require('./mail'));
 router.use('/file-attachment', authenticate, require('./fileAttachment'));
 router.use('/preset-reason', authenticate, require('./presetReason'));
 router.use('/theme-setting', require('./themeSetting'));
-router.use('/ai-report', authenticate, require('../ai-agents/routes/dailyReportRoutes'));
-router.use('/ai-agent', authenticate, require('../ai-agents/routes/adminRoutes'));
-router.use('/ai-performance-analysis', authenticate, require('../ai-agents/routes/performanceAnalysisRoutes'));
-router.use('/ai-monthly-company-analysis', authenticate, require('../ai-agents/routes/monthlyCompanyAnalysisRoutes'));
-router.use('/ai-request-parser', authenticate, require('../ai-agents/routes/requestGenerationRoutes'));
-router.use('/ai-task-analysis', authenticate, require('../ai-agents/routes/taskAnalysisRoutes'));
+router.use('/task-status', authenticate, require('./taskStatus'));
+router.use('/ai-report', authenticate, require('../ai-agents/dailyReportRoutes'));
+router.use('/ai-agent', authenticate, require('../ai-agents/adminRoutes'));
+router.use('/ai-performance', authenticate, require('../ai-agents/performanceRoutes'));
+router.use('/ai-request-parser', authenticate, require('../ai-agents/requestGenerationRoutes'));
 
 module.exports = router;

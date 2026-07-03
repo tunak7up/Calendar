@@ -49,8 +49,8 @@ export default function AdminSchedule() {
 
   const regTheme = useMemo(() => {
     return theme?.['[data-custom-component="Schedule-Admin-Registered"]'] || {
-      bg: '#eff6ff',
-      text: '#1e4ed8'
+      bg: '#d1fae5',
+      text: '#065f46'
     };
   }, [theme]);
 

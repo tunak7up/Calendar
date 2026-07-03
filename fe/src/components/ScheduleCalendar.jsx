@@ -79,6 +79,30 @@ const ScheduleCalendar = React.forwardRef(({
 
           return classes;
         }}
+        dayCellDidMount={(arg) => {
+          const cellDate = arg.date;
+          const y = cellDate.getFullYear();
+          const m = String(cellDate.getMonth() + 1).padStart(2, '0');
+          const d = String(cellDate.getDate()).padStart(2, '0');
+          const dateStr = `${y}-${m}-${d}`;
+
+          if (arg.view.type === 'dayGridMonth') {
+            const status = dayStatusMap[dateStr];
+            if (status) {
+              let compKey = '';
+              if (status === 'scheduled') compKey = 'Schedule-User-Registered';
+              else if (status === 'unscheduled') compKey = 'Schedule-User-Unscheduled';
+              else if (status === 'absent') compKey = 'Schedule-User-Absent';
+              else if (status === 'upcoming') compKey = 'Schedule-User-Upcoming';
+              
+              if (compKey) {
+                arg.el.setAttribute('data-custom-component', compKey);
+              }
+            } else if (workDays.includes(dateStr)) {
+              arg.el.setAttribute('data-custom-component', 'Schedule-User-Registered');
+            }
+          }
+        }}
         eventContent={(arg) => {
           if (arg.event.extendedProps?.isWorkHour) return null;
 

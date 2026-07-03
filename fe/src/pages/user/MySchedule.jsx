@@ -19,6 +19,11 @@ export default function MySchedule() {
   const { theme } = useTheme();
   const getTaskColor = useTaskColor();
 
+  const regTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Registered"]'] || { bg: '#e0f2fe', text: '#0369a1' }, [theme]);
+  const unschedTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Unscheduled"]'] || { bg: '#fef3c7', text: '#92400e' }, [theme]);
+  const absentTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Absent"]'] || { bg: '#ffe4e6', text: '#9f1239' }, [theme]);
+  const upcomingTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Upcoming"]'] || { bg: '#ede9fe', text: '#6d28d9' }, [theme]);
+
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -184,11 +189,11 @@ export default function MySchedule() {
       const d = parseVNTime(e.start);
       const dateStr = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : e.start?.split?.(/[T ]/)?.[0];
       const status = dayStatusMap[dateStr];
-      let bg = '#bae6fd'; // Default Blue/Sky
-      if (status === 'scheduled') bg = '#bae6fd';
-      else if (status === 'unscheduled') bg = '#fef08a';
-      else if (status === 'absent') bg = '#fecaca';
-      else if (status === 'upcoming') bg = '#e0f2fe';
+      let bg = regTheme.bg;
+      if (status === 'scheduled') bg = regTheme.bg;
+      else if (status === 'unscheduled') bg = unschedTheme.bg;
+      else if (status === 'absent') bg = absentTheme.bg;
+      else if (status === 'upcoming') bg = upcomingTheme.bg;
 
       return {
         ...e,
@@ -310,20 +315,20 @@ export default function MySchedule() {
         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('myschedule.legend_title') || 'Chú thích màu sắc'}:</h4>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#bae6fd] border border-blue-200"></div>
-            <span className="text-xs font-semibold text-gray-600">{t('myschedule.legend_scheduled')}</span>
+            <div className="w-4 h-4 rounded border" data-custom-component="Schedule-User-Registered" style={{ backgroundColor: regTheme.bg, borderColor: regTheme.bg }}></div>
+            <span className="text-xs font-semibold" style={{ color: regTheme.text }}>{t('myschedule.legend_scheduled')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#fef08a] border border-yellow-200"></div>
-            <span className="text-xs font-semibold text-gray-600">{t('myschedule.legend_unscheduled')}</span>
+            <div className="w-4 h-4 rounded border" data-custom-component="Schedule-User-Unscheduled" style={{ backgroundColor: unschedTheme.bg, borderColor: unschedTheme.bg }}></div>
+            <span className="text-xs font-semibold" style={{ color: unschedTheme.text }}>{t('myschedule.legend_unscheduled')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#fecaca] border border-red-200"></div>
-            <span className="text-xs font-semibold text-gray-600">{t('myschedule.legend_absent')}</span>
+            <div className="w-4 h-4 rounded border" data-custom-component="Schedule-User-Absent" style={{ backgroundColor: absentTheme.bg, borderColor: absentTheme.bg }}></div>
+            <span className="text-xs font-semibold" style={{ color: absentTheme.text }}>{t('myschedule.legend_absent')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[#f1f5f9] border border-gray-300"></div>
-            <span className="text-xs font-semibold text-gray-600">{t('myschedule.legend_upcoming')}</span>
+            <div className="w-4 h-4 rounded border" data-custom-component="Schedule-User-Upcoming" style={{ backgroundColor: upcomingTheme.bg, borderColor: upcomingTheme.bg }}></div>
+            <span className="text-xs font-semibold" style={{ color: upcomingTheme.text }}>{t('myschedule.legend_upcoming')}</span>
           </div>
         </div>
       </div>

@@ -26,6 +26,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
 import { apiFetch, BASE_URL, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
+import { taskStatusService } from '../../services/taskStatusService';
 import { aiAgentService } from '../../services/aiAgentService';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
@@ -218,6 +219,7 @@ export default function TaskDetails() {
   const [allUsers, setAllUsers] = useState([]); // Matching AddTask
   const [taskAttachments, setTaskAttachments] = useState([]);
   const [commentFiles, setCommentFiles] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -451,6 +453,13 @@ export default function TaskDetails() {
 
   useEffect(() => {
     fetchPersons();
+    taskStatusService.getAllStatuses()
+      .then(res => {
+        if (res.success) {
+          setStatuses(res.data);
+        }
+      })
+      .catch(err => console.error('Error fetching statuses:', err));
   }, [fetchPersons]);
 
   useEffect(() => {
@@ -690,6 +699,7 @@ export default function TaskDetails() {
               <TaskStatusSelect
                 currentStatus={fullTask.status}
                 dueDate={fullTask.due_date}
+                statusesList={statuses}
                 onStatusChange={async (val) => {
                   const res = await taskService.updateTask(fullTask.task_id, { status: val });
                   if (res.success) {
@@ -1093,6 +1103,7 @@ export default function TaskDetails() {
                               currentStatus={sub.status}
                               dueDate={sub.due_date}
                               size="sm"
+                              statusesList={statuses}
                               onStatusChange={async (val) => {
                                 const res = await taskService.updateTask(sub.task_id, { status: val });
                                 if (res.success) {

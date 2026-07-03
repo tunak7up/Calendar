@@ -92,6 +92,7 @@ export const en = {
     status: {
       pending: "Pending",
       in_progress: "In Progress",
+      in_review: "In Review",
       completed: "Completed",
       overdue: "Overdue",
       req_pending: "Pending",

@@ -102,7 +102,7 @@ export default function ReportHistory() {
           </p>
         </div>
 
-        <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="w-full md:w-auto flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
           <button
             onClick={() => setIsAiModalOpen(true)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"

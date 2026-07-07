@@ -104,7 +104,6 @@ export default function TaskList({ isAdmin }) {
   const [endDate, setEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [importFile, setImportFile] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const pageSize = 15;
@@ -389,7 +388,6 @@ export default function TaskList({ isAdmin }) {
                 onChange={async (e) => {
                   const file = e.target.files[0];
                   if (!file) return;
-                  setImportFile(file);
                   const formData = new FormData();
                   formData.append('file', file);
                   try {
@@ -474,7 +472,7 @@ export default function TaskList({ isAdmin }) {
 
       {/* General Filters: Employee, Search, Role, DateRange */}
       <div className="flex flex-col gap-4 mb-6 bg-white p-4 rounded-2xl border border-gray-300 shadow-md">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
+        <div className="flex flex-col lg:flex-row lg:flex-wrap items-stretch lg:items-center gap-3 w-full">
           {isAdmin && (
             <div className="w-full lg:w-[240px] flex-shrink-0">
               <EmployeeMultiFilter

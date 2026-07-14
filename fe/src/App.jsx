@@ -64,7 +64,7 @@ function App() {
       if (isNative) {
         try {
           // Initialize native plugin
-          await OneSignalNative.initialize(import.meta.env.VITE_ONESIGNAL_APP_ID || "c0956a4d-1329-4fd4-80e8-005d342d9d22");
+          await OneSignalNative.initialize(import.meta.env.VITE_ONESIGNAL_APP_ID);
 
           // Request permission
           await OneSignalNative.Notifications.requestPermission(true);
@@ -96,7 +96,7 @@ function App() {
           window.OneSignalDeferred = window.OneSignalDeferred || [];
           window.OneSignalDeferred.push(async function (OneSignal) {
             await OneSignal.init({
-              appId: import.meta.env.VITE_ONESIGNAL_APP_ID || "c0956a4d-1329-4fd4-80e8-005d342d9d22",
+              appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
               notifyButton: {
                 enable: false,
               },

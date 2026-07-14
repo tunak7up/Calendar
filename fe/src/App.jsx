@@ -35,6 +35,7 @@ import './styles/App.css'
 
 import MainLayout from './layouts/MainLayout'
 import { saveAuthRedirect, clearAuthRedirect, getAuthRedirect, getDefaultRedirectPath } from './utils/authRedirect'
+import { apiFetch } from './services/api'
 
 function App() {
   const { isLoggedIn, isAdmin, isLoading, isLoggingOut, user } = useAuth();
@@ -44,7 +45,7 @@ function App() {
   // Hide Splash Screen once loading is complete
   useEffect(() => {
     if (!isLoading) {
-      SplashScreen.hide().catch(() => {});
+      SplashScreen.hide().catch(() => { });
     }
   }, [isLoading]);
 
@@ -55,17 +56,17 @@ function App() {
     const script = document.createElement('script');
     script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
     script.defer = true;
-    
+
     script.onload = () => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function(OneSignal) {
+      window.OneSignalDeferred.push(async function (OneSignal) {
         await OneSignal.init({
           appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
           notifyButton: {
             enable: false,
           },
         });
-        
+
         try {
           // Request permission
           await OneSignal.Notifications.requestPermission();
@@ -73,9 +74,8 @@ function App() {
           const subscriptionId = OneSignal.User.PushSubscription.id;
           if (subscriptionId) {
             console.log('[OneSignal] Registration ID:', subscriptionId);
-            await fetch(`${import.meta.env.VITE_API_URL}/person/${user.person_id}/onesignal`, {
+            await apiFetch(`/person/${user.person_id}/onesignal`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ onesignal_id: subscriptionId })
             }).catch(e => console.error('[OneSignal] Failed to send subscription ID to backend:', e));
           }
@@ -85,9 +85,8 @@ function App() {
             const newId = event.current.id;
             if (newId) {
               console.log('[OneSignal] Subscription ID changed:', newId);
-              await fetch(`${import.meta.env.VITE_API_URL}/person/${user.person_id}/onesignal`, {
+              await apiFetch(`/person/${user.person_id}/onesignal`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ onesignal_id: newId })
               }).catch(e => console.error('[OneSignal] Failed to send updated subscription ID to backend:', e));
             }

@@ -1,4 +1,4 @@
-const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || 'c0956a4d-1329-4fd4-80e8-005d342d9d22';
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 /**
@@ -15,6 +15,11 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
     .filter(id => id && id.trim() !== '');
 
   if (ids.length === 0) return;
+
+  if (!ONESIGNAL_APP_ID) {
+    console.warn('[OneSignal] Missing ONESIGNAL_APP_ID in environment variables. Skip sending push notification.');
+    return;
+  }
 
   if (!ONESIGNAL_REST_API_KEY) {
     console.warn('[OneSignal] Missing ONESIGNAL_REST_API_KEY in environment variables. Skip sending push notification.');

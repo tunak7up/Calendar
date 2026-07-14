@@ -16,8 +16,9 @@ polyfill({
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { Capacitor } from '@capacitor/core'
 
-const isCapacitor = window.hasOwnProperty('Capacitor') || navigator.userAgent.includes('Capacitor') || window.location.protocol === 'file:';
+const isCapacitor = Capacitor.isNativePlatform();
 const RouterComponent = isCapacitor ? HashRouter : BrowserRouter;
 
 createRoot(document.getElementById('root')).render(

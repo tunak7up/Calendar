@@ -9,6 +9,7 @@ import { CheckCircleIcon, ClockIcon, DocumentTextIcon, PaperAirplaneIcon, PlusIc
 import { useTranslation } from 'react-i18next';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
 import AIReportModal from '../../components/AIReportModal/AIReportModal';
+import { Capacitor } from '@capacitor/core';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -33,9 +34,7 @@ export default function Dashboard() {
   const fileInputRef = useRef(null);
 
   const isMobile = useMemo(() => {
-    return window.hasOwnProperty('Capacitor') || 
-      navigator.userAgent.includes('Capacitor') || 
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return Capacitor.isNativePlatform();
   }, []);
 
   const boardContainerRef = useRef(null);

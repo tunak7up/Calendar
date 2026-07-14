@@ -22,7 +22,8 @@ app.use(cookieParser());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'http://localhost', // Android Capacitor
+  'http://localhost', // Android Capacitor (HTTP)
+  'https://localhost', // Android Capacitor (HTTPS)
   'capacitor://localhost', // iOS Capacitor
   'https://qltt.kis-v.com',
   process.env.FRONTEND_URL,

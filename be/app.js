@@ -22,6 +22,8 @@ app.use(cookieParser());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost', // Android Capacitor
+  'capacitor://localhost', // iOS Capacitor
   'https://qltt.kis-v.com',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
@@ -55,7 +57,7 @@ app.use('/api', router);
 app.post('/api/test/attendance-email', async (req, res) => {
   try {
     const { checkType } = req.body; // 'morning-checkin', 'morning-checkout', 'afternoon-checkin', 'afternoon-checkout'
-    
+
     if (!checkType) {
       return res.status(400).json({ success: false, message: 'checkType is required' });
     }

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { SplashScreen } from '@capacitor/splash-screen'
 import { useAuth } from './context/AuthContext'
 import HeaderPage from './layouts/HeaderPage'
 import SidebarRegister from './layouts/SidebarRegister'
@@ -39,6 +40,13 @@ function App() {
   const { isLoggedIn, isAdmin, isLoading, isLoggingOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Hide Splash Screen once loading is complete
+  useEffect(() => {
+    if (!isLoading) {
+      SplashScreen.hide().catch(() => {});
+    }
+  }, [isLoading]);
 
   // Redirect to login if not logged in
   useEffect(() => {

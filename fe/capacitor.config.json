@@ -1,0 +1,11 @@
+{
+  "appId": "com.example.app",
+  "appName": "qltt.kis-v",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 1500
+    }
+  }
+}

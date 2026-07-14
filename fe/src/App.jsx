@@ -36,6 +36,8 @@ import './styles/App.css'
 import MainLayout from './layouts/MainLayout'
 import { saveAuthRedirect, clearAuthRedirect, getAuthRedirect, getDefaultRedirectPath } from './utils/authRedirect'
 import { apiFetch } from './services/api'
+import { Capacitor } from '@capacitor/core'
+import OneSignalNative from '@onesignal/capacitor-plugin'
 
 function App() {
   const { isLoggedIn, isAdmin, isLoading, isLoggingOut, user } = useAuth();
@@ -53,56 +55,98 @@ function App() {
   useEffect(() => {
     if (!isLoggedIn || !user?.person_id) return;
 
-    const script = document.createElement('script');
-    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-    script.defer = true;
+    let active = true;
+    let webCleanup = null;
 
-    script.onload = () => {
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        await OneSignal.init({
-          appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
-          notifyButton: {
-            enable: false,
-          },
-        });
+    const initOneSignal = async () => {
+      const isNative = Capacitor.isNativePlatform();
 
+      if (isNative) {
         try {
-          // Request permission
-          await OneSignal.Notifications.requestPermission();
+          // Initialize native plugin
+          await OneSignalNative.initialize(import.meta.env.VITE_ONESIGNAL_APP_ID || "c0956a4d-1329-4fd4-80e8-005d342d9d22");
 
-          const subscriptionId = OneSignal.User.PushSubscription.id;
-          if (subscriptionId) {
-            console.log('[OneSignal] Registration ID:', subscriptionId);
+          // Request permission
+          await OneSignalNative.Notifications.requestPermission(true);
+
+          // Get Subscription ID
+          const subscriptionId = await OneSignalNative.User.pushSubscription.getIdAsync();
+          if (subscriptionId && active) {
+            console.log('[OneSignal Native] Registration ID:', subscriptionId);
             await apiFetch(`/person/${user.person_id}/onesignal`, {
               method: 'POST',
               body: JSON.stringify({ onesignal_id: subscriptionId })
-            }).catch(e => console.error('[OneSignal] Failed to send subscription ID to backend:', e));
+            }).catch(e => console.error('[OneSignal Native] Failed to send subscription ID to backend:', e));
           }
 
-          // Listen for subscription change events
-          OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
-            const newId = event.current.id;
-            if (newId) {
-              console.log('[OneSignal] Subscription ID changed:', newId);
-              await apiFetch(`/person/${user.person_id}/onesignal`, {
-                method: 'POST',
-                body: JSON.stringify({ onesignal_id: newId })
-              }).catch(e => console.error('[OneSignal] Failed to send updated subscription ID to backend:', e));
+          // Link external ID to matching person ID
+          await OneSignalNative.login(String(user.person_id));
+
+        } catch (e) {
+          console.error('[OneSignal Native] Error initializing:', e);
+        }
+      } else {
+        // Web browser environment
+        const script = document.createElement('script');
+        script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+        script.defer = true;
+
+        script.onload = () => {
+          if (!active) return;
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function (OneSignal) {
+            await OneSignal.init({
+              appId: import.meta.env.VITE_ONESIGNAL_APP_ID || "c0956a4d-1329-4fd4-80e8-005d342d9d22",
+              notifyButton: {
+                enable: false,
+              },
+            });
+
+            try {
+              // Request permission
+              await OneSignal.Notifications.requestPermission();
+
+              const subscriptionId = OneSignal.User.PushSubscription.id;
+              if (subscriptionId && active) {
+                console.log('[OneSignal Web] Registration ID:', subscriptionId);
+                await apiFetch(`/person/${user.person_id}/onesignal`, {
+                  method: 'POST',
+                  body: JSON.stringify({ onesignal_id: subscriptionId })
+                }).catch(e => console.error('[OneSignal Web] Failed to send subscription ID to backend:', e));
+              }
+
+              // Listen for subscription change events
+              OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
+                const newId = event.current.id;
+                if (newId && active) {
+                  console.log('[OneSignal Web] Subscription ID changed:', newId);
+                  await apiFetch(`/person/${user.person_id}/onesignal`, {
+                    method: 'POST',
+                    body: JSON.stringify({ onesignal_id: newId })
+                  }).catch(e => console.error('[OneSignal Web] Failed to send updated subscription ID to backend:', e));
+                }
+              });
+            } catch (e) {
+              console.error('[OneSignal Web] Error initializing or requesting permissions:', e);
             }
           });
-        } catch (e) {
-          console.error('[OneSignal] Error initializing or requesting permissions:', e);
-        }
-      });
+        };
+
+        document.head.appendChild(script);
+
+        webCleanup = () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      }
     };
 
-    document.head.appendChild(script);
+    initOneSignal();
 
     return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
+      active = false;
+      if (webCleanup) webCleanup();
     };
   }, [isLoggedIn, user?.person_id]);
 

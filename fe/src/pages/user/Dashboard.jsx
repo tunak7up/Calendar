@@ -33,8 +33,17 @@ export default function Dashboard() {
   const [showAddStatusInput, setShowAddStatusInput] = useState(false);
   const fileInputRef = useRef(null);
 
-  const isMobile = useMemo(() => {
-    return Capacitor.isNativePlatform();
+  const [isMobile, setIsMobile] = useState(() => {
+    return Capacitor.isNativePlatform() || window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const boardContainerRef = useRef(null);

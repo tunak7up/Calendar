@@ -75,6 +75,16 @@ const getTasksByPersonId = async (req, res) => {
     }
 };
 
+const updateOneSignalId = async (req, res) => {
+    try {
+        const { onesignal_id } = req.body;
+        const data = await personService.updateOneSignalId(req.params.id, onesignal_id);
+        sendRes(res, 200, 'OneSignal ID updated successfully', data);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Error updating OneSignal ID', null, error.message);
+    }
+};
+
 module.exports = {
     getAllPersons,
     getPersonByRole,
@@ -83,5 +93,6 @@ module.exports = {
     updatePerson,
     removePerson,
     getTasksAndRolesByPersonId,
-    getTasksByPersonId
+    getTasksByPersonId,
+    updateOneSignalId
 };

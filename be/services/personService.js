@@ -123,6 +123,12 @@ const getTasksByPersonId = async (personId) => {
   return tasks;
 };
 
+const updateOneSignalId = async (id, onesignalId) => {
+  const data = await person.findByPk(id);
+  if (!data) throw new Error('Person not found');
+  return await data.update({ onesignal_id: onesignalId });
+};
+
 module.exports = {
   getAllPersons,
   getTasksAndRolesByPersonId,
@@ -131,5 +137,6 @@ module.exports = {
   getPersonById,
   createPerson,
   updatePerson,
-  removePerson
+  removePerson,
+  updateOneSignalId
 };

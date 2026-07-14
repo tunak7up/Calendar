@@ -32,6 +32,67 @@ export default function Dashboard() {
   const [showAddStatusInput, setShowAddStatusInput] = useState(false);
   const fileInputRef = useRef(null);
 
+  const isMobile = useMemo(() => {
+    return window.hasOwnProperty('Capacitor') || 
+      navigator.userAgent.includes('Capacitor') || 
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }, []);
+
+  const boardContainerRef = useRef(null);
+  const scrollIntervalRef = useRef(null);
+  const scrollDirectionRef = useRef(null);
+
+  const stopScroll = useCallback(() => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+    scrollDirectionRef.current = null;
+  }, []);
+
+  const handleAutoScroll = useCallback((e) => {
+    if (!boardContainerRef.current) return;
+
+    const container = boardContainerRef.current;
+    const rect = container.getBoundingClientRect();
+    const clientX = e.clientX;
+
+    // Define boundary threshold (70px from edges) and scrolling speed
+    const threshold = 70;
+    const speed = 10;
+
+    const distFromLeft = clientX - rect.left;
+    const distFromRight = rect.right - clientX;
+
+    if (distFromRight < threshold && distFromRight > 0) {
+      if (scrollDirectionRef.current !== 'right') {
+        stopScroll();
+        scrollDirectionRef.current = 'right';
+        scrollIntervalRef.current = setInterval(() => {
+          container.scrollLeft += speed;
+        }, 16);
+      }
+    } else if (distFromLeft < threshold && distFromLeft > 0) {
+      if (scrollDirectionRef.current !== 'left') {
+        stopScroll();
+        scrollDirectionRef.current = 'left';
+        scrollIntervalRef.current = setInterval(() => {
+          container.scrollLeft -= speed;
+        }, 16);
+      }
+    } else {
+      stopScroll();
+    }
+  }, [stopScroll]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+      }
+    };
+  }, []);
+
   // Get YYYY-MM-DD for local timezone
   const getWorkingDate = () => {
     const d = new Date();
@@ -120,6 +181,14 @@ export default function Dashboard() {
       const response = await taskService.getAllTasksByParticipantId(user.person_id);
       if (response.success) {
         let allTasks = response.data;
+
+        // Filter: get tasks that are within deadline (not overdue) OR tasks that are not completed
+        const now = new Date();
+        allTasks = allTasks.filter(task => {
+          const isWithinDeadline = !task.due_date || new Date(task.due_date) >= now;
+          const isNotCompleted = task.status?.toLowerCase() !== 'completed';
+          return isWithinDeadline || isNotCompleted;
+        });
 
         allTasks.sort((a, b) => {
           const pA = priorityWeight[a.priority] || 0;
@@ -256,13 +325,19 @@ export default function Dashboard() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleDragEnd = () => {
+    stopScroll();
+  };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    handleAutoScroll(e);
   };
 
   const handleDrop = (e, targetStatus) => {
     e.preventDefault();
+    stopScroll();
     const taskIdStr = e.dataTransfer.getData('text/plain');
     if (!taskIdStr) return;
     const taskId = parseInt(taskIdStr, 10);
@@ -470,52 +545,142 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Kanban Board Container */}
           <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 shadow-sm">
-              <div>
-                <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{t('dashboard.tasks_pending_subtitle')}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {showAddStatusInput ? (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
-                    <input
-                      type="text"
-                      placeholder={t('dashboard.add_column_placeholder')}
-                      value={newStatusLabel}
-                      onChange={(e) => setNewStatusLabel(e.target.value)}
-                      className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+            {!isMobile && (
+              <div className="flex justify-between items-center bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 shadow-sm">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-800">{t('dashboard.tasks_pending')}</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('dashboard.tasks_pending_subtitle')}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {showAddStatusInput ? (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                      <input
+                        type="text"
+                        placeholder={t('dashboard.add_column_placeholder')}
+                        value={newStatusLabel}
+                        onChange={(e) => setNewStatusLabel(e.target.value)}
+                        className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <button
+                        onClick={handleAddStatus}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
+                      >
+                        {t('dashboard.save')}
+                      </button>
+                      <button
+                        onClick={() => { setShowAddStatusInput(false); setNewStatusLabel(''); }}
+                        className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      onClick={handleAddStatus}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
+                      onClick={() => setShowAddStatusInput(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
                     >
-                      {t('dashboard.save')}
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      {t('dashboard.add_column')}
                     </button>
-                    <button
-                      onClick={() => { setShowAddStatusInput(false); setNewStatusLabel(''); }}
-                      className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
-                    >
-                      <XMarkIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowAddStatusInput(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
-                  >
-                    <PlusIcon className="w-3.5 h-3.5" />
-                    {t('dashboard.add_column')}
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-20 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
+            ) : isMobile ? (
+              <div className="space-y-4">
+                {tasks.length === 0 ? (
+                  <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center">
+                    <p className="text-gray-500">{t('dashboard.no_tasks') || 'Không có công việc nào'}</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {tasks.map(task => {
+                      const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+
+                      return (
+                        <div
+                          key={task.task_id}
+                          className="bg-white border border-gray-150 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden"
+                        >
+                          {isOverdue && (
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />
+                          )}
+
+                          {/* Header: ID & Title */}
+                          <div className="flex justify-between items-start gap-4">
+                            <div onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })} className="cursor-pointer group flex-1">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">REQ-{task.task_id}</span>
+                              <h3 className="font-extrabold text-gray-900 text-base leading-snug group-hover:text-[#0056b3] transition-colors line-clamp-2">
+                                {task.name || task.title}
+                              </h3>
+                              {task.parent_id && (
+                                <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                  <div className="w-1.5 h-1.5 border-b border-l border-gray-400 inline-block"></div>
+                                  <span>Subtask of REQ-{task.parent_id}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Info: Priority & Due date */}
+                          <div className="flex flex-wrap items-center gap-3 pt-1">
+                            {/* Priority */}
+                            <span
+                              data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ''}`}
+                              className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full border uppercase tracking-wider ${task.priority?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-100' :
+                                task.priority?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                  'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                }`}
+                            >
+                              {task.priority?.toLowerCase() === 'high' ? t('dashboard.priority_high') : task.priority?.toLowerCase() === 'medium' ? t('dashboard.priority_medium') : t('dashboard.priority_low')}
+                            </span>
+
+                            {/* Due Date */}
+                            {task.due_date && (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${isOverdue ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-200'
+                                }`}>
+                                <CalendarIcon className="w-3.5 h-3.5" />
+                                {new Date(task.due_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Footer: Assigner & Status Select */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                            {/* Assigner */}
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
+                                <UserIcon className="w-3 h-3 text-[#0056b3]" />
+                              </div>
+                              <span className="text-xs font-semibold text-gray-600 max-w-[100px] truncate">
+                                {task.assigner || 'N/A'}
+                              </span>
+                            </div>
+
+                            {/* Status Select */}
+                            <div className="relative">
+                              <TaskStatusSelect
+                                currentStatus={task.status}
+                                dueDate={task.due_date}
+                                statusesList={statuses}
+                                size="sm"
+                                onStatusChange={(newStatus) => handleStatusChange(newStatus, task.task_id)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4 items-start">
+              <div ref={boardContainerRef} className="flex flex-row lg:grid lg:grid-cols-4 gap-4 overflow-x-auto pb-4 items-start custom-scrollbar">
                 {statuses.map(status => {
                   const groupedList = tasksByStatus[status.name] || [];
                   const isSystemDefault = ['pending', 'in progress', 'completed'].includes(status.name);
@@ -528,7 +693,7 @@ export default function Dashboard() {
                       key={status.status_id}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, status.name)}
-                      className="bg-gray-50/50 rounded-2xl border border-gray-150 p-4 min-h-[450px] flex flex-col flex-shrink-0"
+                      className="bg-gray-50/50 rounded-2xl border border-gray-150 p-4 min-h-[450px] flex flex-col flex-shrink-0 w-[290px] sm:w-[320px] lg:w-auto"
                     >
                       {/* Column Header */}
                       <div className="flex items-center justify-between mb-4">
@@ -568,6 +733,7 @@ export default function Dashboard() {
                                 key={task.task_id}
                                 draggable={!checkOutTime}
                                 onDragStart={(e) => handleDragStart(e, task.task_id)}
+                                onDragEnd={handleDragEnd}
                                 onClick={() => navigate(`/tasks/${task.task_id}`, { state: { task } })}
                                 className="bg-white border border-gray-150 hover:border-blue-200 p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-grab active:cursor-grabbing group space-y-3 relative overflow-hidden"
                               >
@@ -610,7 +776,7 @@ export default function Dashboard() {
                                   <span className="font-bold text-gray-500">REQ-{task.task_id}</span>
                                   <div className="flex items-center gap-1.5">
                                     <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
-                                      <UserIcon className="w-3 h-3 text-blue-600" />
+                                      <UserIcon className="w-3 h-3 text-[#0056b3]" />
                                     </div>
                                     <span className="font-semibold text-gray-600 max-w-[80px] truncate">
                                       {task.assigner || 'N/A'}

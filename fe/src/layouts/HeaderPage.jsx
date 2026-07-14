@@ -46,9 +46,9 @@ export default function HeaderPage({ isAdmin }) {
     <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200" data-customizable-id="header-bg" data-customizable-type="bg">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-[56px] items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0">
             {/* Mobile menu button */}
-            <div className="flex items-center sm:hidden mr-2">
+            <div className="flex items-center sm:hidden mr-2 flex-shrink-0">
               <DisclosureButton className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
                 <span className="sr-only">Mở menu chính</span>
                 <Bars3Icon aria-hidden="true" className="block h-6 w-6 group-data-open:hidden" />
@@ -57,8 +57,8 @@ export default function HeaderPage({ isAdmin }) {
             </div>
 
             {/* Logo */}
-            <div className="flex shrink-0 items-center mr-2 sm:mr-8">
-              <Link to="/" className="text-[#0056b3] font-[800] text-base sm:text-[1.15rem] tracking-tight hover:text-[#004494]" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
+            <div className="flex shrink items-center mr-2 sm:mr-8 min-w-0">
+              <Link to="/" className="text-[#0056b3] font-[800] text-base sm:text-[1.15rem] tracking-tight hover:text-[#004494] truncate" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
             </div>
 
             {/* Desktop Nav */}

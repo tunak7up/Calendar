@@ -37,7 +37,7 @@ import MainLayout from './layouts/MainLayout'
 import { saveAuthRedirect, clearAuthRedirect, getAuthRedirect, getDefaultRedirectPath } from './utils/authRedirect'
 
 function App() {
-  const { isLoggedIn, isAdmin, isLoading, isLoggingOut } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading, isLoggingOut, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -47,6 +47,65 @@ function App() {
       SplashScreen.hide().catch(() => {});
     }
   }, [isLoading]);
+
+  // Initialize OneSignal and register device Subscription ID
+  useEffect(() => {
+    if (!isLoggedIn || !user?.person_id) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+    script.defer = true;
+    
+    script.onload = () => {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+          notifyButton: {
+            enable: false,
+          },
+        });
+        
+        try {
+          // Request permission
+          await OneSignal.Notifications.requestPermission();
+
+          const subscriptionId = OneSignal.User.PushSubscription.id;
+          if (subscriptionId) {
+            console.log('[OneSignal] Registration ID:', subscriptionId);
+            await fetch(`${import.meta.env.VITE_API_URL}/person/${user.person_id}/onesignal`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ onesignal_id: subscriptionId })
+            }).catch(e => console.error('[OneSignal] Failed to send subscription ID to backend:', e));
+          }
+
+          // Listen for subscription change events
+          OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
+            const newId = event.current.id;
+            if (newId) {
+              console.log('[OneSignal] Subscription ID changed:', newId);
+              await fetch(`${import.meta.env.VITE_API_URL}/person/${user.person_id}/onesignal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ onesignal_id: newId })
+              }).catch(e => console.error('[OneSignal] Failed to send updated subscription ID to backend:', e));
+            }
+          });
+        } catch (e) {
+          console.error('[OneSignal] Error initializing or requesting permissions:', e);
+        }
+      });
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [isLoggedIn, user?.person_id]);
 
   // Redirect to login if not logged in
   useEffect(() => {

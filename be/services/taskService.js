@@ -102,6 +102,23 @@ const createTask = async (data) => {
                     return Promise.resolve();
                 });
                 await Promise.all(emailPromises);
+
+                // Send OneSignal Push Notifications
+                try {
+                    const onesignalIds = participants
+                        .map(p => p.onesignal_id)
+                        .filter(id => id && id.trim() !== '');
+                    
+                    if (onesignalIds.length > 0) {
+                        const { sendPushNotification } = require('../utils/onesignal');
+                        const title = `Task mới: ${data.title}`;
+                        const message = `Bạn vừa được giao một công việc mới từ ${assignerName}.`;
+                        const url = `/tasks/${parentTask.task_id}`;
+                        await sendPushNotification(onesignalIds, title, message, url);
+                    }
+                } catch (pushError) {
+                    console.error('Failed to send task push notifications:', pushError);
+                }
             } catch (error) {
                 console.error('Error fetching participants or sending task emails in background:', error);
             }
@@ -315,7 +332,7 @@ const updateTask = async (id, data) => {
     const parentTask = await task.findByPk(id);
     if (!parentTask) throw new Error('Task not found');
 
-    return await sequelize.transaction(async (t) => {
+    const updatedParent = await sequelize.transaction(async (t) => {
         if (data.due_date && new Date(data.due_date).getTime() >= Date.now() && parentTask.status === 'overdue') {
             data.status = 'pending';
         }
@@ -345,6 +362,51 @@ const updateTask = async (id, data) => {
 
         return updatedParent;
     });
+
+    // Send notifications in background if status changed
+    if (data.status && data.status !== parentTask.status) {
+        (async () => {
+            try {
+                const { person } = require('../models');
+                // Get all participants of this task
+                const taskWithParticipants = await task.findByPk(id, {
+                    include: [
+                        { model: person, as: 'participants' },
+                        { model: person, as: 'assigner' }
+                    ]
+                });
+                
+                if (taskWithParticipants) {
+                    const title = `Cập nhật trạng thái: ${parentTask.title}`;
+                    const message = `Trạng thái công việc đã thay đổi thành "${data.status}".`;
+                    const url = `/tasks/${parentTask.task_id}`;
+
+                    // Collect all OneSignal IDs
+                    const recipientIds = [];
+                    if (taskWithParticipants.assigner && taskWithParticipants.assigner.onesignal_id) {
+                        recipientIds.push(taskWithParticipants.assigner.onesignal_id);
+                    }
+                    if (taskWithParticipants.participants) {
+                        taskWithParticipants.participants.forEach(p => {
+                            if (p.onesignal_id) {
+                                recipientIds.push(p.onesignal_id);
+                            }
+                        });
+                    }
+
+                    const uniqueIds = [...new Set(recipientIds)].filter(Boolean);
+                    if (uniqueIds.length > 0) {
+                        const { sendPushNotification } = require('../utils/onesignal');
+                        await sendPushNotification(uniqueIds, title, message, url);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to send status update push notification:', err);
+            }
+        })();
+    }
+
+    return updatedParent;
 };
 
 const updateTaskTitleOrDescription = async (id, { title, description }) => {

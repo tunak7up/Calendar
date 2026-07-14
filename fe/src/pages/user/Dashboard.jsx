@@ -613,7 +613,7 @@ export default function Dashboard() {
                       return (
                         <div
                           key={task.task_id}
-                          className="bg-white border border-gray-150 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all space-y-4 relative"
+                          className="bg-white border border-gray-150 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all space-y-4 relative focus-within:z-20"
                         >
                           {isOverdue && (
                             <div className="absolute top-0 left-0 right-0 h-1 bg-red-500 rounded-t-2xl" />

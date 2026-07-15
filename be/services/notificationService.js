@@ -22,10 +22,24 @@ const createNotification = async (recipientId, senderId, title, content, url = n
             created_at: new Date()
         });
 
-        // Fetch user's onesignal_id
+        // Fetch all active subscription IDs for the recipient
+        const { push_subscription } = require('../models');
+        const subs = await push_subscription.findAll({
+            where: { person_id: recipientId }
+        });
+        
+        const subscriptionIds = subs.map(sub => sub.onesignal_id).filter(id => id && id.trim() !== '');
+        
+        // Fallback to legacy single column if not already included
         const recipient = await person.findByPk(recipientId);
         if (recipient && recipient.onesignal_id && recipient.onesignal_id.trim() !== '') {
-            await sendPushNotification(recipient.onesignal_id, title, content, url);
+            if (!subscriptionIds.includes(recipient.onesignal_id)) {
+                subscriptionIds.push(recipient.onesignal_id);
+            }
+        }
+
+        if (subscriptionIds.length > 0) {
+            await sendPushNotification(subscriptionIds, title, content, url);
         }
 
         return newNotif;

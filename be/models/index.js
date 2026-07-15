@@ -17,6 +17,7 @@ const preset_reason = require('./preset_reason');
 const theme_setting = require('./theme_setting');
 const ai_agent = require('./ai_agent');
 const task_status = require('./task_status');
+const push_subscription = require('./pushSubscription');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -73,6 +74,9 @@ person.hasMany(refresh_token, { foreignKey: 'person_id', as: 'refresh_tokens' })
 preset_reason.hasMany(request, { foreignKey: 'preset_reason_id', as: 'requests' });
 request.belongsTo(preset_reason, { foreignKey: 'preset_reason_id', as: 'preset_reason' });
 
+person.hasMany(push_subscription, { foreignKey: 'person_id', as: 'push_subscriptions' });
+push_subscription.belongsTo(person, { foreignKey: 'person_id', as: 'person' });
+
 module.exports = {
     person,
     task,
@@ -91,5 +95,6 @@ module.exports = {
     preset_reason,
     theme_setting,
     ai_agent,
-    task_status
+    task_status,
+    push_subscription
 };

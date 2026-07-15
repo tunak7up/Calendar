@@ -126,7 +126,19 @@ const getTasksByPersonId = async (personId) => {
 const updateOneSignalId = async (id, onesignalId) => {
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
-  return await data.update({ onesignal_id: onesignalId });
+  
+  // Update legacy field
+  await data.update({ onesignal_id: onesignalId });
+  
+  // Register in push_subscription table for multi-device support
+  const { push_subscription } = require('../models');
+  if (onesignalId && onesignalId.trim() !== '') {
+    await push_subscription.findOrCreate({
+      where: { person_id: id, onesignal_id: onesignalId }
+    }).catch(err => console.error('[Person Service] Error registering push subscription:', err));
+  }
+  
+  return data;
 };
 
 module.exports = {

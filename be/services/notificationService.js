@@ -31,7 +31,14 @@ const createNotification = async (recipientId, senderId, title, content, url = n
         const subscriptionIds = subs.map(sub => sub.onesignal_id).filter(id => id && id.trim() !== '');
 
         if (subscriptionIds.length > 0) {
-            await sendPushNotification(subscriptionIds, title, content, url);
+            let buttons = null;
+            if (url && url.includes('/history/')) {
+                buttons = [
+                    { id: 'approved', text: 'Đồng ý' },
+                    { id: 'rejected', text: 'Từ chối' }
+                ];
+            }
+            await sendPushNotification(subscriptionIds, title, content, url, buttons);
         }
 
         return newNotif;

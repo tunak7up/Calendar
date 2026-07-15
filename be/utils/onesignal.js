@@ -8,7 +8,7 @@ const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
  * @param {string} message - Notification body
  * @param {string} [url] - Optional click URL
  */
-const sendPushNotification = async (targetOnesignalIds, title, message, url = null) => {
+const sendPushNotification = async (targetOnesignalIds, title, message, url = null, buttons = null) => {
   if (!targetOnesignalIds) return;
 
   const ids = (Array.isArray(targetOnesignalIds) ? targetOnesignalIds : [targetOnesignalIds])
@@ -47,7 +47,8 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
         include_subscription_ids: ids,
         headings: { en: title, vi: title },
         contents: { en: message, vi: message },
-        url: targetUrl
+        url: targetUrl,
+        buttons: buttons || undefined
       })
     });
 

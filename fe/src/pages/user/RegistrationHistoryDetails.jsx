@@ -175,6 +175,26 @@ export default function RegistrationHistoryDetails() {
     }
   };
 
+  useEffect(() => {
+    if (rawReq && id) {
+      const queryParams = new URLSearchParams(location.search);
+      const onesignalAction = queryParams.get('_onesignal_action') || queryParams.get('action');
+      if (onesignalAction && (onesignalAction === 'approved' || onesignalAction === 'rejected')) {
+        const currentStatus = rawReq.status?.toLowerCase();
+        if (currentStatus === 'pending' || currentStatus === 'chờ phê duyệt') {
+          // Clear query params to prevent double triggers on reload
+          const newSearch = new URLSearchParams(location.search);
+          newSearch.delete('_onesignal_action');
+          newSearch.delete('action');
+          const newUrl = `${location.pathname}${newSearch.toString() ? '?' + newSearch.toString() : ''}`;
+          navigate(newUrl, { replace: true });
+          
+          handleUpdateStatus(onesignalAction);
+        }
+      }
+    }
+  }, [rawReq, id, location.search, location.pathname, navigate]);
+
   return (
     <>
       <div>

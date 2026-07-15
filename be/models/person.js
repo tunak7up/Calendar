@@ -21,7 +21,7 @@ const person = sequelize.define(
       type: DataTypes.BOOLEAN,
     },
     role: {
-      type: DataTypes.ENUM('employee', 'manager'),
+      type: DataTypes.STRING(256), // Use STRING instead of ENUM to avoid Sequelize check constraint alter bugs in MSSQL
     },
     username: {
       type: DataTypes.STRING(256),

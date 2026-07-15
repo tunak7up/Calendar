@@ -134,7 +134,7 @@ async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
-    await sequelize.sync({ alter: true });
+    await sequelize.sync(); // Avoid using alter: true as it generates invalid ALTER COLUMN syntax for constraints in MSSQL
     console.log('Database synced successfully.');
 
     // Setup cron jobs for attendance notifications

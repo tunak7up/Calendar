@@ -1,9 +1,11 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSelector from '../components/LanguageSelector'
+import { apiFetch } from '../services/api'
+import { useState, useEffect } from 'react'
 
 const userNavigation = [
   { key: 'dashboard', path: '/dashboard', id: 'dashboard' },
@@ -29,9 +31,98 @@ function classNames(...classes) {
 
 export default function HeaderPage({ isAdmin }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentNav = isAdmin ? adminNavigation : userNavigation;
+
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifs(true);
+    try {
+      const response = await apiFetch('/notification');
+      if (response && response.success) {
+        setNotifications(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.person_id) {
+      fetchNotifications();
+      // Poll notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.person_id]);
+
+  const handleMarkAllAsRead = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const response = await apiFetch('/notification/read-all', {
+        method: 'PUT'
+      });
+      if (response && response.success) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      }
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.is_read) {
+      try {
+        await apiFetch(`/notification/${notif.notification_id}/read`, {
+          method: 'PUT'
+        });
+        setNotifications(prev => prev.map(n => 
+          n.notification_id === notif.notification_id ? { ...n, is_read: true } : n
+        ));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    
+    if (notif.url) {
+      navigate(notif.url);
+    }
+  };
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      const isVi = i18n.language === 'vi';
+
+      if (diffMins < 1) return isVi ? 'Vừa xong' : 'Just now';
+      if (diffMins < 60) return isVi ? `${diffMins} phút trước` : `${diffMins}m ago`;
+      if (diffHours < 24) return isVi ? `${diffHours} giờ trước` : `${diffHours}h ago`;
+      if (diffDays < 7) return isVi ? `${diffDays} ngày trước` : `${diffDays}d ago`;
+
+      return date.toLocaleDateString(isVi ? 'vi-VN' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return '';
+    }
+  };
 
   const navigation = currentNav.map(item => ({
     ...item,
@@ -58,7 +149,12 @@ export default function HeaderPage({ isAdmin }) {
 
             {/* Logo */}
             <div className="flex shrink items-center mr-2 sm:mr-8 min-w-0">
-              <Link to="/" className="text-[#0056b3] font-[800] text-base sm:text-[1.15rem] tracking-tight hover:text-[#004494] truncate" data-customizable-id="header-logo" data-customizable-type="text">{t('nav.logo')}</Link>
+              <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+                <img src="/kis_vietnam_creative_logo.jpeg" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
+                <span className="text-[#0056b3] font-[800] text-base sm:text-[1.15rem] tracking-tight truncate hidden md:inline-block" data-customizable-id="header-logo" data-customizable-type="text">
+                  {t('nav.logo')}
+                </span>
+              </Link>
             </div>
 
             {/* Desktop Nav */}
@@ -121,6 +217,83 @@ export default function HeaderPage({ isAdmin }) {
                 <QuestionMarkCircleIcon className="h-6 w-6" aria-hidden="true" />
               </a>
             )}
+
+            {/* Notification Bell Dropdown */}
+            <Menu as="div" className="relative ml-1">
+              <MenuButton 
+                onClick={fetchNotifications}
+                className="relative rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
+              >
+                <span className="sr-only">{t('nav.notifications')}</span>
+                <BellIcon className="h-6 w-6" aria-hidden="true" />
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
+                    {notifications.filter(n => !n.is_read).length > 99 ? '99+' : notifications.filter(n => !n.is_read).length}
+                  </span>
+                )}
+              </MenuButton>
+
+              <MenuItems
+                transition
+                className="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-2xl bg-white py-2 shadow-xl ring-1 ring-black/5 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in max-h-[400px] overflow-y-auto"
+              >
+                <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                  <span className="font-bold text-gray-800 text-sm">{t('nav.notifications')}</span>
+                  {notifications.filter(n => !n.is_read).length > 0 && (
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs font-semibold text-[#0056b3] hover:text-[#004494] hover:underline"
+                    >
+                      {t('nav.mark_all_read')}
+                    </button>
+                  )}
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {loadingNotifs && notifications.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-gray-500">
+                      {t('nav.loading_notifications')}
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-gray-500">
+                      {t('nav.no_notifications')}
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <MenuItem key={notif.notification_id}>
+                        <div
+                          onClick={() => handleNotificationClick(notif)}
+                          className={classNames(
+                            'block px-4 py-3 text-sm cursor-pointer transition-colors relative hover:bg-gray-50',
+                            notif.is_read ? 'bg-white' : 'bg-blue-50/50'
+                          )}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            {!notif.is_read && (
+                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0056b3]" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className={classNames(
+                                'text-xs text-gray-900 leading-snug',
+                                notif.is_read ? 'font-medium' : 'font-bold'
+                              )}>
+                                {notif.title}
+                              </p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">
+                                {notif.content}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {formatTime(notif.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </MenuItem>
+                    ))
+                  )}
+                </div>
+              </MenuItems>
+            </Menu>
 
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-1">

@@ -18,7 +18,11 @@ export const vi = {
       admin_ai_agents: "Quản lý AI Agent",
       docs: "Hướng dẫn",
       profile: "Hồ sơ của bạn",
-      logout: "Đăng xuất"
+      logout: "Đăng xuất",
+      notifications: "Thông báo",
+      mark_all_read: "Đánh dấu tất cả đã đọc",
+      no_notifications: "Không có thông báo nào",
+      loading_notifications: "Đang tải thông báo..."
     },
     login: {
       welcome: "Chào mừng trở lại",

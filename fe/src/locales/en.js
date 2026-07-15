@@ -18,7 +18,11 @@ export const en = {
       admin_ai_agents: "AI Agents",
       docs: "Guide lines",
       profile: "Your Profile",
-      logout: "Log Out"
+      logout: "Log Out",
+      notifications: "Notifications",
+      mark_all_read: "Mark all as read",
+      no_notifications: "No notifications",
+      loading_notifications: "Loading notifications..."
     },
     login: {
       welcome: "Welcome Back",

@@ -134,7 +134,7 @@ async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
-    await sequelize.sync({ force: false });
+    await sequelize.sync({ alter: true });
     console.log('Database synced successfully.');
 
     // Setup cron jobs for attendance notifications

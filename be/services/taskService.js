@@ -103,21 +103,20 @@ const createTask = async (data) => {
                 });
                 await Promise.all(emailPromises);
 
-                // Send OneSignal Push Notifications
+                // Send & Save Notifications
                 try {
-                    const onesignalIds = participants
-                        .map(p => p.onesignal_id)
-                        .filter(id => id && id.trim() !== '');
-                    
-                    if (onesignalIds.length > 0) {
-                        const { sendPushNotification } = require('../utils/onesignal');
-                        const title = `Task mới: ${data.title}`;
-                        const message = `Bạn vừa được giao một công việc mới từ ${assignerName}.`;
-                        const url = `/tasks/${parentTask.task_id}`;
-                        await sendPushNotification(onesignalIds, title, message, url);
+                    const { createNotification } = require('./notificationService');
+                    const title = `Task mới: ${data.title}`;
+                    const message = `Bạn vừa được giao một công việc mới từ ${assignerName}.`;
+                    const url = `/tasks/${parentTask.task_id}`;
+
+                    for (const participant of participants) {
+                        if (participant && participant.person_id) {
+                            await createNotification(participant.person_id, data.assigner_id, title, message, url);
+                        }
                     }
                 } catch (pushError) {
-                    console.error('Failed to send task push notifications:', pushError);
+                    console.error('Failed to send task notifications:', pushError);
                 }
             } catch (error) {
                 console.error('Error fetching participants or sending task emails in background:', error);
@@ -381,23 +380,27 @@ const updateTask = async (id, data) => {
                     const message = `Trạng thái công việc đã thay đổi thành "${data.status}".`;
                     const url = `/tasks/${parentTask.task_id}`;
 
-                    // Collect all OneSignal IDs
-                    const recipientIds = [];
-                    if (taskWithParticipants.assigner && taskWithParticipants.assigner.onesignal_id) {
-                        recipientIds.push(taskWithParticipants.assigner.onesignal_id);
+                    const recipients = [];
+                    if (taskWithParticipants.assigner) {
+                        recipients.push(taskWithParticipants.assigner);
                     }
                     if (taskWithParticipants.participants) {
-                        taskWithParticipants.participants.forEach(p => {
-                            if (p.onesignal_id) {
-                                recipientIds.push(p.onesignal_id);
-                            }
-                        });
+                        recipients.push(...taskWithParticipants.participants);
                     }
 
-                    const uniqueIds = [...new Set(recipientIds)].filter(Boolean);
-                    if (uniqueIds.length > 0) {
-                        const { sendPushNotification } = require('../utils/onesignal');
-                        await sendPushNotification(uniqueIds, title, message, url);
+                    // Unique recipients
+                    const uniqueRecipients = [];
+                    const seen = new Set();
+                    recipients.forEach(r => {
+                        if (r && r.person_id && !seen.has(r.person_id)) {
+                            seen.add(r.person_id);
+                            uniqueRecipients.push(r);
+                        }
+                    });
+
+                    const { createNotification } = require('./notificationService');
+                    for (const recipient of uniqueRecipients) {
+                        await createNotification(recipient.person_id, null, title, message, url);
                     }
                 }
             } catch (err) {

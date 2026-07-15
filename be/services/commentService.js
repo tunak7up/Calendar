@@ -58,16 +58,24 @@ const createCommentByTaskId = async (taskId, data) => {
                     });
                 }
 
-                const onesignalIds = recipients
-                    .map(r => r.onesignal_id)
-                    .filter(id => id && id.trim() !== '');
+                const title = `Bình luận mới: ${targetTask.title}`;
+                const message = `${commenterName}: "${data.content.substring(0, 60)}${data.content.length > 60 ? '...' : ''}"`;
+                const url = `/tasks/${taskId}`;
 
-                if (onesignalIds.length > 0) {
-                    const { sendPushNotification } = require('../utils/onesignal');
-                    const title = `Bình luận mới: ${targetTask.title}`;
-                    const message = `${commenterName}: "${data.content.substring(0, 60)}${data.content.length > 60 ? '...' : ''}"`;
-                    const url = `/tasks/${taskId}`;
-                    await sendPushNotification(onesignalIds, title, message, url);
+                const { createNotification } = require('./notificationService');
+
+                // Filter unique recipients
+                const uniqueRecipients = [];
+                const seen = new Set();
+                recipients.forEach(r => {
+                    if (r && r.person_id && !seen.has(r.person_id)) {
+                        seen.add(r.person_id);
+                        uniqueRecipients.push(r);
+                    }
+                });
+
+                for (const recipient of uniqueRecipients) {
+                    await createNotification(recipient.person_id, data.person_id, title, message, url);
                 }
             }
         } catch (err) {

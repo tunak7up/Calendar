@@ -29,8 +29,17 @@ const notification = sequelize.define(
         content: {
             type: DataTypes.TEXT,
         },
+        url: {
+            type: DataTypes.STRING(512),
+            allowNull: true
+        },
+        is_read: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
         created_at: {
             type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
         }
     }
 );

@@ -153,9 +153,7 @@ export default function Login({ onLogin }) {
 
         {/* Logo / Brand */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 mb-4">
-            <CalendarDaysIcon className="w-7 h-7 text-white" />
-          </div>
+          <img src="/kis_vietnam_creative_logo.jpeg" alt="Logo" className="w-16 h-16 rounded-2xl object-cover shadow-lg mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight" data-customizable-id="login-welcome" data-customizable-type="text">{t('login.welcome')}</h1>
           <p className="text-sm text-gray-400 mt-1 text-center" data-customizable-id="login-subtitle" data-customizable-type="text">{t('login.subtitle')}</p>
         </div>

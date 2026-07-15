@@ -30,10 +30,6 @@ const person = sequelize.define(
     email: {
       type: DataTypes.STRING(256),
       unique: true
-    },
-    onesignal_id: {
-      type: DataTypes.STRING(256),
-      allowNull: true
     }
   },
   {

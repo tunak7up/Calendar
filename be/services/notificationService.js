@@ -29,14 +29,6 @@ const createNotification = async (recipientId, senderId, title, content, url = n
         });
         
         const subscriptionIds = subs.map(sub => sub.onesignal_id).filter(id => id && id.trim() !== '');
-        
-        // Fallback to legacy single column if not already included
-        const recipient = await person.findByPk(recipientId);
-        if (recipient && recipient.onesignal_id && recipient.onesignal_id.trim() !== '') {
-            if (!subscriptionIds.includes(recipient.onesignal_id)) {
-                subscriptionIds.push(recipient.onesignal_id);
-            }
-        }
 
         if (subscriptionIds.length > 0) {
             await sendPushNotification(subscriptionIds, title, content, url);

@@ -21,10 +21,6 @@ const pushSubscription = sequelize.define(
       type: DataTypes.STRING(256),
       allowNull: false,
       unique: true
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
     }
   },
   {

@@ -10,7 +10,7 @@ const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
  */
 const sendPushNotification = async (targetOnesignalIds, title, message, url = null) => {
   if (!targetOnesignalIds) return;
-  
+
   const ids = (Array.isArray(targetOnesignalIds) ? targetOnesignalIds : [targetOnesignalIds])
     .filter(id => id && id.trim() !== '');
 
@@ -26,6 +26,15 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
     return;
   }
 
+  // Ensure the click URL is absolute so it opens correctly in the browser
+  let targetUrl = url;
+  if (targetUrl && typeof targetUrl === 'string') {
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      const baseUrl = process.env.FRONTEND_URL;
+      targetUrl = `${baseUrl.replace(/\/$/, '')}/${targetUrl.replace(/^\//, '')}`;
+    }
+  }
+
   try {
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
@@ -38,10 +47,10 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
         include_subscription_ids: ids,
         headings: { en: title, vi: title },
         contents: { en: message, vi: message },
-        url: url
+        url: targetUrl
       })
     });
-    
+
     const data = await response.json();
     console.log('[OneSignal] Push notification response:', data);
     return data;

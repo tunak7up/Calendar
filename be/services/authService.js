@@ -111,8 +111,6 @@ const refresh = async (refreshTokenString) => {
 const logout = async (refreshTokenString) => {
   if (!refreshTokenString) return;
   try {
-    jwt.verify(refreshTokenString, jwtConfig.refreshSecret);
-
     const tokenHash = hashToken(refreshTokenString);
     await RefreshToken.destroy({ where: { token_hash: tokenHash } });
   } catch (err) {

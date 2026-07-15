@@ -53,6 +53,17 @@ const logout = async (req, res) => {
     if (refreshToken) {
       authService.logout(refreshToken).catch(err => console.error('Lỗi xóa refresh token ngầm:', err));
     }
+
+    const { onesignal_id } = req.body;
+    if (onesignal_id && onesignal_id.trim() !== '') {
+      const { push_subscription } = require('../models');
+      push_subscription.destroy({
+        where: { onesignal_id }
+      }).then(() => {
+        console.log(`[Auth Controller] Deleted push subscription for onesignal_id: ${onesignal_id}`);
+      }).catch(err => console.error('Lỗi xóa push subscription khi logout:', err));
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     res.clearCookie('refreshToken', {
       httpOnly: true,

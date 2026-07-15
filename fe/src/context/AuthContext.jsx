@@ -95,10 +95,12 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     setIsLoggingOut(true);
+    const onesignalId = localStorage.getItem('onesignal_id');
     try {
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onesignal_id: onesignalId }),
         credentials: 'include'
       });
       // Thêm chút thời gian chờ để user kịp nhìn thấy hiệu ứng loading, giảm xuống 300ms
@@ -110,6 +112,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setAccessToken(null);
       localStorage.removeItem('user');
+      localStorage.removeItem('onesignal_id');
       
       // Chuyển hướng người dùng về trang đăng nhập
       window.location.href = '/login';

@@ -73,6 +73,7 @@ function App() {
           const subscriptionId = await OneSignalNative.User.pushSubscription.getIdAsync();
           if (subscriptionId && active) {
             console.log('[OneSignal Native] Registration ID:', subscriptionId);
+            localStorage.setItem('onesignal_id', subscriptionId);
             await apiFetch(`/person/${user.person_id}/onesignal`, {
               method: 'POST',
               body: JSON.stringify({ onesignal_id: subscriptionId })
@@ -109,6 +110,7 @@ function App() {
               const subscriptionId = OneSignal.User.PushSubscription.id;
               if (subscriptionId && active) {
                 console.log('[OneSignal Web] Registration ID:', subscriptionId);
+                localStorage.setItem('onesignal_id', subscriptionId);
                 await apiFetch(`/person/${user.person_id}/onesignal`, {
                   method: 'POST',
                   body: JSON.stringify({ onesignal_id: subscriptionId })
@@ -120,6 +122,7 @@ function App() {
                 const newId = event.current.id;
                 if (newId && active) {
                   console.log('[OneSignal Web] Subscription ID changed:', newId);
+                  localStorage.setItem('onesignal_id', newId);
                   await apiFetch(`/person/${user.person_id}/onesignal`, {
                     method: 'POST',
                     body: JSON.stringify({ onesignal_id: newId })

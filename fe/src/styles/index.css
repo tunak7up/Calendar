@@ -6,6 +6,7 @@
 
 :root {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  scrollbar-gutter: stable;
 }
 
 html,

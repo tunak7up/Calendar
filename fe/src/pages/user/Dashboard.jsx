@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import TaskStatusSelect from '../../components/TaskStatusSelect';
 import AIReportModal from '../../components/AIReportModal/AIReportModal';
 import { Capacitor } from '@capacitor/core';
+import PWABanner from '../../components/PWABanner';
 
 const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
@@ -526,6 +527,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <PWABanner />
 
       {checkingReport ? (
         <div className="flex items-center justify-center py-20">

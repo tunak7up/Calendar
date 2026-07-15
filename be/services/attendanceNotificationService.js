@@ -128,6 +128,15 @@ const checkMorningCheckIn = async () => {
             `
           });
 
+          const { createNotification } = require('./notificationService');
+          await createNotification(
+            p.person_id,
+            null,
+            '[CẢNH BÁO] Chưa check-in ca sáng',
+            `Xin chào ${p.name}, bạn có lịch làm việc ca sáng hôm nay nhưng đến 09:31 vẫn chưa check-in. Vui lòng check-in ngay.`,
+            '/dashboard'
+          ).catch(err => console.error('[Attendance SW] Push notification warning error:', err));
+
           sent0931CheckInSet.add(sched.schedule_id);
         }
       }
@@ -243,6 +252,15 @@ const checkMorningCheckOut = async () => {
             `
           });
 
+          const { createNotification } = require('./notificationService');
+          await createNotification(
+            p.person_id,
+            null,
+            '[NHẮC NHỞ] Quên check-out ca sáng',
+            `Xin chào ${p.name}, bạn đã quá giờ kết thúc ca sáng nhưng chưa thực hiện check-out. Vui lòng hoàn thành báo cáo và check-out.`,
+            '/dashboard'
+          ).catch(err => console.error('[Attendance SW] Push notification reminder error:', err));
+
           sent1215CheckOutSet.add(sched.schedule_id);
         }
       }
@@ -356,6 +374,15 @@ const checkAfternoonCheckIn = async () => {
             `
           });
 
+          const { createNotification } = require('./notificationService');
+          await createNotification(
+            p.person_id,
+            null,
+            '[CẢNH BÁO] Chưa check-in ca chiều',
+            `Xin chào ${p.name}, bạn có lịch làm việc ca chiều hôm nay nhưng đến 14:01 vẫn chưa check-in. Vui lòng check-in ngay.`,
+            '/dashboard'
+          ).catch(err => console.error('[Attendance SW] Push notification warning error:', err));
+
           sent1401CheckInSet.add(sched.schedule_id);
         }
       }
@@ -467,6 +494,15 @@ const checkAfternoonCheckOut = async () => {
               </div>
             `
           });
+
+          const { createNotification } = require('./notificationService');
+          await createNotification(
+            p.person_id,
+            null,
+            '[NHẮC NHỞ] Quên check-out',
+            `Xin chào ${p.name}, bạn đã quá giờ kết thúc ca chiều nhưng chưa thực hiện check-out. Vui lòng hoàn thành báo cáo và check-out.`,
+            '/dashboard'
+          ).catch(err => console.error('[Attendance SW] Push notification reminder error:', err));
 
           sent1831CheckOutSet.add(sched.schedule_id);
         }

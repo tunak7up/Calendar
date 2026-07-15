@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import ProfileWorkHoursChart from '../../components/ProfileWorkHoursChart';
 import BackButton from '../../components/BackButton';
 import { useTheme } from '../../context/ThemeContext';
+import PWASettings from '../../components/PWASettings';
 
 import {
   ArrowLeftIcon,
@@ -415,6 +416,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {isOwnProfile && <PWASettings />}
 
       <div className="grid grid-cols-1 gap-6">
         {/* FullCalendar Schedule */}

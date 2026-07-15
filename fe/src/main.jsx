@@ -16,17 +16,22 @@ polyfill({
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { PWAProvider } from './context/PWAContext'
 import { Capacitor } from '@capacitor/core'
 
 const isCapacitor = Capacitor.isNativePlatform();
 const RouterComponent = isCapacitor ? HashRouter : BrowserRouter;
+
+// Register Service Worker for PWA (Handled automatically by OneSignal SDK v16 after initialization to prevent appId query conflicts)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RouterComponent>
       <AuthProvider>
         <ThemeProvider>
-          <App />
+          <PWAProvider>
+            <App />
+          </PWAProvider>
         </ThemeProvider>
       </AuthProvider>
     </RouterComponent>

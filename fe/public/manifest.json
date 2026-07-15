@@ -1,0 +1,17 @@
+{
+  "short_name": "KIS Quản Lý",
+  "name": "Hệ thống quản lý thực tập sinh KIS",
+  "description": "Hệ thống quản lý thực tập sinh KIS Vietnam Creative",
+  "icons": [
+    {
+      "src": "kis_vietnam_creative_logo.jpeg",
+      "type": "image/jpeg",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0056b3",
+  "theme_color": "#0056b3",
+  "display": "standalone",
+  "orientation": "portrait"
+}

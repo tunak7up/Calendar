@@ -176,7 +176,21 @@ const createBulkRequest = async (data) => {
                 }
                 return Promise.resolve();
             });
-            await Promise.all(emailPromises);
+
+            // Send DB notifications to the assigned approver, or all managers if none specified
+            const { createNotification } = require('./notificationService');
+            const recipientIds = data.approver_id ? [data.approver_id] : admins.map(admin => admin.person_id);
+            const dbNotificationPromises = recipientIds.map(recipientId => {
+                return createNotification(
+                    recipientId,
+                    data.requester_id,
+                    `[Yêu cầu] ${requester.name} ${subjectSuffix}`,
+                    `Loại: ${typeText}. Lý do: ${data.reason || 'Không có lý do'}`,
+                    `/history/${newRequest.request_id || newRequest.id}`
+                ).catch(err => console.error('[Request Service] DB notification error:', err));
+            });
+
+            await Promise.all([...emailPromises, ...dbNotificationPromises]);
         } catch (error) {
             console.error('Error fetching requester/admins or sending request emails in background:', error);
         }
@@ -232,7 +246,7 @@ const getRequestsByRequesterId = async (requester_id) => {
 
 const updateRequestStatus = async (request_id, status, approver_id) => {
     console.log(`Updating request ${request_id} to status: ${status}`);
-    return await sequelize.transaction(async (t) => {
+    const updatedRequest = await sequelize.transaction(async (t) => {
         const data = await request.findByPk(request_id, {
             include: [{ model: request_detail, as: 'details' }],
             transaction: t
@@ -294,6 +308,38 @@ const updateRequestStatus = async (request_id, status, approver_id) => {
 
         return data;
     });
+
+    // Notify requester in background after transaction succeeds
+    (async () => {
+        try {
+            const requesterId = updatedRequest.requester_id;
+            const approver = await person.findByPk(approver_id);
+            const approverName = approver ? approver.name : 'Quản lý';
+            const typeLabels = {
+                register: 'Đăng ký lịch làm',
+                leave: 'Xin nghỉ làm',
+                arrive_early: 'Đi làm sớm',
+                arrive_late: 'Đi làm muộn',
+                leave_early: 'Về sớm',
+                leave_late: 'Về muộn'
+            };
+            const typeText = typeLabels[updatedRequest.type] || 'Điều chỉnh giờ làm';
+            const statusText = status.toLowerCase() === 'approved' ? 'được duyệt' : 'bị từ chối';
+
+            const { createNotification } = require('./notificationService');
+            await createNotification(
+                requesterId,
+                approver_id,
+                `[Kết quả] Yêu cầu ${typeText} đã ${statusText}`,
+                `Yêu cầu ${typeText.toLowerCase()} của bạn đã được ${approverName} ${statusText}.`,
+                `/history/${request_id}`
+            );
+        } catch (err) {
+            console.error('[Request Service] Status update notification error:', err);
+        }
+    })();
+
+    return updatedRequest;
 };
 
 const deleteRequest = async (request_id) => {

@@ -40,12 +40,8 @@ const createNotification = async (recipientId, senderId, title, content, url = n
     }
 };
 
-/**
- * Fetch all notifications for a specific person.
- * @param {number} personId 
- */
 const getNotificationsByPerson = async (personId) => {
-    return await notification.findAll({
+    const list = await notification.findAll({
         where: { notificate_to: personId },
         include: [
             {
@@ -56,6 +52,31 @@ const getNotificationsByPerson = async (personId) => {
         ],
         order: [['created_at', 'DESC']]
     });
+
+    const { request: requestModel } = require('../models');
+    const enrichedList = [];
+    for (const notif of list) {
+        const notifData = notif.toJSON();
+        if (notifData.url) {
+            const match = notifData.url.match(/^\/history\/(\d+)$/);
+            if (match) {
+                const requestId = parseInt(match[1], 10);
+                try {
+                    const reqObj = await requestModel.findByPk(requestId, {
+                        attributes: ['status']
+                    });
+                    if (reqObj) {
+                        notifData.request_status = reqObj.status;
+                        notifData.request_id = requestId;
+                    }
+                } catch (err) {
+                    console.error('[Notification Service] Error fetching request status for ID', requestId, err);
+                }
+            }
+        }
+        enrichedList.push(notifData);
+    }
+    return enrichedList;
 };
 
 /**

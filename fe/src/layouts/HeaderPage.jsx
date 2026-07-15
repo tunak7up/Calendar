@@ -1,5 +1,5 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon, ExclamationTriangleIcon, ClockIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +28,79 @@ const adminNavigation = [
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
+
+const resolveNotificationType = (notif) => {
+  const url = notif.url || '';
+  const title = notif.title || '';
+
+  if (url.startsWith('/tasks/')) {
+    if (title.includes('Bình luận')) {
+      return {
+        icon: ChatBubbleLeftRightIcon,
+        bgColor: 'bg-emerald-500',
+        textColor: 'text-emerald-500',
+        theme: 'emerald'
+      };
+    }
+    return {
+      icon: ClipboardDocumentListIcon,
+      bgColor: 'bg-teal-500',
+      textColor: 'text-teal-500',
+      theme: 'teal'
+    };
+  }
+
+  if (url.startsWith('/history/')) {
+    if (title.includes('[Kết quả]')) {
+      if (title.includes('đã được duyệt') || title.includes('được duyệt')) {
+        return {
+          icon: CheckIcon,
+          bgColor: 'bg-green-500',
+          textColor: 'text-green-500',
+          theme: 'green'
+        };
+      } else {
+        return {
+          icon: XMarkIcon,
+          bgColor: 'bg-rose-500',
+          textColor: 'text-rose-500',
+          theme: 'rose'
+        };
+      }
+    }
+    return {
+      icon: DocumentTextIcon,
+      bgColor: 'bg-indigo-500',
+      textColor: 'text-indigo-500',
+      theme: 'indigo'
+    };
+  }
+
+  if (title.includes('CẢNH BÁO')) {
+    return {
+      icon: ExclamationTriangleIcon,
+      bgColor: 'bg-rose-500',
+      textColor: 'text-rose-500',
+      theme: 'rose'
+    };
+  }
+
+  if (title.includes('NHẮC NHỞ')) {
+    return {
+      icon: ClockIcon,
+      bgColor: 'bg-amber-500',
+      textColor: 'text-amber-500',
+      theme: 'amber'
+    };
+  }
+
+  return {
+    icon: BellIcon,
+    bgColor: 'bg-slate-400',
+    textColor: 'text-slate-400',
+    theme: 'slate'
+  };
+};
 
 export default function HeaderPage({ isAdmin }) {
   const location = useLocation();
@@ -93,6 +166,44 @@ export default function HeaderPage({ isAdmin }) {
     
     if (notif.url) {
       navigate(notif.url);
+    }
+  };
+
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  const handleRequestAction = async (e, notif, actionStatus) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const requestId = notif.request_id;
+    if (!requestId) return;
+
+    setActionLoadingId(notif.notification_id);
+    try {
+      const response = await apiFetch(`/request/${requestId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: actionStatus })
+      });
+
+      if (response && response.success) {
+        setNotifications(prev => prev.map(n => {
+          if (n.notification_id === notif.notification_id) {
+            return { ...n, request_status: actionStatus, is_read: true };
+          }
+          return n;
+        }));
+
+        if (!notif.is_read) {
+          await apiFetch(`/notification/${notif.notification_id}/read`, {
+            method: 'PUT'
+          }).catch(err => console.error('Error marking as read during action:', err));
+        }
+      }
+    } catch (error) {
+      console.error('Error updating request status from notification:', error);
+      alert(t('requests.alert_update_fail') || 'Cập nhật trạng thái thất bại');
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -227,7 +338,7 @@ export default function HeaderPage({ isAdmin }) {
                 <span className="sr-only">{t('nav.notifications')}</span>
                 <BellIcon className="h-6 w-6" aria-hidden="true" />
                 {notifications.filter(n => !n.is_read).length > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
                     {notifications.filter(n => !n.is_read).length > 99 ? '99+' : notifications.filter(n => !n.is_read).length}
                   </span>
                 )}
@@ -235,9 +346,9 @@ export default function HeaderPage({ isAdmin }) {
 
               <MenuItems
                 transition
-                className="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-2xl bg-white py-2 shadow-xl ring-1 ring-black/5 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in max-h-[400px] overflow-y-auto"
+                className="absolute right-0 z-50 mt-2 w-[340px] sm:w-[380px] max-w-[90vw] sm:max-w-none origin-top-right rounded-2xl bg-white border border-gray-100/80 shadow-2xl py-2 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in max-h-[460px] overflow-y-auto"
               >
-                <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                   <span className="font-bold text-gray-800 text-sm">{t('nav.notifications')}</span>
                   {notifications.filter(n => !n.is_read).length > 0 && (
                     <button
@@ -249,7 +360,7 @@ export default function HeaderPage({ isAdmin }) {
                   )}
                 </div>
 
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-50">
                   {loadingNotifs && notifications.length === 0 ? (
                     <div className="p-4 text-center text-xs text-gray-500">
                       {t('nav.loading_notifications')}
@@ -259,37 +370,96 @@ export default function HeaderPage({ isAdmin }) {
                       {t('nav.no_notifications')}
                     </div>
                   ) : (
-                    notifications.map((notif) => (
-                      <MenuItem key={notif.notification_id}>
-                        <div
-                          onClick={() => handleNotificationClick(notif)}
-                          className={classNames(
-                            'block px-4 py-3 text-sm cursor-pointer transition-colors relative hover:bg-gray-50',
-                            notif.is_read ? 'bg-white' : 'bg-blue-50/50'
-                          )}
-                        >
-                          <div className="flex items-start gap-2.5">
-                            {!notif.is_read && (
-                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0056b3]" />
+                    notifications.map((notif) => {
+                      const typeInfo = resolveNotificationType(notif);
+                      return (
+                        <MenuItem key={notif.notification_id}>
+                          <div
+                            onClick={() => handleNotificationClick(notif)}
+                            className={classNames(
+                              'block px-4 py-3.5 cursor-pointer transition-all duration-200 border-b border-gray-50 hover:bg-slate-50/50',
+                              notif.is_read ? 'bg-white' : 'bg-blue-50/10',
+                              notif.is_read ? 'border-l-[4px] border-l-transparent' : 'border-l-[4px] border-l-[#0056b3]'
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className={classNames(
-                                'text-xs text-gray-900 leading-snug',
-                                notif.is_read ? 'font-medium' : 'font-bold'
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* Left Category Icon Box */}
+                              <div className={classNames(
+                                'w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm transition-transform duration-200 hover:scale-105',
+                                typeInfo.bgColor
                               )}>
-                                {notif.title}
-                              </p>
-                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">
-                                {notif.content}
-                              </p>
-                              <p className="text-[10px] text-gray-400 mt-1">
-                                {formatTime(notif.created_at)}
-                              </p>
+                                <typeInfo.icon className="h-5 w-5 stroke-[2.2]" aria-hidden="true" />
+                              </div>
+
+                              {/* Middle content and actions */}
+                              <div className="flex-1 min-w-0">
+                                {/* Header row: Title + Time */}
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <p className={classNames(
+                                    'text-[13px] text-gray-900 leading-snug break-words pr-2',
+                                    notif.is_read ? 'font-medium text-gray-700' : 'font-bold text-gray-900'
+                                  )}>
+                                    {notif.title}
+                                  </p>
+                                  <span className="text-[10px] text-gray-400 font-medium shrink-0 pt-0.5">
+                                    {formatTime(notif.created_at)}
+                                  </span>
+                                </div>
+
+                                {/* Content text */}
+                                <p className="text-[11.5px] text-gray-500 mt-1 leading-relaxed break-words line-clamp-3">
+                                  {notif.content}
+                                </p>
+
+                                {/* Inline request action buttons / status badges */}
+                                {notif.request_status && (
+                                  <div className="mt-3 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                    {notif.request_status === 'pending' ? (
+                                      <>
+                                        {actionLoadingId === notif.notification_id ? (
+                                          <span className="inline-flex items-center text-xs text-gray-400 font-medium py-1">
+                                            <svg className="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-[#0056b3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Đang xử lý...
+                                          </span>
+                                        ) : (
+                                          <>
+                                            <button
+                                              onClick={(e) => handleRequestAction(e, notif, 'approved')}
+                                              className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm shadow-emerald-500/10 cursor-pointer"
+                                            >
+                                              Đồng ý
+                                            </button>
+                                            <button
+                                              onClick={(e) => handleRequestAction(e, notif, 'rejected')}
+                                              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                                            >
+                                              Từ chối
+                                            </button>
+                                          </>
+                                        )}
+                                      </>
+                                    ) : notif.request_status === 'approved' ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/50 shadow-sm shadow-emerald-500/5">
+                                        <CheckIcon className="w-3 h-3 stroke-[2.5]" />
+                                        Đã duyệt
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/50 shadow-sm shadow-rose-500/5">
+                                        <XMarkIcon className="w-3 h-3 stroke-[2.5]" />
+                                        Đã từ chối
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </MenuItem>
-                    ))
+                        </MenuItem>
+                      );
+                    })
                   )}
                 </div>
               </MenuItems>

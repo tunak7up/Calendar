@@ -4,9 +4,14 @@
   "description": "Hệ thống quản lý thực tập sinh KIS Vietnam Creative",
   "icons": [
     {
-      "src": "kis_vietnam_creative_logo.jpeg",
-      "type": "image/jpeg",
-      "sizes": "192x192 512x512"
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "start_url": "/",

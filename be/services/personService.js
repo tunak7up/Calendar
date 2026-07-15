@@ -132,9 +132,14 @@ const updateOneSignalId = async (id, onesignalId) => {
   if (onesignalId && onesignalId.trim() !== '') {
     try {
       const existing = await push_subscription.findOne({
-        where: { person_id: id, onesignal_id: onesignalId }
+        where: { onesignal_id: onesignalId }
       });
-      if (!existing) {
+      if (existing) {
+        if (existing.person_id !== id) {
+          await existing.update({ person_id: id });
+          console.log(`[Person Service] Updated push subscription owner from person ${existing.person_id} to ${id}`);
+        }
+      } else {
         await push_subscription.create({
           person_id: id,
           onesignal_id: onesignalId

@@ -179,6 +179,9 @@ export default function Login({ onLogin }) {
                 id="login-username"
                 type="text"
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={t('login.username_placeholder')}
@@ -197,6 +200,9 @@ export default function Login({ onLogin }) {
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('login.password_placeholder')}

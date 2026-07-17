@@ -17,6 +17,9 @@ const {
 } = require('./services/attendanceNotificationService');
 const { getVNTime } = require('./utils/dateUtils');
 
+// Initialize the notification worker
+require('./workers/notificationWorker');
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

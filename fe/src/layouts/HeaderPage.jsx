@@ -346,7 +346,7 @@ export default function HeaderPage({ isAdmin }) {
 
               <MenuItems
                 transition
-                className="absolute right-0 z-50 mt-2 w-[340px] sm:w-[380px] max-w-[90vw] sm:max-w-none origin-top-right rounded-2xl bg-white border border-gray-100/80 shadow-2xl py-2 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in max-h-[460px] overflow-y-auto"
+                className="fixed inset-x-4 top-[56px] sm:absolute sm:right-0 sm:left-auto sm:top-auto z-50 mt-2 w-auto sm:w-[380px] max-w-none sm:max-w-none origin-top sm:origin-top-right rounded-2xl bg-white border border-gray-100/80 shadow-2xl py-2 transition focus:outline-none data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in max-h-[460px] overflow-y-auto"
               >
                 <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                   <span className="font-bold text-gray-800 text-sm">{t('nav.notifications')}</span>

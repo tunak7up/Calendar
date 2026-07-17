@@ -1,5 +1,5 @@
 const { notification, person } = require('../models');
-const { sendPushNotification } = require('../utils/onesignal');
+const { notificationQueue } = require('../utils/queue');
 
 /**
  * Creates a notification in the DB and pushes it via OneSignal if subscription ID exists.
@@ -38,7 +38,23 @@ const createNotification = async (recipientId, senderId, title, content, url = n
                     { id: 'rejected', text: 'Từ chối' }
                 ];
             }
-            await sendPushNotification(subscriptionIds, title, content, url, buttons);
+            
+            // Queue the push notification sending asynchronously
+            await notificationQueue.add('send-push', {
+                subscriptionIds,
+                title,
+                content,
+                url,
+                buttons
+            }, {
+                attempts: 3,
+                backoff: {
+                    type: 'exponential',
+                    delay: 2000
+                }
+            }).catch(err => {
+                console.error('[Notification Service] Failed to add push notification job to queue:', err);
+            });
         }
 
         return newNotif;

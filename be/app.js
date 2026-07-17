@@ -15,6 +15,7 @@ const {
   checkAfternoonCheckIn,
   checkAfternoonCheckOut
 } = require('./services/attendanceNotificationService');
+const { getVNTime } = require('./utils/dateUtils');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -96,10 +97,8 @@ const setupAttendanceNotificationCrons = () => {
   // Tuy nhiên các hàm sẽ kiểm tra logic để chỉ gửi mail vào đúng giờ
   setInterval(async () => {
     const now = new Date();
-    const vnTime = now.toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const hours = vnTime.split(' ')[1].substring(0, 2);
-    const minutes = vnTime.split(' ')[1].substring(3, 5);
-    const hm = `${hours}:${minutes}`;
+    const vnTime = getVNTime(now);
+    const hm = vnTime.timeStr;
 
     // 9h31 - Morning shift check-in warning
     if (hm === '09:31') {

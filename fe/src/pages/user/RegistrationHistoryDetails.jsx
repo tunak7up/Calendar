@@ -32,6 +32,45 @@ export default function RegistrationHistoryDetails() {
   const [responseText, setResponseText] = useState('');
   const [responseTextLoading, setResponseTextLoading] = useState(false);
 
+  const handleUpdateStatus = async (newStatus) => {
+    const reqId = rawReq?.id || rawReq?.request_id || id;
+    if (!reqId) return;
+    setIsUpdating(true);
+    try {
+      const result = await apiFetch(`/request/${reqId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (result.success) {
+        const commentContent = feedbackInput.trim() || (
+          newStatus === 'approved' 
+            ? 'Yêu cầu của bạn đã được phê duyệt.' 
+            : 'Yêu cầu của bạn đã bị từ chối.'
+        );
+        
+        await apiFetch('/response', {
+          method: 'POST',
+          body: JSON.stringify({
+            request_id: reqId,
+            content: commentContent
+          })
+        });
+
+        setResponseText(commentContent);
+        setStatus(newStatus);
+        alert(t('history.alert_update_success'));
+      } else {
+        alert(t('history.alert_update_fail'));
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert(t('history.alert_update_error'));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 1. Initial status sync from rawReq
   useEffect(() => {
     if (rawReq) {
       const initialStatus = rawReq?.status?.toLowerCase() === 'chờ phê duyệt' || rawReq?.status?.toLowerCase() === 'pending' ? 'pending' :
@@ -42,10 +81,12 @@ export default function RegistrationHistoryDetails() {
     }
   }, [rawReq]);
 
+  // 2. Fetch request details on mount / id change
   useEffect(() => {
     if (!id) return;
     const fetchRequest = async () => {
       setLoading(true);
+      setError(null);
       try {
         const response = await apiFetch(`/request/${id}`);
         if (response.success && response.data) {
@@ -66,11 +107,19 @@ export default function RegistrationHistoryDetails() {
       }
     };
 
-    if (!rawReq) {
+    const rawReqId = rawReq?.id || rawReq?.request_id;
+    if (!rawReq || String(rawReqId) !== String(id)) {
       fetchRequest();
     }
   }, [id, rawReq, t]);
 
+  // 3. Reset input states when id changes
+  useEffect(() => {
+    setFeedbackInput('');
+    setResponseText('');
+  }, [id]);
+
+  // 4. Fetch response text when status changes
   useEffect(() => {
     const fetchResponseText = async () => {
       if (status !== 'pending' && id) {
@@ -91,6 +140,27 @@ export default function RegistrationHistoryDetails() {
     };
     fetchResponseText();
   }, [id, status]);
+
+  // 5. Handle action from push notification query params
+  useEffect(() => {
+    if (rawReq && id) {
+      const queryParams = new URLSearchParams(location.search);
+      const onesignalAction = queryParams.get('_onesignal_action') || queryParams.get('action');
+      if (onesignalAction && (onesignalAction === 'approved' || onesignalAction === 'rejected')) {
+        const currentStatus = rawReq.status?.toLowerCase();
+        if (currentStatus === 'pending' || currentStatus === 'chờ phê duyệt') {
+          // Clear query params to prevent double triggers on reload
+          const newSearch = new URLSearchParams(location.search);
+          newSearch.delete('_onesignal_action');
+          newSearch.delete('action');
+          const newUrl = `${location.pathname}${newSearch.toString() ? '?' + newSearch.toString() : ''}`;
+          navigate(newUrl, { replace: true });
+          
+          handleUpdateStatus(onesignalAction);
+        }
+      }
+    }
+  }, [rawReq, id, location.search, location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -138,62 +208,6 @@ export default function RegistrationHistoryDetails() {
   };
 
   const isPending = status === 'pending';
-
-  const handleUpdateStatus = async (newStatus) => {
-    setIsUpdating(true);
-    try {
-      const result = await apiFetch(`/request/${request.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (result.success) {
-        const commentContent = feedbackInput.trim() || (
-          newStatus === 'approved' 
-            ? 'Yêu cầu của bạn đã được phê duyệt.' 
-            : 'Yêu cầu của bạn đã bị từ chối.'
-        );
-        
-        await apiFetch('/response', {
-          method: 'POST',
-          body: JSON.stringify({
-            request_id: request.id,
-            content: commentContent
-          })
-        });
-
-        setResponseText(commentContent);
-        setStatus(newStatus);
-        alert(t('history.alert_update_success'));
-      } else {
-        alert(t('history.alert_update_fail'));
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert(t('history.alert_update_error'));
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  useEffect(() => {
-    if (rawReq && id) {
-      const queryParams = new URLSearchParams(location.search);
-      const onesignalAction = queryParams.get('_onesignal_action') || queryParams.get('action');
-      if (onesignalAction && (onesignalAction === 'approved' || onesignalAction === 'rejected')) {
-        const currentStatus = rawReq.status?.toLowerCase();
-        if (currentStatus === 'pending' || currentStatus === 'chờ phê duyệt') {
-          // Clear query params to prevent double triggers on reload
-          const newSearch = new URLSearchParams(location.search);
-          newSearch.delete('_onesignal_action');
-          newSearch.delete('action');
-          const newUrl = `${location.pathname}${newSearch.toString() ? '?' + newSearch.toString() : ''}`;
-          navigate(newUrl, { replace: true });
-          
-          handleUpdateStatus(onesignalAction);
-        }
-      }
-    }
-  }, [rawReq, id, location.search, location.pathname, navigate]);
 
   return (
     <>

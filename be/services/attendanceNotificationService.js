@@ -1,16 +1,17 @@
 const { schedule, daily_report, person } = require('../models');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
+const { getVNTime } = require('../utils/dateUtils');
 
 // Cache cho từng loại check và thời điểm
-let currentDayStr = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).split(' ')[0];
+let currentDayStr = getVNTime().dateStr;
 const sent0931CheckInSet = new Set(); // 9h31 - Morning shift check-in
 const sent1401CheckInSet = new Set(); // 14h01 - Afternoon shift check-in
 const sent1215CheckOutSet = new Set(); // 12h15 - Morning shift check-out
 const sent1831CheckOutSet = new Set(); // 18h31 - Afternoon shift check-out
 
 const checkAndResetDailyCache = () => {
-  const todayStr = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).split(' ')[0];
+  const todayStr = getVNTime().dateStr;
   if (todayStr !== currentDayStr) {
     currentDayStr = todayStr;
     sent0931CheckInSet.clear();
@@ -30,11 +31,10 @@ const checkMorningCheckIn = async () => {
     checkAndResetDailyCache();
 
     const now = new Date();
-    const nowVNStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const todayStr = nowVNStr.split(' ')[0];
-    const nowMs = new Date(nowVNStr).getTime();
+    const nowVN = getVNTime(now);
+    const todayStr = nowVN.dateStr;
 
-    console.log(`[Attendance Service - 9h31] Running morning check-in check at ${nowVNStr}...`);
+    console.log(`[Attendance Service - 9h31] Running morning check-in check at ${nowVN.dateTimeStr}...`);
 
     const startOfDay = `${todayStr} 00:00:00`;
     const endOfDay = `${todayStr} 23:59:59`;
@@ -64,18 +64,16 @@ const checkMorningCheckIn = async () => {
       const p = sched.person;
       if (!p || !p.email) continue;
 
-      const startVNStr = new Date(sched.start_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const endVNStr = new Date(sched.end_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const startVN = getVNTime(sched.start_time);
+      const endVN = getVNTime(sched.end_time);
 
-      const startMs = new Date(startVNStr).getTime();
-      const endMs = new Date(endVNStr).getTime();
+      const startHour = parseInt(startVN.hour, 10);
+      const startMin = parseInt(startVN.minute, 10);
+      const isMorningShift = startHour < 9 || (startHour === 9 && startMin <= 30);
+      const isPastStartTime = now.getTime() >= new Date(sched.start_time).getTime();
 
-      const timeStartHHMM = startVNStr.split(' ')[1].substring(0, 5);
-      const timeEndHHMM = endVNStr.split(' ')[1].substring(0, 5);
-
-      // Kiểm tra: Ca bắt đầu từ 9h30 trở về trước (sáng) và đã qua giờ bắt đầu ca
-      const isMorningShift = startMs < new Date(`${todayStr} 09:30:00`).getTime();
-      const isPastStartTime = nowMs >= startMs;
+      const timeStartHHMM = `${startVN.hour}:${startVN.minute}`;
+      const timeEndHHMM = `${endVN.hour}:${endVN.minute}`;
 
       if (isMorningShift && isPastStartTime && !sent0931CheckInSet.has(sched.schedule_id)) {
         // Tìm báo cáo check-in hôm nay
@@ -154,11 +152,10 @@ const checkMorningCheckOut = async () => {
     checkAndResetDailyCache();
 
     const now = new Date();
-    const nowVNStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const todayStr = nowVNStr.split(' ')[0];
-    const nowMs = new Date(nowVNStr).getTime();
+    const nowVN = getVNTime(now);
+    const todayStr = nowVN.dateStr;
 
-    console.log(`[Attendance Service - 12h15] Running morning check-out check at ${nowVNStr}...`);
+    console.log(`[Attendance Service - 12h15] Running morning check-out check at ${nowVN.dateTimeStr}...`);
 
     const startOfDay = `${todayStr} 00:00:00`;
     const endOfDay = `${todayStr} 23:59:59`;
@@ -187,16 +184,19 @@ const checkMorningCheckOut = async () => {
       const p = sched.person;
       if (!p || !p.email) continue;
 
-      const startVNStr = new Date(sched.start_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const endVNStr = new Date(sched.end_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-      
-      const startMs = new Date(startVNStr).getTime();
-      const endMs = new Date(endVNStr).getTime();
-      const timeEndHHMM = endVNStr.split(' ')[1].substring(0, 5);
+      const startVN = getVNTime(sched.start_time);
+      const endVN = getVNTime(sched.end_time);
 
-      // Kiểm tra: Ca sáng thuần (bắt đầu trước 9h30 và kết thúc từ 12h00 trở về trước) và đã qua giờ kết thúc
-      const isMorningShift = startMs < new Date(`${todayStr} 09:30:00`).getTime() && endMs <= new Date(`${todayStr} 12:00:00`).getTime();
-      const isPastEndTime = nowMs >= endMs;
+      const startHour = parseInt(startVN.hour, 10);
+      const startMin = parseInt(startVN.minute, 10);
+      const endHour = parseInt(endVN.hour, 10);
+      const endMin = parseInt(endVN.minute, 10);
+
+      // Ca sáng thuần: bắt đầu trước 9h30 và kết thúc từ 12h00 trở về trước
+      const isMorningShift = (startHour < 9 || (startHour === 9 && startMin <= 30)) && (endHour < 12 || (endHour === 12 && endMin === 0));
+      const isPastEndTime = now.getTime() >= new Date(sched.end_time).getTime();
+
+      const timeEndHHMM = `${endVN.hour}:${endVN.minute}`;
 
       if (isMorningShift && isPastEndTime && !sent1215CheckOutSet.has(sched.schedule_id)) {
         const report = await daily_report.findOne({
@@ -278,11 +278,10 @@ const checkAfternoonCheckIn = async () => {
     checkAndResetDailyCache();
 
     const now = new Date();
-    const nowVNStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const todayStr = nowVNStr.split(' ')[0];
-    const nowMs = new Date(nowVNStr).getTime();
+    const nowVN = getVNTime(now);
+    const todayStr = nowVN.dateStr;
 
-    console.log(`[Attendance Service - 14h01] Running afternoon check-in check at ${nowVNStr}...`);
+    console.log(`[Attendance Service - 14h01] Running afternoon check-in check at ${nowVN.dateTimeStr}...`);
 
     const startOfDay = `${todayStr} 00:00:00`;
     const endOfDay = `${todayStr} 23:59:59`;
@@ -311,18 +310,15 @@ const checkAfternoonCheckIn = async () => {
       const p = sched.person;
       if (!p || !p.email) continue;
 
-      const startVNStr = new Date(sched.start_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const endVNStr = new Date(sched.end_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const startVN = getVNTime(sched.start_time);
+      const endVN = getVNTime(sched.end_time);
 
-      const startMs = new Date(startVNStr).getTime();
-      const endMs = new Date(endVNStr).getTime();
+      const startHour = parseInt(startVN.hour, 10);
+      const isAfternoonShift = startHour >= 13 && startHour <= 14;
+      const isPastStartTime = now.getTime() >= new Date(sched.start_time).getTime();
 
-      const timeStartHHMM = startVNStr.split(' ')[1].substring(0, 5);
-      const timeEndHHMM = endVNStr.split(' ')[1].substring(0, 5);
-
-      // Kiểm tra: Ca bắt đầu từ 13h00 đến 14h00 và đã qua giờ bắt đầu
-      const isAfternoonShift = startMs >= new Date(`${todayStr} 13:00:00`).getTime() && startMs <= new Date(`${todayStr} 14:00:00`).getTime();
-      const isPastStartTime = nowMs >= startMs;
+      const timeStartHHMM = `${startVN.hour}:${startVN.minute}`;
+      const timeEndHHMM = `${endVN.hour}:${endVN.minute}`;
 
       if (isAfternoonShift && isPastStartTime && !sent1401CheckInSet.has(sched.schedule_id)) {
         const report = await daily_report.findOne({
@@ -400,11 +396,10 @@ const checkAfternoonCheckOut = async () => {
     checkAndResetDailyCache();
 
     const now = new Date();
-    const nowVNStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-    const todayStr = nowVNStr.split(' ')[0];
-    const nowMs = new Date(nowVNStr).getTime();
+    const nowVN = getVNTime(now);
+    const todayStr = nowVN.dateStr;
 
-    console.log(`[Attendance Service - 18h31] Running afternoon check-out check at ${nowVNStr}...`);
+    console.log(`[Attendance Service - 18h31] Running afternoon check-out check at ${nowVN.dateTimeStr}...`);
 
     const startOfDay = `${todayStr} 00:00:00`;
     const endOfDay = `${todayStr} 23:59:59`;
@@ -433,13 +428,14 @@ const checkAfternoonCheckOut = async () => {
       const p = sched.person;
       if (!p || !p.email) continue;
 
-      const endVNStr = new Date(sched.end_time).toLocaleString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const endMs = new Date(endVNStr).getTime();
-      const timeEndHHMM = endVNStr.split(' ')[1].substring(0, 5);
+      const endVN = getVNTime(sched.end_time);
+      const endHour = parseInt(endVN.hour, 10);
 
-      // Kiểm tra: Ca kết thúc sau 12h00 (ca chiều/full ngày) và đã qua giờ kết thúc
-      const isAfternoonOrFullShift = endMs > new Date(`${todayStr} 12:00:00`).getTime();
-      const isPastEndTime = nowMs >= endMs;
+      // Ca kết thúc sau 12h00 (ca chiều/full ngày)
+      const isAfternoonOrFullShift = endHour > 12;
+      const isPastEndTime = now.getTime() >= new Date(sched.end_time).getTime();
+
+      const timeEndHHMM = `${endVN.hour}:${endVN.minute}`;
 
       if (isAfternoonOrFullShift && isPastEndTime && !sent1831CheckOutSet.has(sched.schedule_id)) {
         const report = await daily_report.findOne({

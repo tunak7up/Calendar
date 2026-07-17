@@ -473,43 +473,57 @@ const addParticipantToTask = async (taskId, { participant_id, role }) => {
     try {
         const targetTask = await task.findByPk(taskId);
         const p = await person.findByPk(participant_id);
-        if (targetTask && p && p.email) {
+        if (targetTask && p) {
             const assigner = await person.findByPk(targetTask.assigner_id);
             const assignerName = assigner ? assigner.name : 'Người quản lý';
-            const subject = `Thông báo có task mới từ ${assignerName}`;
 
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-            const html = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                <div style="background-color: #0D8ABC; color: white; padding: 20px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 20px;">Thông Báo Task Mới</h2>
-                </div>
-                <div style="padding: 24px; color: #333333;">
-                    <p>Xin chào,</p>
-                    <p>Bạn vừa được giao một công việc mới từ <strong>${assignerName}</strong>:</p>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <a href="${frontendUrl}/tasks/${taskId}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Xem Chi Tiết Công Việc</a>
-                    </div>
-                    <div style="background-color: #f9fafb; border-left: 4px solid #0D8ABC; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                        <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 18px;">${targetTask.title}</h3>
-                        <p style="margin: 0; color: #4b5563; font-size: 14px; white-space: pre-line;">${targetTask.description || 'Không có mô tả chi tiết cho task này.'}</p>
-                    </div>
-                    <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý công việc.</p>
-                    <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
-                </div>
-            </div>
-            `;
+            // Send database and push notification
+            try {
+                const { createNotification } = require('./notificationService');
+                const title = `Task mới: ${targetTask.title}`;
+                const message = `Bạn vừa được giao một công việc mới từ ${assignerName}.`;
+                const url = `/tasks/${taskId}`;
+                await createNotification(participant_id, targetTask.assigner_id, title, message, url);
+            } catch (pushError) {
+                console.error('Error creating database notification for added participant:', pushError);
+            }
 
-            sendMail({
-                to: p.email,
-                subject: subject,
-                html: html
-            }).catch(error => {
-                console.error('Error sending task email to added participant:', error);
-            });
+            // Send email
+            if (p.email) {
+                const subject = `Thông báo có task mới từ ${assignerName}`;
+                const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const html = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="background-color: #0D8ABC; color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; font-size: 20px;">Thông Báo Task Mới</h2>
+                    </div>
+                    <div style="padding: 24px; color: #333333;">
+                        <p>Xin chào,</p>
+                        <p>Bạn vừa được giao một công việc mới từ <strong>${assignerName}</strong>:</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${frontendUrl}/tasks/${taskId}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Xem Chi Tiết Công Việc</a>
+                        </div>
+                        <div style="background-color: #f9fafb; border-left: 4px solid #0D8ABC; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 18px;">${targetTask.title}</h3>
+                            <p style="margin: 0; color: #4b5563; font-size: 14px; white-space: pre-line;">${targetTask.description || 'Không có mô tả chi tiết cho task này.'}</p>
+                        </div>
+                        <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 40px;">Đây là email tự động từ hệ thống quản lý công việc.</p>
+                        <span style="display:none !important; font-size: 0px;">id: ${Date.now()}</span>
+                    </div>
+                </div>
+                `;
+
+                sendMail({
+                    to: p.email,
+                    subject: subject,
+                    html: html
+                }).catch(error => {
+                    console.error('Error sending task email to added participant:', error);
+                });
+            }
         }
     } catch (error) {
-        console.error('Error sending task email to added participant:', error);
+        console.error('Error sending task email/notification to added participant:', error);
     }
 
     return participant;

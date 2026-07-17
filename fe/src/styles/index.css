@@ -13,6 +13,7 @@ html,
 body,
 #root {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  touch-action: manipulation;
 }
 
 /* --- FullCalendar Modern Styling --- */

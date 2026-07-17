@@ -69,6 +69,12 @@ function App() {
           // Request permission
           await OneSignalNative.Notifications.requestPermission(true);
 
+          // Suppress push notifications in foreground
+          OneSignalNative.Notifications.addEventListener('foregroundWillDisplay', (event) => {
+            event.preventDefault();
+            console.log('[OneSignal Native] Suppressed foreground notification');
+          });
+
           // Get Subscription ID
           const subscriptionId = await OneSignalNative.User.pushSubscription.getIdAsync();
           if (subscriptionId && active) {
@@ -106,6 +112,12 @@ function App() {
             try {
               // Request permission
               await OneSignal.Notifications.requestPermission();
+
+              // Suppress push notifications in foreground
+              OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
+                event.preventDefault();
+                console.log('[OneSignal Web] Suppressed foreground notification');
+              });
 
               const subscriptionId = OneSignal.User.PushSubscription.id;
               if (subscriptionId && active) {

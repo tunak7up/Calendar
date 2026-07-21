@@ -31,29 +31,65 @@ const analyzePerformance = async (req, res) => {
             });
         }
 
-        // Detect intent from AI Agent's systemPrompt: does it want full history?
+        // Detect intent from AI Agent's systemPrompt: does it want full history, current month, or specific date range?
         let isFullHistory = false;
+        let dateRangeMonths = null; // { startMonth, startYear, endMonth, endYear }
+        
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
             
-            const intentPrompt = `Dựa vào prompt hướng dẫn AI sau, hãy xác định xem admin có yêu cầu đánh giá từ TOÀN THỜI GIAN (từ lúc bắt đầu đến nay) hay chỉ THÁNG HIỆN TẠI:
+            const intentPrompt = `Dựa vào prompt hướng dẫn AI sau, hãy xác định khoảng thời gian đánh giá mà admin yêu cầu:
 
 "${agent.systemPrompt || ''}"
 
-Trả lời CHỈ bằng 1 từ: "FULL" (toàn thời gian) hoặc "MONTH" (tháng hiện tại)`;
+HƯỚNG DẪN: Trả lời CHỈ bằng MỘT trong các format sau (không có text khác):
+- "FULL" nếu yêu cầu đánh giá từ đầu hoặc toàn bộ thời gian
+- "MONTH" nếu yêu cầu đánh giá tháng hiện tại
+- "RANGE:X" nếu yêu cầu tháng X cụ thể (ví dụ: "RANGE:6")
+- "RANGE:X-Y" nếu yêu cầu từ tháng X đến tháng Y cùng năm (ví dụ: "RANGE:5-7")
+- "RANGE:X/YYYY-Y/YYYY" nếu yêu cầu có năm cụ thể (ví dụ: "RANGE:5/2025-7/2025")
+
+KHÔNG trả lời gì khác ngoài các format trên.`;
 
             const intentResult = await model.generateContent(intentPrompt);
             const intentResponse = await intentResult.response;
             const intentText = intentResponse.text().trim().toUpperCase();
             
-            isFullHistory = intentText.includes('FULL');
+            console.log('Intent detection response:', intentText);
+            
+            if (intentText.includes('FULL')) {
+                isFullHistory = true;
+            } else if (intentText.includes('RANGE:')) {
+                // Parse range like "RANGE:6", "RANGE:5-6", or "RANGE:5/2025-6/2025"
+                let rangeMatch = intentText.match(/RANGE:(\d{1,2})(?:\/(\d{4}))?(?:-(\d{1,2}))?(?:\/(\d{4}))?/);
+                
+                if (rangeMatch) {
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    
+                    const startMonth = parseInt(rangeMatch[1], 10);
+                    const startYear = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : currentYear;
+                    
+                    // If only one month specified (RANGE:6), treat as single month
+                    const endMonth = rangeMatch[3] ? parseInt(rangeMatch[3], 10) : startMonth;
+                    const endYear = rangeMatch[4] ? parseInt(rangeMatch[4], 10) : currentYear;
+                    
+                    dateRangeMonths = {
+                        startMonth,
+                        startYear,
+                        endMonth,
+                        endYear
+                    };
+                    
+                    console.log('Parsed date range:', dateRangeMonths);
+                }
+            }
         } catch (err) {
             console.warn('Intent detection failed, defaulting to current month:', err.message);
-            isFullHistory = false;
         }
 
-        // Determine date range based on isFullHistory flag
+        // Determine date range based on intent detection
         let startDate, endDate, monthYear;
         
         if (isFullHistory) {
@@ -61,6 +97,21 @@ Trả lời CHỈ bằng 1 từ: "FULL" (toàn thời gian) hoặc "MONTH" (thá
             startDate = null;
             endDate = null;
             monthYear = 'Toàn thời gian';
+        } else if (dateRangeMonths) {
+            // Use specified date range
+            const { startMonth, startYear, endMonth, endYear } = dateRangeMonths;
+            const endLastDay = new Date(endYear, endMonth, 0).getDate();
+            
+            startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-01`;
+            endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-${String(endLastDay).padStart(2, '0')}`;
+            
+            if (startYear === endYear && startMonth === endMonth) {
+                monthYear = `Tháng ${startMonth}/${startYear}`;
+            } else if (startYear === endYear) {
+                monthYear = `Tháng ${startMonth} - Tháng ${endMonth}/${startYear}`;
+            } else {
+                monthYear = `Tháng ${startMonth}/${startYear} - Tháng ${endMonth}/${endYear}`;
+            }
         } else {
             // Default: Get current month's start and end
             const now = new Date();

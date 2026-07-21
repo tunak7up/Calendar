@@ -16,10 +16,10 @@ export const aiAgentService = {
     });
   },
 
-  analyzePerformance: async (personId) => {
+  analyzePerformance: async (personId, customPrompt) => {
     return await apiFetch('/ai-performance-analysis/analyze', {
       method: 'POST',
-      body: JSON.stringify({ personId })
+      body: JSON.stringify({ personId, customPrompt })
     });
   },
 

@@ -3,34 +3,13 @@ const { person, schedule, daily_report, task, task_participant, ai_agent } = req
 const { Op } = require('sequelize');
 
 const analyzePerformance = async (req, res) => {
-    const { personId, time_start, time_end } = req.body;
+    const { personId } = req.body;
 
     if (!personId) {
         return res.status(400).json({
             success: false,
             message: 'Thiếu thông tin personId nhân viên cần phân tích.'
         });
-    }
-
-    // Determine date range (default to current month if not provided)
-    let startDate, endDate, monthYear;
-    if (time_start && time_end) {
-        // Parse as string format YYYY-MM-DD
-        const startObj = new Date(time_start);
-        const endObj = new Date(time_end);
-        startDate = `${startObj.getFullYear()}-${String(startObj.getMonth() + 1).padStart(2, '0')}-${String(startObj.getDate()).padStart(2, '0')}`;
-        endDate = `${endObj.getFullYear()}-${String(endObj.getMonth() + 1).padStart(2, '0')}-${String(endObj.getDate()).padStart(2, '0')}`;
-        monthYear = `${startObj.getMonth() + 1}/${startObj.getFullYear()}`;
-    } else {
-        // Get current month's start and end in string format YYYY-MM-DD
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = now.getMonth() + 1;
-        const lastDay = new Date(y, m, 0).getDate();
-        
-        startDate = `${y}-${String(m).padStart(2, '0')}-01`;
-        endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-        monthYear = `${m}/${y}`;
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -43,19 +22,55 @@ const analyzePerformance = async (req, res) => {
     }
 
     try {
-        // Fetch AI Agent configuration from DB
+        // Fetch AI Agent configuration (admin setup at /admin/ai-agents)
         const agent = await ai_agent.findOne({ where: { code: 'performance_analysis' } });
-        if (!agent) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy cấu hình cho AI Agent Đánh giá hiệu suất trong cơ sở dữ liệu. Vui lòng chạy lại seeding.'
-            });
-        }
-        if (!agent.isActive) {
+        if (!agent || !agent.isActive) {
             return res.status(400).json({
                 success: false,
-                message: 'Chức năng AI Đánh giá hiệu suất nhân viên hiện đang bị tắt bởi Quản trị viên.'
+                message: 'Chức năng AI Đánh giá hiệu suất nhân viên hiện đang bị tắt hoặc không tìm thấy cấu hình.'
             });
+        }
+
+        // Detect intent from AI Agent's systemPrompt: does it want full history?
+        let isFullHistory = false;
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
+            
+            const intentPrompt = `Dựa vào prompt hướng dẫn AI sau, hãy xác định xem admin có yêu cầu đánh giá từ TOÀN THỜI GIAN (từ lúc bắt đầu đến nay) hay chỉ THÁNG HIỆN TẠI:
+
+"${agent.systemPrompt || ''}"
+
+Trả lời CHỈ bằng 1 từ: "FULL" (toàn thời gian) hoặc "MONTH" (tháng hiện tại)`;
+
+            const intentResult = await model.generateContent(intentPrompt);
+            const intentResponse = await intentResult.response;
+            const intentText = intentResponse.text().trim().toUpperCase();
+            
+            isFullHistory = intentText.includes('FULL');
+        } catch (err) {
+            console.warn('Intent detection failed, defaulting to current month:', err.message);
+            isFullHistory = false;
+        }
+
+        // Determine date range based on isFullHistory flag
+        let startDate, endDate, monthYear;
+        
+        if (isFullHistory) {
+            // Use full history (no date filtering)
+            startDate = null;
+            endDate = null;
+            monthYear = 'Toàn thời gian';
+        } else {
+            // Default: Get current month's start and end
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth() + 1;
+            const lastDay = new Date(y, m, 0).getDate();
+            
+            startDate = `${y}-${String(m).padStart(2, '0')}-01`;
+            endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+            monthYear = `${m}/${y}`;
         }
 
         // 1. Fetch Employee Profile
@@ -67,25 +82,27 @@ const analyzePerformance = async (req, res) => {
             });
         }
 
-        // 2. Fetch Schedules (Registered days) - filtered by month
+        // 2. Fetch Schedules (Registered days) - filtered by month if not full history
+        const scheduleWhere = { person_id: personId };
+        if (!isFullHistory) {
+            scheduleWhere.working_date = {
+                [Op.between]: [startDate, endDate]
+            };
+        }
         const schedules = await schedule.findAll({
-            where: { 
-                person_id: personId,
-                working_date: {
-                    [Op.between]: [startDate, endDate]
-                }
-            },
+            where: scheduleWhere,
             order: [['working_date', 'ASC']]
         });
 
-        // 3. Fetch Daily Reports (Actual days worked & check-ins) - filtered by month
+        // 3. Fetch Daily Reports (Actual days worked & check-ins) - filtered by month if not full history
+        const reportWhere = { person_id: personId };
+        if (!isFullHistory) {
+            reportWhere.working_date = {
+                [Op.between]: [startDate, endDate]
+            };
+        }
         const reports = await daily_report.findAll({
-            where: { 
-                person_id: personId,
-                working_date: {
-                    [Op.between]: [startDate, endDate]
-                }
-            },
+            where: reportWhere,
             order: [['working_date', 'ASC']]
         });
 
@@ -131,28 +148,30 @@ const analyzePerformance = async (req, res) => {
             });
         });
 
-        // 4. Fetch Tasks (Assigned vs Completed) - filtered by month
+        // 4. Fetch Tasks (Assigned vs Completed) - filtered by month if not full history
         const participantRecords = await task_participant.findAll({
             where: { participant_id: personId },
             attributes: ['task_id']
         });
         const participantTaskIds = participantRecords.map(p => p.task_id);
 
-        // Convert string dates to Date objects for task filtering
-        const startDateObj = new Date(startDate);
-        const endDateObj = new Date(endDate);
-        endDateObj.setHours(23, 59, 59, 999);
+        let taskWhere = {
+            [Op.or]: [
+                { task_id: { [Op.in]: participantTaskIds } },
+                { assigner_id: personId },
+                { created_by: personId }
+            ]
+        };
 
-        const userTasks = await task.findAll({
-            where: {
+        if (!isFullHistory) {
+            // Convert string dates to Date objects for task filtering
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            endDateObj.setHours(23, 59, 59, 999);
+
+            taskWhere = {
                 [Op.and]: [
-                    {
-                        [Op.or]: [
-                            { task_id: { [Op.in]: participantTaskIds } },
-                            { assigner_id: personId },
-                            { created_by: personId }
-                        ]
-                    },
+                    taskWhere,
                     {
                         created_at: {
                             [Op.gte]: startDateObj,
@@ -160,7 +179,11 @@ const analyzePerformance = async (req, res) => {
                         }
                     }
                 ]
-            },
+            };
+        }
+
+        const userTasks = await task.findAll({
+            where: taskWhere,
             order: [['created_at', 'DESC']]
         });
 
@@ -180,70 +203,52 @@ const analyzePerformance = async (req, res) => {
             dueDate: t.due_date
         }));
 
-        // 5. Build AI Context Prompt
-        let systemInstruction = agent.systemPrompt;
-        systemInstruction += "\nYêu cầu quan trọng: Bản phân tích hiệu suất nhân viên phải cực kỳ ngắn gọn, súc tích, tóm tắt các điểm then chốt nhất, không viết rườm rà hay dài dòng lê thê.";
+        // 5. Build AI Prompt with admin-configured systemPrompt and employee data
         const preferredModel = agent.modelName || 'gemini-3.1-flash-lite';
         const candidateModels = [preferredModel, 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
             .filter((val, index, self) => self.indexOf(val) === index);
 
-        const prompt = `ĐÁNH GIÁ HIỆU SUẤT NHÂN SỰ THÁNG ${monthYear}
-
-Thông tin nhân viên cần phân tích:
+        // Build data context for the analysis
+        const dataContext = `
+THÔNG TIN NHÂN VIÊN:
 - Họ tên: ${employee.name}
 - Tên đăng nhập: ${employee.username}
 - Mã nhân sự: ${employee.id || 'N/A'}
 - Email: ${employee.email || 'Chưa cập nhật'}
 - Vai trò: ${employee.role}
-- Kỳ đánh giá: Từ ${new Date(startDate).toLocaleDateString('vi-VN')} đến ${new Date(endDate).toLocaleDateString('vi-VN')}
- 
-TỔNG HỢP CHUYÊN CẦN (ATTENDANCE & TIME TRACKING):
-- Số ngày có lịch đăng ký đi làm: ${schedules.length} ngày
-- Số ngày thực tế đi làm (chấm công): ${reports.length} ngày
-- Tổng số giờ làm việc tích lũy: ${totalHours.toFixed(2)} giờ
-- Số lần đi muộn (check-in sau 09:00): ${lateCount} lần
- 
-TỔNG HỢP CÔNG VIỆC (TASK & GOAL ACCOMPLISHMENTS):
-- Tổng số công việc được giao/tham gia: ${totalTasks} task
-- Số công việc đã hoàn thành: ${completedTasks} task
-- Số công việc đang thực hiện: ${inProgressTasks} task
-- Số công việc đang chờ xử lý: ${pendingTasks} task
-- Số công việc trễ hạn (Overdue): ${overdueTasks} task
- 
-CHI TIẾT LỊCH SỬ CHẤM CÔNG VÀ BÁO CÁO CÔNG VIỆC TỪNG NGÀY:
+- Kỳ đánh giá: ${isFullHistory ? 'Toàn thời gian' : `${new Date(startDate).toLocaleDateString('vi-VN')} - ${new Date(endDate).toLocaleDateString('vi-VN')}`}
+
+DỮ LIỆU CHUYÊN CẦN (ATTENDANCE & TIME TRACKING):
+- Số ngày có lịch đăng ký: ${schedules.length} ngày
+- Số ngày thực tế đi làm: ${reports.length} ngày
+- Tổng giờ làm việc: ${totalHours.toFixed(2)} giờ
+- Số lần đi muộn: ${lateCount} lần
+
+DỮ LIỆU CÔNG VIỆC (TASK & GOAL ACCOMPLISHMENTS):
+- Tổng số công việc: ${totalTasks} task
+- Công việc hoàn thành: ${completedTasks} task
+- Công việc đang làm: ${inProgressTasks} task
+- Công việc chờ xử lý: ${pendingTasks} task
+- Công việc trễ hạn: ${overdueTasks} task
+
+CHI TIẾT CHẤM CÔNG:
 ${attendanceDetails.length > 0
-    ? attendanceDetails.map(d => `- Ngày ${d.date} | Vào: ${d.checkIn || '--'} - Ra: ${d.checkOut || '--'} | Giờ làm: ${d.workingHours}h | Trạng thái: ${d.isLate ? 'ĐI MUỘN' : 'Đúng giờ'} | Nội dung báo cáo ngày: "${d.reportSummary || 'Không ghi báo cáo'}"`).join('\n')
-    : '- Không có dữ liệu chấm công nào trong tháng.'}
- 
-CHI TIẾT DANH SÁCH CÔNG VIỆC ĐƯỢC GIAO:
+    ? attendanceDetails.map(d => `Ngày ${d.date}: ${d.checkIn || '--'}-${d.checkOut || '--'} (${d.workingHours}h, ${d.isLate ? 'muộn' : 'đúng giờ'})`).join('\n')
+    : 'Không có dữ liệu'}
+
+CHI TIẾT CÔNG VIỆC:
 ${tasksDetails.length > 0
-    ? tasksDetails.map(t => `- Tiêu đề: "${t.title}" | Trạng thái: ${t.status} | Độ ưu tiên: ${t.priority} | Hạn chót: ${t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : 'Không có'}`).join('\n')
-    : '- Chưa được giao công việc nào trong kỳ đánh giá.'}
- 
-Hãy đóng vai Chuyên viên Nhân sự cấp cao kiêm Giám đốc Vận hành để tiến hành phân tích sâu, đưa ra bản Đánh giá hiệu suất nhân sự chi tiết và cái nhìn khách quan nhất theo đúng cấu trúc yêu cầu sau. Cấu trúc đầu ra tuyệt đối KHÔNG sử dụng ký tự Markdown như #, ##, ### hay ** ở các tiêu đề và nội dung. 
+    ? tasksDetails.map(t => `"${t.title}" - ${t.status} (${t.priority}, hạn: ${t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : 'N/A'})`).join('\n')
+    : 'Không có công việc'}
+`;
 
-CẤU TRÚC ĐẦU RA (Bắt buộc tuân thủ):
+        // Combine admin's systemPrompt with data context
+        const prompt = `${agent.systemPrompt || 'Hãy đánh giá hiệu suất nhân viên'}
 
-ĐÁNH GIÁ HIỆU SUẤT NHÂN SỰ - [Tên nhân viên]
-Mã nhân sự: [Mã ID]
+${dataContext}
 
-1. Đánh giá tính Chuyên cần & Giờ làm việc (Attendance & Time Tracking)
-- Tổng số giờ làm việc thực tế so với đăng ký.
-- Phân tích mức độ đi muộn/về sớm (chỉ ra số lần cụ thể và xu hướng: thường xuyên hay hy hữu).
-- Đánh giá ý thức chấp hành kỷ luật giờ giấc.
+Lưu ý: Phân tích dựa vào dữ liệu trên, không sử dụng ký tự Markdown (#, ##, **, *) trong câu trả lời.`;
 
-2. Đánh giá Hiệu suất Công việc (Task & Goal Accomplishments)
-- Tỷ lệ hoàn thành công việc (Hoàn thành / Tổng số task được giao).
-- Đánh giá tiến độ hoàn thành (có nhiều task bị trễ hạn (overdue) hay không).
-- Chất lượng phân bổ thời gian dựa trên độ ưu tiên của task (Cao, Trung bình, Thấp).
-
-3. Nhận xét & Cái nhìn Khách quan (Objective Assessment)
-- Chỉ ra điểm mạnh nổi bật (ví dụ: hoàn thành task đúng hạn, làm việc chăm chỉ, giờ giấc nghiêm chỉnh).
-- Chỉ ra điểm hạn chế cần cải thiện (ví dụ: thường xuyên check-in muộn, tỷ lệ task quá hạn cao).
-
-4. Đề xuất Hướng Phát triển & Đào tạo (Actionable Recommendations)
-- Đề xuất giải pháp thiết thực cho nhân viên (ví dụ: cải thiện kỹ năng quản lý thời gian, tập trung hoàn thành các công việc ưu tiên cao).
-- Đề xuất giải pháp cho quản lý để hỗ trợ nhân viên (nếu cần thiết).`;
 
         const genAI = new GoogleGenerativeAI(apiKey);
         let analysisContent = '';
@@ -253,8 +258,7 @@ Mã nhân sự: [Mã ID]
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
-                    model: modelName,
-                    systemInstruction: systemInstruction
+                    model: modelName
                 });
                 const result = await model.generateContent(prompt);
                 const response = await result.response;

@@ -3,13 +3,34 @@ const { person, schedule, daily_report, task, task_participant, ai_agent } = req
 const { Op } = require('sequelize');
 
 const analyzePerformance = async (req, res) => {
-    const { personId } = req.body;
+    const { personId, time_start, time_end } = req.body;
 
     if (!personId) {
         return res.status(400).json({
             success: false,
             message: 'Thiếu thông tin personId nhân viên cần phân tích.'
         });
+    }
+
+    // Determine date range (default to current month if not provided)
+    let startDate, endDate, monthYear;
+    if (time_start && time_end) {
+        // Parse as string format YYYY-MM-DD
+        const startObj = new Date(time_start);
+        const endObj = new Date(time_end);
+        startDate = `${startObj.getFullYear()}-${String(startObj.getMonth() + 1).padStart(2, '0')}-${String(startObj.getDate()).padStart(2, '0')}`;
+        endDate = `${endObj.getFullYear()}-${String(endObj.getMonth() + 1).padStart(2, '0')}-${String(endObj.getDate()).padStart(2, '0')}`;
+        monthYear = `${startObj.getMonth() + 1}/${startObj.getFullYear()}`;
+    } else {
+        // Get current month's start and end in string format YYYY-MM-DD
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth() + 1;
+        const lastDay = new Date(y, m, 0).getDate();
+        
+        startDate = `${y}-${String(m).padStart(2, '0')}-01`;
+        endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        monthYear = `${m}/${y}`;
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -46,15 +67,25 @@ const analyzePerformance = async (req, res) => {
             });
         }
 
-        // 2. Fetch Schedules (Registered days)
+        // 2. Fetch Schedules (Registered days) - filtered by month
         const schedules = await schedule.findAll({
-            where: { person_id: personId },
+            where: { 
+                person_id: personId,
+                working_date: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
             order: [['working_date', 'ASC']]
         });
 
-        // 3. Fetch Daily Reports (Actual days worked & check-ins)
+        // 3. Fetch Daily Reports (Actual days worked & check-ins) - filtered by month
         const reports = await daily_report.findAll({
-            where: { person_id: personId },
+            where: { 
+                person_id: personId,
+                working_date: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
             order: [['working_date', 'ASC']]
         });
 
@@ -100,19 +131,34 @@ const analyzePerformance = async (req, res) => {
             });
         });
 
-        // 4. Fetch Tasks (Assigned vs Completed)
+        // 4. Fetch Tasks (Assigned vs Completed) - filtered by month
         const participantRecords = await task_participant.findAll({
             where: { participant_id: personId },
             attributes: ['task_id']
         });
         const participantTaskIds = participantRecords.map(p => p.task_id);
 
+        // Convert string dates to Date objects for task filtering
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+
         const userTasks = await task.findAll({
             where: {
-                [Op.or]: [
-                    { task_id: { [Op.in]: participantTaskIds } },
-                    { assigner_id: personId },
-                    { created_by: personId }
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { task_id: { [Op.in]: participantTaskIds } },
+                            { assigner_id: personId },
+                            { created_by: personId }
+                        ]
+                    },
+                    {
+                        created_at: {
+                            [Op.gte]: startDateObj,
+                            [Op.lte]: endDateObj
+                        }
+                    }
                 ]
             },
             order: [['created_at', 'DESC']]
@@ -141,19 +187,23 @@ const analyzePerformance = async (req, res) => {
         const candidateModels = [preferredModel, 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
             .filter((val, index, self) => self.indexOf(val) === index);
 
-        const prompt = `Thông tin phân tích hiệu suất nhân viên:
+        const prompt = `ĐÁNH GIÁ HIỆU SUẤT NHÂN SỰ THÁNG ${monthYear}
+
+Thông tin nhân viên cần phân tích:
 - Họ tên: ${employee.name}
 - Tên đăng nhập: ${employee.username}
+- Mã nhân sự: ${employee.id || 'N/A'}
 - Email: ${employee.email || 'Chưa cập nhật'}
 - Vai trò: ${employee.role}
+- Kỳ đánh giá: Từ ${new Date(startDate).toLocaleDateString('vi-VN')} đến ${new Date(endDate).toLocaleDateString('vi-VN')}
  
-TỔNG HỢP CHUYÊN CẦN (ATTENDANCE STATS):
+TỔNG HỢP CHUYÊN CẦN (ATTENDANCE & TIME TRACKING):
 - Số ngày có lịch đăng ký đi làm: ${schedules.length} ngày
 - Số ngày thực tế đi làm (chấm công): ${reports.length} ngày
 - Tổng số giờ làm việc tích lũy: ${totalHours.toFixed(2)} giờ
 - Số lần đi muộn (check-in sau 09:00): ${lateCount} lần
  
-TỔNG HỢP CÔNG VIỆC (TASK STATS):
+TỔNG HỢP CÔNG VIỆC (TASK & GOAL ACCOMPLISHMENTS):
 - Tổng số công việc được giao/tham gia: ${totalTasks} task
 - Số công việc đã hoàn thành: ${completedTasks} task
 - Số công việc đang thực hiện: ${inProgressTasks} task
@@ -163,14 +213,37 @@ TỔNG HỢP CÔNG VIỆC (TASK STATS):
 CHI TIẾT LỊCH SỬ CHẤM CÔNG VÀ BÁO CÁO CÔNG VIỆC TỪNG NGÀY:
 ${attendanceDetails.length > 0
     ? attendanceDetails.map(d => `- Ngày ${d.date} | Vào: ${d.checkIn || '--'} - Ra: ${d.checkOut || '--'} | Giờ làm: ${d.workingHours}h | Trạng thái: ${d.isLate ? 'ĐI MUỘN' : 'Đúng giờ'} | Nội dung báo cáo ngày: "${d.reportSummary || 'Không ghi báo cáo'}"`).join('\n')
-    : '- Không có dữ liệu chấm công nào.'}
+    : '- Không có dữ liệu chấm công nào trong tháng.'}
  
 CHI TIẾT DANH SÁCH CÔNG VIỆC ĐƯỢC GIAO:
 ${tasksDetails.length > 0
     ? tasksDetails.map(t => `- Tiêu đề: "${t.title}" | Trạng thái: ${t.status} | Độ ưu tiên: ${t.priority} | Hạn chót: ${t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : 'Không có'}`).join('\n')
-    : '- Chưa được giao công việc nào trên hệ thống.'}
+    : '- Chưa được giao công việc nào trong kỳ đánh giá.'}
  
-Hãy đóng vai Chuyên viên Nhân sự cấp cao kiêm Giám đốc Vận hành để tiến hành phân tích sâu, đưa ra bản Đánh giá hiệu suất nhân sự chi tiết và cái nhìn khách quan nhất theo đúng cấu trúc yêu cầu. Cấu trúc đầu ra tuyệt đối KHÔNG sử dụng ký tự Markdown như #, ##, ### hay ** ở các tiêu đề và nội dung.`;
+Hãy đóng vai Chuyên viên Nhân sự cấp cao kiêm Giám đốc Vận hành để tiến hành phân tích sâu, đưa ra bản Đánh giá hiệu suất nhân sự chi tiết và cái nhìn khách quan nhất theo đúng cấu trúc yêu cầu sau. Cấu trúc đầu ra tuyệt đối KHÔNG sử dụng ký tự Markdown như #, ##, ### hay ** ở các tiêu đề và nội dung. 
+
+CẤU TRÚC ĐẦU RA (Bắt buộc tuân thủ):
+
+ĐÁNH GIÁ HIỆU SUẤT NHÂN SỰ - [Tên nhân viên]
+Mã nhân sự: [Mã ID]
+
+1. Đánh giá tính Chuyên cần & Giờ làm việc (Attendance & Time Tracking)
+- Tổng số giờ làm việc thực tế so với đăng ký.
+- Phân tích mức độ đi muộn/về sớm (chỉ ra số lần cụ thể và xu hướng: thường xuyên hay hy hữu).
+- Đánh giá ý thức chấp hành kỷ luật giờ giấc.
+
+2. Đánh giá Hiệu suất Công việc (Task & Goal Accomplishments)
+- Tỷ lệ hoàn thành công việc (Hoàn thành / Tổng số task được giao).
+- Đánh giá tiến độ hoàn thành (có nhiều task bị trễ hạn (overdue) hay không).
+- Chất lượng phân bổ thời gian dựa trên độ ưu tiên của task (Cao, Trung bình, Thấp).
+
+3. Nhận xét & Cái nhìn Khách quan (Objective Assessment)
+- Chỉ ra điểm mạnh nổi bật (ví dụ: hoàn thành task đúng hạn, làm việc chăm chỉ, giờ giấc nghiêm chỉnh).
+- Chỉ ra điểm hạn chế cần cải thiện (ví dụ: thường xuyên check-in muộn, tỷ lệ task quá hạn cao).
+
+4. Đề xuất Hướng Phát triển & Đào tạo (Actionable Recommendations)
+- Đề xuất giải pháp thiết thực cho nhân viên (ví dụ: cải thiện kỹ năng quản lý thời gian, tập trung hoàn thành các công việc ưu tiên cao).
+- Đề xuất giải pháp cho quản lý để hỗ trợ nhân viên (nếu cần thiết).`;
 
         const genAI = new GoogleGenerativeAI(apiKey);
         let analysisContent = '';

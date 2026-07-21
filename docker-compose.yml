@@ -15,7 +15,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     env_file:
-      - ./be/.env
+      - ./be/.env.docker
     volumes:
       - ./be/uploads:/usr/src/app/uploads
     depends_on:

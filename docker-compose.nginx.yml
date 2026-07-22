@@ -1,0 +1,91 @@
+# Docker Compose Updated Example
+# ⚠️ Sử dụng version này nếu muốn bật Nginx proxy cho backend + IP restriction
+# 
+# Thay đổi chính:
+# 1. Thêm backend-nginx service (Nginx reverse proxy)
+# 2. Backend không expose port ra ngoài (chỉ trong Docker network)
+# 3. Cập nhật frontend dependencies
+
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: calendar-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    # ❌ Loại bỏ - chỉ expose qua Nginx proxy
+    # ports:
+    #   - "${BACKEND_PORT}:3000"
+    env_file:
+      - ./be/.env.docker
+    volumes:
+      - ./be/uploads:/usr/src/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - calendar-network
+    # Express sẽ listen trên port 3000 bên trong container
+    expose:
+      - "3000"
+
+  backend-nginx:  # ✅ NEW: Nginx reverse proxy + X-Forwarded-For headers
+    image: nginx:alpine
+    container_name: calendar-backend-nginx
+    restart: always
+    ports:
+      - "${BACKEND_PORT}:80"
+    volumes:
+      - ./be/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - calendar-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - backend-nginx
+    networks:
+      - calendar-network
+    environment:
+      # Ensure VITE_API_URL points to nginx proxy (not Express directly)
+      # VITE_API_URL=http://localhost:${BACKEND_PORT}/api  (for dev)
+      # VITE_API_URL=https://api.yourdomain.com/api  (for production)
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000/api}
+
+  docs:
+    build:
+      context: ./docs
+      dockerfile: Dockerfile
+    ports:
+      - "${DOCS_PORT}:80"
+    depends_on:
+      - frontend
+    networks:
+      - calendar-network
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  calendar-network:
+    driver: bridge

@@ -36,6 +36,14 @@ const daily_report = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        check_in_device: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        check_out_device: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     });
 
 // const syncDailyReport = async () => {

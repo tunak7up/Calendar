@@ -186,11 +186,21 @@ export default function AdminReportHistory() {
               {report.check_in_ip && (
                 <div className="text-[11px] font-mono text-gray-400">IP: {report.check_in_ip}</div>
               )}
+              {report.check_in_device && (
+                <div className="text-[11px] text-gray-400 truncate max-w-[160px]" title={report.check_in_device}>
+                  {report.check_in_device}
+                </div>
+              )}
             </td>
             <td className="px-4 py-5 text-sm text-gray-600">
               <div>{report.check_out || '--:--'}</div>
               {report.check_out_ip && (
                 <div className="text-[11px] font-mono text-gray-400">IP: {report.check_out_ip}</div>
+              )}
+              {report.check_out_device && (
+                <div className="text-[11px] text-gray-400 truncate max-w-[160px]" title={report.check_out_device}>
+                  {report.check_out_device}
+                </div>
               )}
             </td>
             <td className="px-4 py-5">
@@ -281,12 +291,18 @@ export default function AdminReportHistory() {
                           {selectedReport.check_in_ip && (
                             <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_in_ip}</p>
                           )}
+                          {selectedReport.check_in_device && (
+                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_in_device}</p>
+                          )}
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkout')}</p>
                           <p className="text-sm font-semibold text-indigo-600">{selectedReport.check_out || '--:--'}</p>
                           {selectedReport.check_out_ip && (
                             <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_out_ip}</p>
+                          )}
+                          {selectedReport.check_out_device && (
+                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_out_device}</p>
                           )}
                         </div>
                       </div>

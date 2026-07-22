@@ -39,8 +39,6 @@ export default function Dashboard() {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
-  const [checkInIp, setCheckInIp] = useState(null);
-  const [checkOutIp, setCheckOutIp] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -164,10 +162,6 @@ export default function Dashboard() {
 
           const cOut = parseDate(report.check_out, report.working_date);
           if (cOut) setCheckOutTime(cOut);
-
-          if (report.check_in_ip) setCheckInIp(report.check_in_ip);
-          if (report.check_out_ip) setCheckOutIp(report.check_out_ip);
-
           if (report.description) {
             setReportText(report.description);
           }
@@ -267,9 +261,6 @@ export default function Dashboard() {
         const now = new Date();
         setIsCheckedIn(true);
         setCheckInTime(now);
-        if (report.check_in_ip) {
-          setCheckInIp(report.check_in_ip);
-        }
         setReportId(report.report_id || report.id);
       } else {
         alert(
@@ -315,9 +306,6 @@ export default function Dashboard() {
           const now = new Date();
           const isUpdating = !!checkOutTime;
           setCheckOutTime(now);
-          if (response.data && response.data.check_out_ip) {
-            setCheckOutIp(response.data.check_out_ip);
-          }
           if (isUpdating) {
             alert(
               t("dashboard.alert_update_success", {
@@ -580,21 +568,14 @@ export default function Dashboard() {
                 <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">
                   {t("dashboard.checked_in")}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">
-                    {checkInTime instanceof Date && !isNaN(checkInTime)
-                      ? checkInTime.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "--:--"}
-                  </span>
-                  {checkInIp && (
-                    <span className="text-xs font-mono font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      IP: {checkInIp}
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm font-bold text-gray-900">
+                  {checkInTime instanceof Date && !isNaN(checkInTime)
+                    ? checkInTime.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "--:--"}
+                </span>
               </div>
             </div>
           )}
@@ -607,21 +588,14 @@ export default function Dashboard() {
                 <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-wider leading-none mb-1">
                   {t("dashboard.checked_out")}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">
-                    {checkOutTime instanceof Date && !isNaN(checkOutTime)
-                      ? checkOutTime.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "--:--"}
-                  </span>
-                  {checkOutIp && (
-                    <span className="text-xs font-mono font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      IP: {checkOutIp}
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm font-bold text-gray-900">
+                  {checkOutTime instanceof Date && !isNaN(checkOutTime)
+                    ? checkOutTime.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "--:--"}
+                </span>
               </div>
             </div>
           )}
@@ -766,13 +740,12 @@ export default function Dashboard() {
                             {/* Priority */}
                             <span
                               data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ""}`}
-                              className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full border uppercase tracking-wider ${
-                                task.priority?.toLowerCase() === "high"
+                              className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full border uppercase tracking-wider ${task.priority?.toLowerCase() === "high"
                                   ? "bg-red-50 text-red-700 border-red-100"
                                   : task.priority?.toLowerCase() === "medium"
                                     ? "bg-amber-50 text-amber-700 border-amber-100"
                                     : "bg-emerald-50 text-emerald-700 border-emerald-100"
-                              }`}
+                                }`}
                             >
                               {task.priority?.toLowerCase() === "high"
                                 ? t("dashboard.priority_high")
@@ -784,11 +757,10 @@ export default function Dashboard() {
                             {/* Due Date */}
                             {task.due_date && (
                               <span
-                                className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                                  isOverdue
+                                className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${isOverdue
                                     ? "bg-red-50 text-red-600 border-red-100"
                                     : "bg-gray-50 text-gray-500 border-gray-200"
-                                }`}
+                                  }`}
                               >
                                 <CalendarIcon className="w-3.5 h-3.5" />
                                 {new Date(task.due_date).toLocaleDateString(
@@ -941,30 +913,28 @@ export default function Dashboard() {
                                 <div className="flex flex-wrap items-center gap-1.5">
                                   <span
                                     data-custom-component={`TaskPriority-${task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() : ""}`}
-                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${
-                                      task.priority?.toLowerCase() === "high"
+                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${task.priority?.toLowerCase() === "high"
                                         ? "bg-red-50 text-red-700 border-red-100"
                                         : task.priority?.toLowerCase() ===
-                                            "medium"
+                                          "medium"
                                           ? "bg-amber-50 text-amber-700 border-amber-100"
                                           : "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                    }`}
+                                      }`}
                                   >
                                     {task.priority?.toLowerCase() === "high"
                                       ? t("dashboard.priority_high")
                                       : task.priority?.toLowerCase() ===
-                                          "medium"
+                                        "medium"
                                         ? t("dashboard.priority_medium")
                                         : t("dashboard.priority_low")}
                                   </span>
 
                                   {task.due_date && (
                                     <span
-                                      className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${
-                                        isOverdue
+                                      className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${isOverdue
                                           ? "bg-red-50 text-red-600 border-red-100"
                                           : "bg-gray-50 text-gray-500 border-gray-200"
-                                      }`}
+                                        }`}
                                     >
                                       <CalendarIcon className="w-3.5 h-3.5" />
                                       {new Date(
@@ -1124,10 +1094,9 @@ export default function Dashboard() {
               <button
                 onClick={handleSubmitReport}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
-                  ${
-                    checkOutTime
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
-                      : "bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20"
+                  ${checkOutTime
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
+                    : "bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20"
                   }`}
                 data-customizable-id="btn-submit-report"
                 data-customizable-type="bg"

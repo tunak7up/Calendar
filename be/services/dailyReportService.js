@@ -22,6 +22,7 @@ const createDailyReport = async (data) => {
         }),
         check_out: null,
         check_in_ip: data.clientIp || "khong lay duoc ip",
+        check_in_device: typeof data.check_in_device === 'object' ? JSON.stringify(data.check_in_device) : (data.check_in_device || "khong lay duoc device")
     });
 };
 
@@ -35,7 +36,8 @@ const updateDailyReport = async (id, data) => {
             timeZone: 'Asia/Ho_Chi_Minh'
         }),
         check_out_ip: data.clientIp || "khong lay duoc ip",
-        description: data.description
+        description: data.description,
+        check_out_device: typeof data.check_out_device === 'object' ? JSON.stringify(data.check_out_device) : (data.check_out_device || "khong lay duoc device")
     });
 };
 
@@ -167,7 +169,7 @@ const exportDailyReport = async (personIds, startDate, endDate) => {
                 if (cellLength > maxLength) maxLength = cellLength;
             });
 
-            column.width = maxLength + 4; 
+            column.width = maxLength + 4;
         });
     };
 

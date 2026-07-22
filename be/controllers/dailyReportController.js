@@ -3,8 +3,7 @@ const { sendRes } = require('../utils/responseHelper');
 
 const createDailyReport = async (req, res) => {
     try {
-        // ✅ Pass clientIp from middleware to service
-        const data = { ...req.body, clientIp: req.clientIp };
+        const data = { ...req.body, clientIp: req.clientIp, check_in_device: req.clientDevice };
         const report = await dailyReportService.createDailyReport(data);
         sendRes(res, 200, 'Daily report created successfully', report);
     } catch (error) {
@@ -14,8 +13,7 @@ const createDailyReport = async (req, res) => {
 
 const updateDailyReport = async (req, res) => {
     try {
-        // ✅ Pass clientIp from middleware to service
-        const data = { ...req.body, clientIp: req.clientIp };
+        const data = { ...req.body, clientIp: req.clientIp, check_out_device: req.clientDevice };
         const report = await dailyReportService.updateDailyReport(req.params.id, data);
         sendRes(res, 200, 'Daily report updated successfully', report);
     } catch (error) {

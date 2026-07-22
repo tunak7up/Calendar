@@ -181,8 +181,18 @@ export default function AdminReportHistory() {
             <td className="px-4 py-5">
               <span className="text-sm font-semibold text-gray-900">{report.employee_name}</span>
             </td>
-            <td className="px-4 py-5 text-sm text-gray-600">{report.check_in || '--:--'}</td>
-            <td className="px-4 py-5 text-sm text-gray-600">{report.check_out || '--:--'}</td>
+            <td className="px-4 py-5 text-sm text-gray-600">
+              <div>{report.check_in || '--:--'}</div>
+              {report.check_in_ip && (
+                <div className="text-[11px] font-mono text-gray-400">IP: {report.check_in_ip}</div>
+              )}
+            </td>
+            <td className="px-4 py-5 text-sm text-gray-600">
+              <div>{report.check_out || '--:--'}</div>
+              {report.check_out_ip && (
+                <div className="text-[11px] font-mono text-gray-400">IP: {report.check_out_ip}</div>
+              )}
+            </td>
             <td className="px-4 py-5">
               {report.statusKey === STATUS_DONE && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
@@ -268,10 +278,16 @@ export default function AdminReportHistory() {
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkin')}</p>
                           <p className="text-sm font-semibold text-emerald-600">{selectedReport.check_in || '--:--'}</p>
+                          {selectedReport.check_in_ip && (
+                            <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_in_ip}</p>
+                          )}
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkout')}</p>
                           <p className="text-sm font-semibold text-indigo-600">{selectedReport.check_out || '--:--'}</p>
+                          {selectedReport.check_out_ip && (
+                            <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_out_ip}</p>
+                          )}
                         </div>
                       </div>
 

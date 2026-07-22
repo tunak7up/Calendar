@@ -7,19 +7,41 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - calendar-network
 
   backend:
     build:
       context: ./be
       dockerfile: Dockerfile
-    ports:
-      - "${BACKEND_PORT}:3000"
+    # ⚠️ CHANGED: Backend không expose port trực tiếp nữa
+    # Requests phải đi qua backend-nginx proxy để lấy đúng client IP
+    # ports:
+    #   - "${BACKEND_PORT}:3000"
+    expose:
+      - "3000"
     env_file:
       - ./be/.env.docker
     volumes:
       - ./be/uploads:/usr/src/app/uploads
     depends_on:
       - redis
+    networks:
+      - calendar-network
+
+  # ✅ NEW: Nginx reverse proxy - forward X-Forwarded-For headers
+  backend-nginx:
+    image: nginx:alpine
+    container_name: calendar-backend-nginx
+    restart: always
+    ports:
+      - "${BACKEND_PORT}:80"
+    volumes:
+      - ./be/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - calendar-network
 
   frontend:
     build:
@@ -28,7 +50,9 @@ services:
     ports:
       - "${FRONTEND_PORT}:80"
     depends_on:
-      - backend
+      - backend-nginx
+    networks:
+      - calendar-network
 
   docs:
     build:
@@ -38,7 +62,13 @@ services:
       - "${DOCS_PORT}:80"
     depends_on:
       - frontend
+    networks:
+      - calendar-network
 
 volumes:
   db_data:
   redis_data:
+
+networks:
+  calendar-network:
+    driver: bridge

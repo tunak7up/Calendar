@@ -3,7 +3,9 @@ const { sendRes } = require('../utils/responseHelper');
 
 const createDailyReport = async (req, res) => {
     try {
-        const report = await dailyReportService.createDailyReport(req.body);
+        // ✅ Pass clientIp from middleware to service
+        const data = { ...req.body, clientIp: req.clientIp };
+        const report = await dailyReportService.createDailyReport(data);
         sendRes(res, 200, 'Daily report created successfully', report);
     } catch (error) {
         sendRes(res, 400, 'Error creating daily report', null, error.message);
@@ -12,7 +14,9 @@ const createDailyReport = async (req, res) => {
 
 const updateDailyReport = async (req, res) => {
     try {
-        const report = await dailyReportService.updateDailyReport(req.params.id, req.body);
+        // ✅ Pass clientIp from middleware to service
+        const data = { ...req.body, clientIp: req.clientIp };
+        const report = await dailyReportService.updateDailyReport(req.params.id, data);
         sendRes(res, 200, 'Daily report updated successfully', report);
     } catch (error) {
         sendRes(res, 400, 'Error updating daily report', null, error.message);

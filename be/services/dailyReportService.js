@@ -20,7 +20,8 @@ const createDailyReport = async (data) => {
         check_in: new Date().toLocaleTimeString('it-IT', {
             timeZone: 'Asia/Ho_Chi_Minh'
         }),
-        check_out: null
+        check_out: null,
+        check_in_ip: data.clientIp || "khong lay duoc ip",
     });
 };
 
@@ -33,6 +34,7 @@ const updateDailyReport = async (id, data) => {
         check_out: new Date().toLocaleTimeString('it-IT', {
             timeZone: 'Asia/Ho_Chi_Minh'
         }),
+        check_out_ip: data.clientIp || "khong lay duoc ip",
         description: data.description
     });
 };
@@ -43,7 +45,7 @@ const updateDailyReportDescription = async (id, description) => {
         throw new Error('Daily report not found');
     }
     return await report.update({
-        description: description
+        description: description,
     });
 };
 

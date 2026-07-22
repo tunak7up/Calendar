@@ -79,6 +79,7 @@ export const en = {
       alert_checkout_success: "Report submitted and Checked-out successfully at {{time}}",
       alert_draft_success: "Report draft saved successfully!",
       alert_checkin_fail: "Check-in failed: {{message}}",
+      alert_checkin_fail_ip: "Can't check-in: {{message}} (Please connect to the office network)",
       alert_checkin_fail_general: "Failed to check-in. Please try again.",
       alert_save_fail_no_report: "Report ID not found, please Check-in first.",
       alert_action_fail: "An error occurred during processing, please try again.",

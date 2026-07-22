@@ -820,7 +820,7 @@ export default function TaskDetails() {
 
         {/* Description */}
         <div className="p-5 sm:p-8 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <DocumentTextIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.description')}</h2>
@@ -923,7 +923,7 @@ export default function TaskDetails() {
 
         {/* Attachments Section */}
         <div className="p-5 sm:p-8 border-b border-gray-100 bg-white">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <PaperClipIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.attachments')}</h2>

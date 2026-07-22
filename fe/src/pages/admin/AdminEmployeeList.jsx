@@ -22,6 +22,7 @@ export default function AdminEmployeeList() {
     username: '',
     password: '',
     email: '',
+    company_card: '',
     role: 'employee',
     status: true
   });
@@ -49,6 +50,7 @@ export default function AdminEmployeeList() {
         username: user.username,
         password: '',
         email: user.email || '',
+        company_card: user.company_card || '',
         role: user.role || 'employee',
         status: user.status
       });
@@ -59,6 +61,7 @@ export default function AdminEmployeeList() {
         username: '',
         password: '',
         email: '',
+        company_card: '',
         role: 'employee',
         status: true
       });
@@ -95,6 +98,8 @@ export default function AdminEmployeeList() {
         alert(t('employees.error_duplicate_email', { defaultValue: 'Trùng email! Vui lòng sử dụng email khác.' }));
       } else if (error.message && error.message.includes('Username already exists')) {
         alert(t('employees.error_duplicate_username', { defaultValue: 'Trùng tên đăng nhập! Vui lòng sử dụng tên khác.' }));
+      } else if (error.message && error.message.includes('Company card already exists')) {
+        alert(t('employees.error_duplicate_company_card', { defaultValue: 'Trùng mã thẻ công ty! Vui lòng sử dụng mã khác.' }));
       } else {
         alert(t('employees.error_saving', { defaultValue: 'Error saving user' }));
       }
@@ -152,6 +157,7 @@ export default function AdminEmployeeList() {
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('employees.col_name')}</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden md:table-cell">{t('employees.col_email')}</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden sm:table-cell">{t('employees.col_username')}</th>
+                <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest hidden lg:table-cell">{t('employees.col_company_card', { defaultValue: 'Mã thẻ' })}</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest">{t('employees.col_role')}</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center hidden sm:table-cell">{t('employees.col_status')}</th>
                 <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">{t('employees.col_actions')}</th>
@@ -160,11 +166,11 @@ export default function AdminEmployeeList() {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-gray-400">{t('employees.loading')}</td>
+                  <td colSpan="8" className="text-center py-12 text-gray-400">{t('employees.loading')}</td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-gray-400">{t('employees.empty')}</td>
+                  <td colSpan="8" className="text-center py-12 text-gray-400">{t('employees.empty')}</td>
                 </tr>
               ) : (
                 employees.map((emp) => (
@@ -188,6 +194,7 @@ export default function AdminEmployeeList() {
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden md:table-cell">{emp.email || <span className="text-gray-400 font-normal italic">{t('employees.email_not_updated')}</span>}</td>
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium hidden sm:table-cell">{emp.username}</td>
+                    <td className="py-4 px-6 text-sm text-gray-600 font-mono font-medium hidden lg:table-cell">{emp.company_card || '--'}</td>
                     <td className="py-4 px-6">
                       <CustomSelect
                         value={emp.role || 'employee'}
@@ -276,6 +283,18 @@ export default function AdminEmployeeList() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={t('employees.email_placeholder')}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  {t('employees.field_company_card', { defaultValue: 'Mã thẻ công ty' })}
+                </label>
+                <input
+                  type="text"
+                  value={formData.company_card}
+                  onChange={(e) => setFormData({ ...formData, company_card: e.target.value })}
+                  placeholder={t('employees.company_card_placeholder', { defaultValue: 'Nhập mã thẻ công ty' })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
                 />
               </div>

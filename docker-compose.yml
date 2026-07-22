@@ -14,32 +14,14 @@ services:
     build:
       context: ./be
       dockerfile: Dockerfile
-    # ⚠️ CHANGED: Backend không expose port trực tiếp nữa
-    # Requests phải đi qua backend-nginx proxy để lấy đúng client IP
-    # ports:
-    #   - "${BACKEND_PORT}:3000"
-    expose:
-      - "3000"
+    ports:
+      - "${BACKEND_PORT}:3000"
     env_file:
       - ./be/.env.docker
     volumes:
       - ./be/uploads:/usr/src/app/uploads
     depends_on:
       - redis
-    networks:
-      - calendar-network
-
-  # ✅ NEW: Nginx reverse proxy - forward X-Forwarded-For headers
-  backend-nginx:
-    image: nginx:alpine
-    container_name: calendar-backend-nginx
-    restart: always
-    ports:
-      - "${BACKEND_PORT}:80"
-    volumes:
-      - ./be/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - backend
     networks:
       - calendar-network
 
@@ -50,7 +32,7 @@ services:
     ports:
       - "${FRONTEND_PORT}:80"
     depends_on:
-      - backend-nginx
+      - backend
     networks:
       - calendar-network
 

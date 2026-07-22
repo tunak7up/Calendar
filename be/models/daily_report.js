@@ -28,6 +28,12 @@ const daily_report = sequelize.define(
         check_out: {
             type: DataTypes.STRING,
         },
+        check_in_machine: {
+            type: DataTypes.STRING,
+        },
+        check_out_machine: {
+            type: DataTypes.STRING,
+        },
         check_in_ip: {
             type: DataTypes.STRING,
             allowNull: true,

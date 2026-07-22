@@ -111,6 +111,8 @@ export default function AdminReportHistory() {
     { key: 'employee_name', label: t('reporthistory.col_employee'), sortable: true },
     { key: 'check_in', label: t('reporthistory.col_checkin'), sortable: true },
     { key: 'check_out', label: t('reporthistory.col_checkout'), sortable: true },
+    { key: 'check_in_machine', label: t('reporthistory.col_checkin_machine', { defaultValue: 'Vào (Máy)' }), sortable: true },
+    { key: 'check_out_machine', label: t('reporthistory.col_checkout_machine', { defaultValue: 'Ra (Máy)' }), sortable: true },
     { key: 'statusKey', label: t('reporthistory.col_status'), sortable: true }
   ];
 
@@ -159,7 +161,7 @@ export default function AdminReportHistory() {
         totalItems={sortedData.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
-        tableClassName="min-w-[600px]"
+        tableClassName="min-w-[750px]"
         renderRow={(report) => (
           <tr
             key={report.id}
@@ -202,6 +204,12 @@ export default function AdminReportHistory() {
                   {report.check_out_device}
                 </div>
               )}
+            </td>
+            <td className="px-4 py-5 text-sm font-semibold text-gray-700">
+              {report.check_in_machine || '--:--'}
+            </td>
+            <td className="px-4 py-5 text-sm font-semibold text-gray-700">
+              {report.check_out_machine || '--:--'}
             </td>
             <td className="px-4 py-5">
               {report.statusKey === STATUS_DONE && (
@@ -304,6 +312,14 @@ export default function AdminReportHistory() {
                           {selectedReport.check_out_device && (
                             <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_out_device}</p>
                           )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Vào (Máy chấm công)</p>
+                          <p className="text-sm font-semibold text-emerald-700">{selectedReport.check_in_machine || '--:--'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ra (Máy chấm công)</p>
+                          <p className="text-sm font-semibold text-indigo-700">{selectedReport.check_out_machine || '--:--'}</p>
                         </div>
                       </div>
 

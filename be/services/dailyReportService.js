@@ -76,7 +76,8 @@ const getAllDailyReportsInRange = async (startDate, endDate) => {
             working_date: {
                 [Op.between]: [startDate, endDate]
             }
-        }
+        },
+        order: [['working_date', 'ASC']]
     });
 };
 
@@ -84,7 +85,8 @@ const getDailyReportByPersonId = async (person_id) => {
     return await daily_report.findAll({
         where: {
             person_id: person_id
-        }
+        },
+        order: [['working_date', 'ASC']]
     });
 };
 
@@ -109,6 +111,7 @@ const exportDailyReport = async (personIds, startDate, endDate) => {
                 person_id: personId,
                 working_date: { [Op.between]: [startDate, endDate] }
             },
+            order: [['working_date', 'ASC']],
             include: [
                 {
                     model: person,

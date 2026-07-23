@@ -630,6 +630,149 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Daily Report Section */}
+          <div
+            className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6"
+            data-customizable-id="card-daily-report"
+            data-customizable-type="bg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-bold text-gray-800">
+                  {t("dashboard.daily_report")}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
+              >
+                <span>✨ Tạo báo cáo bằng AI</span>
+              </button>
+            </div>
+            <textarea
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              placeholder={t("dashboard.report_placeholder")}
+              rows={4}
+              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  const val = e.target.value;
+                  if (val.length === 0 || val.endsWith("\n")) {
+                    e.preventDefault();
+                    handleSubmitReport();
+                  }
+                }
+              }}
+            />
+
+            {/* Attachment Section */}
+            <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <PaperClipIcon className="w-5 h-5 text-gray-500" />
+                  <span className="text-sm font-semibold text-gray-700">
+                    {t("dashboard.attachments", {
+                      count: reportAttachments.length,
+                    })}
+                  </span>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleUploadReportFiles}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!reportId) {
+                        alert(t("dashboard.alert_upload_no_id_btn"));
+                        return;
+                      }
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
+                    data-customizable-id="btn-add-file"
+                    data-customizable-type="bg"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    {t("dashboard.add_file")}
+                  </button>
+                </div>
+              </div>
+
+              {reportAttachments.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {reportAttachments.map((att) => {
+                    const fullUrl = `${import.meta.env.VITE_API_URL.replace("/api", "")}${att.url}`;
+                    const fileName = att.file_name || "File đính kèm";
+                    return (
+                      <div
+                        key={att.file_attachment_id}
+                        className="flex items-center gap-1 bg-white border border-gray-200 pl-3 pr-1 py-1 rounded-lg shadow-sm group"
+                      >
+                        <button
+                          onClick={() => downloadFile(fullUrl, fileName)}
+                          className="text-xs font-medium text-gray-700 hover:text-blue-600 truncate max-w-[150px] text-left"
+                          title={fileName}
+                        >
+                          {fileName}
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleDeleteAttachment(att.file_attachment_id)
+                          }
+                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                          title="Xóa file"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleSaveDescription}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
+                data-customizable-id="btn-save-draft"
+                data-customizable-type="bg"
+              >
+                <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
+                {t("dashboard.save_draft")}
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
+                  ${checkOutTime
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
+                    : "bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20"
+                  }`}
+                data-customizable-id="btn-submit-report"
+                data-customizable-type="bg"
+              >
+                {checkOutTime ? (
+                  <>
+                    <CheckCircleIcon className="w-5 h-5" />
+                    {t("dashboard.update_report")}
+                  </>
+                ) : (
+                  <>
+                    <PaperAirplaneIcon className="w-5 h-5" />
+                    {t("dashboard.submit_report")}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Kanban Board Container */}
           <div className="flex flex-col gap-4">
             {!isMobile && (
@@ -972,148 +1115,6 @@ export default function Dashboard() {
                 })}
               </div>
             )}
-          </div>
-
-          <div
-            className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6"
-            data-customizable-id="card-daily-report"
-            data-customizable-type="bg"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-gray-800">
-                  {t("dashboard.daily_report")}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAiModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
-              >
-                <span>✨ Tạo báo cáo bằng AI</span>
-              </button>
-            </div>
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              placeholder={t("dashboard.report_placeholder")}
-              rows={4}
-              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  const val = e.target.value;
-                  if (val.length === 0 || val.endsWith("\n")) {
-                    e.preventDefault();
-                    handleSubmitReport();
-                  }
-                }
-              }}
-            />
-
-            {/* Attachment Section */}
-            <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <PaperClipIcon className="w-5 h-5 text-gray-500" />
-                  <span className="text-sm font-semibold text-gray-700">
-                    {t("dashboard.attachments", {
-                      count: reportAttachments.length,
-                    })}
-                  </span>
-                </div>
-                <div>
-                  <input
-                    type="file"
-                    multiple
-                    ref={fileInputRef}
-                    style={{ display: "none" }}
-                    onChange={handleUploadReportFiles}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!reportId) {
-                        alert(t("dashboard.alert_upload_no_id_btn"));
-                        return;
-                      }
-                      fileInputRef.current?.click();
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
-                    data-customizable-id="btn-add-file"
-                    data-customizable-type="bg"
-                  >
-                    <PlusIcon className="w-3.5 h-3.5" />
-                    {t("dashboard.add_file")}
-                  </button>
-                </div>
-              </div>
-
-              {reportAttachments.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {reportAttachments.map((att) => {
-                    const fullUrl = `${import.meta.env.VITE_API_URL.replace("/api", "")}${att.url}`;
-                    const fileName = att.file_name || "File đính kèm";
-                    return (
-                      <div
-                        key={att.file_attachment_id}
-                        className="flex items-center gap-1 bg-white border border-gray-200 pl-3 pr-1 py-1 rounded-lg shadow-sm group"
-                      >
-                        <button
-                          onClick={() => downloadFile(fullUrl, fileName)}
-                          className="text-xs font-medium text-gray-700 hover:text-blue-600 truncate max-w-[150px] text-left"
-                          title={fileName}
-                        >
-                          {fileName}
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteAttachment(att.file_attachment_id)
-                          }
-                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                          title="Xóa file"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={handleSaveDescription}
-                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
-                data-customizable-id="btn-save-draft"
-                data-customizable-type="bg"
-              >
-                <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
-                {t("dashboard.save_draft")}
-              </button>
-              <button
-                onClick={handleSubmitReport}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
-                  ${checkOutTime
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
-                    : "bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20"
-                  }`}
-                data-customizable-id="btn-submit-report"
-                data-customizable-type="bg"
-              >
-                {checkOutTime ? (
-                  <>
-                    <CheckCircleIcon className="w-5 h-5" />
-                    {t("dashboard.update_report")}
-                  </>
-                ) : (
-                  <>
-                    <PaperAirplaneIcon className="w-5 h-5" />
-                    {t("dashboard.submit_report")}
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         </div>
       )}

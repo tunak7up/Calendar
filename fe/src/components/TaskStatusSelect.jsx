@@ -8,7 +8,7 @@ const statuses = (t) => [
   { id: 'completed', label: t('status.completed'), bg: 'bg-emerald-500', text: 'text-emerald-800', light: 'bg-emerald-100', dot: 'bg-emerald-500', border: 'border-emerald-200' },
 ];
 
-export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDate, size = 'md', disabled = false, statusesList }) {
+export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDate, size = 'md', disabled = false, statusesList, direction = 'auto' }) {
   const { t } = useTranslation();
 
   const isOverdue = (status, date) => {
@@ -92,6 +92,7 @@ export default function TaskStatusSelect({ currentStatus, onStatusChange, dueDat
       options={options}
       size={size === 'sm' ? 'sm' : 'md'}
       style={customStyle}
+      direction={direction}
       buttonClassName={`
         font-black uppercase tracking-widest rounded-full border shadow-sm whitespace-nowrap
         ${size === 'sm' ? 'px-2.5 py-0.5 text-[8.5px]' : 'px-4 py-1.5 text-[10px]'}

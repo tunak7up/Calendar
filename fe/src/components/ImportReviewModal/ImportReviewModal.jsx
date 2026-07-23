@@ -120,14 +120,14 @@ export default function ImportReviewModal({ isOpen, onClose, previewData, onSucc
                     <table className="import-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '50px' }}>Dòng</th>
-                                <th style={{ width: '22%' }}>Tên công việc (Title) *</th>
-                                <th style={{ width: '25%' }}>Mô tả (Description)</th>
-                                <th style={{ width: '15%' }}>Ngày bắt đầu</th>
-                                <th style={{ width: '15%' }}>Hạn chót (Deadline)</th>
-                                <th style={{ width: '11%' }}>Trạng thái</th>
-                                <th style={{ width: '10%' }}>Độ ưu tiên</th>
-                                <th style={{ width: '40px', textAlign: 'center' }}>Xóa</th>
+                                <th style={{ width: '50px', minWidth: '50px' }}>Dòng</th>
+                                <th style={{ minWidth: '200px' }}>Tên công việc (Title) *</th>
+                                <th style={{ minWidth: '220px' }}>Mô tả (Description)</th>
+                                <th style={{ minWidth: '135px' }}>Ngày bắt đầu</th>
+                                <th style={{ minWidth: '135px' }}>Hạn chót (Deadline)</th>
+                                <th style={{ minWidth: '125px' }}>Trạng thái</th>
+                                <th style={{ minWidth: '115px' }}>Độ ưu tiên</th>
+                                <th style={{ width: '45px', minWidth: '45px', textAlign: 'center' }}>Xóa</th>
                             </tr>
                         </thead>
                         <tbody>

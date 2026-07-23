@@ -165,6 +165,7 @@ export const vi = {
       subtitle: "Xem và theo dõi trạng thái các yêu cầu đã gửi.",
       btn_register_work: "Đăng ký làm việc",
       btn_register_leave: "Đăng ký nghỉ phép",
+      btn_register_exception: "Đăng ký ngoại lệ",
       search_placeholder: "Tìm kiếm yêu cầu...",
       filter: "Bộ lọc:",
       type_all: "Tất cả loại yêu cầu",

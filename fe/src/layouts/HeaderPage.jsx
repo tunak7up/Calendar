@@ -244,6 +244,8 @@ export default function HeaderPage({ isAdmin }) {
       (item.id === 'work' && (location.pathname.startsWith('/register') || location.pathname.startsWith('/history')))
   }));
 
+  const docsUrl = import.meta.env.VITE_DOCS_URL || (import.meta.env.DEV ? 'http://localhost:5174' : 'https://docs-qltt.kis-v.com/');
+
   return (
     <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200" data-customizable-id="header-bg" data-customizable-type="bg">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -319,7 +321,7 @@ export default function HeaderPage({ isAdmin }) {
 
             {isAdmin && (
               <a
-                href="https://docs-qltt.kis-v.com/"
+                href={docsUrl}
                 target="_blank"
                 rel="noreferrer"
                 title={t('nav.docs')}

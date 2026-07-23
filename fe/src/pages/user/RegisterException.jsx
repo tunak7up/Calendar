@@ -234,7 +234,7 @@ export default function RegisterException() {
       return options.filter(t => t > standardStart && t < standardEnd);
     }
     if (type === 'leave_early') {
-      const options = ['10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+      const options = ['10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15'];
       return options.filter(t => t < standardEnd && t > standardStart);
     }
     if (type === 'leave_late') {
@@ -407,7 +407,7 @@ export default function RegisterException() {
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                 {t('register.exception_reason')}
               </h2>
-              
+
               {presetReasons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
                   {presetReasons.map((pr) => {
@@ -426,11 +426,10 @@ export default function RegisterException() {
                             setSelectedPresetId(pr.id);
                           }
                         }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
-                            : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-750'
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${isSelected
+                          ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
+                          : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-750'
+                          }`}
                       >
                         {textVal}
                       </button>

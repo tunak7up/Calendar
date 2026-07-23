@@ -165,6 +165,7 @@ export const en = {
       subtitle: "View and track the status of submitted requests.",
       btn_register_work: "Register Work",
       btn_register_leave: "Register Leave",
+      btn_register_exception: "Register Exception",
       search_placeholder: "Search requests...",
       filter: "Filters:",
       type_all: "All Request Types",

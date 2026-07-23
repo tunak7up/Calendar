@@ -95,8 +95,15 @@ const updatePerson = async (
     }
   }
 
-  const updateData = { name, status, role, username, email: finalEmail, company_card: finalCompanyCard };
-  if (password) {
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (status !== undefined) updateData.status = status;
+  if (role !== undefined) updateData.role = role;
+  if (username !== undefined) updateData.username = username;
+  if (email !== undefined) updateData.email = finalEmail;
+  if (company_card !== undefined) updateData.company_card = finalCompanyCard;
+
+  if (password && password.trim() !== '') {
     updateData.password = await bcrypt.hash(password, 10);
   }
 

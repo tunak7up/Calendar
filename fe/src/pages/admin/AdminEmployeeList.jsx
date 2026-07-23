@@ -108,15 +108,11 @@ export default function AdminEmployeeList() {
 
   const handleInlineUpdate = async (person_id, field, value) => {
     try {
-      const empToUpdate = employees.find(e => e.person_id === person_id);
-      if (!empToUpdate) return;
-
-      const payload = { ...empToUpdate, [field]: value };
       setEmployees(employees.map(e => e.person_id === person_id ? { ...e, [field]: value } : e));
 
       await apiFetch(`/person/${person_id}`, {
         method: 'PUT',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ [field]: value })
       });
     } catch (error) {
       console.error('Error updating inline:', error);
@@ -201,7 +197,8 @@ export default function AdminEmployeeList() {
                         onChange={(val) => handleInlineUpdate(emp.person_id, 'role', val)}
                         options={[
                           { value: 'employee', label: t('employees.role_employee') },
-                          { value: 'manager', label: t('employees.role_manager') }
+                          { value: 'manager', label: t('employees.role_manager') },
+                          ...(emp.role === 'admin' ? [{ value: 'admin', label: 'Admin' }] : [])
                         ]}
                         buttonClassName="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border-transparent"
                         activeOptionClassName="bg-gray-100 text-gray-950 font-black"
@@ -253,12 +250,14 @@ export default function AdminEmployeeList() {
                 <XCircleIcon className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleSave} className="p-6 space-y-4">
+            <form onSubmit={handleSave} className="p-6 space-y-4" autoComplete="off">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">{t('employees.field_name')}</label>
                 <input
                   type="text"
                   required
+                  name="user_name_input"
+                  autoComplete="off"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('employees.name_placeholder')}
@@ -270,6 +269,8 @@ export default function AdminEmployeeList() {
                 <input
                   type="text"
                   required
+                  name="user_username_input"
+                  autoComplete="off"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   placeholder={t('employees.username_placeholder')}
@@ -280,6 +281,8 @@ export default function AdminEmployeeList() {
                 <label className="block text-sm font-bold text-gray-700 mb-1">{t('employees.field_email')}</label>
                 <input
                   type="email"
+                  name="user_email_input"
+                  autoComplete="off"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={t('employees.email_placeholder')}
@@ -292,6 +295,8 @@ export default function AdminEmployeeList() {
                 </label>
                 <input
                   type="text"
+                  name="user_company_card_input"
+                  autoComplete="off"
                   value={formData.company_card}
                   onChange={(e) => setFormData({ ...formData, company_card: e.target.value })}
                   placeholder={t('employees.company_card_placeholder', { defaultValue: 'Nhập mã thẻ công ty' })}
@@ -304,6 +309,8 @@ export default function AdminEmployeeList() {
                 </label>
                 <input
                   type="password"
+                  name="user_password_input"
+                  autoComplete="new-password"
                   required={!selectedUser}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -320,6 +327,7 @@ export default function AdminEmployeeList() {
                 >
                   <option value="employee">{t('employees.role_employee')}</option>
                   <option value="manager">{t('employees.role_manager')}</option>
+                  {formData.role === 'admin' && <option value="admin">Admin</option>}
                 </select>
               </div>
               <div className="flex items-center gap-2 pt-2">

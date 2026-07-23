@@ -269,8 +269,7 @@ const importDailyReports = async (fileBuffer) => {
     const personMap = new Map();
 
     allPersons.forEach(p => {
-        personMap.set(String(p.person_id), p.person_id);
-        if (p.company_card) {
+        if (p.company_card && String(p.company_card).trim() !== '') {
             const cardStr = String(p.company_card).trim();
             personMap.set(cardStr, p.person_id);
             const stripped = cardStr.replace(/^0+/, '');

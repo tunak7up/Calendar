@@ -93,13 +93,7 @@ export default function AddTask() {
             if (self) {
               const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
               if (!alreadyAdded) {
-                initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
-              } else {
-                initialAssignees = initialAssignees.map(a => 
-                  (a.person_id === self.person_id || a.name === self.name) 
-                    ? { ...a, isLocked: true } 
-                    : a
-                );
+                initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id }];
               }
             }
           }
@@ -133,13 +127,7 @@ export default function AddTask() {
       if (self) {
         const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
         if (!alreadyAdded) {
-          initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
-        } else {
-          initialAssignees = initialAssignees.map(a => 
-            (a.person_id === self.person_id || a.name === self.name) 
-              ? { ...a, isLocked: true } 
-              : a
-          );
+          initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id }];
         }
       }
     }
@@ -239,10 +227,7 @@ export default function AddTask() {
   const removeAssignee = (personIdOrName) => {
     setFormData({ 
       ...formData, 
-      assignees: formData.assignees.filter(a => {
-        if (a.isLocked) return true;
-        return !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName);
-      }) 
+      assignees: formData.assignees.filter(a => !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName))
     });
   };
 

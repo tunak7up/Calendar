@@ -116,6 +116,10 @@ export default function AdminReportHistory() {
     { key: 'statusKey', label: t('reporthistory.col_status'), sortable: true }
   ];
 
+  const filteredEmployeeList = useMemo(() => {
+    return employees.filter(emp => emp.role !== 'manager');
+  }, [employees]);
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -141,7 +145,7 @@ export default function AdminReportHistory() {
       <div className="bg-white rounded-2xl shadow-md border border-gray-300 p-4 flex items-center">
         <div className="w-full">
           <EmployeeMultiFilter
-            employees={employees}
+            employees={filteredEmployeeList}
             selectedIds={selectedEmployeeIds}
             onSelectionChange={(ids) => {
               setSelectedEmployeeIds(ids);

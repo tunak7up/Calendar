@@ -14,6 +14,8 @@ router.get('/person/:person_id', dailyReportController.getDailyReportByPersonId)
 router.patch('/:id/description', dailyReportController.updateDailyReportDescription);
 router.post('/export', dailyReportController.exportDailyReport);
 router.post('/import', upload.single('file'), dailyReportController.importDailyReports);
+router.post('/preview-import', upload.single('file'), dailyReportController.previewImportDailyReports);
+router.post('/import-direct', dailyReportController.importDirectDailyReports);
 router.get('/range', dailyReportController.getAllDailyReportsInRange);
 
 module.exports = router;

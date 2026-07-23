@@ -440,6 +440,285 @@ const importDailyReports = async (fileBuffer) => {
     return results;
 };
 
+const previewImportDailyReports = async (fileBuffer) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(fileBuffer);
+
+    const sheet = workbook.worksheets[0];
+    if (!sheet) throw new Error('File Excel không có sheet nào.');
+
+    const getCellString = (cell) => {
+        if (!cell || cell.value === null || cell.value === undefined) return '';
+        let val = cell.value;
+        if (typeof val === 'object') {
+            if (val.result !== undefined && val.result !== null) val = val.result;
+            else if (val.text !== undefined && val.text !== null) val = val.text;
+            else if (val.richText && Array.isArray(val.richText)) val = val.richText.map(rt => rt.text).join('');
+        }
+        return val ? val.toString().trim() : '';
+    };
+
+    let headerRowNumber = null;
+    let colIndices = {
+        codeCol: null,
+        nameCol: null,
+        dateCol: null,
+        checkInCol: null,
+        checkOutCol: null
+    };
+
+    sheet.eachRow((row, rowNumber) => {
+        if (headerRowNumber) return;
+
+        let isHeaderRow = false;
+        row.eachCell((cell) => {
+            const text = getCellString(cell).toLowerCase();
+            if (text.includes('mã n.viên') || text.includes('mã nv') || text.includes('mã nhân viên')) {
+                isHeaderRow = true;
+            }
+        });
+
+        if (isHeaderRow) {
+            headerRowNumber = rowNumber;
+            row.eachCell((cell, colIndex) => {
+                const normText = getCellString(cell).toLowerCase();
+                if (normText.includes('mã n.viên') || normText.includes('mã nv') || normText.includes('mã nhân viên')) {
+                    colIndices.codeCol = colIndex;
+                } else if (normText.includes('tên n.viên') || normText.includes('tên nv') || normText.includes('họ tên') || normText.includes('tên nhân viên')) {
+                    colIndices.nameCol = colIndex;
+                } else if (normText.includes('ngày')) {
+                    colIndices.dateCol = colIndex;
+                } else if (normText.includes('vào')) {
+                    colIndices.checkInCol = colIndex;
+                } else if (normText.includes('ra')) {
+                    colIndices.checkOutCol = colIndex;
+                }
+            });
+        }
+    });
+
+    if (!headerRowNumber || !colIndices.codeCol || !colIndices.dateCol) {
+        throw new Error('Không tìm thấy dòng tiêu đề hợp lệ (chứa cột "Mã N.Viên", "Ngày").');
+    }
+
+    const allPersons = await person.findAll();
+    const personMap = new Map();
+
+    allPersons.forEach(p => {
+        if (p.company_card && String(p.company_card).trim() !== '') {
+            const cardStr = String(p.company_card).trim();
+            personMap.set(cardStr, p);
+            const stripped = cardStr.replace(/^0+/, '');
+            if (stripped) personMap.set(stripped, p);
+        }
+    });
+
+    const formatWorkingDate = (val) => {
+        if (val === null || val === undefined || val === '') return '';
+        if (val instanceof Date) {
+            if (isNaN(val.getTime())) return '';
+            const y = val.getFullYear();
+            const m = String(val.getMonth() + 1).padStart(2, '0');
+            const d = String(val.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        if (typeof val === 'number') {
+            if (val > 30000 && val < 60000) {
+                const jsDate = new Date(Math.round((val - 25569) * 86400 * 1000));
+                if (!isNaN(jsDate.getTime())) {
+                    const y = jsDate.getFullYear();
+                    const m = String(jsDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(jsDate.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+            }
+        }
+        const str = val.toString().replace(/^['"]+/, '').trim();
+        if (!str) return '';
+        const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (dmyMatch) {
+            const day = String(dmyMatch[1]).padStart(2, '0');
+            const month = String(dmyMatch[2]).padStart(2, '0');
+            const year = dmyMatch[3];
+            return `${year}-${month}-${day}`;
+        }
+        const ymdMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+        if (ymdMatch) {
+            const year = ymdMatch[1];
+            const month = String(ymdMatch[2]).padStart(2, '0');
+            const day = String(ymdMatch[3]).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return str;
+    };
+
+    const formatTimeStr = (val) => {
+        if (val === null || val === undefined || val === '') return '';
+        if (val instanceof Date) {
+            if (isNaN(val.getTime())) return '';
+            const h = String(val.getHours()).padStart(2, '0');
+            const m = String(val.getMinutes()).padStart(2, '0');
+            const s = String(val.getSeconds()).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+        if (typeof val === 'number' && val >= 0 && val < 1) {
+            const totalSeconds = Math.round(val * 86400);
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+        const str = val.toString().replace(/^['"]+/, '').trim();
+        if (!str || str === '--:--' || str === '-') return '';
+        const timeMatch = str.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+        if (timeMatch) {
+            const h = String(timeMatch[1]).padStart(2, '0');
+            const m = String(timeMatch[2]).padStart(2, '0');
+            const s = timeMatch[3] ? String(timeMatch[3]).padStart(2, '0') : '00';
+            return `${h}:${m}:${s}`;
+        }
+        return str;
+    };
+
+    const parsedRows = [];
+
+    for (let rowNumber = headerRowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
+        const row = sheet.getRow(rowNumber);
+
+        const rawCodeCell = colIndices.codeCol ? row.getCell(colIndices.codeCol) : null;
+        const rawNameCell = colIndices.nameCol ? row.getCell(colIndices.nameCol) : null;
+        const rawDateCell = colIndices.dateCol ? row.getCell(colIndices.dateCol) : null;
+        const rawInCell = colIndices.checkInCol ? row.getCell(colIndices.checkInCol) : null;
+        const rawOutCell = colIndices.checkOutCol ? row.getCell(colIndices.checkOutCol) : null;
+
+        const rawCode = getCellString(rawCodeCell);
+        const rawName = getCellString(rawNameCell);
+        const rawDate = rawDateCell ? rawDateCell.value : null;
+        const rawIn = rawInCell ? rawInCell.value : null;
+        const rawOut = rawOutCell ? rawOutCell.value : null;
+
+        if (!rawCode && !rawName && !rawDate && !rawIn && !rawOut) continue;
+
+        const normalizedCode = rawCode.replace(/^['"]+/, '').trim();
+        const formattedDate = formatWorkingDate(rawDate);
+        const formattedIn = formatTimeStr(rawIn);
+        const formattedOut = formatTimeStr(rawOut);
+
+        const errors = [];
+        if (!normalizedCode) {
+            errors.push('Thiếu mã nhân viên');
+        } else {
+            const stripped = normalizedCode.replace(/^0+/, '');
+            const targetPerson = personMap.get(normalizedCode) || personMap.get(stripped);
+            if (!targetPerson) {
+                errors.push(`Không tìm thấy nhân viên với mã: "${rawCode}"`);
+            }
+        }
+
+        if (!formattedDate) {
+            errors.push(`Ngày làm việc không hợp lệ: "${rawDate || ''}"`);
+        }
+
+        const stripped = normalizedCode.replace(/^0+/, '');
+        const targetPersonObj = personMap.get(normalizedCode) || personMap.get(stripped);
+        const empName = rawName || targetPersonObj?.name || targetPersonObj?.username || '';
+
+        parsedRows.push({
+            rowNumber,
+            employee_code: normalizedCode,
+            employee_name: empName,
+            working_date: formattedDate,
+            check_in: formattedIn,
+            check_out: formattedOut,
+            isValid: errors.length === 0,
+            errors
+        });
+    }
+
+    parsedRows.sort((a, b) => {
+        if (a.isValid === b.isValid) return a.rowNumber - b.rowNumber;
+        return a.isValid ? -1 : 1;
+    });
+
+    return { rows: parsedRows };
+};
+
+const importDirectDailyReports = async (rows) => {
+    const allPersons = await person.findAll();
+    const personMap = new Map();
+
+    allPersons.forEach(p => {
+        if (p.company_card && String(p.company_card).trim() !== '') {
+            const cardStr = String(p.company_card).trim();
+            personMap.set(cardStr, p.person_id);
+            const stripped = cardStr.replace(/^0+/, '');
+            if (stripped) personMap.set(stripped, p.person_id);
+        }
+    });
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+
+    for (const r of rows) {
+        const rawCode = (r.employee_code || '').toString().trim();
+        const stripped = rawCode.replace(/^0+/, '');
+        const personId = personMap.get(rawCode) || personMap.get(stripped);
+
+        if (!personId) {
+            failCount++;
+            errors.push(`Dòng ${r.rowNumber || '?'}: Không tìm thấy nhân viên với mã "${rawCode}"`);
+            continue;
+        }
+
+        const workingDate = r.working_date;
+        if (!workingDate) {
+            failCount++;
+            errors.push(`Dòng ${r.rowNumber || '?'}: Thiếu ngày làm việc`);
+            continue;
+        }
+
+        const cIn = r.check_in || null;
+        const cOut = r.check_out || null;
+
+        try {
+            const existingReport = await daily_report.findOne({
+                where: {
+                    person_id: personId,
+                    working_date: workingDate
+                }
+            });
+
+            if (existingReport) {
+                const updateFields = {};
+                if (cIn) updateFields.check_in_machine = cIn;
+                if (cOut) updateFields.check_out_machine = cOut;
+                if (Object.keys(updateFields).length > 0) {
+                    await existingReport.update(updateFields);
+                }
+            } else {
+                await daily_report.create({
+                    person_id: personId,
+                    working_date: workingDate,
+                    check_in_machine: cIn,
+                    check_out_machine: cOut,
+                    description: null
+                });
+            }
+            successCount++;
+        } catch (err) {
+            failCount++;
+            errors.push(`Dòng ${r.rowNumber || '?'}: Lỗi lưu DB (${err.message})`);
+        }
+    }
+
+    return {
+        successCount,
+        failCount,
+        message: `Import thành công ${successCount} dòng dữ liệu chấm công!${failCount > 0 ? ` (${failCount} dòng thất bại)` : ''}`
+    };
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -450,5 +729,7 @@ module.exports = {
     updateDailyReportDescription,
     exportDailyReport,
     checkTodayReportExists,
-    importDailyReports
+    importDailyReports,
+    previewImportDailyReports,
+    importDirectDailyReports
 };

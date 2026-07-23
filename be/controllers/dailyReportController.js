@@ -115,6 +115,31 @@ const importDailyReports = async (req, res) => {
     }
 };
 
+const previewImportDailyReports = async (req, res) => {
+    try {
+        if (!req.file) {
+            return sendRes(res, 400, 'Lỗi preview import', null, 'No file uploaded');
+        }
+        const data = await dailyReportService.previewImportDailyReports(req.file.buffer);
+        sendRes(res, 200, 'Preview excel daily report thành công', data);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Error previewing daily reports', null, error.message);
+    }
+};
+
+const importDirectDailyReports = async (req, res) => {
+    try {
+        const { rows } = req.body;
+        if (!rows || !Array.isArray(rows) || rows.length === 0) {
+            return sendRes(res, 400, 'Không có dòng dữ liệu hợp lệ để import');
+        }
+        const result = await dailyReportService.importDirectDailyReports(rows);
+        sendRes(res, 200, result.message, result);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Lỗi import trực tiếp', null, error.message);
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -125,5 +150,7 @@ module.exports = {
     updateDailyReportDescription,
     exportDailyReport,
     checkTodayReportExists,
-    importDailyReports
+    importDailyReports,
+    previewImportDailyReports,
+    importDirectDailyReports
 };

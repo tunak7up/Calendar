@@ -15,6 +15,7 @@ import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import SortableTable from '../../components/SortableTable';
 import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
+import ImportWorkHoursReviewModal from '../../components/ImportWorkHoursReviewModal/ImportWorkHoursReviewModal';
 
 const MONTH_NAMES_VI = [
   'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -43,6 +44,8 @@ export default function AdminWorkHours() {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const fileInputRef = useRef(null);
 
   // Pagination
@@ -163,7 +166,7 @@ export default function AdminWorkHours() {
     setImporting(true);
     try {
       let accessToken = getAccessToken();
-      let response = await fetch(`${BASE_URL}/daily-report/import`, {
+      let response = await fetch(`${BASE_URL}/daily-report/preview-import`, {
         method: 'POST',
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
         credentials: 'include',
@@ -180,7 +183,7 @@ export default function AdminWorkHours() {
           const refreshData = await refreshRes.json();
           accessToken = refreshData.token;
           setAccessToken(accessToken);
-          response = await fetch(`${BASE_URL}/daily-report/import`, {
+          response = await fetch(`${BASE_URL}/daily-report/preview-import`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${accessToken}` },
             credentials: 'include',
@@ -190,14 +193,14 @@ export default function AdminWorkHours() {
       }
 
       const data = await response.json();
-      if (response.ok) {
-        alert(data.message || 'Import dữ liệu chấm công thành công!');
-        fetchData();
+      if (response.ok && data.data) {
+        setPreviewData(data.data);
+        setShowReviewModal(true);
       } else {
-        alert(data.message || 'Import thất bại!');
+        alert(data.message || 'Lỗi đọc file Excel');
       }
     } catch (err) {
-      console.error('Error importing daily reports:', err);
+      console.error('Error previewing daily reports:', err);
       alert('Lỗi import dữ liệu: ' + err.message);
     } finally {
       setImporting(false);
@@ -451,6 +454,14 @@ export default function AdminWorkHours() {
             </td>
           </tr>
         )}
+      />
+
+      <ImportWorkHoursReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        previewData={previewData}
+        employees={employees}
+        onSuccess={fetchData}
       />
     </div>
   );

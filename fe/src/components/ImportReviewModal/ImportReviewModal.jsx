@@ -7,7 +7,12 @@ export default function ImportReviewModal({ isOpen, onClose, previewData, onSucc
 
     useEffect(() => {
         if (previewData && previewData.rows) {
-            setRows(previewData.rows.map((r, idx) => ({ ...r, id: idx + 1 })));
+            const mappedRows = previewData.rows.map((r, idx) => validateRow({ ...r, id: idx + 1 }));
+            mappedRows.sort((a, b) => {
+                if (a.isValid === b.isValid) return (a.rowNumber || a.id) - (b.rowNumber || b.id);
+                return a.isValid ? -1 : 1;
+            });
+            setRows(mappedRows);
         } else {
             setRows([]);
         }

@@ -96,6 +96,8 @@ export const taskService = {
 
   getAttachmentsByTaskId: (taskId) => apiFetch(`/task/attachment/${taskId}`),
 
+  getStatusHistory: (taskId) => apiFetch(`/task/${taskId}/status-history`),
+
   // --- Update ---
   updateTask: (id, taskData) => apiFetch(`/task/${id}`, {
     method: 'PUT',

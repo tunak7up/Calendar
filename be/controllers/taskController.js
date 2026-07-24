@@ -73,10 +73,26 @@ const getAllTasksByParticipantsId = async (req, res) => {
 
 const updateTask = async (req, res) => {
     try {
-        const task = await taskService.updateTask(req.params.id, req.body);
+        const changedBy = req.user ? req.user.person_id : req.body.changed_by;
+        const task = await taskService.updateTask(req.params.id, req.body, changedBy);
         sendRes(res, 200, 'Task updated successfully', task);
     } catch (error) {
-        sendRes(res, 404, 'Task not found', null, error.message);
+        console.error('Error in updateTask controller:', error);
+        if (error.message === 'Task not found') {
+            sendRes(res, 404, 'Task not found', null, error.message);
+        } else {
+            sendRes(res, 500, 'Error updating task', null, error.message);
+        }
+    }
+};
+
+const getTaskStatusHistory = async (req, res) => {
+    try {
+        const history = await taskService.getTaskStatusHistory(req.params.id);
+        sendRes(res, 200, 'Task status history retrieved successfully', history);
+    } catch (error) {
+        console.error('Error in getTaskStatusHistory:', error);
+        sendRes(res, 500, 'Error retrieving status history', null, error.message);
     }
 };
 
@@ -294,5 +310,6 @@ module.exports = {
     previewImport,
     importTasks,
     importDirectTasks,
-    exportTemplate
+    exportTemplate,
+    getTaskStatusHistory
 };

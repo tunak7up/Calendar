@@ -21,6 +21,7 @@ router.post('/import', upload.single('file'), taskController.importTasks);
 router.post('/import-direct', taskController.importDirectTasks);
 router.get('/person/:personId', taskController.getAllTasksByPersonId);
 router.put('/update-title-description/:id', taskController.updateTaskTitleOrDescription);
+router.get('/:id/status-history', taskController.getTaskStatusHistory);
 router.get('/:id', taskController.getTaskById);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);

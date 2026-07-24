@@ -596,7 +596,13 @@ export const en = {
       confirm_delete_file: "Delete this file?",
       confirm_delete_all_files: "Delete ALL files from this task?",
       task_not_found: "This task has been deleted or does not exist.",
-      task_not_found_desc: "The task you are looking for may have been deleted or the link is invalid."
+      task_not_found_desc: "The task you are looking for may have been deleted or the link is invalid.",
+      status_history_title: "Status History",
+      loading_history: "Loading status history...",
+      no_status_history: "No status change history found.",
+      system_user: "System",
+      status_label: "Status",
+      initial_status: "Initial"
     },
     sidebar: {
       open: "Open sidebar",

@@ -596,7 +596,13 @@ export const vi = {
       confirm_delete_file: "Xóa file này?",
       confirm_delete_all_files: "Xóa TẤT CẢ file của công việc này?",
       task_not_found: "Công việc này đã bị xóa hoặc không tồn tại.",
-      task_not_found_desc: "Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng."
+      task_not_found_desc: "Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng.",
+      status_history_title: "Lịch sử thay đổi",
+      loading_history: "Đang tải lịch sử thay đổi...",
+      no_status_history: "Chưa có lịch sử thay đổi trạng thái nào.",
+      system_user: "Hệ thống",
+      status_label: "Trạng thái",
+      initial_status: "Khởi tạo"
     },
     sidebar: {
       open: "Mở thanh bên",

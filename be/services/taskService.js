@@ -1,4 +1,4 @@
-const { task, person, task_participant, task_attachment, comment, comment_attachment } = require('../models');
+const { task, person, task_participant, task_attachment, comment, comment_attachment, task_status_change_history } = require('../models');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
 const ExcelJS = require('exceljs');
@@ -163,14 +163,38 @@ const checkAndUpdateOverdueStatus = async (taskInstance) => {
         taskInstance.status !== 'completed'
     ) {
         if (taskInstance.status !== 'overdue') {
+            const oldStatus = taskInstance.status;
             await taskInstance.update({ status: 'overdue' });
+            try {
+                await task_status_change_history.create({
+                    task_id: taskInstance.task_id,
+                    old_status: oldStatus,
+                    new_status: 'overdue',
+                    changed_by: null,
+                    changed_at: new Date()
+                });
+            } catch (err) {
+                console.error('Error logging overdue status change:', err.message);
+            }
         }
     } else if (
         taskInstance.due_date &&
         new Date(taskInstance.due_date).getTime() >= Date.now() &&
         taskInstance.status === 'overdue'
     ) {
+        const oldStatus = taskInstance.status;
         await taskInstance.update({ status: 'pending' });
+        try {
+            await task_status_change_history.create({
+                task_id: taskInstance.task_id,
+                old_status: oldStatus,
+                new_status: 'pending',
+                changed_by: null,
+                changed_at: new Date()
+            });
+        } catch (err) {
+            console.error('Error logging overdue status reset:', err.message);
+        }
     }
 };
 
@@ -327,15 +351,32 @@ const getAllTasksByParticipantsId = async (participantId) => {
     });
 };
 
-const updateTask = async (id, data) => {
+const updateTask = async (id, data, changedBy = null) => {
     const parentTask = await task.findByPk(id);
     if (!parentTask) throw new Error('Task not found');
+
+    const oldStatus = parentTask.status;
 
     const updatedParent = await sequelize.transaction(async (t) => {
         if (data.due_date && new Date(data.due_date).getTime() >= Date.now() && parentTask.status === 'overdue') {
             data.status = 'pending';
         }
         const updatedParent = await parentTask.update(data, { transaction: t });
+
+        if (data.status && data.status !== oldStatus) {
+            try {
+                await task_status_change_history.sync();
+                await task_status_change_history.create({
+                    task_id: id,
+                    old_status: oldStatus,
+                    new_status: data.status,
+                    changed_by: changedBy || data.changed_by || null,
+                    changed_at: new Date()
+                }, { transaction: t });
+            } catch (histError) {
+                console.error('Error recording task status history:', histError.message);
+            }
+        }
 
         if (data.status === 'completed') {
             await parentTask.update({ ended_at: new Date() }, { transaction: t });
@@ -374,7 +415,7 @@ const updateTask = async (id, data) => {
                         { model: person, as: 'assigner' }
                     ]
                 });
-                
+
                 if (taskWithParticipants) {
                     const title = `Cập nhật trạng thái: ${parentTask.title}`;
                     const message = `Trạng thái công việc đã thay đổi thành "${data.status}".`;
@@ -1041,6 +1082,20 @@ const exportTemplate = async () => {
     return workbook;
 };
 
+const getTaskStatusHistory = async (taskId) => {
+    return await task_status_change_history.findAll({
+        where: { task_id: taskId },
+        include: [
+            {
+                model: person,
+                as: 'changer',
+                attributes: ['person_id', 'name', 'username']
+            }
+        ],
+        order: [['changed_at', 'DESC']]
+    });
+};
+
 module.exports = {
     createTask,
     createSubTask,
@@ -1063,5 +1118,6 @@ module.exports = {
     previewImportTasks,
     importTasks,
     importDirectTasks,
-    exportTemplate
+    exportTemplate,
+    getTaskStatusHistory
 };

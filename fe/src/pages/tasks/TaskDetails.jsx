@@ -37,7 +37,9 @@ import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
 
-
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
 
 const downloadFile = async (url, fileName) => {
   try {
@@ -226,6 +228,33 @@ export default function TaskDetails() {
   const [aiError, setAiError] = useState('');
   const [loadingTask, setLoadingTask] = useState(true);
   const [taskNotFound, setTaskNotFound] = useState(false);
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [statusHistory, setStatusHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const fetchStatusHistory = useCallback(async () => {
+    if (!id) return;
+    setLoadingHistory(true);
+    try {
+      const res = await taskService.getStatusHistory(id);
+      if (res.success) {
+        setStatusHistory(res.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching status history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [id]);
+
+  const handleToggleHistory = () => {
+    const nextState = !isHistoryOpen;
+    setIsHistoryOpen(nextState);
+    if (nextState) {
+      fetchStatusHistory();
+    }
+  };
 
   const handleAIAnalyze = async () => {
     setAiLoading(true);
@@ -742,6 +771,9 @@ export default function TaskDetails() {
                   if (res.success) {
                     fetchTaskData();
                     fetchSubTasks();
+                    if (isHistoryOpen) {
+                      fetchStatusHistory();
+                    }
                   }
                 }}
               />
@@ -1228,6 +1260,84 @@ export default function TaskDetails() {
           </div>
         </div>
       )}
+
+      {/* Status Change History Accordion */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <button
+          type="button"
+          onClick={handleToggleHistory}
+          className="w-full p-5 sm:p-6 flex items-center justify-between bg-white hover:bg-gray-50/50 transition-colors text-left font-bold text-gray-900 text-sm sm:text-base cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🕘</span>
+            <span className="font-extrabold text-gray-900">
+              {t('taskdetails.status_history_title') || 'Lịch sử thay đổi'}
+            </span>
+            {statusHistory.length > 0 && (
+              <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-indigo-100">
+                {statusHistory.length}
+              </span>
+            )}
+          </div>
+          <ChevronDownIcon
+            className={classNames(
+              'w-5 h-5 text-gray-400 transition-transform duration-200',
+              isHistoryOpen ? 'rotate-180' : ''
+            )}
+          />
+        </button>
+
+        {isHistoryOpen && (
+          <div className="p-5 sm:p-6 border-t border-gray-100 bg-gray-50/30">
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8 text-xs font-semibold text-indigo-600 gap-2">
+                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                <span>{t('taskdetails.loading_history') || 'Đang tải lịch sử thay đổi...'}</span>
+              </div>
+            ) : statusHistory.length === 0 ? (
+              <div className="text-center py-8 text-xs text-gray-400 font-semibold">
+                {t('taskdetails.no_status_history') || 'Chưa có lịch sử thay đổi trạng thái nào.'}
+              </div>
+            ) : (
+              <div className="relative border-l-2 border-indigo-100 ml-3 pl-4 space-y-4 my-2">
+                {statusHistory.map((item) => (
+                  <div key={item.history_id} className="relative group">
+                    <div className="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-indigo-500 ring-4 ring-white" />
+                    
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-xs space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-50 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900">
+                            {item.changer?.name || item.changer?.username || t('taskdetails.system_user') || 'Hệ thống'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-gray-400 font-medium">
+                          {formatDateTime(item.changed_at)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1 font-medium">
+                        <span className="text-gray-500 font-semibold">{t('taskdetails.status_label') || 'Trạng thái'}:</span>
+                        {item.old_status ? (
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-bold">
+                            {item.old_status}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-[11px]">{t('taskdetails.initial_status') || 'Khởi tạo'}</span>
+                        )}
+                        <span className="text-gray-400">→</span>
+                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-[11px] border border-indigo-100">
+                          {item.new_status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
     </div>
   );

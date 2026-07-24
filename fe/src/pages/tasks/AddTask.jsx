@@ -235,8 +235,21 @@ export default function AddTask() {
     <div className="space-y-6 pb-20">
       <div>
         <BackButton className="mb-6" />
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="add-task-title" data-customizable-type="text">{t('addtask.title')}</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="add-task-subtitle" data-customizable-type="text">{t('addtask.subtitle')}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="add-task-title" data-customizable-type="text">{t('addtask.title')}</h1>
+            <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="add-task-subtitle" data-customizable-type="text">{t('addtask.subtitle')}</p>
+          </div>
+          <button
+            onClick={handleSubmit}
+            data-customizable-id="btn-add-task-header-submit"
+            data-customizable-type="bg"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-xl shadow-blue-100 active:scale-95 flex items-center gap-2 self-start sm:self-auto shrink-0"
+          >
+            <PlusIcon className="w-5 h-5" />
+            {t('addtask.btn_create')}
+          </button>
+        </div>
       </div>
 
       {/* Task Definition Section */}

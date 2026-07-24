@@ -20,7 +20,8 @@ import {
   PencilSquareIcon,
   SparklesIcon,
   CpuChipIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
@@ -223,6 +224,8 @@ export default function TaskDetails() {
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [loadingTask, setLoadingTask] = useState(true);
+  const [taskNotFound, setTaskNotFound] = useState(false);
 
   const handleAIAnalyze = async () => {
     setAiLoading(true);
@@ -258,10 +261,12 @@ export default function TaskDetails() {
   const [editedDueDate, setEditedDueDate] = useState('');
 
   const fetchTaskData = useCallback(() => {
+    setLoadingTask(true);
     taskService.getTaskById(id)
       .then(data => {
-        if (data.success) {
+        if (data.success && data.data) {
           setFullTask(data.data);
+          setTaskNotFound(false);
 
           // If it's a sub-task, fetch parent info
           if (data.data.parent_id) {
@@ -275,10 +280,16 @@ export default function TaskDetails() {
           } else {
             setParentTask(null);
           }
+        } else {
+          setTaskNotFound(true);
         }
       })
       .catch(error => {
         console.error('Error fetching task:', error);
+        setTaskNotFound(true);
+      })
+      .finally(() => {
+        setLoadingTask(false);
       });
   }, [id]);
 
@@ -589,6 +600,32 @@ export default function TaskDetails() {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
         <div className="text-gray-500 mb-4">{t('taskdetails.no_task_id')}</div>
+        <BackButton className="mx-auto" />
+      </div>
+    );
+  }
+
+  if (loadingTask) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0056b3]"></div>
+        <p className="mt-3 text-sm text-[#0056b3] font-medium">Đang tải...</p>
+      </div>
+    );
+  }
+
+  if (taskNotFound) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-16 px-6 bg-white rounded-2xl shadow-sm border border-gray-100 my-8">
+        <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ExclamationTriangleIcon className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">
+          {t('taskdetails.task_not_found') || 'Công việc này đã bị xóa hoặc không tồn tại.'}
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          {t('taskdetails.task_not_found_desc') || 'Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng.'}
+        </p>
         <BackButton className="mx-auto" />
       </div>
     );

@@ -594,7 +594,9 @@ export const vi = {
       alert_delete_fail: "Xóa công việc thất bại",
       alert_delete_error: "Lỗi: ",
       confirm_delete_file: "Xóa file này?",
-      confirm_delete_all_files: "Xóa TẤT CẢ file của công việc này?"
+      confirm_delete_all_files: "Xóa TẤT CẢ file của công việc này?",
+      task_not_found: "Công việc này đã bị xóa hoặc không tồn tại.",
+      task_not_found_desc: "Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng."
     },
     sidebar: {
       open: "Mở thanh bên",

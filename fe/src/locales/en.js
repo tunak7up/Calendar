@@ -594,7 +594,9 @@ export const en = {
       alert_delete_fail: "Failed to delete task",
       alert_delete_error: "Error: ",
       confirm_delete_file: "Delete this file?",
-      confirm_delete_all_files: "Delete ALL files from this task?"
+      confirm_delete_all_files: "Delete ALL files from this task?",
+      task_not_found: "This task has been deleted or does not exist.",
+      task_not_found_desc: "The task you are looking for may have been deleted or the link is invalid."
     },
     sidebar: {
       open: "Open sidebar",

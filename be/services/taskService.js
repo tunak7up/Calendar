@@ -403,6 +403,10 @@ const updateTask = async (id, data, changedBy = null) => {
         return updatedParent;
     });
 
+    if (updatedParent.status !== 'completed') {
+        await checkAndUpdateOverdueStatus(updatedParent);
+    }
+
     // Send notifications in background if status changed
     if (data.status && data.status !== parentTask.status) {
         (async () => {

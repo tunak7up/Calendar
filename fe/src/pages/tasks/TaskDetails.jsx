@@ -84,22 +84,34 @@ const isImageFile = (fileName) => {
 };
 
 const CommentItem = ({ comment, persons }) => {
-  const [files, setFiles] = useState([]);
+  const [fetchedFiles, setFetchedFiles] = useState([]);
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const commentId = comment.comment_id || comment.id;
-        const res = await apiFetch(`/file-attachment/comment/${commentId}`);
-        if (res.success) {
-          setFiles(res.data);
+    if (!comment.attachments || comment.attachments.length === 0) {
+      const fetchFiles = async () => {
+        try {
+          const commentId = comment.comment_id || comment.id;
+          const res = await apiFetch(`/file-attachment/comment/${commentId}`);
+          if (res.success) {
+            setFetchedFiles(res.data || []);
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchFiles();
+      };
+      fetchFiles();
+    }
   }, [comment]);
+
+  const rawAttachments = [...(comment.attachments || []), ...fetchedFiles];
+  const uniqueAttachments = [];
+  const seenUrls = new Set();
+  for (const att of rawAttachments) {
+    if (att && att.url && !seenUrls.has(att.url)) {
+      seenUrls.add(att.url);
+      uniqueAttachments.push(att);
+    }
+  }
 
   return (
     <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
@@ -109,14 +121,14 @@ const CommentItem = ({ comment, persons }) => {
       </div>
       <p className="text-sm text-gray-900 whitespace-pre-wrap">{comment.content || comment.text}</p>
 
-      {files.length > 0 && (
+      {uniqueAttachments.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
-          {files.map(f => {
-            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${f.url}`;
-            const fileName = f.file_name || 'File đính kèm';
+          {uniqueAttachments.map((att, idx) => {
+            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+            const fileName = att.file_name || 'File đính kèm';
             const isImage = isImageFile(fileName);
             return (
-              <div key={f.file_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+              <div key={att.file_attachment_id || att.comment_attachment_id || idx} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
                 {isImage ? (
                   <button
                     type="button"
@@ -127,46 +139,6 @@ const CommentItem = ({ comment, persons }) => {
                       src={fullUrl}
                       alt={fileName}
                       className="w-full h-32 object-cover"
-                    />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => downloadFile(fullUrl, fileName)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline bg-blue-50 px-2 py-2 rounded-t-2xl w-full text-left"
-                  >
-                    <PaperClipIcon className="w-3 h-3" />
-                    {fileName}
-                  </button>
-                )}
-                {isImage && (
-                  <div className="px-2 py-1 text-xs text-gray-600 truncate" title={fileName}>
-                    {fileName}
-                  </div>
-                )}
-              </div>
-          )})}
-        </div>
-      )}
-
-      {comment.attachments && comment.attachments.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
-          {comment.attachments.map(att => {
-            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
-            const fileName = att.file_name || 'Attachment';
-            const isImage = isImageFile(fileName);
-            return (
-              <div key={att.comment_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
-                {isImage ? (
-                  <button
-                    type="button"
-                    onClick={() => window.open(fullUrl, '_blank')}
-                    className="block w-full h-32 overflow-hidden bg-gray-100 hover:bg-gray-200"
-                  >
-                    <img
-                      src={fullUrl}
-                      alt={fileName}
-                      className="w-full h-full object-cover"
                     />
                   </button>
                 ) : (

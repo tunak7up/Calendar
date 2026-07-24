@@ -6,7 +6,6 @@ const request = require('./request');
 const request_detail = require('./request_detail');
 const response = require('./response');
 const comment = require('./comment');
-const comment_attachment = require('./comment_attachment');
 const report_attachment = require('./report_attachment');
 const task_participant = require('./task_participant');
 const task_attachment = require('./task_attachment');
@@ -38,9 +37,6 @@ comment.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 task.hasMany(comment, { foreignKey: 'task_id', as: 'comments' });
 comment.belongsTo(person, { foreignKey: 'person_id', as: 'commenter' });
 person.hasMany(comment, { foreignKey: 'person_id', as: 'comments' });
-
-comment.hasMany(comment_attachment, { foreignKey: 'comment_id', as: 'attachments' });
-comment_attachment.belongsTo(comment, { foreignKey: 'comment_id', as: 'comment' });
 
 report_attachment.belongsTo(daily_report, { foreignKey: 'report_id', as: 'daily_report' });
 daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachments' });
@@ -90,7 +86,6 @@ module.exports = {
     request_detail,
     response,
     comment,
-    comment_attachment,
     report_attachment,
     task_participant,
     task_attachment,

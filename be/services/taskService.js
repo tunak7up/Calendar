@@ -1,4 +1,4 @@
-const { task, person, task_participant, task_attachment, comment, comment_attachment, change_history, fileAttachment } = require('../models');
+const { task, person, task_participant, task_attachment, comment, change_history, fileAttachment } = require('../models');
 const { logChange } = require('../utils/changeLogger');
 const { deletePhysicalFile } = require('../utils/fileHelper');
 const { Op } = require('sequelize');
@@ -560,7 +560,7 @@ const deleteTaskRecursive = async (id, t) => {
     if (taskComments.length > 0) {
         const commentIds = taskComments.map(c => c.comment_id);
 
-        // a) Xóa file_attachment có attachable_type = 'comment'
+        // Xóa file_attachment có attachable_type = 'comment' thuộc các comment của task này
         if (fileAttachment) {
             const commentFileAttachments = await fileAttachment.findAll({
                 where: {
@@ -580,21 +580,6 @@ const deleteTaskRecursive = async (id, t) => {
                 transaction: t
             });
         }
-
-        // b) Xóa comment_attachment truyền thống
-        const commentAttachments = await comment_attachment.findAll({
-            where: { comment_id: { [Op.in]: commentIds } },
-            transaction: t
-        });
-
-        for (const att of commentAttachments) {
-            deletePhysicalFile(att.url);
-        }
-
-        await comment_attachment.destroy({
-            where: { comment_id: { [Op.in]: commentIds } },
-            transaction: t
-        });
     }
 
     // Xóa tất cả các file vật lý & CSDL của task_attachment thuộc task này

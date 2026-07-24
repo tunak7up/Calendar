@@ -256,6 +256,210 @@ export default function TaskDetails() {
     }
   };
 
+function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text) {
+    return <span className="italic text-gray-400">(Xóa mô tả)</span>;
+  }
+
+  const isLong = text.length > maxLength;
+  const displayText = isLong && !isExpanded ? text.substring(0, maxLength) + '...' : text;
+
+  return (
+    <div className={className}>
+      <span className="whitespace-pre-wrap">{displayText}</span>
+      {isLong && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="ml-2 text-indigo-600 font-bold hover:underline inline-block cursor-pointer text-[11px]"
+        >
+          {isExpanded ? 'Thu gọn' : 'Xem thêm...'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+  const renderHistoryContent = (item) => {
+    const oldData = item.old_data || {};
+    const newData = item.changed_data || {};
+    const tableName = item.table_name;
+    const action = item.action;
+
+    if (tableName === 'task' || tableName === 'subtask') {
+      if (action === 'CREATE') {
+        const isSubtask = item.parent_table === 'task' || (item.parent_id && String(item.record_id) !== String(id));
+        return (
+          <div className="flex flex-wrap items-center gap-2 pt-1 font-medium text-emerald-700">
+            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-100">
+              {isSubtask ? '📌 Tạo công việc con' : '✨ Tạo mới công việc'}
+            </span>
+            {newData.title && <span className="font-semibold text-gray-800">"{newData.title}"</span>}
+          </div>
+        );
+      }
+      if (action === 'UPDATE') {
+        return (
+          <div className="space-y-1.5 pt-1 text-xs">
+            {newData.status && (
+              <div className="flex items-center gap-2 font-medium">
+                <span className="text-gray-500 font-semibold">{t('taskdetails.status_label') || 'Trạng thái'}:</span>
+                {oldData.status ? (
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">
+                    {oldData.status}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 italic text-[11px]">{t('taskdetails.initial_status') || 'Khởi tạo'}</span>
+                )}
+                <span className="text-gray-400">→</span>
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded text-[11px] border border-indigo-100">
+                  {newData.status}
+                </span>
+              </div>
+            )}
+
+            {newData.title && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Tên công việc:</span>
+                {oldData.title && <span className="line-through text-gray-400">{oldData.title}</span>}
+                <span>→</span>
+                <span className="font-bold text-gray-900">{newData.title}</span>
+              </div>
+            )}
+
+            {newData.description !== undefined && (
+              <div className="space-y-1 pt-1">
+                <span className="text-gray-500 font-semibold block">Mô tả công việc:</span>
+                {oldData.description && (
+                  <ExpandableHistoryText
+                    text={oldData.description}
+                    maxLength={100}
+                    className="bg-gray-50 p-2 rounded-lg border border-gray-200 text-gray-400 line-through text-[11px]"
+                  />
+                )}
+                <ExpandableHistoryText
+                  text={newData.description}
+                  maxLength={150}
+                  className="bg-indigo-50/60 p-2 rounded-lg border border-indigo-100 text-gray-800 font-medium text-[11px]"
+                />
+              </div>
+            )}
+
+            {newData.due_date && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Hạn chót:</span>
+                {oldData.due_date && <span className="line-through text-gray-400">{oldData.due_date.split('T')[0]}</span>}
+                <span>→</span>
+                <span className="font-bold text-indigo-600">{newData.due_date.split('T')[0]}</span>
+              </div>
+            )}
+
+            {newData.priority && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Mức ưu tiên:</span>
+                <span className="font-bold text-gray-800">{oldData.priority || 'medium'}</span>
+                <span>→</span>
+                <span className="font-bold text-indigo-600">{newData.priority}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex flex-wrap items-center gap-2 pt-1 font-medium text-red-600">
+            <span className="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[11px] font-bold border border-red-100">
+              🗑️ Xóa công việc con
+            </span>
+            {oldData.title && <span className="font-semibold text-gray-800">"{oldData.title}"</span>}
+          </div>
+        );
+      }
+    }
+
+    if (tableName === 'task_participant') {
+      const personName = item.target_person_name || (newData.participant_id || oldData.participant_id ? `ID: ${newData.participant_id || oldData.participant_id}` : 'thành viên');
+      if (action === 'CREATE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-blue-700">
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[11px] font-bold border border-blue-100">
+              👥 Thêm người thực hiện
+            </span>
+            <span className="font-bold text-gray-900">{personName}</span>
+            {newData.role && <span className="text-gray-500 font-semibold">với vai trò <span className="text-blue-600 font-bold">"{newData.role}"</span></span>}
+          </div>
+        );
+      }
+      if (action === 'UPDATE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-blue-700">
+            <span className="text-gray-500 font-semibold">Cập nhật vai trò của</span>
+            <span className="font-bold text-gray-900">{personName}</span>
+            <span className="text-gray-500">từ</span>
+            {oldData.role && <span className="line-through text-gray-400 font-semibold">"{oldData.role}"</span>}
+            <span className="text-gray-500">thành</span>
+            <span className="font-bold text-blue-700">"{newData.role}"</span>
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-red-600">
+            <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[11px] font-bold border border-red-100">
+              🚫 Xóa người thực hiện
+            </span>
+            <span className="font-bold text-gray-900">{personName}</span>
+          </div>
+        );
+      }
+    }
+
+    if (tableName === 'comment') {
+      return (
+        <div className="flex items-center gap-2 pt-1 font-medium text-purple-700">
+          <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[11px] font-bold border border-purple-100">
+            💬 Thêm bình luận mới
+          </span>
+          {newData.content && <span className="text-gray-700 italic truncate max-w-xs">"{newData.content}"</span>}
+        </div>
+      );
+    }
+
+    if (tableName === 'file_attachment') {
+      if (action === 'CREATE') {
+        return (
+          <div className="flex items-center gap-2 pt-1 font-medium text-amber-700">
+            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[11px] font-bold border border-amber-100">
+              📎 Tải lên tệp đính kèm
+            </span>
+            {newData.file_name && <span className="font-semibold text-gray-800">{newData.file_name}</span>}
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex items-center gap-2 pt-1 font-medium text-red-600">
+            <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[11px] font-bold border border-red-100">
+              🗑️ Xóa tệp đính kèm
+            </span>
+            {oldData.file_name && <span className="text-gray-500 font-semibold">{oldData.file_name}</span>}
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div className="text-xs text-gray-700 font-medium">
+        <span className="font-bold uppercase text-gray-500">{action}</span> {tableName}
+      </div>
+    );
+  };
+
   const handleAIAnalyze = async () => {
     setAiLoading(true);
     setAiError('');
@@ -1301,7 +1505,7 @@ export default function TaskDetails() {
             ) : (
               <div className="relative border-l-2 border-indigo-100 ml-3 pl-4 space-y-4 my-2">
                 {statusHistory.map((item) => (
-                  <div key={item.history_id} className="relative group">
+                  <div key={item.id || item.history_id} className="relative group">
                     <div className="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-indigo-500 ring-4 ring-white" />
                     
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-xs space-y-2">
@@ -1312,24 +1516,11 @@ export default function TaskDetails() {
                           </span>
                         </div>
                         <span className="text-[11px] text-gray-400 font-medium">
-                          {formatDateTime(item.changed_at)}
+                          {formatDateTime(item.created_at || item.changed_at)}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-1 font-medium">
-                        <span className="text-gray-500 font-semibold">{t('taskdetails.status_label') || 'Trạng thái'}:</span>
-                        {item.old_status ? (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-bold">
-                            {item.old_status}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 italic text-[11px]">{t('taskdetails.initial_status') || 'Khởi tạo'}</span>
-                        )}
-                        <span className="text-gray-400">→</span>
-                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-[11px] border border-indigo-100">
-                          {item.new_status}
-                        </span>
-                      </div>
+                      {renderHistoryContent(item)}
                     </div>
                   </div>
                 ))}

@@ -1,4 +1,5 @@
 const { comment, comment_attachment } = require('../models');
+const { logChange } = require('../utils/changeLogger');
 const sequelize = require('../config/db');
 
 const getAllComments = async () => {
@@ -27,6 +28,18 @@ const createCommentByTaskId = async (taskId, data) => {
             }));
             await comment_attachment.bulkCreate(attachments, { transaction: t });
         }
+
+        await logChange({
+            tableName: 'comment',
+            recordId: newComment.comment_id,
+            parentTable: 'task',
+            parentId: taskId,
+            action: 'CREATE',
+            newData: { content: data.content, person_id: data.person_id },
+            changedBy: data.person_id,
+            transaction: t
+        });
+
         return newComment;
     });
 

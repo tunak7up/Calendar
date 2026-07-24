@@ -1,4 +1,5 @@
-const { task, person, task_participant, task_attachment, comment, comment_attachment, task_status_change_history } = require('../models');
+const { task, person, task_participant, task_attachment, comment, comment_attachment, change_history } = require('../models');
+const { logChange } = require('../utils/changeLogger');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
 const ExcelJS = require('exceljs');
@@ -21,8 +22,28 @@ const createTask = async (data) => {
             ended_at: null,
         }, { transaction: t });
 
+        await logChange({
+            tableName: 'task',
+            recordId: parentTask.task_id,
+            parentTable: null,
+            parentId: null,
+            action: 'CREATE',
+            newData: {
+                task_id: parentTask.task_id,
+                title: parentTask.title,
+                status: parentTask.status,
+                assigner_id: parentTask.assigner_id,
+                start_time: parentTask.start_time,
+                due_date: parentTask.due_date,
+                priority: parentTask.priority,
+                description: parentTask.description
+            },
+            changedBy: data.created_by || data.assigner_id || null,
+            transaction: t
+        });
+
         if (data.sub_tasks && data.sub_tasks.length > 0) {
-            const subTasks = data.sub_tasks.map(subTask => ({
+            const subTasksData = data.sub_tasks.map(subTask => ({
                 parent_id: parentTask.task_id,
                 assigner_id: data.assigner_id,
                 created_by: data.created_by || 2,
@@ -35,16 +56,40 @@ const createTask = async (data) => {
                 priority: subTask.priority,
                 ended_at: null,
             }));
-            await task.bulkCreate(subTasks, { transaction: t });
+            const createdSubTasks = await task.bulkCreate(subTasksData, { transaction: t, returning: true });
+            for (const sub of createdSubTasks) {
+                await logChange({
+                    tableName: 'task',
+                    recordId: sub.task_id,
+                    parentTable: 'task',
+                    parentId: parentTask.task_id,
+                    action: 'CREATE',
+                    newData: { title: sub.title, status: sub.status },
+                    changedBy: data.created_by || null,
+                    transaction: t
+                });
+            }
         }
 
         if (data.task_participants && data.task_participants.length > 0) {
-            const participants = data.task_participants.map(participant => ({
+            const participantsData = data.task_participants.map(participant => ({
                 task_id: parentTask.task_id,
                 participant_id: participant.participant_id,
                 role: participant.role
             }));
-            await task_participant.bulkCreate(participants, { transaction: t });
+            const createdParticipants = await task_participant.bulkCreate(participantsData, { transaction: t, returning: true });
+            for (const p of createdParticipants) {
+                await logChange({
+                    tableName: 'task_participant',
+                    recordId: p.participant_id,
+                    parentTable: 'task',
+                    parentId: parentTask.task_id,
+                    action: 'CREATE',
+                    newData: { participant_id: p.participant_id, role: p.role },
+                    changedBy: data.created_by || null,
+                    transaction: t
+                });
+            }
         }
 
         return parentTask;
@@ -127,13 +172,14 @@ const createTask = async (data) => {
     return parentTask;
 };
 
-const createSubTask = async (parentTaskId, data) => {
+const createSubTask = async (parentTaskId, data, createdBy = null) => {
     const parentTaskData = await task.findByPk(parentTaskId);
     if (!parentTaskData) throw new Error('Parent task not found');
-    return await task.create({
+
+    const subTask = await task.create({
         parent_id: parentTaskId,
         assigner_id: parentTaskData.assigner_id,
-        created_by: parentTaskData.created_by,
+        created_by: createdBy || data.created_by || parentTaskData.created_by,
         start_time: parentTaskData.start_time,
         due_date: parentTaskData.due_date,
         title: data.title,
@@ -144,6 +190,23 @@ const createSubTask = async (parentTaskId, data) => {
         ended_at: null,
         ...data
     });
+
+    await logChange({
+        tableName: 'task',
+        recordId: subTask.task_id,
+        parentTable: 'task',
+        parentId: Number(parentTaskId),
+        action: 'CREATE',
+        newData: {
+            task_id: subTask.task_id,
+            title: subTask.title,
+            status: subTask.status,
+            description: subTask.description
+        },
+        changedBy: createdBy || data.created_by || null
+    });
+
+    return subTask;
 };
 
 const createTaskAttachment = async ({ task_id, url }) => {
@@ -165,17 +228,16 @@ const checkAndUpdateOverdueStatus = async (taskInstance) => {
         if (taskInstance.status !== 'overdue') {
             const oldStatus = taskInstance.status;
             await taskInstance.update({ status: 'overdue' });
-            try {
-                await task_status_change_history.create({
-                    task_id: taskInstance.task_id,
-                    old_status: oldStatus,
-                    new_status: 'overdue',
-                    changed_by: null,
-                    changed_at: new Date()
-                });
-            } catch (err) {
-                console.error('Error logging overdue status change:', err.message);
-            }
+            await logChange({
+                tableName: 'task',
+                recordId: taskInstance.task_id,
+                parentTable: taskInstance.parent_id ? 'task' : null,
+                parentId: taskInstance.parent_id || taskInstance.task_id,
+                action: 'UPDATE',
+                oldData: { status: oldStatus },
+                newData: { status: 'overdue' },
+                changedBy: null
+            });
         }
     } else if (
         taskInstance.due_date &&
@@ -184,17 +246,16 @@ const checkAndUpdateOverdueStatus = async (taskInstance) => {
     ) {
         const oldStatus = taskInstance.status;
         await taskInstance.update({ status: 'pending' });
-        try {
-            await task_status_change_history.create({
-                task_id: taskInstance.task_id,
-                old_status: oldStatus,
-                new_status: 'pending',
-                changed_by: null,
-                changed_at: new Date()
-            });
-        } catch (err) {
-            console.error('Error logging overdue status reset:', err.message);
-        }
+        await logChange({
+            tableName: 'task',
+            recordId: taskInstance.task_id,
+            parentTable: taskInstance.parent_id ? 'task' : null,
+            parentId: taskInstance.parent_id || taskInstance.task_id,
+            action: 'UPDATE',
+            oldData: { status: oldStatus },
+            newData: { status: 'pending' },
+            changedBy: null
+        });
     }
 };
 
@@ -355,7 +416,7 @@ const updateTask = async (id, data, changedBy = null) => {
     const parentTask = await task.findByPk(id);
     if (!parentTask) throw new Error('Task not found');
 
-    const oldStatus = parentTask.status;
+    const oldTaskJSON = parentTask.toJSON();
 
     const updatedParent = await sequelize.transaction(async (t) => {
         if (data.due_date && new Date(data.due_date).getTime() >= Date.now() && parentTask.status === 'overdue') {
@@ -363,20 +424,17 @@ const updateTask = async (id, data, changedBy = null) => {
         }
         const updatedParent = await parentTask.update(data, { transaction: t });
 
-        if (data.status && data.status !== oldStatus) {
-            try {
-                await task_status_change_history.sync();
-                await task_status_change_history.create({
-                    task_id: id,
-                    old_status: oldStatus,
-                    new_status: data.status,
-                    changed_by: changedBy || data.changed_by || null,
-                    changed_at: new Date()
-                }, { transaction: t });
-            } catch (histError) {
-                console.error('Error recording task status history:', histError.message);
-            }
-        }
+        await logChange({
+            tableName: 'task',
+            recordId: id,
+            parentTable: parentTask.parent_id ? 'task' : null,
+            parentId: parentTask.parent_id || null,
+            action: 'UPDATE',
+            oldData: oldTaskJSON,
+            newData: updatedParent.toJSON(),
+            changedBy: changedBy || data.changed_by || null,
+            transaction: t
+        });
 
         if (data.status === 'completed') {
             await parentTask.update({ ended_at: new Date() }, { transaction: t });
@@ -457,13 +515,31 @@ const updateTask = async (id, data, changedBy = null) => {
     return updatedParent;
 };
 
-const updateTaskTitleOrDescription = async (id, { title, description }) => {
+const updateTaskTitleOrDescription = async (id, { title, description }, changedBy = null) => {
     const targetTask = await task.findByPk(id);
     if (!targetTask) throw new Error('Task not found');
-    return await targetTask.update({ title, description });
+    const oldJSON = targetTask.toJSON();
+
+    const updated = await targetTask.update({ title, description });
+
+    await logChange({
+        tableName: 'task',
+        recordId: id,
+        parentTable: targetTask.parent_id ? 'task' : null,
+        parentId: targetTask.parent_id || null,
+        action: 'UPDATE',
+        oldData: oldJSON,
+        newData: updated.toJSON(),
+        changedBy
+    });
+
+    return updated;
 };
 
 const deleteTaskRecursive = async (id, t) => {
+    const targetTask = await task.findByPk(id, { transaction: t });
+    const isSubTask = targetTask && targetTask.parent_id !== null;
+
     const childTasks = await task.findAll({
         where: { parent_id: id },
         transaction: t
@@ -475,15 +551,55 @@ const deleteTaskRecursive = async (id, t) => {
 
     await comment.destroy({ where: { task_id: id }, transaction: t });
 
+    if (isSubTask) {
+        // Xóa lịch sử thuộc về các phần tử con của subtask này
+        await change_history.destroy({
+            where: {
+                parent_table: 'task',
+                parent_id: id
+            },
+            transaction: t
+        });
+    } else {
+        // Xóa toàn bộ lịch sử liên quan đến task gốc
+        await change_history.destroy({
+            where: {
+                [Op.or]: [
+                    { table_name: 'task', record_id: id },
+                    { parent_table: 'task', parent_id: id }
+                ]
+            },
+            transaction: t
+        });
+    }
+
     await task.destroy({ where: { task_id: id }, transaction: t });
 };
 
-const deleteTask = async (id) => {
+const deleteTask = async (id, changedBy = null) => {
     return await sequelize.transaction(async (t) => {
         const targetTask = await task.findByPk(id, { transaction: t });
 
         if (!targetTask) {
-            throw new Error('Task not found hehe');
+            throw new Error('Task not found');
+        }
+
+        // If subtask, log DELETE history on parent task
+        if (targetTask.parent_id) {
+            await logChange({
+                tableName: 'subtask',
+                recordId: targetTask.task_id,
+                parentTable: 'task',
+                parentId: targetTask.parent_id,
+                action: 'DELETE',
+                oldData: {
+                    task_id: targetTask.task_id,
+                    title: targetTask.title,
+                    status: targetTask.status
+                },
+                changedBy: changedBy,
+                transaction: t
+            });
         }
 
         await deleteTaskRecursive(id, t);
@@ -508,11 +624,21 @@ const getTasksBeforeDueDate = async (personId, data) => {
     });
 };
 
-const addParticipantToTask = async (taskId, { participant_id, role }) => {
+const addParticipantToTask = async (taskId, { participant_id, role }, changedBy = null) => {
     const participant = await task_participant.create({
         task_id: taskId,
         participant_id,
         role
+    });
+
+    await logChange({
+        tableName: 'task_participant',
+        recordId: participant_id,
+        parentTable: 'task',
+        parentId: taskId,
+        action: 'CREATE',
+        newData: { participant_id, role },
+        changedBy
     });
 
     try {
@@ -574,17 +700,48 @@ const addParticipantToTask = async (taskId, { participant_id, role }) => {
     return participant;
 };
 
-const updateParticipantRole = async (taskId, participantId, { role }) => {
-    return await task_participant.update(
+const updateParticipantRole = async (taskId, participantId, { role }, changedBy = null) => {
+    const existing = await task_participant.findOne({ where: { task_id: taskId, participant_id: participantId } });
+    const oldRole = existing ? existing.role : null;
+
+    const res = await task_participant.update(
         { role },
         { where: { task_id: taskId, participant_id: participantId } }
     );
+
+    await logChange({
+        tableName: 'task_participant',
+        recordId: participantId,
+        parentTable: 'task',
+        parentId: taskId,
+        action: 'UPDATE',
+        oldData: { participant_id: participantId, role: oldRole },
+        newData: { participant_id: participantId, role },
+        changedBy
+    });
+
+    return res;
 };
 
-const removeParticipantFromTask = async (taskId, participantId) => {
-    return await task_participant.destroy({
+const removeParticipantFromTask = async (taskId, participantId, changedBy = null) => {
+    const existing = await task_participant.findOne({ where: { task_id: taskId, participant_id: participantId } });
+    const oldRole = existing ? existing.role : null;
+
+    const res = await task_participant.destroy({
         where: { task_id: taskId, participant_id: participantId }
     });
+
+    await logChange({
+        tableName: 'task_participant',
+        recordId: participantId,
+        parentTable: 'task',
+        parentId: taskId,
+        action: 'DELETE',
+        oldData: { participant_id: participantId, role: oldRole },
+        changedBy
+    });
+
+    return res;
 };
 
 const exportTasks = async (taskIds = null) => {
@@ -1087,8 +1244,13 @@ const exportTemplate = async () => {
 };
 
 const getTaskStatusHistory = async (taskId) => {
-    return await task_status_change_history.findAll({
-        where: { task_id: taskId },
+    const histories = await change_history.findAll({
+        where: {
+            [Op.or]: [
+                { table_name: 'task', record_id: taskId },
+                { parent_table: 'task', parent_id: taskId }
+            ]
+        },
         include: [
             {
                 model: person,
@@ -1096,7 +1258,39 @@ const getTaskStatusHistory = async (taskId) => {
                 attributes: ['person_id', 'name', 'username']
             }
         ],
-        order: [['changed_at', 'DESC']]
+        order: [['created_at', 'DESC']]
+    });
+
+    // Collect all participant_ids referenced in history
+    const participantIds = new Set();
+    histories.forEach(h => {
+        if (h.table_name === 'task_participant') {
+            const pId = h.changed_data?.participant_id || h.old_data?.participant_id || h.record_id;
+            if (pId) participantIds.add(Number(pId));
+        }
+    });
+
+    let personMap = {};
+    if (participantIds.size > 0) {
+        const persons = await person.findAll({
+            where: { person_id: { [Op.in]: Array.from(participantIds) } },
+            attributes: ['person_id', 'name', 'username']
+        });
+        persons.forEach(p => {
+            personMap[p.person_id] = p.name || p.username;
+        });
+    }
+
+    return histories.map(h => {
+        const hJson = h.toJSON();
+        if (hJson.table_name === 'task_participant') {
+            const pId = hJson.changed_data?.participant_id || hJson.old_data?.participant_id || hJson.record_id;
+            if (pId) {
+                hJson.target_person_id = pId;
+                hJson.target_person_name = personMap[pId] || `ID: ${pId}`;
+            }
+        }
+        return hJson;
     });
 };
 

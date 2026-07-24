@@ -18,7 +18,7 @@ const theme_setting = require('./theme_setting');
 const ai_agent = require('./ai_agent');
 const task_status = require('./task_status');
 const push_subscription = require('./pushSubscription');
-const task_status_change_history = require('./task_status_change_history');
+const change_history = require('./change_history');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -53,11 +53,8 @@ person.belongsToMany(task, { through: task_participant, foreignKey: 'participant
 task.hasMany(task_participant, { foreignKey: 'task_id', as: 'task_participants' });
 task_participant.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 
-task.hasMany(task_status_change_history, { foreignKey: 'task_id', as: 'status_histories' });
-task_status_change_history.belongsTo(task, { foreignKey: 'task_id', as: 'task', onDelete: 'NO ACTION' });
-
-person.hasMany(task_status_change_history, { foreignKey: 'changed_by', as: 'status_changes' });
-task_status_change_history.belongsTo(person, { foreignKey: 'changed_by', as: 'changer', onDelete: 'NO ACTION' });
+person.hasMany(change_history, { foreignKey: 'changed_by', as: 'change_histories' });
+change_history.belongsTo(person, { foreignKey: 'changed_by', as: 'changer', onDelete: 'NO ACTION' });
 
 notification.belongsTo(person, { foreignKey: 'notificate_to', as: 'recipient' });
 person.hasMany(notification, { foreignKey: 'notificate_to', as: 'notifications' });
@@ -104,5 +101,5 @@ module.exports = {
     ai_agent,
     task_status,
     push_subscription,
-    task_status_change_history
+    change_history
 };

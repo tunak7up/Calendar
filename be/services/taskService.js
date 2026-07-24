@@ -1,5 +1,6 @@
-const { task, person, task_participant, task_attachment, comment, comment_attachment, change_history } = require('../models');
+const { task, person, task_participant, task_attachment, comment, comment_attachment, change_history, fileAttachment } = require('../models');
 const { logChange } = require('../utils/changeLogger');
+const { deletePhysicalFile } = require('../utils/fileHelper');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
 const ExcelJS = require('exceljs');
@@ -549,7 +550,81 @@ const deleteTaskRecursive = async (id, t) => {
         await deleteTaskRecursive(child.task_id, t);
     }
 
+    // Xóa tất cả các file_attachment & comment_attachment của các comment thuộc task này
+    const taskComments = await comment.findAll({
+        where: { task_id: id },
+        attributes: ['comment_id'],
+        transaction: t
+    });
+
+    if (taskComments.length > 0) {
+        const commentIds = taskComments.map(c => c.comment_id);
+
+        // a) Xóa file_attachment có attachable_type = 'comment'
+        if (fileAttachment) {
+            const commentFileAttachments = await fileAttachment.findAll({
+                where: {
+                    attachable_type: 'comment',
+                    attachable_id: { [Op.in]: commentIds }
+                },
+                transaction: t
+            });
+            for (const att of commentFileAttachments) {
+                deletePhysicalFile(att.url);
+            }
+            await fileAttachment.destroy({
+                where: {
+                    attachable_type: 'comment',
+                    attachable_id: { [Op.in]: commentIds }
+                },
+                transaction: t
+            });
+        }
+
+        // b) Xóa comment_attachment truyền thống
+        const commentAttachments = await comment_attachment.findAll({
+            where: { comment_id: { [Op.in]: commentIds } },
+            transaction: t
+        });
+
+        for (const att of commentAttachments) {
+            deletePhysicalFile(att.url);
+        }
+
+        await comment_attachment.destroy({
+            where: { comment_id: { [Op.in]: commentIds } },
+            transaction: t
+        });
+    }
+
+    // Xóa tất cả các file vật lý & CSDL của task_attachment thuộc task này
+    const taskAttachments = await task_attachment.findAll({
+        where: { task_id: id },
+        transaction: t
+    });
+
+    for (const att of taskAttachments) {
+        deletePhysicalFile(att.url);
+    }
+    await task_attachment.destroy({ where: { task_id: id }, transaction: t });
+
+    // Xóa tất cả các file vật lý & CSDL của fileAttachment thuộc task này
+    if (fileAttachment) {
+        const genericAttachments = await fileAttachment.findAll({
+            where: { attachable_type: 'task', attachable_id: id },
+            transaction: t
+        });
+        for (const att of genericAttachments) {
+            deletePhysicalFile(att.url);
+        }
+        await fileAttachment.destroy({
+            where: { attachable_type: 'task', attachable_id: id },
+            transaction: t
+        });
+    }
+
     await comment.destroy({ where: { task_id: id }, transaction: t });
+    await task_participant.destroy({ where: { task_id: id }, transaction: t });
 
     if (isSubTask) {
         // Xóa lịch sử thuộc về các phần tử con của subtask này

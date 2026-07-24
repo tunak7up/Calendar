@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const fileAttachment = require('../models/fileAttachment');
 const { logChange } = require('../utils/changeLogger');
+const { deletePhysicalFile } = require('../utils/fileHelper');
 
 // Configuration
 const UPLOADS_DIR = process.env.UPLOADS_DIR
@@ -175,11 +176,7 @@ const deleteAttachment = async (file_attachment_id) => {
         }
 
         // Delete file from disk
-        const actualFileName = path.basename(attachment.url);
-        const filePath = path.join(UPLOADS_DIR, actualFileName);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        deletePhysicalFile(attachment.url);
 
         if (attachment.attachable_type === 'task') {
             await logChange({

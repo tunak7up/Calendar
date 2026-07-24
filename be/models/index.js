@@ -19,6 +19,7 @@ const ai_agent = require('./ai_agent');
 const task_status = require('./task_status');
 const push_subscription = require('./pushSubscription');
 const change_history = require('./change_history');
+const fileAttachment = require('./fileAttachment');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -101,5 +102,6 @@ module.exports = {
     ai_agent,
     task_status,
     push_subscription,
-    change_history
+    change_history,
+    fileAttachment
 };

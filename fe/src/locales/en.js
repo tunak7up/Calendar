@@ -667,7 +667,10 @@ export const en = {
       weekDatePicker: {
         prevWeek: "Previous week",
         nextWeek: "Next week",
-        selectDate: "Select date to jump to the corresponding week"
+        selectDate: "Select date to jump to the corresponding week",
+        legend_selecting: "Selecting",
+        legend_added: "Added to List",
+        legend_pending: "Pending Approval"
       },
       wheelTimePicker: {
         hour: "Hour",

@@ -667,7 +667,10 @@ export const vi = {
       weekDatePicker: {
         prevWeek: "Tuần trước",
         nextWeek: "Tuần sau",
-        selectDate: "Chọn ngày để nhảy tới tuần tương ứng"
+        selectDate: "Chọn ngày để nhảy tới tuần tương ứng",
+        legend_selecting: "Đang chọn",
+        legend_added: "Đã thêm vào danh sách",
+        legend_pending: "Chờ duyệt"
       },
       wheelTimePicker: {
         hour: "Giờ",

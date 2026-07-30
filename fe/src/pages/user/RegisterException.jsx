@@ -41,6 +41,7 @@ export default function RegisterException() {
   const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
   const [presetReasons, setPresetReasons] = useState([]);
+  const [pendingDates, setPendingDates] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState(null);
 
   useEffect(() => {
@@ -56,6 +57,30 @@ export default function RegisterException() {
     };
     loadPresetReasons();
   }, []);
+
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      if (!user?.person_id) return;
+      try {
+        const result = await requestService.getRequestsByRequester(user.person_id);
+        if (result.success) {
+          const pending = result.data.filter(req => req.status === 'pending');
+          const dates = [];
+          pending.forEach(req => {
+            if (req.details) {
+              req.details.forEach(d => {
+                if (d.date) dates.push(d.date);
+              });
+            }
+          });
+          setPendingDates(dates);
+        }
+      } catch (error) {
+        console.error('Error fetching pending requests:', error);
+      }
+    };
+    fetchPendingRequests();
+  }, [user?.person_id]);
 
   // Fetch approved schedule days for user
   useEffect(() => {
@@ -283,6 +308,8 @@ export default function RegisterException() {
               viewDate={viewDateObj}
               onViewChange={setViewDateObj}
               selectedDates={selectedDate ? [selectedDate.date] : []}
+              addedDates={[]}
+              pendingDates={pendingDates}
               onDayClick={handleDayClick}
               workDays={workDays}
             />

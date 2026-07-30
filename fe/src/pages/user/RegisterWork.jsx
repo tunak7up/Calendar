@@ -47,6 +47,7 @@ export default function RegisterWork() {
   const [shiftEndTime, setShiftEndTime] = useState('17:30');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+  const [pendingDates, setPendingDates] = useState([]);
 
 
 
@@ -79,6 +80,31 @@ export default function RegisterWork() {
     };
     fetchSchedule();
   }, [user?.person_id]);
+
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      if (!user?.person_id) return;
+      try {
+        const result = await requestService.getRequestsByRequester(user.person_id);
+        if (result.success) {
+          const pending = result.data.filter(req => req.status === 'pending');
+          const dates = [];
+          pending.forEach(req => {
+            if (req.details) {
+              req.details.forEach(d => {
+                if (d.date) dates.push(d.date);
+              });
+            }
+          });
+          setPendingDates(dates);
+        }
+      } catch (error) {
+        console.error('Error fetching pending requests:', error);
+      }
+    };
+    fetchPendingRequests();
+  }, [user?.person_id]);
+
   const [isRepeatDropdownOpen, setIsRepeatDropdownOpen] = useState(false);
   const [repeatOption, setRepeatOption] = useState('none');
   const [repeatInterval, setRepeatInterval] = useState(1);
@@ -278,6 +304,8 @@ export default function RegisterWork() {
             viewDate={viewDateObj}
             onViewChange={setViewDateObj}
             selectedDates={draftDates}
+            addedDates={schedule.map(item => item.date)}
+            pendingDates={pendingDates}
             onDayClick={handleDayClick}
             workDays={workDays}
           />

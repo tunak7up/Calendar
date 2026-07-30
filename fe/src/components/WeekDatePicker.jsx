@@ -31,6 +31,8 @@ export default function WeekDatePicker({
   viewDate,
   onViewChange,
   selectedDates = [],
+  addedDates = [],
+  pendingDates = [],
   onDayClick,
   workDays = [],
 }) {
@@ -112,33 +114,81 @@ export default function WeekDatePicker({
       <div className="flex justify-between items-center w-full max-w-2xl mx-auto gap-2 overflow-x-auto pb-2 px-1">
         {weekDates.map((d) => {
           const active = selectedDates.includes(d.fullDate);
+          const isAdded = addedDates.includes(d.fullDate);
+          const isPending = pendingDates.includes(d.fullDate);
           const hasWork = workDays.includes(d.fullDate);
           const colPos = d.dateObj.getDay();
           const isWeekend = colPos === 0 || colPos === 6;
           const isPast = d.fullDate < todayStr;
           const isDisabled = isWeekend || isPast;
 
+          let btnClass = '';
+          let dayTextClass = '';
+          let dateTextClass = '';
+          let dotColor = '';
+
+          if (active) {
+            btnClass = 'bg-blue-50 border-blue-400 shadow-md';
+            dayTextClass = 'text-blue-500';
+            dateTextClass = 'text-blue-700';
+            dotColor = 'bg-blue-600';
+          } else if (isAdded) {
+            btnClass = 'bg-emerald-50 border-emerald-400 shadow-md text-emerald-700';
+            dayTextClass = 'text-emerald-500';
+            dateTextClass = 'text-emerald-700';
+            dotColor = 'bg-emerald-600';
+          } else if (isPending) {
+            btnClass = 'bg-yellow-50 border-yellow-400 shadow-md text-yellow-700';
+            dayTextClass = 'text-yellow-600';
+            dateTextClass = 'text-yellow-700';
+            dotColor = 'bg-yellow-600';
+          } else if (isDisabled) {
+            btnClass = 'opacity-40 cursor-not-allowed border-transparent bg-gray-50/50';
+            dayTextClass = 'text-gray-350';
+            dateTextClass = 'text-gray-300';
+            dotColor = 'bg-blue-300';
+          } else {
+            btnClass = 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-sm';
+            dayTextClass = 'text-gray-400';
+            dateTextClass = 'text-gray-900';
+            dotColor = 'bg-blue-400';
+          }
+
           return (
             <button
               key={d.fullDate}
               disabled={isDisabled}
               onClick={() => onDayClick(d.dateObj)}
-              className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative border-2 ${
-                active ? 'bg-blue-50 border-blue-400 shadow-md' : (isDisabled ? 'opacity-40 cursor-not-allowed border-transparent bg-gray-50/50' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-sm')
-              }`}
+              className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all flex-shrink-0 relative border-2 ${btnClass}`}
             >
-              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${active ? 'text-blue-500' : (isDisabled ? 'text-gray-350' : 'text-gray-400')}`}>
+              <span className={`text-[0.65rem] font-bold tracking-widest uppercase mb-1 ${dayTextClass}`}>
                 {d.day}
               </span>
-              <span className={`text-xl font-bold ${active ? 'text-blue-700' : (isDisabled ? 'text-gray-300' : 'text-gray-900')}`}>
+              <span className={`text-xl font-bold ${dateTextClass}`}>
                 {d.date}
               </span>
               {hasWork && (
-                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${active ? 'bg-blue-600' : 'bg-blue-400'}`}></div>
+                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${dotColor}`}></div>
               )}
             </button>
           );
         })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-col sm:flex-row justify-center items-start sm:items-center gap-y-2 sm:gap-x-6 mt-5 text-[11px] font-bold text-gray-400 uppercase tracking-wider w-fit mx-auto sm:w-auto">
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-400 bg-blue-50"></div>
+          <span>{t('components.weekDatePicker.legend_selecting', 'Đang chọn')}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-emerald-400 bg-emerald-50"></div>
+          <span>{t('components.weekDatePicker.legend_added', 'Đã thêm vào danh sách')}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-yellow-400 bg-yellow-50"></div>
+          <span>{t('components.weekDatePicker.legend_pending', 'Chờ duyệt')}</span>
+        </div>
       </div>
     </div>
   );

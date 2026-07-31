@@ -19,7 +19,7 @@ const worker = new Worker('notification-queue', async (job) => {
   }
 }, {
   connection,
-  concurrency: 5
+  concurrency: 2
 });
 
 worker.on('completed', (job) => {

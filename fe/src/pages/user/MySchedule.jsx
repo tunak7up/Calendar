@@ -36,14 +36,23 @@ export default function MySchedule() {
   const [reports, setReports] = useState([]);
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay, shift, report, tasks }
 
-  const fetchData = useCallback(async (start, end) => {
-    if (!user?.person_id) return;
+  const fetchData = useCallback(async (viewStart) => {
+    if (!user?.person_id || !viewStart) return;
     try {
+      // Calculate 3-month window: 1st of previous month to last day of next month
+      const y = viewStart.getFullYear();
+      const m = viewStart.getMonth();
+      const startDate = new Date(y, m - 1, 1);
+      const endDate = new Date(y, m + 2, 0, 23, 59, 59);
+
+      const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
+      const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}T23:59:59`;
+
       const [scheduleRes, taskRes, reportRes] = await Promise.all([
         scheduleService.getScheduleByPersonIdWithTimeRange({
           personId: user.person_id,
-          startTime: start,
-          endTime: end
+          startTime: startStr,
+          endTime: endStr
         }),
         taskService.getAllTasksByParticipantId(user.person_id),
         dailyReportService.getDailyReportByPersonId(user.person_id)
@@ -69,15 +78,9 @@ export default function MySchedule() {
 
       const unregisteredWorkHours = [];
       fetchedReports.forEach(rep => {
-        const repDate = rep.working_date.split('T')[0];
-        const hasSchedule = registeredWorkHours.some(wh => {
-          const d = parseVNTime(wh.start);
-          if (!d) return wh.start?.split?.(/[T ]/)?.[0] === repDate;
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}` === repDate;
-        });
+        const repDate = getLocalYYYYMMDD(rep.working_date);
+        if (!repDate) return;
+        const hasSchedule = registeredWorkHours.some(wh => getLocalYYYYMMDD(wh.start) === repDate);
 
         if (!hasSchedule) {
           const checkInTime = rep.check_in || '08:00:00';
@@ -129,31 +132,22 @@ export default function MySchedule() {
   }, [rawTasks, getTaskColor]);
 
   const workDays = useMemo(() => {
-    const registeredDays = workingHours.map(e => {
-      const d = parseVNTime(e.start);
-      if (!d) return e.start?.split?.(/[T ]/)?.[0] || '';
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }).filter(Boolean);
-
-    const reportDays = reports.map(r => r.working_date.split('T')[0]);
+    const registeredDays = workingHours.map(e => getLocalYYYYMMDD(e.start)).filter(Boolean);
+    const reportDays = reports.map(r => getLocalYYYYMMDD(r.working_date)).filter(Boolean);
     return Array.from(new Set([...registeredDays, ...reportDays]));
   }, [workingHours, reports]);
 
   const dayStatusMap = useMemo(() => {
     const map = {};
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalYYYYMMDD(new Date());
 
     // Compute status for all working hours (schedules)
     workingHours.forEach(wh => {
       if (wh.extendedProps?.isWorkHour) {
-        const d = parseVNTime(wh.start);
-        const dateStr = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : wh.start?.split?.(/[T ]/)?.[0];
+        const dateStr = getLocalYYYYMMDD(wh.start);
         if (dateStr) {
           const isRegistered = wh.extendedProps.isRegistered;
-          const rep = reports.find(r => r.working_date.split('T')[0] === dateStr);
+          const rep = reports.find(r => getLocalYYYYMMDD(r.working_date) === dateStr);
           
           if (isRegistered) {
             if (rep) {
@@ -175,8 +169,8 @@ export default function MySchedule() {
 
     // Also map any remaining daily reports that aren't mapped
     reports.forEach(rep => {
-      const dateStr = rep.working_date.split('T')[0];
-      if (!map[dateStr]) {
+      const dateStr = getLocalYYYYMMDD(rep.working_date);
+      if (dateStr && !map[dateStr]) {
         map[dateStr] = 'unscheduled'; // Yellow
       }
     });
@@ -186,8 +180,7 @@ export default function MySchedule() {
 
   const displayEvents = [...workingHours, ...tasks].map(e => {
     if (e.extendedProps?.isWorkHour) {
-      const d = parseVNTime(e.start);
-      const dateStr = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : e.start?.split?.(/[T ]/)?.[0];
+      const dateStr = getLocalYYYYMMDD(e.start);
       const status = dayStatusMap[dateStr];
       let bg = regTheme.bg;
       if (status === 'scheduled') bg = regTheme.bg;
@@ -261,19 +254,9 @@ export default function MySchedule() {
     const clickedDate = info.dateStr;
     const isWorkDay = workDays.includes(clickedDate);
     
-    const shift = workingHours.find(h => {
-      const d = parseVNTime(h.start);
-      if (!d) return false;
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}` === clickedDate;
-    });
+    const shift = workingHours.find(h => getLocalYYYYMMDD(h.start) === clickedDate);
 
-    const report = reports.find(r => {
-      const dateStr = r.working_date.split('T')[0];
-      return dateStr === clickedDate;
-    });
+    const report = reports.find(r => getLocalYYYYMMDD(r.working_date) === clickedDate);
     
     const dayTasks = tasks.filter(t => {
       const taskStartDate = getLocalYYYYMMDD(t.start) || getLocalYYYYMMDD(t.end);
@@ -350,19 +333,18 @@ export default function MySchedule() {
             onDateClick={handleDateClick}
             onEventClick={handleEventClick}
             onDatesSet={(info) => {
-              const startStr = info.startStr.split('T')[0];
-              const endStr = info.endStr.split('T')[0];
+              const currentStart = info.view.currentStart;
+              const y = currentStart.getFullYear();
+              const m = currentStart.getMonth();
               const lang = i18n.language;
-              if (
-                lastFetchedRangeRef.current.start === startStr &&
-                lastFetchedRangeRef.current.end === endStr &&
-                lastFetchedRangeRef.current.lang === lang
-              ) {
+              const key = `${y}-${m}-${lang}`;
+
+              if (lastFetchedRangeRef.current.key === key) {
                 return;
               }
-              lastFetchedRangeRef.current = { start: startStr, end: endStr, lang };
-              setViewDate(info.view.currentStart);
-              fetchData(info.startStr, info.endStr);
+              lastFetchedRangeRef.current = { key };
+              setViewDate(currentStart);
+              fetchData(currentStart);
             }}
           />
         </div>

@@ -3,7 +3,8 @@ const { sendRes } = require('../utils/responseHelper');
 
 const createDailyReport = async (req, res) => {
     try {
-        const report = await dailyReportService.createDailyReport(req.body);
+        const data = { ...req.body, clientIp: req.clientIp, check_in_device: req.clientDevice };
+        const report = await dailyReportService.createDailyReport(data);
         sendRes(res, 200, 'Daily report created successfully', report);
     } catch (error) {
         sendRes(res, 400, 'Error creating daily report', null, error.message);
@@ -12,7 +13,8 @@ const createDailyReport = async (req, res) => {
 
 const updateDailyReport = async (req, res) => {
     try {
-        const report = await dailyReportService.updateDailyReport(req.params.id, req.body);
+        const data = { ...req.body, clientIp: req.clientIp, check_out_device: req.clientDevice };
+        const report = await dailyReportService.updateDailyReport(req.params.id, data);
         sendRes(res, 200, 'Daily report updated successfully', report);
     } catch (error) {
         sendRes(res, 400, 'Error updating daily report', null, error.message);
@@ -88,6 +90,56 @@ const checkTodayReportExists = async (req, res) => {
     }
 };
 
+const importDailyReports = async (req, res) => {
+    try {
+        if (!req.file) {
+            sendRes(res, 400, 'Error importing daily reports', null, 'No file uploaded');
+            return;
+        }
+
+        const result = await dailyReportService.importDailyReports(req.file.buffer);
+
+        if (result.success === 0) {
+            const errorDetails = result.errors.map(e => `Dòng ${e.row}: ${e.reason}`).join('\n');
+            return sendRes(res, 400, `Import thất bại!\nChi tiết lỗi:\n${errorDetails}`, result);
+        }
+
+        if (result.failed > 0) {
+            const errorDetails = result.errors.map(e => `Dòng ${e.row}: ${e.reason}`).join('\n');
+            return sendRes(res, 201, `Import thành công ${result.success} dòng, thất bại ${result.failed} dòng.\nChi tiết lỗi:\n${errorDetails}`, result);
+        }
+
+        return sendRes(res, 201, `Import hoàn tất. Thành công: ${result.success} dòng.`, result);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Error importing daily reports', null, error.message);
+    }
+};
+
+const previewImportDailyReports = async (req, res) => {
+    try {
+        if (!req.file) {
+            return sendRes(res, 400, 'Lỗi preview import', null, 'No file uploaded');
+        }
+        const data = await dailyReportService.previewImportDailyReports(req.file.buffer);
+        sendRes(res, 200, 'Preview excel daily report thành công', data);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Error previewing daily reports', null, error.message);
+    }
+};
+
+const importDirectDailyReports = async (req, res) => {
+    try {
+        const { rows } = req.body;
+        if (!rows || !Array.isArray(rows) || rows.length === 0) {
+            return sendRes(res, 400, 'Không có dòng dữ liệu hợp lệ để import');
+        }
+        const result = await dailyReportService.importDirectDailyReports(rows);
+        sendRes(res, 200, result.message, result);
+    } catch (error) {
+        sendRes(res, 400, error.message || 'Lỗi import trực tiếp', null, error.message);
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -97,5 +149,8 @@ module.exports = {
     getAllDailyReportsInRange,
     updateDailyReportDescription,
     exportDailyReport,
-    checkTodayReportExists
+    checkTodayReportExists,
+    importDailyReports,
+    previewImportDailyReports,
+    importDirectDailyReports
 };

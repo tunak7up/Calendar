@@ -21,7 +21,7 @@ const person = sequelize.define(
       type: DataTypes.BOOLEAN,
     },
     role: {
-      type: DataTypes.STRING(256), // Use STRING instead of ENUM to avoid Sequelize check constraint alter bugs in MSSQL
+      type: DataTypes.STRING(256),
     },
     username: {
       type: DataTypes.STRING(256),
@@ -29,6 +29,10 @@ const person = sequelize.define(
     },
     email: {
       type: DataTypes.STRING(256),
+      unique: true
+    },
+    company_card: {
+      type: DataTypes.STRING(16),
       unique: true
     }
   },
@@ -60,25 +64,32 @@ const person = sequelize.define(
   },
 );
 
-const hashOldPasswords = async () => {
-  const persons = await person.findAll();
+// const hashOldPasswords = async () => {
+//   const persons = await person.findAll();
 
-  for (const person of persons) {
-    if (!person.password.startsWith('$2b$')) {
-      const hashed = await bcrypt.hash(person.password, 10);
+//   for (const person of persons) {
+//     if (!person.password.startsWith('$2b$')) {
+//       const hashed = await bcrypt.hash(person.password, 10);
 
-      await person.update(
-        { password: hashed },
-        { where: { person_id: person.person_id } }
-      );
-    }
-  }
-};
+//       await person.update(
+//         { password: hashed },
+//         { where: { person_id: person.person_id } }
+//       );
+//     }
+//   }
+// };
 
 // hashOldPasswords().then(() => {
 //   console.log('Old passwords hashed successfully');
 // }).catch(err => {
 //   console.error('Error hashing old passwords:', err);
 // });
+
+// const syncPerson = async () => {
+//   await person.sync({ alter: true });
+//   console.log('Person table synced');
+// };
+
+// syncPerson();
 
 module.exports = person;

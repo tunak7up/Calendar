@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ClockIcon,
@@ -6,6 +6,7 @@ import {
   FunnelIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
 import { apiFetch, BASE_URL, getAccessToken, setAccessToken } from '../../services/api';
@@ -14,6 +15,7 @@ import EmployeeMultiFilter from '../../components/EmployeeMultiFilter';
 import SortableTable from '../../components/SortableTable';
 import DateRangeFilter from '../../components/DateRangeFilter';
 import { useTranslation } from 'react-i18next';
+import ImportWorkHoursReviewModal from '../../components/ImportWorkHoursReviewModal/ImportWorkHoursReviewModal';
 
 const MONTH_NAMES_VI = [
   'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -41,6 +43,10 @@ export default function AdminWorkHours() {
   const [loading, setLoading] = useState(true);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -150,6 +156,58 @@ export default function AdminWorkHours() {
     }
   };
 
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setImporting(true);
+    try {
+      let accessToken = getAccessToken();
+      let response = await fetch(`${BASE_URL}/daily-report/preview-import`, {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        credentials: 'include',
+        body: formData
+      });
+
+      if (response.status === 403) {
+        const refreshRes = await fetch(`${BASE_URL}/auth/refresh-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          accessToken = refreshData.token;
+          setAccessToken(accessToken);
+          response = await fetch(`${BASE_URL}/daily-report/preview-import`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            credentials: 'include',
+            body: formData
+          });
+        }
+      }
+
+      const data = await response.json();
+      if (response.ok && data.data) {
+        setPreviewData(data.data);
+        setShowReviewModal(true);
+      } else {
+        alert(data.message || 'Lỗi đọc file Excel');
+      }
+    } catch (err) {
+      console.error('Error previewing daily reports:', err);
+      alert('Lỗi import dữ liệu: ' + err.message);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const parseTimeToHours = (startStr, endStr) => {
     if (!startStr || !endStr) return 0;
     try {
@@ -196,10 +254,23 @@ export default function AdminWorkHours() {
     const totalDays = empReports.length;
     const registeredHours = empSchedules.reduce((sum, s) => sum + parseTimeToHours(s.start_time, s.end_time), 0);
     const actualHours = empReports.reduce((sum, r) => {
-      if (!r.check_in || !r.check_out) return sum;
+      const getMinTime = (t1, t2) => {
+        if (!t1) return t2 || null;
+        if (!t2) return t1 || null;
+        return t1 < t2 ? t1 : t2;
+      };
+      const getMaxTime = (t1, t2) => {
+        if (!t1) return t2 || null;
+        if (!t2) return t1 || null;
+        return t1 > t2 ? t1 : t2;
+      };
 
-      const [sH, sM, sS] = r.check_in.split(':').map(Number);
-      const [eH, eM, eS] = r.check_out.split(':').map(Number);
+      const cIn = getMinTime(r.check_in, r.check_in_machine);
+      const cOut = getMaxTime(r.check_out, r.check_out_machine);
+      if (!cIn || !cOut) return sum;
+
+      const [sH, sM, sS] = cIn.split(':').map(Number);
+      const [eH, eM, eS] = cOut.split(':').map(Number);
 
       const startSeconds = sH * 3600 + sM * 60 + (sS || 0);
       const endSeconds = eH * 3600 + eM * 60 + (eS || 0);
@@ -273,9 +344,24 @@ export default function AdminWorkHours() {
             <span className="font-bold text-gray-700">{monthYearLabel}</span>
           </div>
           <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all flex-1 md:flex-none justify-center"
+          >
+            <ArrowUpTrayIcon className="w-5 h-5" />
+            <span>{importing ? 'Đang import...' : 'Import Excel'}</span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportFile}
+            accept=".xlsx, .xls"
+            className="hidden"
+          />
+          <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#0056b3] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
             <span>{exporting ? t('workhours.exporting') : t('workhours.export_excel')}</span>
@@ -368,6 +454,14 @@ export default function AdminWorkHours() {
             </td>
           </tr>
         )}
+      />
+
+      <ImportWorkHoursReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        previewData={previewData}
+        employees={employees}
+        onSuccess={fetchData}
       />
     </div>
   );

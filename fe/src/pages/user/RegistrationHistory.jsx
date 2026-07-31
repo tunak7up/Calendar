@@ -5,7 +5,8 @@ import {
   EyeIcon,
   CalendarIcon,
   BriefcaseIcon,
-  SparklesIcon
+  SparklesIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
@@ -160,6 +161,15 @@ export default function RegistrationHistory() {
             <CalendarIcon className="w-5 h-5" />
             {t('history.btn_register_leave')}
           </button>
+          <button
+            onClick={() => navigate('/register/exception')}
+            data-customizable-id="btn-history-register-exception"
+            data-customizable-type="bg"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
+          >
+            <ClockIcon className="w-5 h-5" />
+            {t('history.btn_register_exception')}
+          </button>
         </div>
       </div>
 
@@ -259,6 +269,16 @@ export default function RegistrationHistory() {
                     >
                       <CalendarIcon className="w-4 h-4" />
                       {t('history.btn_register_leave')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsNewRequestOpen(false);
+                        navigate('/register/exception');
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors text-left"
+                    >
+                      <ClockIcon className="w-4 h-4 text-emerald-600" />
+                      {t('history.btn_register_exception')}
                     </button>
                   </div>
                 </div>

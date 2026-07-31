@@ -27,7 +27,29 @@ const daily_report = sequelize.define(
         },
         check_out: {
             type: DataTypes.STRING,
-        }
+        },
+        check_in_machine: {
+            type: DataTypes.STRING,
+        },
+        check_out_machine: {
+            type: DataTypes.STRING,
+        },
+        check_in_ip: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        check_out_ip: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        check_in_device: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        check_out_device: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     });
 
 // const syncDailyReport = async () => {

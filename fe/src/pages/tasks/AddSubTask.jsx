@@ -126,13 +126,13 @@ export default function AddSubTask() {
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
                   {t('addsubtask.label_priority')}
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                   {['Low', 'Medium', 'High'].map((p) => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setFormData({ ...formData, priority: p })}
-                      className={`py-3 px-4 rounded-2xl text-sm font-bold transition-all border-2 ${
+                      className={`py-2 px-1.5 sm:py-3 sm:px-4 rounded-2xl text-[10px] sm:text-sm font-bold transition-all border-2 ${
                         formData.priority === p 
                           ? (p === 'High' ? 'border-red-500 bg-red-50 text-red-600' : 
                              p === 'Medium' ? 'border-amber-500 bg-amber-50 text-amber-600' : 
@@ -140,7 +140,7 @@ export default function AddSubTask() {
                           : 'border-transparent bg-gray-50 text-gray-400 hover:bg-gray-100'
                       }`}
                     >
-                      {p === 'High' ? t('addtask.priority_high') : p === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}
+                      <span className="truncate">{p === 'High' ? t('addtask.priority_high') : p === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low')}</span>
                     </button>
                   ))}
                 </div>

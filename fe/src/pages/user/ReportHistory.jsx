@@ -89,6 +89,8 @@ export default function ReportHistory() {
     { key: 'working_date', label: t('reporthistory.col_date'), sortable: true },
     { key: 'check_in', label: t('reporthistory.col_checkin'), sortable: true },
     { key: 'check_out', label: t('reporthistory.col_checkout'), sortable: true },
+    { key: 'check_in_machine', label: t('reporthistory.col_checkin_machine', { defaultValue: 'Vào (Máy)' }), sortable: true },
+    { key: 'check_out_machine', label: t('reporthistory.col_checkout_machine', { defaultValue: 'Ra (Máy)' }), sortable: true },
     { key: 'statusKey', label: t('reporthistory.col_status'), sortable: true }
   ];
 
@@ -132,7 +134,7 @@ export default function ReportHistory() {
         totalItems={sortedData.length}
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
-        tableClassName="min-w-[600px]"
+        tableClassName="min-w-[750px]"
         renderRow={(report) => (
           <tr
             key={report.id}
@@ -151,8 +153,34 @@ export default function ReportHistory() {
                 })()}
               </span>
             </td>
-            <td className="px-4 py-5 text-sm text-gray-600">{report.check_in || '--:--'}</td>
-            <td className="px-4 py-5 text-sm text-gray-600">{report.check_out || '--:--'}</td>
+            <td className="px-4 py-5 text-sm text-gray-600">
+              <div>{report.check_in || '--:--'}</div>
+              {report.check_in_ip && (
+                <div className="text-[11px] font-mono text-gray-400">IP: {report.check_in_ip}</div>
+              )}
+              {report.check_in_device && (
+                <div className="text-[11px] text-gray-400 truncate max-w-[160px]" title={report.check_in_device}>
+                  {report.check_in_device}
+                </div>
+              )}
+            </td>
+            <td className="px-4 py-5 text-sm text-gray-600">
+              <div>{report.check_out || '--:--'}</div>
+              {report.check_out_ip && (
+                <div className="text-[11px] font-mono text-gray-400">IP: {report.check_out_ip}</div>
+              )}
+              {report.check_out_device && (
+                <div className="text-[11px] text-gray-400 truncate max-w-[160px]" title={report.check_out_device}>
+                  {report.check_out_device}
+                </div>
+              )}
+            </td>
+            <td className="px-4 py-5 text-sm font-semibold text-gray-700">
+              {report.check_in_machine || '--:--'}
+            </td>
+            <td className="px-4 py-5 text-sm font-semibold text-gray-700">
+              {report.check_out_machine || '--:--'}
+            </td>
             <td className="px-4 py-5">
               {report.statusKey === STATUS_DONE && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
@@ -160,8 +188,7 @@ export default function ReportHistory() {
                 </span>
               )}
               {report.statusKey === STATUS_WORKING && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">
                   {t('reporthistory.status_working')}
                 </span>
               )}
@@ -238,10 +265,30 @@ export default function ReportHistory() {
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkin')}</p>
                           <p className="text-sm font-semibold text-emerald-600">{selectedReport.check_in || '--:--'}</p>
+                          {selectedReport.check_in_ip && (
+                            <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_in_ip}</p>
+                          )}
+                          {selectedReport.check_in_device && (
+                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_in_device}</p>
+                          )}
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.modal_checkout')}</p>
                           <p className="text-sm font-semibold text-indigo-600">{selectedReport.check_out || '--:--'}</p>
+                          {selectedReport.check_out_ip && (
+                            <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_out_ip}</p>
+                          )}
+                          {selectedReport.check_out_device && (
+                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_out_device}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Vào (Máy chấm công)</p>
+                          <p className="text-sm font-semibold text-emerald-700">{selectedReport.check_in_machine || '--:--'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ra (Máy chấm công)</p>
+                          <p className="text-sm font-semibold text-indigo-700">{selectedReport.check_out_machine || '--:--'}</p>
                         </div>
                       </div>
 

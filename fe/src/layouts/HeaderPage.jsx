@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSelector from '../components/LanguageSelector'
 import { apiFetch } from '../services/api'
+import { taskService } from '../services/taskService'
 import { useState, useEffect } from 'react'
 
 const userNavigation = [
@@ -150,7 +151,11 @@ export default function HeaderPage({ isAdmin }) {
     }
   };
 
+  const [checkingTaskId, setCheckingTaskId] = useState(null);
+
   const handleNotificationClick = async (notif) => {
+    if (checkingTaskId) return;
+
     if (!notif.is_read) {
       try {
         await apiFetch(`/notification/${notif.notification_id}/read`, {
@@ -165,6 +170,24 @@ export default function HeaderPage({ isAdmin }) {
     }
     
     if (notif.url) {
+      const match = notif.url.match(/^\/tasks\/(\d+)/);
+      if (match) {
+        const taskId = match[1];
+        setCheckingTaskId(notif.notification_id);
+        try {
+          const res = await taskService.getTaskById(taskId);
+          if (!res || !res.success || !res.data) {
+            alert(t('taskdetails.task_not_found') || 'Công việc này đã bị xóa hoặc không tồn tại.');
+            setCheckingTaskId(null);
+            return;
+          }
+        } catch (error) {
+          alert(t('taskdetails.task_not_found') || 'Công việc này đã bị xóa hoặc không tồn tại.');
+          setCheckingTaskId(null);
+          return;
+        }
+        setCheckingTaskId(null);
+      }
       navigate(notif.url);
     }
   };
@@ -244,6 +267,8 @@ export default function HeaderPage({ isAdmin }) {
       (item.id === 'work' && (location.pathname.startsWith('/register') || location.pathname.startsWith('/history')))
   }));
 
+  const docsUrl = import.meta.env.VITE_DOCS_URL || (import.meta.env.DEV ? 'http://localhost:5174' : 'https://docs-qltt.kis-v.com/');
+
   return (
     <Disclosure as="nav" className="fixed top-0 z-50 w-full bg-white border-b border-gray-200" data-customizable-id="header-bg" data-customizable-type="bg">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -319,7 +344,7 @@ export default function HeaderPage({ isAdmin }) {
 
             {isAdmin && (
               <a
-                href="https://docs-qltt.kis-v.com/"
+                href={docsUrl}
                 target="_blank"
                 rel="noreferrer"
                 title={t('nav.docs')}
@@ -372,14 +397,16 @@ export default function HeaderPage({ isAdmin }) {
                   ) : (
                     notifications.map((notif) => {
                       const typeInfo = resolveNotificationType(notif);
+                      const isChecking = checkingTaskId === notif.notification_id;
                       return (
                         <MenuItem key={notif.notification_id}>
                           <div
-                            onClick={() => handleNotificationClick(notif)}
+                            onClick={() => !isChecking && handleNotificationClick(notif)}
                             className={classNames(
                               'block px-4 py-3.5 cursor-pointer transition-all duration-200 border-b border-gray-50 hover:bg-slate-50/50',
                               notif.is_read ? 'bg-white' : 'bg-blue-50/10',
-                              notif.is_read ? 'border-l-[4px] border-l-transparent' : 'border-l-[4px] border-l-[#0056b3]'
+                              notif.is_read ? 'border-l-[4px] border-l-transparent' : 'border-l-[4px] border-l-[#0056b3]',
+                              isChecking ? 'opacity-50 pointer-events-none' : ''
                             )}
                           >
                             <div className="flex items-start gap-3">

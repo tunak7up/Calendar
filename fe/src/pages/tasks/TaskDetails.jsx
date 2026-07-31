@@ -20,7 +20,8 @@ import {
   PencilSquareIcon,
   SparklesIcon,
   CpuChipIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatDateTime } from '../../utils/dateUtils';
@@ -36,7 +37,9 @@ import TaskStatusSelect from '../../components/TaskStatusSelect';
 import { useTranslation } from 'react-i18next';
 import BackButton from '../../components/BackButton';
 
-
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
 
 const downloadFile = async (url, fileName) => {
   try {
@@ -81,22 +84,34 @@ const isImageFile = (fileName) => {
 };
 
 const CommentItem = ({ comment, persons }) => {
-  const [files, setFiles] = useState([]);
+  const [fetchedFiles, setFetchedFiles] = useState([]);
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const commentId = comment.comment_id || comment.id;
-        const res = await apiFetch(`/file-attachment/comment/${commentId}`);
-        if (res.success) {
-          setFiles(res.data);
+    if (!comment.attachments || comment.attachments.length === 0) {
+      const fetchFiles = async () => {
+        try {
+          const commentId = comment.comment_id || comment.id;
+          const res = await apiFetch(`/file-attachment/comment/${commentId}`);
+          if (res.success) {
+            setFetchedFiles(res.data || []);
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchFiles();
+      };
+      fetchFiles();
+    }
   }, [comment]);
+
+  const rawAttachments = [...(comment.attachments || []), ...fetchedFiles];
+  const uniqueAttachments = [];
+  const seenUrls = new Set();
+  for (const att of rawAttachments) {
+    if (att && att.url && !seenUrls.has(att.url)) {
+      seenUrls.add(att.url);
+      uniqueAttachments.push(att);
+    }
+  }
 
   return (
     <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 max-w-[90%] sm:max-w-[80%]">
@@ -106,14 +121,14 @@ const CommentItem = ({ comment, persons }) => {
       </div>
       <p className="text-sm text-gray-900 whitespace-pre-wrap">{comment.content || comment.text}</p>
 
-      {files.length > 0 && (
+      {uniqueAttachments.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
-          {files.map(f => {
-            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${f.url}`;
-            const fileName = f.file_name || 'File đính kèm';
+          {uniqueAttachments.map((att, idx) => {
+            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+            const fileName = att.file_name || 'File đính kèm';
             const isImage = isImageFile(fileName);
             return (
-              <div key={f.file_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+              <div key={att.file_attachment_id || att.comment_attachment_id || idx} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
                 {isImage ? (
                   <button
                     type="button"
@@ -124,46 +139,6 @@ const CommentItem = ({ comment, persons }) => {
                       src={fullUrl}
                       alt={fileName}
                       className="w-full h-32 object-cover"
-                    />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => downloadFile(fullUrl, fileName)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline bg-blue-50 px-2 py-2 rounded-t-2xl w-full text-left"
-                  >
-                    <PaperClipIcon className="w-3 h-3" />
-                    {fileName}
-                  </button>
-                )}
-                {isImage && (
-                  <div className="px-2 py-1 text-xs text-gray-600 truncate" title={fileName}>
-                    {fileName}
-                  </div>
-                )}
-              </div>
-          )})}
-        </div>
-      )}
-
-      {comment.attachments && comment.attachments.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
-          {comment.attachments.map(att => {
-            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
-            const fileName = att.file_name || 'Attachment';
-            const isImage = isImageFile(fileName);
-            return (
-              <div key={att.comment_attachment_id} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
-                {isImage ? (
-                  <button
-                    type="button"
-                    onClick={() => window.open(fullUrl, '_blank')}
-                    className="block w-full h-32 overflow-hidden bg-gray-100 hover:bg-gray-200"
-                  >
-                    <img
-                      src={fullUrl}
-                      alt={fileName}
-                      className="w-full h-full object-cover"
                     />
                   </button>
                 ) : (
@@ -223,6 +198,239 @@ export default function TaskDetails() {
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [loadingTask, setLoadingTask] = useState(true);
+  const [taskNotFound, setTaskNotFound] = useState(false);
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [statusHistory, setStatusHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const fetchStatusHistory = useCallback(async () => {
+    if (!id) return;
+    setLoadingHistory(true);
+    try {
+      const res = await taskService.getStatusHistory(id);
+      if (res.success) {
+        setStatusHistory(res.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching status history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [id]);
+
+  const handleToggleHistory = () => {
+    const nextState = !isHistoryOpen;
+    setIsHistoryOpen(nextState);
+    if (nextState) {
+      fetchStatusHistory();
+    }
+  };
+
+function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text) {
+    return <span className="italic text-gray-400">(Xóa mô tả)</span>;
+  }
+
+  const isLong = text.length > maxLength;
+  const displayText = isLong && !isExpanded ? text.substring(0, maxLength) + '...' : text;
+
+  return (
+    <div className={className}>
+      <span className="whitespace-pre-wrap">{displayText}</span>
+      {isLong && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="ml-2 text-indigo-600 font-bold hover:underline inline-block cursor-pointer text-[11px]"
+        >
+          {isExpanded ? 'Thu gọn' : 'Xem thêm...'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+  const renderHistoryContent = (item) => {
+    const oldData = item.old_data || {};
+    const newData = item.changed_data || {};
+    const tableName = item.table_name;
+    const action = item.action;
+
+    if (tableName === 'task' || tableName === 'subtask') {
+      if (action === 'CREATE') {
+        const isSubtask = item.parent_table === 'task' || (item.parent_id && String(item.record_id) !== String(id));
+        return (
+          <div className="flex flex-wrap items-center gap-2 pt-1 font-medium text-emerald-700">
+            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-100">
+              {isSubtask ? '📌 Tạo công việc con' : '✨ Tạo mới công việc'}
+            </span>
+            {newData.title && <span className="font-semibold text-gray-800">"{newData.title}"</span>}
+          </div>
+        );
+      }
+      if (action === 'UPDATE') {
+        return (
+          <div className="space-y-1.5 pt-1 text-xs">
+            {newData.status && (
+              <div className="flex items-center gap-2 font-medium">
+                <span className="text-gray-500 font-semibold">{t('taskdetails.status_label') || 'Trạng thái'}:</span>
+                {oldData.status ? (
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">
+                    {oldData.status}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 italic text-[11px]">{t('taskdetails.initial_status') || 'Khởi tạo'}</span>
+                )}
+                <span className="text-gray-400">→</span>
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded text-[11px] border border-indigo-100">
+                  {newData.status}
+                </span>
+              </div>
+            )}
+
+            {newData.title && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Tên công việc:</span>
+                {oldData.title && <span className="line-through text-gray-400">{oldData.title}</span>}
+                <span>→</span>
+                <span className="font-bold text-gray-900">{newData.title}</span>
+              </div>
+            )}
+
+            {newData.description !== undefined && (
+              <div className="space-y-1 pt-1">
+                <span className="text-gray-500 font-semibold block">Mô tả công việc:</span>
+                {oldData.description && (
+                  <ExpandableHistoryText
+                    text={oldData.description}
+                    maxLength={100}
+                    className="bg-gray-50 p-2 rounded-lg border border-gray-200 text-gray-400 line-through text-[11px]"
+                  />
+                )}
+                <ExpandableHistoryText
+                  text={newData.description}
+                  maxLength={150}
+                  className="bg-indigo-50/60 p-2 rounded-lg border border-indigo-100 text-gray-800 font-medium text-[11px]"
+                />
+              </div>
+            )}
+
+            {newData.due_date && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Hạn chót:</span>
+                {oldData.due_date && <span className="line-through text-gray-400">{oldData.due_date.split('T')[0]}</span>}
+                <span>→</span>
+                <span className="font-bold text-indigo-600">{newData.due_date.split('T')[0]}</span>
+              </div>
+            )}
+
+            {newData.priority && (
+              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-gray-500 font-semibold">Mức ưu tiên:</span>
+                <span className="font-bold text-gray-800">{oldData.priority || 'medium'}</span>
+                <span>→</span>
+                <span className="font-bold text-indigo-600">{newData.priority}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex flex-wrap items-center gap-2 pt-1 font-medium text-red-600">
+            <span className="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[11px] font-bold border border-red-100">
+              🗑️ Xóa công việc con
+            </span>
+            {oldData.title && <span className="font-semibold text-gray-800">"{oldData.title}"</span>}
+          </div>
+        );
+      }
+    }
+
+    if (tableName === 'task_participant') {
+      const personName = item.target_person_name || (newData.participant_id || oldData.participant_id ? `ID: ${newData.participant_id || oldData.participant_id}` : 'thành viên');
+      if (action === 'CREATE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-blue-700">
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[11px] font-bold border border-blue-100">
+              👥 Thêm người thực hiện
+            </span>
+            <span className="font-bold text-gray-900">{personName}</span>
+            {newData.role && <span className="text-gray-500 font-semibold">với vai trò <span className="text-blue-600 font-bold">"{newData.role}"</span></span>}
+          </div>
+        );
+      }
+      if (action === 'UPDATE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-blue-700">
+            <span className="text-gray-500 font-semibold">Cập nhật vai trò của</span>
+            <span className="font-bold text-gray-900">{personName}</span>
+            <span className="text-gray-500">từ</span>
+            {oldData.role && <span className="line-through text-gray-400 font-semibold">"{oldData.role}"</span>}
+            <span className="text-gray-500">thành</span>
+            <span className="font-bold text-blue-700">"{newData.role}"</span>
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 font-medium text-red-600">
+            <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[11px] font-bold border border-red-100">
+              🚫 Xóa người thực hiện
+            </span>
+            <span className="font-bold text-gray-900">{personName}</span>
+          </div>
+        );
+      }
+    }
+
+    if (tableName === 'comment') {
+      return (
+        <div className="flex items-center gap-2 pt-1 font-medium text-purple-700">
+          <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[11px] font-bold border border-purple-100">
+            💬 Thêm bình luận mới
+          </span>
+          {newData.content && <span className="text-gray-700 italic truncate max-w-xs">"{newData.content}"</span>}
+        </div>
+      );
+    }
+
+    if (tableName === 'file_attachment') {
+      if (action === 'CREATE') {
+        return (
+          <div className="flex items-center gap-2 pt-1 font-medium text-amber-700">
+            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[11px] font-bold border border-amber-100">
+              📎 Tải lên tệp đính kèm
+            </span>
+            {newData.file_name && <span className="font-semibold text-gray-800">{newData.file_name}</span>}
+          </div>
+        );
+      }
+      if (action === 'DELETE') {
+        return (
+          <div className="flex items-center gap-2 pt-1 font-medium text-red-600">
+            <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[11px] font-bold border border-red-100">
+              🗑️ Xóa tệp đính kèm
+            </span>
+            {oldData.file_name && <span className="text-gray-500 font-semibold">{oldData.file_name}</span>}
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div className="text-xs text-gray-700 font-medium">
+        <span className="font-bold uppercase text-gray-500">{action}</span> {tableName}
+      </div>
+    );
+  };
 
   const handleAIAnalyze = async () => {
     setAiLoading(true);
@@ -258,10 +466,12 @@ export default function TaskDetails() {
   const [editedDueDate, setEditedDueDate] = useState('');
 
   const fetchTaskData = useCallback(() => {
+    setLoadingTask(true);
     taskService.getTaskById(id)
       .then(data => {
-        if (data.success) {
+        if (data.success && data.data) {
           setFullTask(data.data);
+          setTaskNotFound(false);
 
           // If it's a sub-task, fetch parent info
           if (data.data.parent_id) {
@@ -275,10 +485,16 @@ export default function TaskDetails() {
           } else {
             setParentTask(null);
           }
+        } else {
+          setTaskNotFound(true);
         }
       })
       .catch(error => {
         console.error('Error fetching task:', error);
+        setTaskNotFound(true);
+      })
+      .finally(() => {
+        setLoadingTask(false);
       });
   }, [id]);
 
@@ -594,6 +810,32 @@ export default function TaskDetails() {
     );
   }
 
+  if (loadingTask) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0056b3]"></div>
+        <p className="mt-3 text-sm text-[#0056b3] font-medium">Đang tải...</p>
+      </div>
+    );
+  }
+
+  if (taskNotFound) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-16 px-6 bg-white rounded-2xl shadow-sm border border-gray-100 my-8">
+        <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ExclamationTriangleIcon className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">
+          {t('taskdetails.task_not_found') || 'Công việc này đã bị xóa hoặc không tồn tại.'}
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          {t('taskdetails.task_not_found_desc') || 'Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng.'}
+        </p>
+        <BackButton className="mx-auto" />
+      </div>
+    );
+  }
+
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
       case 'high': return 'text-red-700 bg-red-100 border-red-200';
@@ -705,6 +947,9 @@ export default function TaskDetails() {
                   if (res.success) {
                     fetchTaskData();
                     fetchSubTasks();
+                    if (isHistoryOpen) {
+                      fetchStatusHistory();
+                    }
                   }
                 }}
               />
@@ -820,7 +1065,7 @@ export default function TaskDetails() {
 
         {/* Description */}
         <div className="p-5 sm:p-8 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <DocumentTextIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.description')}</h2>
@@ -923,7 +1168,7 @@ export default function TaskDetails() {
 
         {/* Attachments Section */}
         <div className="p-5 sm:p-8 border-b border-gray-100 bg-white">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <PaperClipIcon className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-bold text-gray-900">{t('taskdetails.attachments')}</h2>
@@ -1191,6 +1436,71 @@ export default function TaskDetails() {
           </div>
         </div>
       )}
+
+      {/* Status Change History Accordion */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <button
+          type="button"
+          onClick={handleToggleHistory}
+          className="w-full p-5 sm:p-6 flex items-center justify-between bg-white hover:bg-gray-50/50 transition-colors text-left font-bold text-gray-900 text-sm sm:text-base cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🕘</span>
+            <span className="font-extrabold text-gray-900">
+              {t('taskdetails.status_history_title') || 'Lịch sử thay đổi'}
+            </span>
+            {statusHistory.length > 0 && (
+              <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-indigo-100">
+                {statusHistory.length}
+              </span>
+            )}
+          </div>
+          <ChevronDownIcon
+            className={classNames(
+              'w-5 h-5 text-gray-400 transition-transform duration-200',
+              isHistoryOpen ? 'rotate-180' : ''
+            )}
+          />
+        </button>
+
+        {isHistoryOpen && (
+          <div className="p-5 sm:p-6 border-t border-gray-100 bg-gray-50/30">
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8 text-xs font-semibold text-indigo-600 gap-2">
+                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                <span>{t('taskdetails.loading_history') || 'Đang tải lịch sử thay đổi...'}</span>
+              </div>
+            ) : statusHistory.length === 0 ? (
+              <div className="text-center py-8 text-xs text-gray-400 font-semibold">
+                {t('taskdetails.no_status_history') || 'Chưa có lịch sử thay đổi trạng thái nào.'}
+              </div>
+            ) : (
+              <div className="relative border-l-2 border-indigo-100 ml-3 pl-4 space-y-4 my-2">
+                {statusHistory.map((item) => (
+                  <div key={item.id || item.history_id} className="relative group">
+                    <div className="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-indigo-500 ring-4 ring-white" />
+                    
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-xs space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-50 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900">
+                            {item.changer?.name || item.changer?.username || t('taskdetails.system_user') || 'Hệ thống'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-gray-400 font-medium">
+                          {formatDateTime(item.created_at || item.changed_at)}
+                        </span>
+                      </div>
+
+                      {renderHistoryContent(item)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
     </div>
   );

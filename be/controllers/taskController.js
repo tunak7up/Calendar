@@ -15,8 +15,9 @@ const createTask = async (req, res) => {
 
 const createSubTask = async (req, res) => {
     try {
-        const data = { ...req.body, created_by: req.user ? req.user.person_id : req.body.created_by };
-        const task = await taskService.createSubTask(req.params.parentId, data);
+        const createdBy = req.user ? req.user.person_id : req.body.created_by;
+        const data = { ...req.body, created_by: createdBy };
+        const task = await taskService.createSubTask(req.params.parentId, data, createdBy);
         sendRes(res, 201, 'Sub-task created successfully', task);
     } catch (error) {
         console.error('Error in createSubTask:', error);
@@ -73,16 +74,33 @@ const getAllTasksByParticipantsId = async (req, res) => {
 
 const updateTask = async (req, res) => {
     try {
-        const task = await taskService.updateTask(req.params.id, req.body);
+        const changedBy = req.user ? req.user.person_id : req.body.changed_by;
+        const task = await taskService.updateTask(req.params.id, req.body, changedBy);
         sendRes(res, 200, 'Task updated successfully', task);
     } catch (error) {
-        sendRes(res, 404, 'Task not found', null, error.message);
+        console.error('Error in updateTask controller:', error);
+        if (error.message === 'Task not found') {
+            sendRes(res, 404, 'Task not found', null, error.message);
+        } else {
+            sendRes(res, 500, 'Error updating task', null, error.message);
+        }
+    }
+};
+
+const getTaskStatusHistory = async (req, res) => {
+    try {
+        const history = await taskService.getTaskStatusHistory(req.params.id);
+        sendRes(res, 200, 'Task status history retrieved successfully', history);
+    } catch (error) {
+        console.error('Error in getTaskStatusHistory:', error);
+        sendRes(res, 500, 'Error retrieving status history', null, error.message);
     }
 };
 
 const deleteTask = async (req, res) => {
     try {
-        await taskService.deleteTask(req.params.id);
+        const changedBy = req.user ? req.user.person_id : null;
+        await taskService.deleteTask(req.params.id, changedBy);
         sendRes(res, 200, 'Task deleted successfully', null);
     } catch (error) {
         sendRes(res, 404, 'Task not found', null, error.message);
@@ -139,16 +157,18 @@ const getTasksBeforeDueDate = async (req, res) => {
 
 const updateTaskTitleOrDescription = async (req, res) => {
     try {
-        const task = await taskService.updateTaskTitleOrDescription(req.params.id, req.body);
-        sendRes(res, 200, 'Task updated successfully', task
-        );
+        const changedBy = req.user ? req.user.person_id : null;
+        const task = await taskService.updateTaskTitleOrDescription(req.params.id, req.body, changedBy);
+        sendRes(res, 200, 'Task updated successfully', task);
     } catch (error) {
         sendRes(res, 404, 'Task not found', null, error.message);
     }
 };
+
 const addParticipantToTask = async (req, res) => {
     try {
-        const participant = await taskService.addParticipantToTask(req.params.id, req.body);
+        const changedBy = req.user ? req.user.person_id : null;
+        const participant = await taskService.addParticipantToTask(req.params.id, req.body, changedBy);
         sendRes(res, 201, 'Participant added successfully', participant);
     } catch (error) {
         console.error('Error in addParticipantToTask:', error);
@@ -159,7 +179,8 @@ const addParticipantToTask = async (req, res) => {
 const updateParticipantRole = async (req, res) => {
     try {
         const { id, participantId } = req.params;
-        await taskService.updateParticipantRole(id, participantId, req.body);
+        const changedBy = req.user ? req.user.person_id : null;
+        await taskService.updateParticipantRole(id, participantId, req.body, changedBy);
         sendRes(res, 200, 'Participant role updated successfully', null);
     } catch (error) {
         console.error('Error in updateParticipantRole:', error);
@@ -170,7 +191,8 @@ const updateParticipantRole = async (req, res) => {
 const removeParticipantFromTask = async (req, res) => {
     try {
         const { id, participantId } = req.params;
-        await taskService.removeParticipantFromTask(id, participantId);
+        const changedBy = req.user ? req.user.person_id : null;
+        await taskService.removeParticipantFromTask(id, participantId, changedBy);
         sendRes(res, 200, 'Participant removed successfully', null);
     } catch (error) {
         console.error('Error in removeParticipantFromTask:', error);
@@ -294,5 +316,6 @@ module.exports = {
     previewImport,
     importTasks,
     importDirectTasks,
-    exportTemplate
+    exportTemplate,
+    getTaskStatusHistory
 };

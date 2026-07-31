@@ -93,13 +93,7 @@ export default function AddTask() {
             if (self) {
               const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
               if (!alreadyAdded) {
-                initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
-              } else {
-                initialAssignees = initialAssignees.map(a => 
-                  (a.person_id === self.person_id || a.name === self.name) 
-                    ? { ...a, isLocked: true } 
-                    : a
-                );
+                initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id }];
               }
             }
           }
@@ -133,13 +127,7 @@ export default function AddTask() {
       if (self) {
         const alreadyAdded = initialAssignees.some(a => a.person_id === self.person_id || a.name === self.name);
         if (!alreadyAdded) {
-          initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id, isLocked: true }];
-        } else {
-          initialAssignees = initialAssignees.map(a => 
-            (a.person_id === self.person_id || a.name === self.name) 
-              ? { ...a, isLocked: true } 
-              : a
-          );
+          initialAssignees = [...initialAssignees, { name: self.name, role: 'assignee', person_id: self.person_id }];
         }
       }
     }
@@ -239,10 +227,7 @@ export default function AddTask() {
   const removeAssignee = (personIdOrName) => {
     setFormData({ 
       ...formData, 
-      assignees: formData.assignees.filter(a => {
-        if (a.isLocked) return true;
-        return !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName);
-      }) 
+      assignees: formData.assignees.filter(a => !(a.person_id?.toString() === personIdOrName.toString() || a.name === personIdOrName))
     });
   };
 
@@ -250,12 +235,25 @@ export default function AddTask() {
     <div className="space-y-6 pb-20">
       <div>
         <BackButton className="mb-6" />
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="add-task-title" data-customizable-type="text">{t('addtask.title')}</h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="add-task-subtitle" data-customizable-type="text">{t('addtask.subtitle')}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-customizable-id="add-task-title" data-customizable-type="text">{t('addtask.title')}</h1>
+            <p className="text-gray-500 mt-2 text-sm sm:text-base" data-customizable-id="add-task-subtitle" data-customizable-type="text">{t('addtask.subtitle')}</p>
+          </div>
+          <button
+            onClick={handleSubmit}
+            data-customizable-id="btn-add-task-header-submit"
+            data-customizable-type="bg"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-xl shadow-blue-100 active:scale-95 flex items-center gap-2 self-start sm:self-auto shrink-0"
+          >
+            <PlusIcon className="w-5 h-5" />
+            {t('addtask.btn_create')}
+          </button>
+        </div>
       </div>
 
       {/* Task Definition Section */}
-      <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/40 border border-gray-100/80 p-8 md:p-10 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/50">
+      <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/40 border border-gray-100/80 p-4 sm:p-8 md:p-10 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/50">
         <h2 className="text-base font-bold text-gray-800 mb-6 flex items-center gap-3">
           <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50 text-blue-600">
             <ListBulletIcon className="w-4 h-4" />
@@ -365,7 +363,7 @@ export default function AddTask() {
 
         <div className="space-y-3 pt-2">
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{t('addtask.label_priority')}</label>
-          <div className="flex gap-4 w-full bg-[#f8fafc] p-2 rounded-2xl border border-gray-100 shadow-inner">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-4 w-full bg-[#f8fafc] p-1.5 sm:p-2 rounded-2xl border border-gray-100 shadow-inner">
             {['Low', 'Medium', 'High'].map((level) => {
               const isActive = formData.priority === level;
               let activeClass = '';
@@ -374,13 +372,13 @@ export default function AddTask() {
 
               if (level === 'Low') {
                 activeClass = 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-emerald-500'}`}></span>;
+                icon = <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isActive ? 'bg-current' : 'bg-emerald-500'}`}></span>;
               } else if (level === 'Medium') {
                 activeClass = 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-amber-500'}`}></span>;
+                icon = <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isActive ? 'bg-current' : 'bg-amber-500'}`}></span>;
               } else {
                 activeClass = 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-200/50';
-                icon = <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-current' : 'bg-rose-500'}`}></span>;
+                icon = <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isActive ? 'bg-current' : 'bg-rose-500'}`}></span>;
               }
 
               const labelText = level === 'High' ? t('addtask.priority_high') : level === 'Medium' ? t('addtask.priority_medium') : t('addtask.priority_low');
@@ -391,13 +389,13 @@ export default function AddTask() {
                   type="button"
                   onClick={() => setFormData({ ...formData, priority: level })}
                   data-custom-component={isActive ? `TaskPriority-${level}` : undefined}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-6 text-xs font-bold rounded-xl border border-transparent transition-all duration-300 cursor-pointer select-none transform ${isActive 
+                  className={`flex items-center justify-center gap-1 sm:gap-2 py-2.5 px-1.5 sm:py-3.5 sm:px-6 text-[10px] sm:text-xs font-bold rounded-xl border border-transparent transition-all duration-300 cursor-pointer select-none transform ${isActive 
                     ? `${activeClass} scale-[1.01]` 
                     : `${inactiveClass}`
                   }`}
                 >
                   {icon}
-                  {labelText}
+                  <span className="truncate">{labelText}</span>
                 </button>
               );
             })}

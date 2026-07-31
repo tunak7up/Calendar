@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const fileAttachment = require('../models/fileAttachment');
+const { logChange } = require('../utils/changeLogger');
+const { deletePhysicalFile } = require('../utils/fileHelper');
 
 // Configuration
 const UPLOADS_DIR = process.env.UPLOADS_DIR
@@ -111,6 +113,19 @@ const createFileAttachment = async (attachable_type, attachable_id, fileData) =>
             file_type: fileData.mimeType,
             file_size: fileData.fileSize
         });
+
+        if (attachable_type === 'task') {
+            await logChange({
+                tableName: 'file_attachment',
+                recordId: attachment.file_attachment_id,
+                parentTable: 'task',
+                parentId: attachable_id,
+                action: 'CREATE',
+                newData: { file_name: attachment.file_name, file_type: attachment.file_type },
+                changedBy: null
+            });
+        }
+
         return attachment;
     } catch (error) {
         // Delete file if DB insert fails
@@ -161,10 +176,18 @@ const deleteAttachment = async (file_attachment_id) => {
         }
 
         // Delete file from disk
-        const actualFileName = path.basename(attachment.url);
-        const filePath = path.join(UPLOADS_DIR, actualFileName);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        deletePhysicalFile(attachment.url);
+
+        if (attachment.attachable_type === 'task') {
+            await logChange({
+                tableName: 'file_attachment',
+                recordId: attachment.file_attachment_id,
+                parentTable: 'task',
+                parentId: attachment.attachable_id,
+                action: 'DELETE',
+                oldData: { file_name: attachment.file_name },
+                changedBy: null
+            });
         }
 
         // Delete record from DB

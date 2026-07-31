@@ -564,7 +564,7 @@ export default function TaskList({ isAdmin }) {
         onPageChange={setCurrentPage}
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); setCurrentPage(1); }}
         tableClassName="min-w-[600px]"
-        renderRow={(task) => (
+        renderRow={(task, index) => (
           <tr
             key={task.task_id}
             onClick={() => navigate(`/tasks/${task.task_id}`)}

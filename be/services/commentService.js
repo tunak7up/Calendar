@@ -1,13 +1,35 @@
-const { comment, comment_attachment } = require('../models');
+const { comment, person, fileAttachment } = require('../models');
+const { logChange } = require('../utils/changeLogger');
+const { Op } = require('sequelize');
 const sequelize = require('../config/db');
 
 const getAllComments = async () => {
-    return await comment.findAll({
-        include: {
-            model: comment_attachment,
-            as: 'attachments',
-            attributes: ['comment_attachment_id', 'url']
-        }
+    const comments = await comment.findAll();
+    const commentIds = comments.map(c => c.comment_id);
+    let fileMap = {};
+    if (fileAttachment && commentIds.length > 0) {
+        const files = await fileAttachment.findAll({
+            where: {
+                attachable_type: 'comment',
+                attachable_id: { [Op.in]: commentIds }
+            }
+        });
+        files.forEach(f => {
+            if (!fileMap[f.attachable_id]) fileMap[f.attachable_id] = [];
+            fileMap[f.attachable_id].push({
+                file_attachment_id: f.file_attachment_id,
+                url: f.url,
+                file_name: f.file_name,
+                file_type: f.file_type,
+                file_size: f.file_size
+            });
+        });
+    }
+
+    return comments.map(c => {
+        const cJson = c.toJSON();
+        cJson.attachments = fileMap[cJson.comment_id] || [];
+        return cJson;
     });
 };
 
@@ -20,13 +42,26 @@ const createCommentByTaskId = async (taskId, data) => {
             created_at: new Date()
         }, { transaction: t });
 
-        if (data.attachments && data.attachments.length > 0) {
+        if (data.attachments && data.attachments.length > 0 && fileAttachment) {
             const attachments = data.attachments.map(url => ({
-                comment_id: newComment.comment_id,
+                attachable_type: 'comment',
+                attachable_id: newComment.comment_id,
                 url
             }));
-            await comment_attachment.bulkCreate(attachments, { transaction: t });
+            await fileAttachment.bulkCreate(attachments, { transaction: t });
         }
+
+        await logChange({
+            tableName: 'comment',
+            recordId: newComment.comment_id,
+            parentTable: 'task',
+            parentId: taskId,
+            action: 'CREATE',
+            newData: { content: data.content, person_id: data.person_id },
+            changedBy: data.person_id,
+            transaction: t
+        });
+
         return newComment;
     });
 
@@ -87,15 +122,43 @@ const createCommentByTaskId = async (taskId, data) => {
 };
 
 const getCommentsByTaskId = async (taskId) => {
-    return await comment.findAll({
-        include: {
-            model: comment_attachment,
-            as: 'attachments',
-            attributes: ['comment_attachment_id', 'url']
-        },
-        where: {
-            task_id: taskId
-        }
+    const comments = await comment.findAll({
+        where: { task_id: taskId },
+        include: [
+            {
+                model: person,
+                as: 'commenter',
+                attributes: ['person_id', 'name', 'username']
+            }
+        ],
+        order: [['created_at', 'ASC']]
+    });
+
+    const commentIds = comments.map(c => c.comment_id);
+    let fileMap = {};
+    if (fileAttachment && commentIds.length > 0) {
+        const files = await fileAttachment.findAll({
+            where: {
+                attachable_type: 'comment',
+                attachable_id: { [Op.in]: commentIds }
+            }
+        });
+        files.forEach(f => {
+            if (!fileMap[f.attachable_id]) fileMap[f.attachable_id] = [];
+            fileMap[f.attachable_id].push({
+                file_attachment_id: f.file_attachment_id,
+                url: f.url,
+                file_name: f.file_name,
+                file_type: f.file_type,
+                file_size: f.file_size
+            });
+        });
+    }
+
+    return comments.map(c => {
+        const cJson = c.toJSON();
+        cJson.attachments = fileMap[cJson.comment_id] || [];
+        return cJson;
     });
 };
 

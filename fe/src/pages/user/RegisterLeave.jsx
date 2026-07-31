@@ -22,6 +22,7 @@ export default function RegisterLeave() {
   const [reason, setReason] = useState('');
   const [schedule, setSchedule] = useState([]);
   const [workDays, setWorkDays] = useState([]);
+  const [pendingDates, setPendingDates] = useState([]);
   const [presetReasons, setPresetReasons] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState(null);
 
@@ -38,6 +39,30 @@ export default function RegisterLeave() {
     };
     loadPresetReasons();
   }, []);
+
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      if (!user?.person_id) return;
+      try {
+        const result = await requestService.getRequestsByRequester(user.person_id);
+        if (result.success) {
+          const pending = result.data.filter(req => req.status === 'pending');
+          const dates = [];
+          pending.forEach(req => {
+            if (req.details) {
+              req.details.forEach(d => {
+                if (d.date) dates.push(d.date);
+              });
+            }
+          });
+          setPendingDates(dates);
+        }
+      } catch (error) {
+        console.error('Error fetching pending requests:', error);
+      }
+    };
+    fetchPendingRequests();
+  }, [user?.person_id]);
 
   const fetchShiftAndAdd = useCallback(async (dateStr) => {
     if (!user?.person_id) return;
@@ -175,7 +200,9 @@ export default function RegisterLeave() {
             <WeekDatePicker
               viewDate={viewDateObj}
               onViewChange={setViewDateObj}
-              selectedDates={schedule.map(item => item.date)}
+              selectedDates={[]}
+              addedDates={schedule.map(item => item.date)}
+              pendingDates={pendingDates}
               onDayClick={handleDayClick}
               workDays={workDays}
             />

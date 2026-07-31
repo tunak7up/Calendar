@@ -24,7 +24,8 @@ const createPerson = async (
     status,
     role,
     username,
-    email
+    email,
+    company_card
   }) => {
   const existingUsername = await person.findOne({ where: { username } });
   if (existingUsername) throw new Error('Username already exists');
@@ -41,6 +42,14 @@ const createPerson = async (
     }
   }
 
+  const finalCompanyCard = (company_card && company_card.trim() !== '') ? company_card.trim() : null;
+  if (finalCompanyCard) {
+    const existingCard = await person.findOne({ where: { company_card: finalCompanyCard } });
+    if (existingCard) {
+      throw new Error('Company card already exists');
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   return await person.create(
     {
@@ -49,7 +58,8 @@ const createPerson = async (
       status,
       role,
       username,
-      email: finalEmail
+      email: finalEmail,
+      company_card: finalCompanyCard
     });
 };
 
@@ -60,7 +70,8 @@ const updatePerson = async (
     status,
     role,
     username,
-    email }) => {
+    email,
+    company_card }) => {
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
 
@@ -76,8 +87,23 @@ const updatePerson = async (
     if (existingEmail) throw new Error('Email already exists');
   }
 
-  const updateData = { name, status, role, username, email: finalEmail };
-  if (password) {
+  const finalCompanyCard = (company_card && company_card.trim() !== '') ? company_card.trim() : null;
+  if (finalCompanyCard && finalCompanyCard !== data.company_card) {
+    const existingCard = await person.findOne({ where: { company_card: finalCompanyCard } });
+    if (existingCard) {
+      throw new Error('Company card already exists');
+    }
+  }
+
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (status !== undefined) updateData.status = status;
+  if (role !== undefined) updateData.role = role;
+  if (username !== undefined) updateData.username = username;
+  if (email !== undefined) updateData.email = finalEmail;
+  if (company_card !== undefined) updateData.company_card = finalCompanyCard;
+
+  if (password && password.trim() !== '') {
     updateData.password = await bcrypt.hash(password, 10);
   }
 

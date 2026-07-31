@@ -118,17 +118,16 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                                 📋 Báo cáo công việc hàng ngày được AI tổng hợp:
                             </div>
                             <div className="ai-result-box">
-                                <div style={{ display: 'flex', gap: '8px', position: 'absolute', top: '14px', right: '14px' }}>
+                                <div className="ai-result-box-header">
                                     {onApplyReport && (
                                         <button 
-                                            className="ai-copy-btn" 
+                                            className="ai-action-btn ai-btn-apply" 
                                             onClick={handleApply}
-                                            style={{ background: '#4f46e5', color: '#ffffff', borderColor: '#4f46e5', position: 'static' }}
                                         >
                                             📥 Áp dụng vào báo cáo
                                         </button>
                                     )}
-                                    <button className="ai-copy-btn" onClick={handleCopy} style={{ position: 'static' }}>
+                                    <button className="ai-action-btn ai-btn-copy" onClick={handleCopy}>
                                         {copied ? (
                                             <>✅ Đã sao chép!</>
                                         ) : (
@@ -142,7 +141,9 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                                         )}
                                     </button>
                                 </div>
-                                {reportResult}
+                                <div className="ai-result-box-content">
+                                    {reportResult}
+                                </div>
                             </div>
                         </div>
                     )}

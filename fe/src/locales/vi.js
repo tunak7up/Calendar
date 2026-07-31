@@ -79,7 +79,9 @@ export const vi = {
       alert_checkout_success: "Đã gửi báo cáo và Check-out thành công lúc {{time}}",
       alert_draft_success: "Đã lưu nội dung báo cáo thành công!",
       alert_checkin_fail: "Check-in thất bại: {{message}}",
+      alert_checkin_fail_ip: "Không thể check-in: {{message}} (Vui lòng kết nối mạng văn phòng)",
       alert_checkin_fail_general: "Không thể check-in. Vui lòng thử lại.",
+      alert_submit_fail_ip: "Không thể submit: {{message}} (Vui lòng kết nối mạng văn phòng)",
       alert_save_fail_no_report: "Không tìm thấy ID báo cáo, vui lòng Check-in trước.",
       alert_action_fail: "Gặp lỗi trong quá trình xử lý, vui lòng thử lại.",
       alert_save_fail: "Lưu báo cáo thất bại, vui lòng thử lại.",
@@ -163,6 +165,7 @@ export const vi = {
       subtitle: "Xem và theo dõi trạng thái các yêu cầu đã gửi.",
       btn_register_work: "Đăng ký làm việc",
       btn_register_leave: "Đăng ký nghỉ phép",
+      btn_register_exception: "Đăng ký ngoại lệ",
       search_placeholder: "Tìm kiếm yêu cầu...",
       filter: "Bộ lọc:",
       type_all: "Tất cả loại yêu cầu",
@@ -591,7 +594,15 @@ export const vi = {
       alert_delete_fail: "Xóa công việc thất bại",
       alert_delete_error: "Lỗi: ",
       confirm_delete_file: "Xóa file này?",
-      confirm_delete_all_files: "Xóa TẤT CẢ file của công việc này?"
+      confirm_delete_all_files: "Xóa TẤT CẢ file của công việc này?",
+      task_not_found: "Công việc này đã bị xóa hoặc không tồn tại.",
+      task_not_found_desc: "Công việc bạn đang tìm kiếm có thể đã bị xóa hoặc đường dẫn không đúng.",
+      status_history_title: "Lịch sử thay đổi",
+      loading_history: "Đang tải lịch sử thay đổi...",
+      no_status_history: "Chưa có lịch sử thay đổi trạng thái nào.",
+      system_user: "Hệ thống",
+      status_label: "Trạng thái",
+      initial_status: "Khởi tạo"
     },
     sidebar: {
       open: "Mở thanh bên",
@@ -656,7 +667,10 @@ export const vi = {
       weekDatePicker: {
         prevWeek: "Tuần trước",
         nextWeek: "Tuần sau",
-        selectDate: "Chọn ngày để nhảy tới tuần tương ứng"
+        selectDate: "Chọn ngày để nhảy tới tuần tương ứng",
+        legend_selecting: "Đang chọn",
+        legend_added: "Đã thêm vào danh sách",
+        legend_pending: "Chờ duyệt"
       },
       wheelTimePicker: {
         hour: "Giờ",

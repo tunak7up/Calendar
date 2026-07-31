@@ -79,6 +79,7 @@ export const en = {
       alert_checkout_success: "Report submitted and Checked-out successfully at {{time}}",
       alert_draft_success: "Report draft saved successfully!",
       alert_checkin_fail: "Check-in failed: {{message}}",
+      alert_checkin_fail_ip: "Can't check-in: {{message}} (Please connect to the office network)",
       alert_checkin_fail_general: "Failed to check-in. Please try again.",
       alert_save_fail_no_report: "Report ID not found, please Check-in first.",
       alert_action_fail: "An error occurred during processing, please try again.",
@@ -164,6 +165,7 @@ export const en = {
       subtitle: "View and track the status of submitted requests.",
       btn_register_work: "Register Work",
       btn_register_leave: "Register Leave",
+      btn_register_exception: "Register Exception",
       search_placeholder: "Search requests...",
       filter: "Filters:",
       type_all: "All Request Types",
@@ -592,7 +594,15 @@ export const en = {
       alert_delete_fail: "Failed to delete task",
       alert_delete_error: "Error: ",
       confirm_delete_file: "Delete this file?",
-      confirm_delete_all_files: "Delete ALL files from this task?"
+      confirm_delete_all_files: "Delete ALL files from this task?",
+      task_not_found: "This task has been deleted or does not exist.",
+      task_not_found_desc: "The task you are looking for may have been deleted or the link is invalid.",
+      status_history_title: "Status History",
+      loading_history: "Loading status history...",
+      no_status_history: "No status change history found.",
+      system_user: "System",
+      status_label: "Status",
+      initial_status: "Initial"
     },
     sidebar: {
       open: "Open sidebar",
@@ -657,7 +667,10 @@ export const en = {
       weekDatePicker: {
         prevWeek: "Previous week",
         nextWeek: "Next week",
-        selectDate: "Select date to jump to the corresponding week"
+        selectDate: "Select date to jump to the corresponding week",
+        legend_selecting: "Selecting",
+        legend_added: "Added to List",
+        legend_pending: "Pending Approval"
       },
       wheelTimePicker: {
         hour: "Hour",

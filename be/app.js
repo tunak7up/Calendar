@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const sequelize = require('./config/db');
 require('./models'); // Load all models and associations
 const port = process.env.PORT || 5000;
+app.set('trust proxy', true);
 
 // Import attendance notification service
 const {

@@ -6,7 +6,6 @@ const request = require('./request');
 const request_detail = require('./request_detail');
 const response = require('./response');
 const comment = require('./comment');
-const comment_attachment = require('./comment_attachment');
 const report_attachment = require('./report_attachment');
 const task_participant = require('./task_participant');
 const task_attachment = require('./task_attachment');
@@ -18,6 +17,8 @@ const theme_setting = require('./theme_setting');
 const ai_agent = require('./ai_agent');
 const task_status = require('./task_status');
 const push_subscription = require('./pushSubscription');
+const change_history = require('./change_history');
+const fileAttachment = require('./fileAttachment');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -37,9 +38,6 @@ task.hasMany(comment, { foreignKey: 'task_id', as: 'comments' });
 comment.belongsTo(person, { foreignKey: 'person_id', as: 'commenter' });
 person.hasMany(comment, { foreignKey: 'person_id', as: 'comments' });
 
-comment.hasMany(comment_attachment, { foreignKey: 'comment_id', as: 'attachments' });
-comment_attachment.belongsTo(comment, { foreignKey: 'comment_id', as: 'comment' });
-
 report_attachment.belongsTo(daily_report, { foreignKey: 'report_id', as: 'daily_report' });
 daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachments' });
 
@@ -51,6 +49,9 @@ person.belongsToMany(task, { through: task_participant, foreignKey: 'participant
 
 task.hasMany(task_participant, { foreignKey: 'task_id', as: 'task_participants' });
 task_participant.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
+
+person.hasMany(change_history, { foreignKey: 'changed_by', as: 'change_histories' });
+change_history.belongsTo(person, { foreignKey: 'changed_by', as: 'changer', onDelete: 'NO ACTION' });
 
 notification.belongsTo(person, { foreignKey: 'notificate_to', as: 'recipient' });
 person.hasMany(notification, { foreignKey: 'notificate_to', as: 'notifications' });
@@ -85,7 +86,6 @@ module.exports = {
     request_detail,
     response,
     comment,
-    comment_attachment,
     report_attachment,
     task_participant,
     task_attachment,
@@ -96,5 +96,7 @@ module.exports = {
     theme_setting,
     ai_agent,
     task_status,
-    push_subscription
+    push_subscription,
+    change_history,
+    fileAttachment
 };

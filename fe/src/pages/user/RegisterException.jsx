@@ -41,6 +41,7 @@ export default function RegisterException() {
   const [workSchedules, setWorkSchedules] = useState([]);
   const [workDays, setWorkDays] = useState([]);
   const [presetReasons, setPresetReasons] = useState([]);
+  const [pendingDates, setPendingDates] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState(null);
 
   useEffect(() => {
@@ -56,6 +57,30 @@ export default function RegisterException() {
     };
     loadPresetReasons();
   }, []);
+
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      if (!user?.person_id) return;
+      try {
+        const result = await requestService.getRequestsByRequester(user.person_id);
+        if (result.success) {
+          const pending = result.data.filter(req => req.status === 'pending');
+          const dates = [];
+          pending.forEach(req => {
+            if (req.details) {
+              req.details.forEach(d => {
+                if (d.date) dates.push(d.date);
+              });
+            }
+          });
+          setPendingDates(dates);
+        }
+      } catch (error) {
+        console.error('Error fetching pending requests:', error);
+      }
+    };
+    fetchPendingRequests();
+  }, [user?.person_id]);
 
   // Fetch approved schedule days for user
   useEffect(() => {
@@ -234,7 +259,7 @@ export default function RegisterException() {
       return options.filter(t => t > standardStart && t < standardEnd);
     }
     if (type === 'leave_early') {
-      const options = ['10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+      const options = ['10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15'];
       return options.filter(t => t < standardEnd && t > standardStart);
     }
     if (type === 'leave_late') {
@@ -283,6 +308,8 @@ export default function RegisterException() {
               viewDate={viewDateObj}
               onViewChange={setViewDateObj}
               selectedDates={selectedDate ? [selectedDate.date] : []}
+              addedDates={[]}
+              pendingDates={pendingDates}
               onDayClick={handleDayClick}
               workDays={workDays}
             />
@@ -407,7 +434,7 @@ export default function RegisterException() {
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                 {t('register.exception_reason')}
               </h2>
-              
+
               {presetReasons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
                   {presetReasons.map((pr) => {
@@ -426,11 +453,10 @@ export default function RegisterException() {
                             setSelectedPresetId(pr.id);
                           }
                         }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
-                            : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-750'
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none ${isSelected
+                          ? 'border-blue-500 bg-blue-50/50 text-blue-600 shadow-sm shadow-blue-500/5'
+                          : 'border-gray-150 bg-gray-50/70 text-gray-500 hover:bg-gray-100 hover:text-gray-750'
+                          }`}
                       >
                         {textVal}
                       </button>

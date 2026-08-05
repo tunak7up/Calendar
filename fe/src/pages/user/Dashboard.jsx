@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [showAddStatusInput, setShowAddStatusInput] = useState(false);
   const fileInputRef = useRef(null);
+  const reportTextareaRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(() => {
     return Capacitor.isNativePlatform() || window.innerWidth < 768;
@@ -130,6 +131,16 @@ export default function Dashboard() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };
 
+  const adjustReportTextareaHeight = useCallback(() => {
+    const textarea = reportTextareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const maxHeight = 300;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, []);
+
   useEffect(() => {
     const checkDailyReport = async () => {
       if (!user) return;
@@ -175,6 +186,10 @@ export default function Dashboard() {
 
     checkDailyReport();
   }, [user]);
+
+  useEffect(() => {
+    adjustReportTextareaHeight();
+  }, [reportText, adjustReportTextareaHeight]);
 
   const fetchReportAttachments = useCallback(async () => {
     if (!reportId) return;
@@ -652,11 +667,14 @@ export default function Dashboard() {
               </button>
             </div>
             <textarea
+              ref={reportTextareaRef}
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
+              onInput={adjustReportTextareaHeight}
               placeholder={t("dashboard.report_placeholder")}
               rows={4}
-              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
+              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm overflow-hidden"
+              style={{ minHeight: 120, maxHeight: 300 }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   const val = e.target.value;

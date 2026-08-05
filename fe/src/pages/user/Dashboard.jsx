@@ -676,12 +676,9 @@ export default function Dashboard() {
               className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm overflow-hidden"
               style={{ minHeight: 120, maxHeight: 300 }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  const val = e.target.value;
-                  if (val.length === 0 || val.endsWith("\n")) {
-                    e.preventDefault();
-                    handleSubmitReport();
-                  }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+                  e.preventDefault();
+                  handleSaveDescription();
                 }
               }}
             />

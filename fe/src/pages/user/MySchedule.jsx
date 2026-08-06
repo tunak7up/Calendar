@@ -29,7 +29,7 @@ export default function MySchedule() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
-  const lastFetchedRangeRef = useRef({ start: '', end: '', lang: '' });
+  const fetchedKeysRef = useRef(new Set());
 
   const [workingHours, setWorkingHours] = useState([]);
   const [rawTasks, setRawTasks] = useState([]);
@@ -58,9 +58,9 @@ export default function MySchedule() {
         dailyReportService.getDailyReportByPersonId(user.person_id)
       ]);
 
-      let registeredWorkHours = [];
+      let newWorkHours = [];
       if (scheduleRes.success) {
-        registeredWorkHours = scheduleRes.data.map(item => ({
+        const registeredWorkHours = scheduleRes.data.map(item => ({
           id: `work_${item.schedule_id}`,
           title: t('myschedule.work_title'),
           start: item.start_time,
@@ -68,38 +68,63 @@ export default function MySchedule() {
           priorityOrder: 6,
           extendedProps: { isWorkHour: true, priorityOrder: 6, isRegistered: true }
         }));
-      }
 
-      let fetchedReports = [];
-      if (reportRes.success) {
-        fetchedReports = reportRes.data;
-        setReports(fetchedReports);
-      }
-
-      const unregisteredWorkHours = [];
-      fetchedReports.forEach(rep => {
-        const repDate = getLocalYYYYMMDD(rep.working_date);
-        if (!repDate) return;
-        const hasSchedule = registeredWorkHours.some(wh => getLocalYYYYMMDD(wh.start) === repDate);
-
-        if (!hasSchedule) {
-          const checkInTime = rep.check_in || '08:00:00';
-          const checkOutTime = rep.check_out || '17:00:00';
-          unregisteredWorkHours.push({
-            id: `report_work_${rep.id}`,
-            title: t('myschedule.legend_unscheduled') || 'Đi làm ngoài lịch',
-            start: `${repDate}T${checkInTime}`,
-            end: `${repDate}T${checkOutTime}`,
-            priorityOrder: 6,
-            extendedProps: { isWorkHour: true, priorityOrder: 6, isRegistered: false, report: rep }
+        let fetchedReports = [];
+        if (reportRes.success) {
+          fetchedReports = reportRes.data;
+          // Merge reports: preserve existing entries not in new data
+          setReports(prev => {
+            const merged = new Map(prev.map(r => [r.id, r]));
+            fetchedReports.forEach(r => merged.set(r.id, r));
+            return Array.from(merged.values());
           });
         }
+
+        const unregisteredWorkHours = [];
+        fetchedReports.forEach(rep => {
+          const repDate = getLocalYYYYMMDD(rep.working_date);
+          if (!repDate) return;
+          const hasSchedule = registeredWorkHours.some(wh => getLocalYYYYMMDD(wh.start) === repDate);
+
+          if (!hasSchedule) {
+            const checkInTime = rep.check_in || '08:00:00';
+            const checkOutTime = rep.check_out || '17:00:00';
+            unregisteredWorkHours.push({
+              id: `report_work_${rep.id}`,
+              title: t('myschedule.legend_unscheduled') || 'Đi làm ngoài lịch',
+              start: `${repDate}T${checkInTime}`,
+              end: `${repDate}T${checkOutTime}`,
+              priorityOrder: 6,
+              extendedProps: { isWorkHour: true, priorityOrder: 6, isRegistered: false, report: rep }
+            });
+          }
+        });
+
+        newWorkHours = [...registeredWorkHours, ...unregisteredWorkHours];
+      } else if (reportRes.success) {
+        // No schedule data but we have reports
+        const fetchedReports = reportRes.data;
+        setReports(prev => {
+          const merged = new Map(prev.map(r => [r.id, r]));
+          fetchedReports.forEach(r => merged.set(r.id, r));
+          return Array.from(merged.values());
+        });
+      }
+
+      // Merge workingHours by id to preserve data from other months
+      setWorkingHours(prev => {
+        const merged = new Map(prev.map(wh => [wh.id, wh]));
+        newWorkHours.forEach(wh => merged.set(wh.id, wh));
+        return Array.from(merged.values());
       });
 
-      setWorkingHours([...registeredWorkHours, ...unregisteredWorkHours]);
-
       if (taskRes.success) {
-        setRawTasks(taskRes.data);
+        // Merge tasks by task_id to preserve data from other months
+        setRawTasks(prev => {
+          const merged = new Map(prev.map(t => [t.task_id, t]));
+          taskRes.data.forEach(t => merged.set(t.task_id, t));
+          return Array.from(merged.values());
+        });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -339,10 +364,12 @@ export default function MySchedule() {
               const lang = i18n.language;
               const key = `${y}-${m}-${lang}`;
 
-              if (lastFetchedRangeRef.current.key === key) {
+              // Use a Set to track ALL fetched months — never skip a month
+              // just because it was fetched before (old data may have been overwritten)
+              if (fetchedKeysRef.current.has(key)) {
                 return;
               }
-              lastFetchedRangeRef.current = { key };
+              fetchedKeysRef.current.add(key);
               setViewDate(currentStart);
               fetchData(currentStart);
             }}

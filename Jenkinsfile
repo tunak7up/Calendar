@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
     environment {
         COMPOSE_FILE = 'docker-compose.yml'
     }
@@ -10,6 +14,21 @@ pipeline {
             steps {
                 echo 'Checking out source code...'
                 checkout scm
+            }
+        }
+
+        stage('Prepare Environment') {
+            steps {
+                echo 'Loading environment files from Jenkins Credentials...'
+                withCredentials([
+                    file(credentialsId: 'calendar-root-env', variable: 'ROOT_ENV'),
+                    file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER')
+                ]) {
+                    sh '''
+                        cp "$ROOT_ENV" .env
+                        cp "$BE_ENV_DOCKER" be/.env.docker
+                    '''
+                }
             }
         }
 

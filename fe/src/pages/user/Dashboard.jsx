@@ -51,6 +51,8 @@ export default function Dashboard() {
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [showAddStatusInput, setShowAddStatusInput] = useState(false);
   const fileInputRef = useRef(null);
+  const reportTextareaRef = useRef(null);
+  const [isReportExpanded, setIsReportExpanded] = useState(false);
 
   const [isMobile, setIsMobile] = useState(() => {
     return Capacitor.isNativePlatform() || window.innerWidth < 768;
@@ -130,6 +132,16 @@ export default function Dashboard() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };
 
+  const adjustReportTextareaHeight = useCallback(() => {
+    const textarea = reportTextareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const maxHeight = isReportExpanded ? 800 : 300;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [isReportExpanded]);
+
   useEffect(() => {
     const checkDailyReport = async () => {
       if (!user) return;
@@ -175,6 +187,17 @@ export default function Dashboard() {
 
     checkDailyReport();
   }, [user]);
+
+  useEffect(() => {
+    adjustReportTextareaHeight();
+  }, [reportText, adjustReportTextareaHeight]);
+
+  useEffect(() => {
+    if (isReportExpanded && reportTextareaRef.current) {
+      reportTextareaRef.current.focus();
+      adjustReportTextareaHeight();
+    }
+  }, [isReportExpanded, adjustReportTextareaHeight]);
 
   const fetchReportAttachments = useCallback(async () => {
     if (!reportId) return;
@@ -643,27 +666,37 @@ export default function Dashboard() {
                   {t("dashboard.daily_report")}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAiModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
-              >
-                <span>✨ Tạo báo cáo bằng AI</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsReportExpanded((s) => !s)}
+                  aria-label={isReportExpanded ? "Thu gọn" : "Mở rộng"}
+                  className="flex items-center justify-center w-9 h-9 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
+                >
+                  <i className="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAiModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <span>✨ Tạo báo cáo bằng AI</span>
+                </button>
+              </div>
             </div>
-            <textarea
+              <textarea
+              ref={reportTextareaRef}
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
+              onInput={adjustReportTextareaHeight}
               placeholder={t("dashboard.report_placeholder")}
               rows={4}
-              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm"
+              className="w-full bg-[#f8fafc] border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-4 focus:ring-blue-100 p-4 outline-none resize-none mb-4 shadow-sm overflow-hidden"
+              style={{ minHeight: isReportExpanded ? 360 : 120, maxHeight: isReportExpanded ? '70vh' : 300 }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  const val = e.target.value;
-                  if (val.length === 0 || val.endsWith("\n")) {
-                    e.preventDefault();
-                    handleSubmitReport();
-                  }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+                  e.preventDefault();
+                  handleSaveDescription();
                 }
               }}
             />

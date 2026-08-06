@@ -1,0 +1,23 @@
+name: calendar-jenkins-ci
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    container_name: calendar-jenkins
+    restart: always
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - jenkins-network
+
+volumes:
+  jenkins_data:
+
+networks:
+  jenkins-network:
+    name: jenkins-network

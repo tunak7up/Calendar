@@ -19,7 +19,7 @@ export const en = {
       docs: "Guide lines",
       profile: "Your Profile",
       logout: "Log Out",
-      notifications: "Notifications automatic pileline",
+      notifications: "Notifications",
       mark_all_read: "Mark all as read",
       no_notifications: "No notifications",
       loading_notifications: "Loading notifications..."

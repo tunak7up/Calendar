@@ -29,6 +29,9 @@ export default function MySchedule() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
+  // Use a Set to remember every month that has already been fetched.
+  // This lets us skip re-fetching when the user navigates back to a visited month
+  // while keeping the accumulated workingHours data in state.
   const fetchedKeysRef = useRef(new Set());
 
   const [workingHours, setWorkingHours] = useState([]);
@@ -36,17 +39,19 @@ export default function MySchedule() {
   const [reports, setReports] = useState([]);
   const [menuConfig, setMenuConfig] = useState(null); // { date, isWorkDay, shift, report, tasks }
 
-  const fetchData = useCallback(async (viewStart) => {
-    if (!user?.person_id || !viewStart) return;
+  const fetchData = useCallback(async (year, month) => {
+    // `month` is 1-indexed (January = 1, August = 8)
+    if (!user?.person_id) return;
     try {
-      // Calculate 3-month window: 1st of previous month to last day of next month
-      const y = viewStart.getFullYear();
-      const m = viewStart.getMonth();
-      const startDate = new Date(y, m - 1, 1);
-      const endDate = new Date(y, m + 2, 0, 23, 59, 59);
+      // 3-month window: 1st of previous month → last day of next month
+      // month-2 converts 1-indexed month to 0-indexed previous month for Date constructor
+      // month+1 with day=0 gives last day of current next month
+      const startDate = new Date(year, month - 2, 1);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
 
-      const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
-      const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}T23:59:59`;
+      const pad = (n) => String(n).padStart(2, '0');
+      const startStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-01T00:00:00`;
+      const endStr = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T23:59:59`;
 
       const [scheduleRes, taskRes, reportRes] = await Promise.all([
         scheduleService.getScheduleByPersonIdWithTimeRange({
@@ -58,6 +63,15 @@ export default function MySchedule() {
         dailyReportService.getDailyReportByPersonId(user.person_id)
       ]);
 
+      // reports & tasks: these APIs return ALL data (not date-filtered), so replacing is safe
+      const fetchedReports = reportRes.success ? reportRes.data : [];
+      setReports(fetchedReports);
+      if (taskRes.success) {
+        setRawTasks(taskRes.data);
+      }
+
+      // workingHours: scheduleService IS date-filtered, so we must MERGE (not replace)
+      // to preserve data from other already-fetched months
       let newWorkHours = [];
       if (scheduleRes.success) {
         const registeredWorkHours = scheduleRes.data.map(item => ({
@@ -69,23 +83,11 @@ export default function MySchedule() {
           extendedProps: { isWorkHour: true, priorityOrder: 6, isRegistered: true }
         }));
 
-        let fetchedReports = [];
-        if (reportRes.success) {
-          fetchedReports = reportRes.data;
-          // Merge reports: preserve existing entries not in new data
-          setReports(prev => {
-            const merged = new Map(prev.map(r => [r.id, r]));
-            fetchedReports.forEach(r => merged.set(r.id, r));
-            return Array.from(merged.values());
-          });
-        }
-
         const unregisteredWorkHours = [];
         fetchedReports.forEach(rep => {
           const repDate = getLocalYYYYMMDD(rep.working_date);
           if (!repDate) return;
           const hasSchedule = registeredWorkHours.some(wh => getLocalYYYYMMDD(wh.start) === repDate);
-
           if (!hasSchedule) {
             const checkInTime = rep.check_in || '08:00:00';
             const checkOutTime = rep.check_out || '17:00:00';
@@ -99,33 +101,14 @@ export default function MySchedule() {
             });
           }
         });
-
         newWorkHours = [...registeredWorkHours, ...unregisteredWorkHours];
-      } else if (reportRes.success) {
-        // No schedule data but we have reports
-        const fetchedReports = reportRes.data;
-        setReports(prev => {
-          const merged = new Map(prev.map(r => [r.id, r]));
-          fetchedReports.forEach(r => merged.set(r.id, r));
-          return Array.from(merged.values());
-        });
       }
 
-      // Merge workingHours by id to preserve data from other months
       setWorkingHours(prev => {
         const merged = new Map(prev.map(wh => [wh.id, wh]));
         newWorkHours.forEach(wh => merged.set(wh.id, wh));
         return Array.from(merged.values());
       });
-
-      if (taskRes.success) {
-        // Merge tasks by task_id to preserve data from other months
-        setRawTasks(prev => {
-          const merged = new Map(prev.map(t => [t.task_id, t]));
-          taskRes.data.forEach(t => merged.set(t.task_id, t));
-          return Array.from(merged.values());
-        });
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -358,20 +341,23 @@ export default function MySchedule() {
             onDateClick={handleDateClick}
             onEventClick={handleEventClick}
             onDatesSet={(info) => {
-              const currentStart = info.view.currentStart;
-              const y = currentStart.getFullYear();
-              const m = currentStart.getMonth();
+              // FullCalendar's currentStart is in UTC — for +7 timezone users,
+              // August 1 local time may appear as July 31 UTC, causing wrong month keys.
+              // Fix: offset by 15 days to land safely in the middle of the displayed month,
+              // then extract local year/month from a YYYY-MM-DD string.
+              const midPoint = new Date(info.view.currentStart.getTime() + 15 * 24 * 60 * 60 * 1000);
+              const localDateStr = midPoint.toLocaleDateString('sv-SE'); // 'sv-SE' gives YYYY-MM-DD in local time
+              const [localYear, localMonth] = localDateStr.split('-').map(Number);
               const lang = i18n.language;
-              const key = `${y}-${m}-${lang}`;
+              const key = `${localYear}-${localMonth}-${lang}`;
 
-              // Use a Set to track ALL fetched months — never skip a month
-              // just because it was fetched before (old data may have been overwritten)
-              if (fetchedKeysRef.current.has(key)) {
-                return;
-              }
+              // Skip if we already fetched this month — workingHours data is
+              // still in state from the previous fetch (merged, not replaced)
+              if (fetchedKeysRef.current.has(key)) return;
               fetchedKeysRef.current.add(key);
-              setViewDate(currentStart);
-              fetchData(currentStart);
+
+              setViewDate(new Date(localYear, localMonth - 1, 1));
+              fetchData(localYear, localMonth);
             }}
           />
         </div>

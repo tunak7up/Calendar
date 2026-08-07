@@ -110,9 +110,9 @@ function App() {
           };
 
           // Cách 1: Lắng nghe khi FCM đăng ký xong (subscription thay đổi)
-          // Đây là cách đáng tin cậy nhất vì FCM có thể mất vài giây
-          OneSignalNative.User.pushSubscription.addObserver(async (subscription) => {
-            const newId = subscription.current?.id;
+          // Dùng addEventListener('change') của Capacitor Plugin SDK v5
+          OneSignalNative.User.pushSubscription.addEventListener("change", async (event) => {
+            const newId = event.current?.id;
             if (newId) {
               console.log("[OneSignal Native] Subscription changed, new ID:", newId);
               await sendSubscriptionToBackend(newId);

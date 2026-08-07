@@ -12,6 +12,11 @@ pipeline {
             defaultValue: true,
             description: 'Tự động dọn dẹp Docker Image rác sau khi hoàn thành'
         )
+        booleanParam(
+            name: 'BUILD_ANDROID',
+            defaultValue: false,
+            description: 'Build Android APK (Debug) sau khi deploy'
+        )
     }
 
     triggers {
@@ -20,6 +25,7 @@ pipeline {
 
     environment {
         COMPOSE_FILE = 'docker-compose.yml'
+        ANDROID_SDK_ROOT = '/opt/android-sdk'
     }
 
     stages {
@@ -102,6 +108,30 @@ pipeline {
             }
             steps {
                 sh "docker compose -f ${COMPOSE_FILE} ps"
+            }
+        }
+
+        stage('Setup Android Build Tools') {
+            when {
+                expression { params.BUILD_ANDROID == true }
+            }
+            steps {
+                echo '🔧 Cài đặt Node.js và Android SDK (nếu chưa có)...'
+                sh 'chmod +x scripts/setup-android-tools.sh && bash scripts/setup-android-tools.sh'
+            }
+        }
+
+        stage('Build Android APK (Debug)') {
+            when {
+                expression { params.BUILD_ANDROID == true }
+            }
+            steps {
+                sh 'chmod +x scripts/build-android-debug.sh && bash scripts/build-android-debug.sh'
+                archiveArtifacts(
+                    artifacts: 'fe/android/app/build/outputs/apk/debug/app-debug.apk',
+                    fingerprint: true,
+                    allowEmptyArchive: false
+                )
             }
         }
     }

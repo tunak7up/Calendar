@@ -136,9 +136,9 @@ export default function AdminEmployeeList() {
           </div>
           <button
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 bg-[#0056b3] hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex-1 md:flex-none justify-center text-center whitespace-nowrap"
           >
-            <PlusIcon className="w-5 h-5" />
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span>{t('employees.add_btn')}</span>
           </button>
         </div>
@@ -183,7 +183,7 @@ export default function AdminEmployeeList() {
                         <img
                           alt={emp.name}
                           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=101c23&color=12a4d9&rounded=true&size=40`}
-                          className="h-10 w-10 rounded-full border-2 border-white shadow-sm"
+                          className="hidden sm:block h-10 w-10 rounded-full border-2 border-white shadow-sm"
                         />
                         <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.name}</span>
                       </div>

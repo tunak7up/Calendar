@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">qltt.kis-v</string>
     <string name="title_activity_main">qltt.kis-v</string>
-    <string name="package_name">com.example.app</string>
-    <string name="custom_url_scheme">com.example.app</string>
+    <string name="package_name">kis_vn.com</string>
+    <string name="custom_url_scheme">kis_vn.com</string>
 </resources>

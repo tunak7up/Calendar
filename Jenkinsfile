@@ -23,20 +23,32 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                echo 'Checking out source code...'
+                echo "Checking out branch: ${env.BRANCH_NAME}..."
                 checkout scm
             }
         }
 
         stage('Prepare Environment') {
             steps {
+                echo 'Loading environment files from Jenkins Credentials...'
                 withCredentials([
                     file(credentialsId: 'calendar-root-env', variable: 'ROOT_ENV'),
-                    file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER')
+                    file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER'),
+                    file(credentialsId: 'calendar-fe-env-production', variable: 'FE_ENV_PRODUCTION')
                 ]) {
-                    sh 'chmod +x scripts/*.sh && ./scripts/prepare-env.sh'
+                    sh '''
+                        if [ -n "$ROOT_ENV" ] && [ -f "$ROOT_ENV" ]; then
+                            cp "$ROOT_ENV" .env
+                        fi
+                        if [ -n "$BE_ENV_DOCKER" ] && [ -f "$BE_ENV_DOCKER" ]; then
+                            cp "$BE_ENV_DOCKER" be/.env.docker
+                        fi
+                        if [ -n "$FE_ENV_PRODUCTION" ] && [ -f "$FE_ENV_PRODUCTION" ]; then
+                            cp "$FE_ENV_PRODUCTION" fe/.env.production
+                        fi
+                    '''
                 }
             }
         }
@@ -44,22 +56,22 @@ pipeline {
         stage('Execute Action') {
             steps {
                 script {
-                    switch(params.ACTION) {
+                    switch(params.ACTION ?: 'DEPLOY') {
                         case 'DEPLOY':
-                            echo '🚀 Executing Deploy...'
-                            sh './scripts/deploy.sh'
+                            echo "🚀 Deploying branch ${env.BRANCH_NAME}..."
+                            sh "docker compose -f ${COMPOSE_FILE} up --build -d"
                             break
                         case 'FULL_REBUILD':
                             echo '🔄 Executing Full Rebuild (no-cache)...'
-                            sh 'docker compose -f ${COMPOSE_FILE} build --no-cache && docker compose -f ${COMPOSE_FILE} up -d'
+                            sh "docker compose -f ${COMPOSE_FILE} build --no-cache && docker compose -f ${COMPOSE_FILE} up -d"
                             break
                         case 'RESTART_ONLY':
                             echo '⚡ Restarting Containers...'
-                            sh 'docker compose -f ${COMPOSE_FILE} restart'
+                            sh "docker compose -f ${COMPOSE_FILE} restart"
                             break
                         case 'CLEANUP_IMAGES':
                             echo '🧹 Executing Cleanup Images...'
-                            sh './scripts/cleanup.sh'
+                            sh 'docker image prune -f'
                             break
                     }
                 }
@@ -71,7 +83,7 @@ pipeline {
                 expression { params.ACTION != 'CLEANUP_IMAGES' }
             }
             steps {
-                sh './scripts/verify.sh'
+                sh "docker compose -f ${COMPOSE_FILE} ps"
             }
         }
     }
@@ -80,15 +92,15 @@ pipeline {
         always {
             script {
                 if (params.PRUNE_IMAGES_AFTER) {
-                    sh './scripts/cleanup.sh'
+                    sh 'docker image prune -f || true'
                 }
             }
         }
         success {
-            echo '🚀 Pipeline completed successfully!'
+            echo "🚀 Pipeline for branch ${env.BRANCH_NAME} completed successfully!"
         }
         failure {
-            echo '❌ Pipeline failed! Please check logs.'
+            echo "❌ Pipeline for branch ${env.BRANCH_NAME} failed!"
         }
     }
 }

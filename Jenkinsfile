@@ -31,6 +31,9 @@ pipeline {
         }
 
         stage('Prepare Environment') {
+            when {
+                expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop' }
+            }
             steps {
                 echo 'Loading environment files from Jenkins Credentials...'
                 withCredentials([
@@ -53,12 +56,15 @@ pipeline {
             }
         }
 
-        stage('Execute Action') {
+        stage('Deploy Production') {
+            when {
+                expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' }
+            }
             steps {
                 script {
                     switch(params.ACTION ?: 'DEPLOY') {
                         case 'DEPLOY':
-                            echo "🚀 Deploying branch ${env.BRANCH_NAME}..."
+                            echo "🚀 Deploying Production for branch ${env.BRANCH_NAME}..."
                             sh "docker compose -f ${COMPOSE_FILE} up --build -d"
                             break
                         case 'FULL_REBUILD':
@@ -78,9 +84,21 @@ pipeline {
             }
         }
 
+        stage('Verify Feature Branch') {
+            when {
+                not {
+                    expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' }
+                }
+            }
+            steps {
+                echo "🔍 Verifying & Testing feature branch: ${env.BRANCH_NAME}"
+                echo "Safe mode: Skipping Production deployment for non-main branch."
+            }
+        }
+
         stage('Verify Deployment') {
             when {
-                expression { params.ACTION != 'CLEANUP_IMAGES' }
+                expression { (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') && params.ACTION != 'CLEANUP_IMAGES' }
             }
             steps {
                 sh "docker compose -f ${COMPOSE_FILE} ps"

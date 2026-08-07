@@ -24,9 +24,9 @@ pipeline {
         )
     }
 
-    triggers {
-        pollSCM('H/5 * * * *')
-    }
+    // triggers {
+    //     pollSCM('H/5 * * * *')
+    // }
 
     environment {
         COMPOSE_FILE = 'docker-compose.yml'

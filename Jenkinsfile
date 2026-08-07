@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', daysToKeepStr: '7'))
+        disableConcurrentBuilds()
+    }
+
     parameters {
         choice(
             name: 'ACTION',

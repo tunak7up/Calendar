@@ -4,6 +4,15 @@ set -e
 ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/opt/android-sdk}"
 export PATH="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
 
+# Inject google-services.json cho FCM/OneSignal push notification
+echo "🔑 Bước 0: Inject google-services.json..."
+if [ -n "$GOOGLE_SERVICES_JSON" ] && [ -f "$GOOGLE_SERVICES_JSON" ]; then
+    cp "$GOOGLE_SERVICES_JSON" fe/android/app/google-services.json
+    echo "✅ google-services.json đã được inject!"
+else
+    echo "⚠️  GOOGLE_SERVICES_JSON không được cung cấp → Push Notification sẽ không hoạt động!"
+fi
+
 echo "📦 Bước 1: Build React web assets..."
 cd fe
 npm ci

@@ -126,7 +126,11 @@ pipeline {
                 expression { params.BUILD_ANDROID == true }
             }
             steps {
-                sh 'chmod +x scripts/build-android-debug.sh && bash scripts/build-android-debug.sh'
+                withCredentials([
+                    file(credentialsId: 'calendar-android-google-services', variable: 'GOOGLE_SERVICES_JSON')
+                ]) {
+                    sh 'chmod +x scripts/build-android-debug.sh && bash scripts/build-android-debug.sh'
+                }
                 archiveArtifacts(
                     artifacts: 'fe/android/app/build/outputs/apk/debug/app-debug.apk',
                     fingerprint: true,

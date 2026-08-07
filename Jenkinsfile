@@ -24,9 +24,9 @@ pipeline {
         )
     }
 
-    triggers {
-        githubPush()
-    }
+    // triggers {
+    //     githubPush()
+    // }
 
     environment {
         COMPOSE_FILE = 'docker-compose.yml'

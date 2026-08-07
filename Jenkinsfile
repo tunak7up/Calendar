@@ -25,7 +25,7 @@ pipeline {
     }
 
     triggers {
-        pollSCM('')
+        githubPush()
     }
 
     environment {

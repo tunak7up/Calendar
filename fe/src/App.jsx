@@ -82,13 +82,13 @@ function App() {
           // Request permission
           await OneSignalNative.Notifications.requestPermission(true);
 
-          // Suppress push notifications in foreground
+          // Display push notifications in foreground
           OneSignalNative.Notifications.addEventListener(
             "foregroundWillDisplay",
             (event) => {
-              event.preventDefault();
               console.log(
-                "[OneSignal Native] Suppressed foreground notification",
+                "[OneSignal Native] Foreground notification received:",
+                event.getNotification(),
               );
             },
           );
@@ -137,13 +137,13 @@ function App() {
               // Request permission
               await OneSignal.Notifications.requestPermission();
 
-              // Suppress push notifications in foreground
+              // Display push notifications in foreground
               OneSignal.Notifications.addEventListener(
                 "foregroundWillDisplay",
                 (event) => {
-                  event.preventDefault();
                   console.log(
-                    "[OneSignal Web] Suppressed foreground notification",
+                    "[OneSignal Web] Foreground notification received:",
+                    event.getNotification(),
                   );
                 },
               );

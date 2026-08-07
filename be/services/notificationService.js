@@ -21,6 +21,7 @@ const createNotification = async (recipientId, senderId, title, content, url = n
             is_read: false,
             created_at: new Date()
         });
+        console.log(`[Notification Service] Created DB record #${newNotif.notification_id} for recipientId: ${recipientId}, title: "${title}"`);
 
         // Fetch all active subscription IDs for the recipient
         const { push_subscription } = require('../models');
@@ -31,6 +32,7 @@ const createNotification = async (recipientId, senderId, title, content, url = n
         const subscriptionIds = subs.map(sub => sub.onesignal_id).filter(id => id && id.trim() !== '');
 
         if (subscriptionIds.length > 0) {
+            console.log(`[Notification Service] Recipient ${recipientId} has ${subscriptionIds.length} subscriptions:`, subscriptionIds);
             let buttons = null;
             if (url && url.includes('/history/')) {
                 buttons = [
@@ -55,6 +57,8 @@ const createNotification = async (recipientId, senderId, title, content, url = n
             }).catch(err => {
                 console.error('[Notification Service] Failed to add push notification job to queue:', err);
             });
+        } else {
+            console.warn(`[Notification Service] ⚠️ Recipient ${recipientId} has 0 push subscriptions in database. Push skipped.`);
         }
 
         return newNotif;

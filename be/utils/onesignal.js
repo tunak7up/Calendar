@@ -36,6 +36,7 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
   }
 
   try {
+    console.log(`[OneSignal] Sending push notification to ${ids.length} subscription IDs:`, ids);
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
@@ -53,7 +54,7 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
     });
 
     const data = await response.json();
-    console.log('[OneSignal] Push notification response:', data);
+    console.log('[OneSignal] Push response status:', response.status, 'body:', JSON.stringify(data));
     return data;
   } catch (error) {
     console.error('[OneSignal] Error sending push notification:', error);

@@ -210,6 +210,47 @@ export default function Profile() {
     return { schedule: sched, report };
   }, [selectedDate, allSchedules, dailyReports]);
 
+  const getTaskStatusLabel = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return t('status.completed');
+      case 'in progress': return t('status.in_progress');
+      case 'pending': return t('status.pending');
+      case 'overdue': return t('status.overdue');
+      case 'in review': case 'in_review': return t('status.in_review');
+      default: return status || t('status.pending');
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'in progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pending': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusPriority = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'overdue': return 0;
+      case 'in progress': return 1;
+      case 'pending': return 2;
+      default: return 3;
+    }
+  };
+
+  const sortedTasks = React.useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const priorityDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+      if (priorityDiff !== 0) return priorityDiff;
+      // Within same priority group: newest first (by due_date, fallback created_at)
+      const dateA = new Date(a.due_date || a.created_at || 0).getTime();
+      const dateB = new Date(b.due_date || b.created_at || 0).getTime();
+      return dateB - dateA;
+    });
+  }, [tasks]);
+
   if (loading || !theme) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -272,29 +313,21 @@ export default function Profile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'in progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   return (
     <div className="space-y-6 pb-20">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <BackButton />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {isAdmin && (
             <button
               onClick={handleAnalyzePerformance}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1 sm:gap-2 bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <SparklesIcon className="w-4 h-4" />
-              {isVi ? 'Phân tích hiệu suất AI' : 'AI Performance Analysis'}
+              <SparklesIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{isVi ? 'Phân tích AI' : 'AI Analysis'}</span>
             </button>
           )}
 
@@ -303,10 +336,10 @@ export default function Profile() {
               onClick={handleAssignTask}
               data-customizable-id="btn-profile-assign-task"
               data-customizable-type="bg"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <PlusIcon className="w-4 h-4" />
-              {t('profile.assign_task')}
+              <PlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{t('profile.assign_task')}</span>
             </button>
           )}
         </div>
@@ -365,12 +398,12 @@ export default function Profile() {
                 <p className="text-sm font-semibold text-gray-400">{t('profile.no_tasks')}</p>
               </div>
             ) : (
-              tasks.map((task) => (
+              sortedTasks.map((task) => (
                 <div key={task.task_id} onClick={() => navigate(`/tasks/${task.task_id}`)} className="p-4 rounded-2xl border border-gray-100 bg-[#f8fafc] hover:border-purple-200 hover:shadow-sm transition-all cursor-pointer group">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={task.name || task.title}>{task.name || task.title}</h3>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getStatusColor(task.status)} border`}>
-                      {task.status || 'Pending'}
+                      {getTaskStatusLabel(task.status)}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">

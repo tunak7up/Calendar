@@ -5,10 +5,17 @@ ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/opt/android-sdk}"
 
 echo "🔧 Kiểm tra và cài đặt môi trường build Android..."
 
+# Update apt cache trước
+apt-get update -qq
+
 # Cài Node.js 22+ nếu chưa có hoặc phiên bản cũ hơn 22
-NODE_MAJOR=$(node -v 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1 || echo "0")
-if [ "$NODE_MAJOR" -lt 22 ] 2>/dev/null; then
-    echo "⬇️  Cài Node.js 22 (Capacitor CLI yêu cầu >= 22)..."
+NODE_MAJOR=0
+if command -v node &> /dev/null; then
+    NODE_MAJOR=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+fi
+
+if [ "${NODE_MAJOR}" -lt 22 ]; then
+    echo "⬇️  Cài Node.js 22 (Capacitor CLI yêu cầu >= 22, hiện có: v${NODE_MAJOR})..."
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
     echo "✅ Node.js đã cài: $(node -v)"

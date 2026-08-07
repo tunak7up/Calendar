@@ -24,9 +24,9 @@ pipeline {
         )
     }
 
-    // triggers {
-    //     githubPush()
-    // }
+    triggers {
+        githubPush()
+    }
 
     environment {
         COMPOSE_FILE = 'docker-compose.yml'
@@ -36,6 +36,9 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
+                script {
+                    System.out.println("🚀 [JENKINS-DOCKER-LOG] Auto pipeline triggered for branch ${env.BRANCH_NAME} - Build #${env.BUILD_NUMBER}")
+                }
                 echo "Checking out branch: ${env.BRANCH_NAME}..."
                 checkout scm
             }

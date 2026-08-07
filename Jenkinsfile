@@ -132,9 +132,17 @@ pipeline {
             }
             steps {
                 withCredentials([
-                    file(credentialsId: 'calendar-android-google-services', variable: 'GOOGLE_SERVICES_JSON')
+                    file(credentialsId: 'calendar-android-google-services', variable: 'GOOGLE_SERVICES_JSON'),
+                    file(credentialsId: 'calendar-fe-env-production', variable: 'FE_ENV_PRODUCTION')
                 ]) {
-                    sh 'chmod +x scripts/build-android-debug.sh && bash scripts/build-android-debug.sh'
+                    sh '''
+                        # Đảm bảo fe/.env.production có VITE_ONESIGNAL_APP_ID trước khi Vite build
+                        if [ -n "$FE_ENV_PRODUCTION" ] && [ -f "$FE_ENV_PRODUCTION" ]; then
+                            cp "$FE_ENV_PRODUCTION" fe/.env.production
+                            echo "✅ fe/.env.production đã được inject!"
+                        fi
+                        chmod +x scripts/build-android-debug.sh && bash scripts/build-android-debug.sh
+                    '''
                 }
                 archiveArtifacts(
                     artifacts: 'fe/android/app/build/outputs/apk/debug/app-debug.apk',

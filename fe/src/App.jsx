@@ -82,22 +82,21 @@ function App() {
           // Request permission
           await OneSignalNative.Notifications.requestPermission(true);
 
-          // Suppress push notifications in foreground
+          // Display push notifications in foreground
           OneSignalNative.Notifications.addEventListener(
             "foregroundWillDisplay",
             (event) => {
-              event.preventDefault();
               console.log(
-                "[OneSignal Native] Suppressed foreground notification",
+                "[OneSignal Native] Foreground notification received:",
+                event.getNotification(),
               );
             },
           );
 
-          // Get Subscription ID
-          const subscriptionId =
-            await OneSignalNative.User.pushSubscription.getIdAsync();
-          if (subscriptionId && active) {
-            console.log("[OneSignal Native] Registration ID:", subscriptionId);
+          // Helper: gửi subscription ID lên backend
+          const sendSubscriptionToBackend = async (subscriptionId) => {
+            if (!subscriptionId || !active) return;
+            console.log("[OneSignal Native] Sending Registration ID:", subscriptionId);
             localStorage.setItem("onesignal_id", subscriptionId);
             await apiFetch(`/person/${user.person_id}/onesignal`, {
               method: "POST",
@@ -108,6 +107,25 @@ function App() {
                 e,
               ),
             );
+          };
+
+          // Cách 1: Lắng nghe khi FCM đăng ký xong (subscription thay đổi)
+          // Đây là cách đáng tin cậy nhất vì FCM có thể mất vài giây
+          OneSignalNative.User.pushSubscription.addObserver(async (subscription) => {
+            const newId = subscription.current?.id;
+            if (newId) {
+              console.log("[OneSignal Native] Subscription changed, new ID:", newId);
+              await sendSubscriptionToBackend(newId);
+            }
+          });
+
+          // Cách 2: Thử lấy ngay lập tức (phòng trường hợp đã có sẵn)
+          const subscriptionId =
+            await OneSignalNative.User.pushSubscription.getIdAsync();
+          if (subscriptionId) {
+            await sendSubscriptionToBackend(subscriptionId);
+          } else {
+            console.log("[OneSignal Native] No subscription ID yet, waiting for FCM registration...");
           }
 
           // Link external ID to matching person ID
@@ -137,13 +155,13 @@ function App() {
               // Request permission
               await OneSignal.Notifications.requestPermission();
 
-              // Suppress push notifications in foreground
+              // Display push notifications in foreground
               OneSignal.Notifications.addEventListener(
                 "foregroundWillDisplay",
                 (event) => {
-                  event.preventDefault();
                   console.log(
-                    "[OneSignal Web] Suppressed foreground notification",
+                    "[OneSignal Web] Foreground notification received:",
+                    event.getNotification(),
                   );
                 },
               );

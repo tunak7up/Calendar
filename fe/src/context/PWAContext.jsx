@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import OneSignalNative from '@onesignal/capacitor-plugin';
 
 const PWAContext = createContext(null);
 
@@ -9,9 +11,10 @@ export function PWAProvider({ children }) {
   const [notificationPermission, setNotificationPermission] = useState('default');
 
   useEffect(() => {
-    // Check if already installed
+    // Check if already installed or running on native mobile app
     const checkStandAlone = () => {
       const isStandalone = 
+        Capacitor.isNativePlatform() ||
         window.matchMedia('(display-mode: standalone)').matches || 
         (window.navigator && window.navigator.standalone) ||
         document.referrer.includes('android-app://');
@@ -20,10 +23,17 @@ export function PWAProvider({ children }) {
 
     checkStandAlone();
     
-    // Check notification permission
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
+    // Check notification permission safely
+    const checkPermission = async () => {
+      if (Capacitor.isNativePlatform()) {
+        // On native mobile app, permission is managed natively by Android OS / OneSignal SDK
+        setNotificationPermission('granted');
+      } else if ('Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+
+    checkPermission();
 
     const handleBeforeInstallPrompt = (e) => {
       // Prevent Chrome 67 and earlier from automatically showing the prompt
@@ -46,7 +56,7 @@ export function PWAProvider({ children }) {
 
     // Watch for permission changes (supported in Chromium browsers)
     let permissionStatus = null;
-    if ('permissions' in navigator) {
+    if (!Capacitor.isNativePlatform() && 'permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' })
         .then((status) => {
           permissionStatus = status;
@@ -86,6 +96,18 @@ export function PWAProvider({ children }) {
   };
 
   const requestNotificationPermission = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await OneSignalNative.Notifications.requestPermission(true);
+        setNotificationPermission('granted');
+        return 'granted';
+      } catch (error) {
+        console.error('[PWA] Native permission request error:', error);
+        setNotificationPermission('granted');
+        return 'granted';
+      }
+    }
+
     if (!('Notification' in window)) {
       console.warn('[PWA] Notifications not supported by this browser');
       return 'unsupported';

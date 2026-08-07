@@ -8,7 +8,7 @@ const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
  * @param {string} message - Notification body
  * @param {string} [url] - Optional click URL
  */
-const sendPushNotification = async (targetOnesignalIds, title, message, url = null, buttons = null) => {
+const sendPushNotification = async (targetOnesignalIds, title, message, url = null, buttons = null, recipientName = '') => {
   if (!targetOnesignalIds) return;
 
   const ids = (Array.isArray(targetOnesignalIds) ? targetOnesignalIds : [targetOnesignalIds])
@@ -17,12 +17,12 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
   if (ids.length === 0) return;
 
   if (!ONESIGNAL_APP_ID) {
-    console.warn('[OneSignal] Missing ONESIGNAL_APP_ID in environment variables. Skip sending push notification.');
+    console.warn('[OneSignal] ⚠️ Missing ONESIGNAL_APP_ID in environment variables. Skip sending push notification.');
     return;
   }
 
   if (!ONESIGNAL_REST_API_KEY) {
-    console.warn('[OneSignal] Missing ONESIGNAL_REST_API_KEY in environment variables. Skip sending push notification.');
+    console.warn('[OneSignal] ⚠️ Missing ONESIGNAL_REST_API_KEY in environment variables. Skip sending push notification.');
     return;
   }
 
@@ -36,7 +36,6 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
   }
 
   try {
-    console.log(`[OneSignal] Sending push notification to ${ids.length} subscription IDs:`, ids);
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
@@ -54,10 +53,14 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
     });
 
     const data = await response.json();
-    console.log('[OneSignal] Push response status:', response.status, 'body:', JSON.stringify(data));
+    if (response.ok && !data.errors) {
+      console.log(`[OneSignal] ✅ ĐÃ GỬI THÀNH CÔNG cho ${recipientName || 'User'} | OneSignal Notification ID: ${data.id} | Số thiết bị nhận được: ${data.recipients || ids.length}`);
+    } else {
+      console.error(`[OneSignal] ❌ KẾT QUẢ GỬI CÓ LỖI cho ${recipientName || 'User'}:`, data);
+    }
     return data;
   } catch (error) {
-    console.error('[OneSignal] Error sending push notification:', error);
+    console.error(`[OneSignal] ❌ Lỗi kết nối API OneSignal khi gửi cho ${recipientName || 'User'}:`, error);
   }
 };
 

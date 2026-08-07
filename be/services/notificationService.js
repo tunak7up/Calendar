@@ -21,7 +21,10 @@ const createNotification = async (recipientId, senderId, title, content, url = n
             is_read: false,
             created_at: new Date()
         });
-        console.log(`[Notification Service] Created DB record #${newNotif.notification_id} for recipientId: ${recipientId}, title: "${title}"`);
+        const recipient = await person.findByPk(recipientId, { attributes: ['person_id', 'name', 'username'] });
+        const recipientName = recipient ? `${recipient.name} (@${recipient.username}, ID: ${recipient.person_id})` : `ID ${recipientId}`;
+
+        console.log(`[Notification Service] 🔔 Đã lưu DB thông báo #${newNotif.notification_id} cho User: ${recipientName} | Tiêu đề: "${title}"`);
 
         // Fetch all active subscription IDs for the recipient
         const { push_subscription } = require('../models');
@@ -32,7 +35,9 @@ const createNotification = async (recipientId, senderId, title, content, url = n
         const subscriptionIds = subs.map(sub => sub.onesignal_id).filter(id => id && id.trim() !== '');
 
         if (subscriptionIds.length > 0) {
-            console.log(`[Notification Service] Recipient ${recipientId} has ${subscriptionIds.length} subscriptions:`, subscriptionIds);
+            console.log(`[Notification Service] 📱 Tìm thấy ${subscriptionIds.length} thiết bị cho User ${recipientName}:`);
+            subscriptionIds.forEach((id, idx) => console.log(`   └─ Thiết bị #${idx + 1}: ${id}`));
+
             let buttons = null;
             if (url && url.includes('/history/')) {
                 buttons = [
@@ -43,6 +48,7 @@ const createNotification = async (recipientId, senderId, title, content, url = n
             
             // Queue the push notification sending asynchronously
             await notificationQueue.add('send-push', {
+                recipientName,
                 subscriptionIds,
                 title,
                 content,
@@ -55,10 +61,10 @@ const createNotification = async (recipientId, senderId, title, content, url = n
                     delay: 2000
                 }
             }).catch(err => {
-                console.error('[Notification Service] Failed to add push notification job to queue:', err);
+                console.error('[Notification Service] ❌ Lỗi thêm job đẩy push vào hàng đợi Queue:', err);
             });
         } else {
-            console.warn(`[Notification Service] ⚠️ Recipient ${recipientId} has 0 push subscriptions in database. Push skipped.`);
+            console.warn(`[Notification Service] ⚠️ User ${recipientName} KHÔNG CÓ THIẾT BỊ NÀO (0 push_subscriptions) trong DB. Bỏ qua gửi Push.`);
         }
 
         return newNotif;

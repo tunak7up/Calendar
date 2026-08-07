@@ -6,14 +6,14 @@ console.log('[Notification Worker] Initializing...');
 
 const worker = new Worker('notification-queue', async (job) => {
   if (job.name === 'send-push') {
-    const { subscriptionIds, title, content, url, buttons } = job.data;
-    console.log(`[Notification Worker] Processing job ${job.id} - sending push to ${subscriptionIds.length} subscriptions`);
+    const { recipientName, subscriptionIds, title, content, url, buttons } = job.data;
+    console.log(`[Notification Worker] 🚀 ĐANG GỬI Push (Job #${job.id}) cho User: ${recipientName || 'Unknown'} tới ${subscriptionIds.length} thiết bị...`);
 
     try {
-      const result = await sendPushNotification(subscriptionIds, title, content, url, buttons);
+      const result = await sendPushNotification(subscriptionIds, title, content, url, buttons, recipientName);
       return result;
     } catch (err) {
-      console.error(`[Notification Worker] Error in sendPushNotification for job ${job.id}:`, err);
+      console.error(`[Notification Worker] ❌ Lỗi khi gửi Push cho Job #${job.id}:`, err);
       throw err; // Rethrow to let BullMQ handle retry/fail state
     }
   }

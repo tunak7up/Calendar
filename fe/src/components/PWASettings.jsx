@@ -1,24 +1,14 @@
 import React from 'react';
 import { usePWA } from '../context/PWAContext';
 import { useTranslation } from 'react-i18next';
-import { ArrowDownTrayIcon, BellIcon, CheckCircleIcon, XCircleIcon, CpuChipIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, BellIcon, CheckCircleIcon, XCircleIcon, CpuChipIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 
 export default function PWASettings() {
   const { t } = useTranslation();
   const {
-    isInstallable,
-    isInstalled,
     notificationPermission,
-    installApp,
     requestNotificationPermission
   } = usePWA();
-
-  const handleInstallClick = async () => {
-    const success = await installApp();
-    if (success) {
-      alert(t('pwa.install_success'));
-    }
-  };
 
   const handleNotificationClick = async () => {
     await requestNotificationPermission();
@@ -69,52 +59,36 @@ export default function PWASettings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* PWA App Install Card */}
+        {/* Android APK Download Card */}
         <div className="bg-[#f8fafc] border border-gray-150 rounded-2xl p-5 sm:p-6 flex flex-col justify-between hover:shadow-md transition-all duration-300 relative group">
           <div className="space-y-4">
             <div className="flex justify-between items-start">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                <ArrowDownTrayIcon className="w-6 h-6" />
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                <DevicePhoneMobileIcon className="w-6 h-6" />
               </div>
               <div>
-                {isInstalled ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-extrabold uppercase tracking-wide">
-                    {t('pwa.installed_status')}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-extrabold uppercase tracking-wide">
-                    {t('pwa.not_installed_status')}
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-extrabold uppercase tracking-wide">
+                  {t('pwa.apk_badge')}
+                </span>
               </div>
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-gray-900">{t('pwa.install_title')}</h3>
+              <h3 className="text-base font-extrabold text-gray-900">{t('pwa.apk_title')}</h3>
               <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                {t('pwa.install_desc')}
+                {t('pwa.apk_desc')}
               </p>
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-gray-100">
-            {isInstallable && !isInstalled ? (
-              <button
-                onClick={handleInstallClick}
-                className="w-full flex items-center justify-center gap-2 bg-[#0056b3] hover:bg-[#004494] text-white py-2.5 px-4 rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all active:scale-95 cursor-pointer"
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-                {t('pwa.install_btn')}
-              </button>
-            ) : isInstalled ? (
-              <div className="flex items-center justify-center gap-2 text-emerald-600 py-2.5 font-bold text-xs">
-                <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
-                {t('pwa.installed_status')}
-              </div>
-            ) : (
-              <div className="text-center text-xs text-gray-400 font-semibold py-2.5 italic">
-                {t('pwa.installed_status')} (Browser Web App)
-              </div>
-            )}
+            <a
+              href="/app-debug.apk"
+              download="app-debug.apk"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all active:scale-95 cursor-pointer text-center"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              {t('pwa.apk_btn')} (18.2 MB)
+            </a>
           </div>
         </div>
 
@@ -166,3 +140,4 @@ export default function PWASettings() {
     </div>
   );
 }
+

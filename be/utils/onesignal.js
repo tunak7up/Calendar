@@ -48,7 +48,9 @@ const sendPushNotification = async (targetOnesignalIds, title, message, url = nu
         headings: { en: title, vi: title },
         contents: { en: message, vi: message },
         url: targetUrl,
-        buttons: buttons || undefined
+        buttons: buttons || undefined,
+        priority: 10, // High priority to bypass Android Doze mode & power saver
+        ttl: 2419200 // 28 days TTL to retry if device offline
       })
     });
 

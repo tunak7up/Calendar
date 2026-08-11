@@ -7,13 +7,19 @@ console.log('[Notification Worker] Initializing...');
 const worker = new Worker('notification-queue', async (job) => {
   if (job.name === 'send-push') {
     const { recipientName, subscriptionIds, title, content, url, buttons } = job.data;
-    console.log(`[Notification Worker] 🚀 ĐANG GỬI Push (Job #${job.id}) cho User: ${recipientName || 'Unknown'} tới ${subscriptionIds.length} thiết bị...`);
+    const attempt = job.attemptsMade + 1;
+    const maxAttempts = job.opts?.attempts || 3;
+    console.log(`[Notification Worker] 🚀 ĐANG GỬI Push (Job #${job.id}, Lần thử ${attempt}/${maxAttempts}) cho User: ${recipientName || 'Unknown'} tới ${subscriptionIds.length} thiết bị...`);
 
     try {
       const result = await sendPushNotification(subscriptionIds, title, content, url, buttons, recipientName);
+      if (result && result.errors && result.errors.length > 0) {
+        const errMsg = Array.isArray(result.errors) ? result.errors.join(', ') : JSON.stringify(result.errors);
+        throw new Error(`OneSignal API returned error: ${errMsg}`);
+      }
       return result;
     } catch (err) {
-      console.error(`[Notification Worker] ❌ Lỗi khi gửi Push cho Job #${job.id}:`, err);
+      console.error(`[Notification Worker] ❌ Lỗi khi gửi Push cho Job #${job.id} (Lần thử ${attempt}/${maxAttempts}):`, err.message || err);
       throw err; // Rethrow to let BullMQ handle retry/fail state
     }
   }

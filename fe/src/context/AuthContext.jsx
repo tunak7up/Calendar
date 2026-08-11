@@ -1,6 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { setAccessToken, BASE_URL } from '../services/api';
+import { Capacitor } from '@capacitor/core';
+import OneSignalNative from '@onesignal/capacitor-plugin';
 
 const AuthContext = createContext(null);
 
@@ -96,6 +97,25 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     setIsLoggingOut(true);
     const onesignalId = localStorage.getItem('onesignal_id');
+
+    // 1. OneSignal SDK Logout (Native & Web)
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await OneSignalNative.logout().catch(e => console.error('[OneSignal Native] Logout error:', e));
+      } else if (window.OneSignalDeferred) {
+        window.OneSignalDeferred.push(async function (OneSignal) {
+          try {
+            await OneSignal.logout();
+          } catch (e) {
+            console.error('[OneSignal Web] Logout error:', e);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('[OneSignal] Logout error:', e);
+    }
+
+    // 2. Call backend logout API to remove token and push subscription
     try {
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
@@ -103,18 +123,15 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ onesignal_id: onesignalId }),
         credentials: 'include'
       });
-      // Thêm chút thời gian chờ để user kịp nhìn thấy hiệu ứng loading, giảm xuống 300ms
       await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error('Lỗi khi gọi API đăng xuất:', error);
     } finally {
-      // Chỉ xóa state SAU KHI api đăng xuất hoàn thành
       setUser(null);
       setAccessToken(null);
       localStorage.removeItem('user');
       localStorage.removeItem('onesignal_id');
       
-      // Chuyển hướng người dùng về trang đăng nhập
       window.location.href = '/login';
     }
   };

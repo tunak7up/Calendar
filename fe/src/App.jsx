@@ -151,6 +151,13 @@ function App() {
               },
             });
 
+            // Link external ID to matching person ID on Web
+            if (user?.person_id) {
+              await OneSignal.login(String(user.person_id)).catch((err) =>
+                console.error("[OneSignal Web] Login error:", err),
+              );
+            }
+
             try {
               // Request permission
               await OneSignal.Notifications.requestPermission();

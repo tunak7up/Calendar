@@ -58,8 +58,10 @@ const createNotification = async (recipientId, senderId, title, content, url = n
                 attempts: 3,
                 backoff: {
                     type: 'exponential',
-                    delay: 2000
-                }
+                    delay: 2000 // 2s, 4s, 8s exponential retry
+                },
+                removeOnComplete: true, // Clean up completed jobs in Redis
+                removeOnFail: { count: 100 } // Retain last 100 failed jobs for debugging
             }).catch(err => {
                 console.error('[Notification Service] ❌ Lỗi thêm job đẩy push vào hàng đợi Queue:', err);
             });

@@ -285,11 +285,19 @@ export default function MySchedule() {
   }, [workDays, workingHours, tasks, reports]);
 
   const handleEventClick = useCallback((event) => {
+    const isTask = event.extendedProps?.isTask;
+    const taskData = event.extendedProps?.taskData;
+
+    if (isTask && taskData?.task_id) {
+      navigate(`/tasks/${taskData.task_id}`, { state: { task: taskData } });
+      return;
+    }
+
     const dateStr = getLocalYYYYMMDD(event.start);
     if (dateStr) {
       handleDateClick({ dateStr });
     }
-  }, [handleDateClick]);
+  }, [navigate, handleDateClick]);
 
   if (!theme) {
     return (

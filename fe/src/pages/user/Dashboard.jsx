@@ -659,32 +659,32 @@ export default function Dashboard() {
             data-customizable-id="card-daily-report"
             data-customizable-type="bg"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-gray-800">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <DocumentTextIcon className="w-5 h-5 text-blue-600 shrink-0" />
+                <h2 className="text-base sm:text-lg font-bold text-gray-800 truncate">
                   {t("dashboard.daily_report")}
                 </h2>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsReportExpanded((s) => !s)}
                   aria-label={isReportExpanded ? "Thu gọn" : "Mở rộng"}
-                  className="flex items-center justify-center w-9 h-9 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all"
+                  className="flex items-center justify-center w-9 h-9 bg-white hover:bg-gray-50 text-[#0056b3] border border-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer"
                 >
                   <i className="fa-solid fa-up-right-and-down-left-from-center"></i>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAiModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <span>✨ Tạo báo cáo bằng AI</span>
                 </button>
               </div>
             </div>
-              <textarea
+            <textarea
               ref={reportTextareaRef}
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
@@ -703,10 +703,10 @@ export default function Dashboard() {
 
             {/* Attachment Section */}
             <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 gap-2">
                 <div className="flex items-center gap-2">
-                  <PaperClipIcon className="w-5 h-5 text-gray-500" />
-                  <span className="text-sm font-semibold text-gray-700">
+                  <PaperClipIcon className="w-5 h-5 text-gray-500 shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">
                     {t("dashboard.attachments", {
                       count: reportAttachments.length,
                     })}
@@ -728,7 +728,7 @@ export default function Dashboard() {
                       }
                       fileInputRef.current?.click();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer"
                     data-customizable-id="btn-add-file"
                     data-customizable-type="bg"
                   >
@@ -771,19 +771,19 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-row items-center justify-end gap-2 sm:gap-3">
               <button
                 onClick={handleSaveDescription}
-                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold shadow-sm transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all whitespace-nowrap cursor-pointer"
                 data-customizable-id="btn-save-draft"
                 data-customizable-type="bg"
               >
-                <DocumentCheckIcon className="w-5 h-5 text-gray-500" />
-                {t("dashboard.save_draft")}
+                <DocumentCheckIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 shrink-0" />
+                <span>{t("dashboard.save_draft")}</span>
               </button>
               <button
                 onClick={handleSubmitReport}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 cursor-pointer
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer whitespace-nowrap
                   ${checkOutTime
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
                     : "bg-[#0056b3] hover:bg-[#004494] text-white shadow-blue-500/20"
@@ -793,13 +793,13 @@ export default function Dashboard() {
               >
                 {checkOutTime ? (
                   <>
-                    <CheckCircleIcon className="w-5 h-5" />
-                    {t("dashboard.update_report")}
+                    <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span>{t("dashboard.update_report")}</span>
                   </>
                 ) : (
                   <>
-                    <PaperAirplaneIcon className="w-5 h-5" />
-                    {t("dashboard.submit_report")}
+                    <PaperAirplaneIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span>{t("dashboard.submit_report")}</span>
                   </>
                 )}
               </button>

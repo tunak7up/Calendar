@@ -46,7 +46,7 @@ const fileAttachment = sequelize.define(
     },
     {
         tableName: 'file_attachment',
-        timestamps: true
+        timestamps: false
     }
 );
 

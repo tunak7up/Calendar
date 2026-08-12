@@ -6,9 +6,7 @@ const request = require('./request');
 const request_detail = require('./request_detail');
 const response = require('./response');
 const comment = require('./comment');
-const report_attachment = require('./report_attachment');
 const task_participant = require('./task_participant');
-const task_attachment = require('./task_attachment');
 const notification = require('./notification');
 const schedule = require('./schedule');
 const refresh_token = require('./refresh_token');
@@ -37,12 +35,6 @@ comment.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
 task.hasMany(comment, { foreignKey: 'task_id', as: 'comments' });
 comment.belongsTo(person, { foreignKey: 'person_id', as: 'commenter' });
 person.hasMany(comment, { foreignKey: 'person_id', as: 'comments' });
-
-report_attachment.belongsTo(daily_report, { foreignKey: 'report_id', as: 'daily_report' });
-daily_report.hasMany(report_attachment, { foreignKey: 'report_id', as: 'attachments' });
-
-task_attachment.belongsTo(task, { foreignKey: 'task_id', as: 'task' });
-task.hasMany(task_attachment, { foreignKey: 'task_id', as: 'attachments' });
 
 task.belongsToMany(person, { through: task_participant, foreignKey: 'task_id', otherKey: 'participant_id', as: 'participants' });
 person.belongsToMany(task, { through: task_participant, foreignKey: 'participant_id', otherKey: 'task_id', as: 'participating_tasks', onDelete: 'NO ACTION' });
@@ -86,9 +78,7 @@ module.exports = {
     request_detail,
     response,
     comment,
-    report_attachment,
     task_participant,
-    task_attachment,
     notification,
     schedule,
     refresh_token,

@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { apiFetch, getAccessToken } from "../../services/api";
 import { taskService } from "../../services/taskService";
 import { taskStatusService } from "../../services/taskStatusService";
+import { fileService } from "../../services/fileService";
 import { formatDateTime } from "../../utils/dateUtils";
 import { useNavigate } from "react-router-dom";
 import {
@@ -495,6 +496,12 @@ export default function Dashboard() {
     }
 
     for (const file of files) {
+      const validation = fileService.validateFile(file);
+      if (!validation.valid) {
+        alert(t("file.upload_error", { name: file.name, error: validation.error }));
+        continue;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("attachable_type", "report");

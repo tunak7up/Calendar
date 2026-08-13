@@ -158,18 +158,20 @@ export const fileService = {
     ];
     const ALLOWED_EXTS = ['.pdf', '.png', '.jpeg', '.jpg', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip', '.rar', '.7z', '.exe', '.apk', '.dmg', '.iso', '.bin'];
 
-    if (file.size > MAX_SIZE) {
-      return {
-        valid: false,
-        error: `Dung lượng file vượt quá giới hạn 50MB`
-      };
-    }
-
+    // 1. Kiểm tra định dạng file trước (Instant check)
     const ext = file.name ? file.name.substring(file.name.lastIndexOf('.')).toLowerCase() : '';
     if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTS.includes(ext)) {
       return {
         valid: false,
         error: `Định dạng file ${ext || file.type} không được hỗ trợ`
+      };
+    }
+
+    // 2. Kiểm tra dung lượng file sau (Instant check)
+    if (file.size > MAX_SIZE) {
+      return {
+        valid: false,
+        error: `Dung lượng file vượt quá giới hạn 50MB`
       };
     }
 

@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
+import { fileService } from '../../services/fileService';
 import MiniCalendar from '../../components/MiniCalendar';
 import SubTaskModal from '../../components/SubTaskModal';
 import ParticipantManager from '../../components/ParticipantManager';
@@ -178,6 +179,12 @@ export default function AddTask() {
         
         if (pendingFiles.length > 0 && newTaskId) {
           for (const file of pendingFiles) {
+            const validation = fileService.validateFile(file);
+            if (!validation.valid) {
+              alert(t('file.upload_error', { name: file.name, error: validation.error }));
+              continue;
+            }
+
             const uploadData = new FormData();
             uploadData.append('file', file);
             uploadData.append('attachable_type', 'task');

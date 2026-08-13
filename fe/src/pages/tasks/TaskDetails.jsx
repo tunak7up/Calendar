@@ -28,6 +28,7 @@ import { formatDateTime } from '../../utils/dateUtils';
 import { apiFetch, BASE_URL, getAccessToken } from '../../services/api';
 import { taskService } from '../../services/taskService';
 import { taskStatusService } from '../../services/taskStatusService';
+import { fileService } from '../../services/fileService';
 import { aiAgentService } from '../../services/aiAgentService';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
@@ -708,6 +709,12 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
         if (commentFiles.length > 0) {
           const commentId = res.data.comment_id || res.data.id;
           for (const file of commentFiles) {
+            const validation = fileService.validateFile(file);
+            if (!validation.valid) {
+              alert(t('file.upload_error', { name: file.name, error: validation.error }));
+              continue;
+            }
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('attachable_type', 'comment');
@@ -738,6 +745,12 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
     if (!files.length) return;
 
     for (const file of files) {
+      const validation = fileService.validateFile(file);
+      if (!validation.valid) {
+        alert(t('file.upload_error', { name: file.name, error: validation.error }));
+        continue;
+      }
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('attachable_type', 'task');

@@ -124,7 +124,9 @@ const CommentItem = ({ comment, persons }) => {
       {uniqueAttachments.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
           {uniqueAttachments.map((att, idx) => {
-            const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+            const fullUrl = att.url && (att.url.startsWith('http://') || att.url.startsWith('https://'))
+              ? att.url
+              : `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
             const fileName = att.file_name || 'File đính kèm';
             const isImage = isImageFile(fileName);
             return (
@@ -1206,7 +1208,9 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
           {taskAttachments.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {taskAttachments.map(att => {
-                const fullUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
+                const fullUrl = att.url && (att.url.startsWith('http://') || att.url.startsWith('https://'))
+                  ? att.url
+                  : `${import.meta.env.VITE_API_URL.replace('/api', '')}${att.url}`;
                 const fileName = att.file_name || 'File đính kèm';
                 const isImage = isImageFile(fileName);
                 return (

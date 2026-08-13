@@ -741,7 +741,9 @@ export default function Dashboard() {
               {reportAttachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {reportAttachments.map((att) => {
-                    const fullUrl = `${import.meta.env.VITE_API_URL.replace("/api", "")}${att.url}`;
+                    const fullUrl = att.url && (att.url.startsWith("http://") || att.url.startsWith("https://"))
+                      ? att.url
+                      : `${import.meta.env.VITE_API_URL.replace("/api", "")}${att.url}`;
                     const fileName = att.file_name || "File đính kèm";
                     return (
                       <div

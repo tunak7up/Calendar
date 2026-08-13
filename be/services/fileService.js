@@ -1,8 +1,51 @@
 const fs = require('fs');
 const path = require('path');
+const { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { s3, bucketName, bucketRegion } = require('../config/aws');
 const fileAttachment = require('../models/fileAttachment');
 const { logChange } = require('../utils/changeLogger');
 const { deletePhysicalFile } = require('../utils/fileHelper');
+
+// Helper to extract S3 Key from any URL format
+const extractS3Key = (fileUrl) => {
+    if (!fileUrl) return null;
+    try {
+        let cleanUrl = String(fileUrl).trim().split('?')[0].split('#')[0];
+        if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+            const urlObj = new URL(cleanUrl);
+            cleanUrl = urlObj.pathname;
+        }
+        cleanUrl = decodeURIComponent(cleanUrl).replace(/^\//, '');
+        if (cleanUrl.startsWith('uploads/')) {
+            return cleanUrl;
+        }
+    } catch (e) {
+        console.error('[fileService] Error parsing S3 key:', e);
+    }
+    return null;
+};
+
+// Helper to generate S3 Presigned Download URL (valid for 1 hour by default)
+const generatePresignedUrl = async (fileUrl, expiresIn = 3600) => {
+    if (!fileUrl) return fileUrl;
+    const isS3Url = fileUrl.includes('.amazonaws.com') || fileUrl.includes('s3.') || (process.env.STORAGE_TYPE === 's3' && fileUrl.startsWith('http'));
+    if (isS3Url) {
+        try {
+            const s3Key = extractS3Key(fileUrl);
+            if (!s3Key) return fileUrl;
+            const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: s3Key
+            });
+            return await getSignedUrl(s3, command, { expiresIn });
+        } catch (err) {
+            console.error('[fileService] Error generating presigned URL:', err);
+            return fileUrl;
+        }
+    }
+    return fileUrl;
+};
 
 // Configuration
 const UPLOADS_DIR = process.env.UPLOADS_DIR
@@ -64,7 +107,7 @@ const buildFileUrl = (fileName) => {
     return `${CDN_UPLOAD_URL.replace(/\/+$/, '')}${urlPath}`;
 };
 
-// Save file to disk
+// Save file to disk (Local Storage)
 const saveFileToDisk = (file) => {
     ensureUploadsDir();
     
@@ -80,7 +123,42 @@ const saveFileToDisk = (file) => {
         fileName,
         filePath,
         url: buildFileUrl(fileName),
-        originalName: file.originalname
+        originalName: file.originalname,
+        storageProvider: 'local'
+    };
+};
+
+// Save file to AWS S3
+const saveFileToS3 = async (file) => {
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const originalName = path.parse(file.originalname);
+    const fileName = `${timestamp}-${randomStr}-${originalName.name}${originalName.ext}`;
+    const s3Key = `uploads/${fileName}`;
+
+    const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: s3Key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+    });
+
+    await s3.send(command);
+
+    let url;
+    if (CDN_UPLOAD_URL) {
+        url = `${CDN_UPLOAD_URL.replace(/\/+$/, '')}/${s3Key}`;
+    } else {
+        const region = bucketRegion || 'ap-southeast-1';
+        url = `https://${bucketName}.s3.${region}.amazonaws.com/${s3Key}`;
+    }
+
+    return {
+        fileName,
+        filePath: s3Key,
+        url,
+        originalName: file.originalname,
+        storageProvider: 's3'
     };
 };
 
@@ -126,21 +204,37 @@ const createFileAttachment = async (attachable_type, attachable_id, fileData) =>
             });
         }
 
-        return attachment;
+        const plainAttachment = attachment.toJSON();
+        plainAttachment.url = await generatePresignedUrl(plainAttachment.url);
+        return plainAttachment;
     } catch (error) {
         // Delete file if DB insert fails
-        if (fs.existsSync(fileData.filePath)) {
+        if (fileData.storageProvider === 's3') {
+            try {
+                await s3.send(new DeleteObjectCommand({ Bucket: bucketName, Key: fileData.filePath }));
+            } catch (s3Err) {
+                console.error('[fileService] Error deleting S3 file on DB rollback:', s3Err);
+            }
+        } else if (fileData.filePath && fs.existsSync(fileData.filePath)) {
             fs.unlinkSync(fileData.filePath);
         }
         throw error;
     }
 };
 
-// Upload file handler (for Express middleware)
-const uploadFile = (file, attachable_type, attachable_id) => {
+// Upload file handler (Orchestrator: supports local disk & S3 based on STORAGE_TYPE env)
+const uploadFile = async (file, attachable_type, attachable_id) => {
     try {
         validateFile(file);
-        const savedFile = saveFileToDisk(file);
+
+        const storageType = (process.env.STORAGE_TYPE || 'local').toLowerCase();
+        let savedFile;
+
+        if (storageType === 's3') {
+            savedFile = await saveFileToS3(file);
+        } else {
+            savedFile = saveFileToDisk(file);
+        }
         
         return {
             ...savedFile,
@@ -161,10 +255,36 @@ const getAttachments = async (attachable_type, attachable_id) => {
                 attachable_id
             }
         });
-        return attachments;
+
+        const result = await Promise.all(attachments.map(async (item) => {
+            const data = item.toJSON();
+            data.url = await generatePresignedUrl(data.url);
+            return data;
+        }));
+
+        return result;
     } catch (error) {
         throw new Error(`Error retrieving attachments: ${error.message}`);
     }
+};
+
+// Helper to delete physical file from storage (S3 or Local Disk)
+const deleteFileFromStorage = async (url) => {
+    if (!url) return;
+    const s3Key = extractS3Key(url);
+    const isS3 = url.includes('.amazonaws.com') || url.includes('s3.') || (process.env.STORAGE_TYPE === 's3' && s3Key);
+
+    if (isS3 && s3Key) {
+        try {
+            console.log(`[fileService] Deleting file from S3 bucket: ${bucketName}, key: ${s3Key}`);
+            await s3.send(new DeleteObjectCommand({ Bucket: bucketName, Key: s3Key }));
+        } catch (s3Err) {
+            console.error('[fileService] Error deleting file from S3:', s3Err);
+        }
+    }
+
+    // Always attempt local disk deletion as well/fallback
+    deletePhysicalFile(url);
 };
 
 // Delete attachment
@@ -175,8 +295,8 @@ const deleteAttachment = async (file_attachment_id) => {
             throw new Error('Attachment not found');
         }
 
-        // Delete file from disk
-        deletePhysicalFile(attachment.url);
+        // Delete file physically (S3 or Local Disk)
+        await deleteFileFromStorage(attachment.url);
 
         if (attachment.attachable_type === 'task') {
             await logChange({
@@ -208,13 +328,9 @@ const deleteAttachmentsByEntity = async (attachable_type, attachable_id) => {
             }
         });
 
-        // Delete files from disk
+        // Delete files physically (S3 or Local Disk)
         for (const attachment of attachments) {
-            const actualFileName = path.basename(attachment.url);
-            const filePath = path.join(UPLOADS_DIR, actualFileName);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+            await deleteFileFromStorage(attachment.url);
         }
 
         // Delete records from DB

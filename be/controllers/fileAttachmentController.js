@@ -15,8 +15,7 @@ const uploadAttachment = async (req, res) => {
         if (!req.file) {
             return sendRes(res, 400, 'No file provided', null);
         }
-
-        const fileData = fileService.uploadFile(req.file, attachable_type, attachable_id);
+        const fileData = await fileService.uploadFile(req.file, attachable_type, attachable_id);
         const attachment = await fileService.createFileAttachment(
             attachable_type,
             attachable_id,

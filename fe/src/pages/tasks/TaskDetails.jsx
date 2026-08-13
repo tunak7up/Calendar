@@ -770,6 +770,21 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
     fetchTaskAttachments();
   };
 
+  const handleCommentFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const validFiles = [];
+    for (const file of files) {
+      const validation = fileService.validateFile(file);
+      if (!validation.valid) {
+        alert(t('file.upload_error', { name: file.name, error: validation.error }));
+      } else {
+        validFiles.push(file);
+      }
+    }
+    setCommentFiles(validFiles);
+  };
+
   const handleDeleteAttachment = async (attachmentId) => {
     if (!window.confirm(t('taskdetails.confirm_delete_file'))) return;
     try {
@@ -1317,7 +1332,7 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
                 multiple
                 ref={commentFileInputRef}
                 style={{ display: 'none' }}
-                onChange={(e) => setCommentFiles(Array.from(e.target.files))}
+                onChange={handleCommentFileSelect}
               />
               <button
                 onClick={() => commentFileInputRef.current?.click()}

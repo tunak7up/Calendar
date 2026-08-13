@@ -584,15 +584,17 @@ const deleteTaskRecursive = async (id, t) => {
     }
 
     // Xóa tất cả các file vật lý & CSDL của task_attachment thuộc task này
-    const taskAttachments = await task_attachment.findAll({
-        where: { task_id: id },
-        transaction: t
-    });
+    if (task_attachment) {
+        const taskAttachments = await task_attachment.findAll({
+            where: { task_id: id },
+            transaction: t
+        });
 
-    for (const att of taskAttachments) {
-        await deleteFileFromStorage(att.url);
+        for (const att of taskAttachments) {
+            await deleteFileFromStorage(att.url);
+        }
+        await task_attachment.destroy({ where: { task_id: id }, transaction: t });
     }
-    await task_attachment.destroy({ where: { task_id: id }, transaction: t });
 
     // Xóa tất cả các file vật lý & CSDL của fileAttachment thuộc task này
     if (fileAttachment) {

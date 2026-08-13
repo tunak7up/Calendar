@@ -103,7 +103,12 @@ const deleteTask = async (req, res) => {
         await taskService.deleteTask(req.params.id, changedBy);
         sendRes(res, 200, 'Task deleted successfully', null);
     } catch (error) {
-        sendRes(res, 404, 'Task not found', null, error.message);
+        console.error('Error in deleteTask controller:', error);
+        if (error.message === 'Task not found') {
+            sendRes(res, 404, 'Task not found', null, error.message);
+        } else {
+            sendRes(res, 500, 'Error deleting task', null, error.message);
+        }
     }
 };
 

@@ -1,6 +1,7 @@
 const { task, person, task_participant, task_attachment, comment, change_history, fileAttachment } = require('../models');
 const { logChange } = require('../utils/changeLogger');
 const { deletePhysicalFile } = require('../utils/fileHelper');
+const { deleteFileFromStorage } = require('./fileService');
 const { Op } = require('sequelize');
 const { sendMail } = require('./mailService');
 const ExcelJS = require('exceljs');
@@ -570,7 +571,7 @@ const deleteTaskRecursive = async (id, t) => {
                 transaction: t
             });
             for (const att of commentFileAttachments) {
-                deletePhysicalFile(att.url);
+                await deleteFileFromStorage(att.url);
             }
             await fileAttachment.destroy({
                 where: {
@@ -589,7 +590,7 @@ const deleteTaskRecursive = async (id, t) => {
     });
 
     for (const att of taskAttachments) {
-        deletePhysicalFile(att.url);
+        await deleteFileFromStorage(att.url);
     }
     await task_attachment.destroy({ where: { task_id: id }, transaction: t });
 
@@ -600,7 +601,7 @@ const deleteTaskRecursive = async (id, t) => {
             transaction: t
         });
         for (const att of genericAttachments) {
-            deletePhysicalFile(att.url);
+            await deleteFileFromStorage(att.url);
         }
         await fileAttachment.destroy({
             where: { attachable_type: 'task', attachable_id: id },

@@ -2,6 +2,7 @@ const { comment, person, fileAttachment } = require('../models');
 const { logChange } = require('../utils/changeLogger');
 const { Op } = require('sequelize');
 const sequelize = require('../config/db');
+const { generatePresignedUrl } = require('./fileService');
 
 const getAllComments = async () => {
     const comments = await comment.findAll();
@@ -26,11 +27,17 @@ const getAllComments = async () => {
         });
     }
 
-    return comments.map(c => {
+    return Promise.all(comments.map(async c => {
         const cJson = c.toJSON();
-        cJson.attachments = fileMap[cJson.comment_id] || [];
+        const rawFiles = fileMap[cJson.comment_id] || [];
+        cJson.attachments = await Promise.all(rawFiles.map(async f => {
+            return {
+                ...f,
+                url: await generatePresignedUrl(f.url)
+            };
+        }));
         return cJson;
-    });
+    }));
 };
 
 const createCommentByTaskId = async (taskId, data) => {
@@ -155,11 +162,17 @@ const getCommentsByTaskId = async (taskId) => {
         });
     }
 
-    return comments.map(c => {
+    return Promise.all(comments.map(async c => {
         const cJson = c.toJSON();
-        cJson.attachments = fileMap[cJson.comment_id] || [];
+        const rawFiles = fileMap[cJson.comment_id] || [];
+        cJson.attachments = await Promise.all(rawFiles.map(async f => {
+            return {
+                ...f,
+                url: await generatePresignedUrl(f.url)
+            };
+        }));
         return cJson;
-    });
+    }));
 };
 
 module.exports = {

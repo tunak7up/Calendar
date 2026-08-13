@@ -353,6 +353,8 @@ module.exports = {
     getAttachments,
     deleteAttachment,
     deleteAttachmentsByEntity,
+    generatePresignedUrl,
+    deleteFileFromStorage,
     validateFile,
     UPLOADS_DIR,
     MAX_FILE_SIZE,

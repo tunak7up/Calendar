@@ -3,6 +3,8 @@ const { sendRes } = require('../utils/responseHelper');
 
 // Upload attachment
 const uploadAttachment = async (req, res) => {
+    console.log("req.body", req.body);
+    console.log("req.file", req.file);
     try {
         const { attachable_type, attachable_id } = req.body;
 

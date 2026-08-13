@@ -24,6 +24,12 @@ export const vi = {
       no_notifications: "Không có thông báo nào",
       loading_notifications: "Đang tải thông báo..."
     },
+    file: {
+      upload_error: "Lỗi tải file \"{{name}}\": {{error}}",
+      upload_success: "Tải file thành công",
+      size_exceeded: "Dung lượng file vượt quá giới hạn tối đa {{max}}MB",
+      type_not_allowed: "Định dạng file {{ext}} không được hỗ trợ"
+    },
     login: {
       welcome: "Chào mừng trở lại",
       subtitle: "Đăng nhập để tiếp tục quản lý lịch của bạn",

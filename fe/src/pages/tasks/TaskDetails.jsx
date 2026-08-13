@@ -719,6 +719,7 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
               });
             } catch (err) {
               console.error('Error uploading comment file:', err);
+              alert(t('file.upload_error', { name: file.name, error: err.message }));
             }
           }
           setCommentFiles([]);
@@ -749,6 +750,7 @@ function ExpandableHistoryText({ text, maxLength = 120, className = '' }) {
         });
       } catch (error) {
         console.error('Upload error:', error);
+        alert(t('file.upload_error', { name: file.name, error: error.message }));
       }
     }
     if (taskFileInputRef.current) taskFileInputRef.current.value = '';

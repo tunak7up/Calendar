@@ -24,6 +24,12 @@ export const en = {
       no_notifications: "No notifications",
       loading_notifications: "Loading notifications..."
     },
+    file: {
+      upload_error: "File upload error \"{{name}}\": {{error}}",
+      upload_success: "File uploaded successfully",
+      size_exceeded: "File size exceeds the maximum limit of {{max}}MB",
+      type_not_allowed: "File type {{ext}} is not supported"
+    },
     login: {
       welcome: "Welcome Back",
       subtitle: "Login to continue managing your schedule",

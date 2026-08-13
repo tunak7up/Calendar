@@ -52,7 +52,8 @@ const UPLOADS_DIR = process.env.UPLOADS_DIR
     ? path.resolve(process.env.UPLOADS_DIR)
     : path.join(__dirname, '../uploads');
 const CDN_UPLOAD_URL = process.env.CDN_UPLOAD_URL || process.env.UPLOAD_URL_BASE || '';
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 50;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
     'application/pdf',
     'image/png',
@@ -71,9 +72,13 @@ const ALLOWED_MIME_TYPES = [
     'application/x-rar-compressed',
     'application/vnd.rar',
     'application/rar',
-    'application/x-7z-compressed'
+    'application/x-7z-compressed',
+    'application/x-msdownload',
+    'application/x-dosexec',
+    'application/octet-stream',
+    'application/x-executable'
 ];
-const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpeg', '.jpg', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip', '.rar', '.7z'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpeg', '.jpg', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip', '.rar', '.7z', '.exe', '.apk', '.dmg', '.iso', '.bin'];
 
 // Ensure uploads directory exists
 const ensureUploadsDir = () => {

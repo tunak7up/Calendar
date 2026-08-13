@@ -186,6 +186,7 @@ export default function AddTask() {
               await apiFetch('/file-attachment/upload', { method: 'POST', body: uploadData });
             } catch (error) {
               console.error('Upload error:', error);
+              alert(t('file.upload_error', { name: file.name, error: error.message }));
             }
           }
         }

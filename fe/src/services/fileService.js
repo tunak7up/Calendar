@@ -144,20 +144,32 @@ export const fileService = {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/csv',
       'text/plain',
-      'application/zip'
+      'application/zip',
+      'application/x-zip-compressed',
+      'multipart/x-zip',
+      'application/x-rar-compressed',
+      'application/vnd.rar',
+      'application/rar',
+      'application/x-7z-compressed',
+      'application/x-msdownload',
+      'application/x-dosexec',
+      'application/octet-stream',
+      'application/x-executable'
     ];
+    const ALLOWED_EXTS = ['.pdf', '.png', '.jpeg', '.jpg', '.gif', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip', '.rar', '.7z', '.exe', '.apk', '.dmg', '.iso', '.bin'];
 
     if (file.size > MAX_SIZE) {
       return {
         valid: false,
-        error: `File size exceeds 50MB limit`
+        error: `Dung lượng file vượt quá giới hạn 50MB`
       };
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const ext = file.name ? file.name.substring(file.name.lastIndexOf('.')).toLowerCase() : '';
+    if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTS.includes(ext)) {
       return {
         valid: false,
-        error: `File type ${file.type} is not allowed`
+        error: `Định dạng file ${ext || file.type} không được hỗ trợ`
       };
     }
 

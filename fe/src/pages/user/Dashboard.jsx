@@ -507,6 +507,7 @@ export default function Dashboard() {
         });
       } catch (error) {
         console.error("Upload error:", error);
+        alert(t("file.upload_error", { name: file.name, error: error.message }));
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";

@@ -7,7 +7,7 @@ services:
     restart: always
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
-    command: redis-server --requirepass ${REDIS_PASSWORD} --protected-mode no
+    command: redis-server --port ${REDIS_PORT} --requirepass ${REDIS_PASSWORD} --protected-mode no
     volumes:
       - redis_data:/data
     networks:

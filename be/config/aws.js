@@ -1,17 +1,21 @@
 const { S3Client } = require("@aws-sdk/client-s3");
-require('dotenv').config();
+require("dotenv").config();
 
-const bucketName = process.env.BUCKET_NAME;
-const bucketRegion = process.env.BUCKET_REGION;
-const accessKey = process.env.AWS_ACCESS_KEY_ID;
-const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
+let s3 = null;
+let bucketName = null;
+let bucketRegion = null;
 
-const s3 = new S3Client({
-    region: bucketRegion,
-    credentials: {
-        accessKeyId: accessKey,
-        secretAccessKey: secretKey,
-    },
-});
+if (process.env.STORAGE_TYPE === "s3") {
+    bucketName = process.env.BUCKET_NAME;
+    bucketRegion = process.env.BUCKET_REGION;
+
+    s3 = new S3Client({
+        region: bucketRegion,
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+    });
+}
 
 module.exports = { s3, bucketName, bucketRegion };

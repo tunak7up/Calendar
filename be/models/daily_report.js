@@ -52,7 +52,7 @@ const daily_report = sequelize.define(
         },
     });
 
-// Automatically inject session context before any update on daily_report
+// Automatically inject session context before any update/delete on daily_report
 daily_report.beforeUpdate(async (instance, options) => {
     const secret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
     await sequelize.query(`EXEC sp_set_session_context N'app_context', N'${secret}';`, {
@@ -61,6 +61,20 @@ daily_report.beforeUpdate(async (instance, options) => {
 });
 
 daily_report.beforeBulkUpdate(async (options) => {
+    const secret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
+    await sequelize.query(`EXEC sp_set_session_context N'app_context', N'${secret}';`, {
+        transaction: options?.transaction
+    });
+});
+
+daily_report.beforeDestroy(async (instance, options) => {
+    const secret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
+    await sequelize.query(`EXEC sp_set_session_context N'app_context', N'${secret}';`, {
+        transaction: options?.transaction
+    });
+});
+
+daily_report.beforeBulkDestroy(async (options) => {
     const secret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
     await sequelize.query(`EXEC sp_set_session_context N'app_context', N'${secret}';`, {
         transaction: options?.transaction

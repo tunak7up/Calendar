@@ -370,6 +370,7 @@ export function useDashboard() {
   };
 
   const handleDragStart = (e, taskId) => {
+    window.getSelection()?.removeAllRanges();
     e.dataTransfer.setData("text/plain", taskId.toString());
     e.dataTransfer.effectAllowed = "move";
   };

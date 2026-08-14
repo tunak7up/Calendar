@@ -50,7 +50,7 @@ function KanbanCard({ task, isOverdueColumn, checkOutTime, onNavigate, onDragSta
       onDragStart={(e) => onDragStart(e, task.task_id)}
       onDragEnd={onDragEnd}
       onClick={() => onNavigate(task)}
-      className={`bg-white border ${cardBorder} p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-grab active:cursor-grabbing group space-y-3 relative overflow-hidden`}
+      className={`bg-white border ${cardBorder} p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-grab active:cursor-grabbing group space-y-3 relative overflow-hidden select-none`}
     >
       {/* Red top bar for overdue */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />

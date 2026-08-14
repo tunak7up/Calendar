@@ -24,6 +24,8 @@ import { formatDateTime } from '../../../utils/dateUtils';
 import ParticipantManager from '../../../components/ParticipantManager';
 import TaskStatusSelect from '../../../components/TaskStatusSelect';
 import BackButton from '../../../components/BackButton';
+import { apiFetch } from '../../../services/api';
+import { taskService } from '../../../services/taskService';
 import { useTaskDetails, downloadFile, isImageFile, formatForDatetimeLocal } from './hooks/useTaskDetails';
 
 function classNames(...classes) {

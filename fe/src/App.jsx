@@ -88,7 +88,7 @@ function App() {
             (event) => {
               console.log(
                 "[OneSignal Native] Foreground notification received:",
-                event.getNotification(),
+                event.notification,
               );
             },
           );
@@ -144,21 +144,22 @@ function App() {
           if (!active) return;
           window.OneSignalDeferred = window.OneSignalDeferred || [];
           window.OneSignalDeferred.push(async function (OneSignal) {
-            await OneSignal.init({
-              appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
-              notifyButton: {
-                enable: false,
-              },
-            });
-
-            // Link external ID to matching person ID on Web
-            if (user?.person_id) {
-              await OneSignal.login(String(user.person_id)).catch((err) =>
-                console.error("[OneSignal Web] Login error:", err),
-              );
-            }
-
             try {
+              await OneSignal.init({
+                appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+                allowLocalhostAsSecureOrigin: true,
+                notifyButton: {
+                  enable: false,
+                },
+              });
+
+              // Link external ID to matching person ID on Web
+              if (user?.person_id) {
+                await OneSignal.login(String(user.person_id)).catch((err) =>
+                  console.error("[OneSignal Web] Login error:", err),
+                );
+              }
+
               // Request permission
               await OneSignal.Notifications.requestPermission();
 
@@ -168,7 +169,7 @@ function App() {
                 (event) => {
                   console.log(
                     "[OneSignal Web] Foreground notification received:",
-                    event.getNotification(),
+                    event.notification,
                   );
                 },
               );
@@ -212,7 +213,7 @@ function App() {
                 },
               );
             } catch (e) {
-              console.error(
+              console.warn(
                 "[OneSignal Web] Error initializing or requesting permissions:",
                 e,
               );

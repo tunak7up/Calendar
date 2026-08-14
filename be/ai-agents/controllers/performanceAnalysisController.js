@@ -293,13 +293,20 @@ ${tasksDetails.length > 0
     : 'Không có công việc'}
 `;
 
-        // Combine admin's systemPrompt with data context
-        const prompt = `${agent.systemPrompt || 'Hãy đánh giá hiệu suất nhân viên'}
+        let systemInstruction = agent.systemPrompt || 'Hãy đánh giá hiệu suất nhân viên';
+        systemInstruction += `
+
+# NGUYÊN TẮC CẤP QUYỀN & GIỚI HẠN THẨM QUYỀN (AUTHORITY & GUARDRAILS):
+1. GIỚI HẠN THẨM QUYỀN:
+- Bạn CHỈ ĐƯỢC CẤP QUYỀN phân tích, nhận xét và đánh giá dựa trên DỮ LIỆU THỰC TẾ (chuyên cần, giờ làm, số lần đi muộn, tiến độ hoàn thành task) được cung cấp trong ngữ cảnh.
+- Bạn TUYỆT ĐỐI KHÔNG CÓ THẨM QUYỀN tự sáng tác, phóng đại hoặc thiên vị số liệu mà không dựa trên dữ liệu thực tế.
+2. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (#, ##, **, *) trong câu trả lời.`;
+
+        const prompt = `Yêu cầu phân tích và đánh giá hiệu suất nhân sự:
 
 ${dataContext}
 
-Lưu ý: Phân tích dựa vào dữ liệu trên, không sử dụng ký tự Markdown (#, ##, **, *) trong câu trả lời.`;
-
+Hãy phân tích khách quan, chính xác dựa trên dữ liệu thực tế ở trên.`;
 
         const genAI = new GoogleGenerativeAI(apiKey);
         let analysisContent = '';
@@ -309,7 +316,8 @@ Lưu ý: Phân tích dựa vào dữ liệu trên, không sử dụng ký tự M
         for (const modelName of candidateModels) {
             try {
                 const model = genAI.getGenerativeModel({
-                    model: modelName
+                    model: modelName,
+                    systemInstruction: systemInstruction
                 });
                 const result = await model.generateContent(prompt);
                 const response = await result.response;

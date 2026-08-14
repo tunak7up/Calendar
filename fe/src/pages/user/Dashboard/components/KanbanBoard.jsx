@@ -31,7 +31,7 @@ function PriorityBadge({ priority }) {
   );
 }
 
-function KanbanCard({ task, isOverdueColumn, checkOutTime, onNavigate, onDragStart, onDragEnd }) {
+function KanbanCard({ task, isOverdueColumn, onNavigate, onDragStart, onDragEnd }) {
   const { i18n } = useTranslation();
   // In normal columns, compute isOverdue from due_date. In the overdue column it's always true.
   const isOverdue =
@@ -46,7 +46,7 @@ function KanbanCard({ task, isOverdueColumn, checkOutTime, onNavigate, onDragSta
 
   return (
     <div
-      draggable={!checkOutTime}
+      draggable
       onDragStart={(e) => onDragStart(e, task.task_id)}
       onDragEnd={onDragEnd}
       onClick={() => onNavigate(task)}
@@ -202,7 +202,6 @@ export default function KanbanBoard({
                   key={task.task_id}
                   task={task}
                   isOverdueColumn
-                  checkOutTime={checkOutTime}
                   onNavigate={onNavigate}
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
@@ -268,7 +267,6 @@ export default function KanbanBoard({
                     <KanbanCard
                       key={task.task_id}
                       task={task}
-                      checkOutTime={checkOutTime}
                       onNavigate={onNavigate}
                       onDragStart={onDragStart}
                       onDragEnd={onDragEnd}

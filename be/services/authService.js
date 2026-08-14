@@ -118,9 +118,21 @@ const logout = async (refreshTokenString) => {
   }
 };
 
+const revokeTokensByPersonId = async (personId) => {
+  if (!personId) return;
+  try {
+    const deletedCount = await RefreshToken.destroy({ where: { person_id: personId } });
+    console.log(`[Auth Service] Đã thu hồi ${deletedCount} refresh token cho person_id: ${personId}`);
+    return deletedCount;
+  } catch (err) {
+    console.error(`Lỗi xóa toàn bộ refresh token cho person_id: ${personId}:`, err);
+    throw err;
+  }
+};
+
 const hashPassword = async (plainPassword) => {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plainPassword, salt);
 };
 
-module.exports = { login, hashPassword, refresh, logout };
+module.exports = { login, hashPassword, refresh, logout, revokeTokensByPersonId };

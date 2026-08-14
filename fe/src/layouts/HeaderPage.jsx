@@ -136,19 +136,22 @@ export default function HeaderPage({ isAdmin }) {
     }
   }, [user?.person_id]);
 
-  const handleMarkAllAsRead = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const response = await apiFetch('/notification/read-all', {
-        method: 'PUT'
-      });
-      if (response && response.success) {
-        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  const handleBellClick = async () => {
+    const hasUnread = notifications.some(n => !n.is_read);
+
+    if (hasUnread) {
+      // Optimistically update UI so unread count clears instantly
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      try {
+        await apiFetch('/notification/read-all', {
+          method: 'PUT'
+        });
+      } catch (error) {
+        console.error('Error marking all as read on bell click:', error);
       }
-    } catch (error) {
-      console.error('Error marking all as read:', error);
     }
+
+    await fetchNotifications();
   };
 
   const [checkingTaskId, setCheckingTaskId] = useState(null);
@@ -359,7 +362,7 @@ export default function HeaderPage({ isAdmin }) {
                 {/* Notification Bell Dropdown */}
                 <Menu as="div" className="relative ml-1">
                   <MenuButton 
-                    onClick={fetchNotifications}
+                    onClick={handleBellClick}
                     className="relative rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
                   >
                     <span className="sr-only">{t('nav.notifications')}</span>
@@ -377,14 +380,6 @@ export default function HeaderPage({ isAdmin }) {
                   >
                     <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                       <span className="font-bold text-gray-800 text-sm">{t('nav.notifications')}</span>
-                      {notifications.filter(n => !n.is_read).length > 0 && (
-                        <button
-                          onClick={handleMarkAllAsRead}
-                          className="text-xs font-semibold text-[#0056b3] hover:text-[#004494] hover:underline"
-                        >
-                          {t('nav.mark_all_read')}
-                        </button>
-                      )}
                     </div>
 
                     <div className="divide-y divide-gray-50">

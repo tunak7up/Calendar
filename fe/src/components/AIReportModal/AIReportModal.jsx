@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { dailyReportService } from '../../services/dailyReportService';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import './AIReportModal.css';
 
 export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const [rawNotes, setRawNotes] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,16 +22,16 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
 
         try {
             const userName = user?.name || user?.username || '';
-            const todayStr = new Date().toLocaleDateString('vi-VN');
+            const todayStr = new Date().toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US');
             const res = await dailyReportService.generateAIReport(rawNotes, userName, todayStr);
             if (res && res.success && res.report) {
                 setReportResult(res.report);
             } else {
-                setError(res?.error || 'Không thể tạo báo cáo bằng AI.');
+                setError(res?.error || t('ai_report.error_failed'));
             }
         } catch (err) {
             console.error(err);
-            setError(err.message || 'Có lỗi xảy ra khi kết nối tới AI Agent.');
+            setError(err.message || t('ai_report.error_connect'));
         } finally {
             setLoading(false);
         }
@@ -53,8 +55,8 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
             <div className="ai-modal-container" onClick={(e) => e.stopPropagation()}>
                 <div className="ai-modal-header">
                     <div className="ai-modal-header-title">
-                        <h2>✨ AI Agent - Tạo Báo Cáo Hàng Ngày</h2>
-                        <span className="ai-badge">Chuyên viên Quản lý Tiến độ</span>
+                        <h2>{t('ai_report.title')}</h2>
+                        <span className="ai-badge">{t('ai_report.badge')}</span>
                     </div>
                     <button className="ai-modal-close" onClick={onClose}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -67,14 +69,17 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                 <div className="ai-modal-body">
                     <div>
                         <label className="ai-section-label">
-                            📝 Ghi chú / Nhật ký bổ sung (không bắt buộc):
+                            {t('ai_report.notes_label')}
                         </label>
                         <div style={{ fontSize: '12px', color: '#334155', marginBottom: '8px', lineHeight: '1.5' }}>
-                            ⚡ <strong>Hệ thống sẽ tự động tổng hợp tất cả các task đã hoàn thành (có ended_at) và các task đang thực hiện từ DB của bạn.</strong> Bạn có thể nhập thêm ghi chú bổ sung hoặc lỗi phát sinh tại đây nếu có.
+                            {t('ai_report.info_auto')}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '6px 10px', borderRadius: '8px', marginBottom: '10px' }}>
+                            {t('ai_report.info_principle')}
                         </div>
                         <textarea
                             className="ai-textarea"
-                            placeholder="Nhập thêm ghi chú bổ sung hoặc lỗi vướng mắc nếu có (hoặc để trống để AI tự động lấy toàn bộ task từ hệ thống)..."
+                            placeholder={t('ai_report.notes_placeholder')}
                             value={rawNotes}
                             onChange={(e) => setRawNotes(e.target.value)}
                             onKeyDown={(e) => {
@@ -97,11 +102,11 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                         {loading ? (
                             <>
                                 <div className="ai-loading-spinner" />
-                                <span>AI đang phân tích DB & tổng hợp báo cáo...</span>
+                                <span>{t('ai_report.generating')}</span>
                             </>
                         ) : (
                             <>
-                                <span>🪄 Tự động tổng hợp Task DB & Tạo báo cáo bằng AI</span>
+                                <span>{t('ai_report.generate_btn')}</span>
                             </>
                         )}
                     </button>
@@ -115,7 +120,7 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                     {reportResult && (
                         <div>
                             <div className="ai-section-label">
-                                📋 Báo cáo công việc hàng ngày được AI tổng hợp:
+                                {t('ai_report.result_label')}
                             </div>
                             <div className="ai-result-box">
                                 <div className="ai-result-box-header">
@@ -124,19 +129,19 @@ export default function AIReportModal({ isOpen, onClose, onApplyReport }) {
                                             className="ai-action-btn ai-btn-apply" 
                                             onClick={handleApply}
                                         >
-                                            📥 Áp dụng vào báo cáo
+                                            {t('ai_report.apply_btn')}
                                         </button>
                                     )}
                                     <button className="ai-action-btn ai-btn-copy" onClick={handleCopy}>
                                         {copied ? (
-                                            <>✅ Đã sao chép!</>
+                                            <>{t('ai_report.copied')}</>
                                         ) : (
                                             <>
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                                 </svg>
-                                                Sao chép
+                                                {t('ai_report.copy_btn')}
                                             </>
                                         )}
                                     </button>

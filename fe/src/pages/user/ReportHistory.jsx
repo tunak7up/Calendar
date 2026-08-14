@@ -109,7 +109,7 @@ export default function ReportHistory() {
             onClick={() => setIsAiModalOpen(true)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
           >
-            <span>✨ Tạo báo cáo bằng AI</span>
+            <span>✨ {t('ai_report.generate_btn_short')}</span>
           </button>
 
           <DateRangeFilter
@@ -269,7 +269,7 @@ export default function ReportHistory() {
                             <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_in_ip}</p>
                           )}
                           {selectedReport.check_in_device && (
-                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_in_device}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{t('reporthistory.device')} {selectedReport.check_in_device}</p>
                           )}
                         </div>
                         <div>
@@ -279,15 +279,15 @@ export default function ReportHistory() {
                             <p className="text-xs font-mono text-gray-500 mt-0.5">IP: {selectedReport.check_out_ip}</p>
                           )}
                           {selectedReport.check_out_device && (
-                            <p className="text-xs text-gray-500 mt-0.5">Thiết bị: {selectedReport.check_out_device}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{t('reporthistory.device')} {selectedReport.check_out_device}</p>
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Vào (Máy chấm công)</p>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.col_checkin_machine')}</p>
                           <p className="text-sm font-semibold text-emerald-700">{selectedReport.check_in_machine || '--:--'}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ra (Máy chấm công)</p>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('reporthistory.col_checkout_machine')}</p>
                           <p className="text-sm font-semibold text-indigo-700">{selectedReport.check_out_machine || '--:--'}</p>
                         </div>
                       </div>

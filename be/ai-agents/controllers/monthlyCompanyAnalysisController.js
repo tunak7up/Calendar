@@ -135,7 +135,13 @@ const analyzeCompanyMonthly = async (req, res) => {
         }).join('\n');
 
         let systemInstruction = agent.systemPrompt;
-        systemInstruction += "\nYêu cầu quan trọng: Báo cáo phân tích hiệu suất công ty phải cực kỳ ngắn gọn, súc tích, tóm gọn trực tiếp vào các điểm chính, không viết dài dòng lê thê hoặc rườm rà.";
+        systemInstruction += `
+
+# NGUYÊN TẮC CẤP QUYỀN & GIỚI HẠN THẨM QUYỀN (AUTHORITY & GUARDRAILS):
+1. GIỚI HẠN THẨM QUYỀN:
+- Bạn CHỈ ĐƯỢC CẤP QUYỀN phân tích, đánh giá tổng thể dựa trên DỮ LIỆU TỔNG HỢP THỰC TẾ của các nhân sự do hệ thống cung cấp.
+- Bạn TUYỆT ĐỐI KHÔNG ĐƯỢC CẤP QUYỀN tự sáng tác dữ liệu nhân sự, không ngụy tạo thành tích hoặc che giấu vi phạm.
+2. Yêu cầu quan trọng: Báo cáo phân tích hiệu suất công ty phải cực kỳ ngắn gọn, súc tích, tóm gọn trực tiếp vào các điểm chính, không viết dài dòng lê thê hoặc rườm rà.`;
         const preferredModel = agent.modelName || 'gemini-3.1-flash-lite';
         const candidateModels = [preferredModel, 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
             .filter((val, index, self) => self.indexOf(val) === index);

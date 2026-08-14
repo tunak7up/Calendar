@@ -11,6 +11,7 @@ app.set('trust proxy', true);
 
 // Import attendance notification service
 const {
+  checkAttendanceMilestones,
   checkMorningCheckIn,
   checkMorningCheckOut,
   checkAfternoonCheckIn,
@@ -62,10 +63,11 @@ app.use('/api', router);
 // Test endpoint for attendance notifications
 app.post('/api/test/attendance-email', async (req, res) => {
   try {
-    const { checkType } = req.body; // 'morning-checkin', 'morning-checkout', 'afternoon-checkin', 'afternoon-checkout'
+    const { checkType } = req.body;
 
-    if (!checkType) {
-      return res.status(400).json({ success: false, message: 'checkType is required' });
+    if (!checkType || checkType === 'all') {
+      await checkAttendanceMilestones();
+      return res.json({ success: true, message: 'All attendance milestones triggered successfully' });
     }
 
     switch (checkType) {
@@ -82,7 +84,8 @@ app.post('/api/test/attendance-email', async (req, res) => {
         await checkAfternoonCheckOut();
         break;
       default:
-        return res.status(400).json({ success: false, message: 'Invalid checkType' });
+        await checkAttendanceMilestones();
+        break;
     }
 
     res.json({ success: true, message: `Test email check (${checkType}) triggered successfully` });
@@ -94,43 +97,19 @@ app.post('/api/test/attendance-email', async (req, res) => {
 
 /**
  * Setup cron jobs cho attendance notifications
- * Các cron jobs chạy vào giờ quy định mỗi ngày
+ * Chạy check mỗi 1 phút theo các mốc thời gian đăng ký và deadline
  */
 const setupAttendanceNotificationCrons = () => {
-  // Polling interval: chạy check mỗi 1 phút
-  // Tuy nhiên các hàm sẽ kiểm tra logic để chỉ gửi mail vào đúng giờ
+  // Polling interval: chạy check mỗi 1 phút (60000ms)
   setInterval(async () => {
-    const now = new Date();
-    const vnTime = getVNTime(now);
-    const hm = vnTime.timeStr;
-
-    // 9h31 - Morning shift check-in warning
-    if (hm === '09:31') {
-      console.log('[Scheduler] Triggering 09:31 morning check-in check...');
-      await checkMorningCheckIn().catch(err => console.error('[Scheduler] Error in 09:31 check:', err));
+    try {
+      await checkAttendanceMilestones();
+    } catch (err) {
+      console.error('[Scheduler] Error in attendance milestones check:', err);
     }
+  }, 60000);
 
-    // 12h15 - Morning shift check-out reminder
-    if (hm === '12:15') {
-      console.log('[Scheduler] Triggering 12:15 morning check-out check...');
-      await checkMorningCheckOut().catch(err => console.error('[Scheduler] Error in 12:15 check:', err));
-    }
-
-    // 14h01 - Afternoon shift check-in warning
-    if (hm === '14:01') {
-      console.log('[Scheduler] Triggering 14:01 afternoon check-in check...');
-      await checkAfternoonCheckIn().catch(err => console.error('[Scheduler] Error in 14:01 check:', err));
-    }
-
-    // 18h31 - Afternoon shift check-out reminder
-    if (hm === '18:31') {
-      console.log('[Scheduler] Triggering 18:31 afternoon check-out check...');
-      await checkAfternoonCheckOut().catch(err => console.error('[Scheduler] Error in 18:31 check:', err));
-    }
-  }, 60000); // Check every 1 minute (60000ms)
-
-  console.log('[Scheduler] Attendance notification crons initialized successfully.');
-  console.log('[Scheduler] Scheduled times: 09:31 (Morning Check-in), 12:15 (Morning Check-out), 14:01 (Afternoon Check-in), 18:31 (Afternoon Check-out)');
+  console.log('[Scheduler] Attendance notification crons initialized successfully (checking all check-in & check-out milestones every 1 minute).');
 };
 
 async function startServer() {

@@ -118,9 +118,42 @@ const logout = async (refreshTokenString) => {
   }
 };
 
+const revokeTokensByPersonId = async (personId) => {
+  if (!personId) return;
+  try {
+    const deletedCount = await RefreshToken.destroy({ where: { person_id: personId } });
+    console.log(`[Auth Service] Đã thu hồi ${deletedCount} refresh token cho person_id: ${personId}`);
+    return deletedCount;
+  } catch (err) {
+    console.error(`Lỗi xóa toàn bộ refresh token cho person_id: ${personId}:`, err);
+    throw err;
+  }
+};
+
+const cleanupExpiredRefreshTokens = async () => {
+  try {
+    const { Op } = require('sequelize');
+    const deletedCount = await RefreshToken.destroy({
+      where: {
+        expires_at: {
+          [Op.lt]: new Date(),
+        },
+      },
+    });
+    if (deletedCount > 0) {
+      console.log(`[Auth Service] Đã tự động dọn dẹp ${deletedCount} refresh token đã hết hạn.`);
+    } else {
+      console.log('[Auth Service] Không có refresh token nào hết hạn cần dọn dẹp.');
+    }
+    return deletedCount;
+  } catch (err) {
+    console.error('[Auth Service] Lỗi dọn dẹp refresh token hết hạn:', err.message || err);
+  }
+};
+
 const hashPassword = async (plainPassword) => {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plainPassword, salt);
 };
 
-module.exports = { login, hashPassword, refresh, logout };
+module.exports = { login, hashPassword, refresh, logout, revokeTokensByPersonId, cleanupExpiredRefreshTokens };

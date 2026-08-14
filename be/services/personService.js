@@ -1,9 +1,8 @@
 const { where } = require('sequelize');
-const { person, task, task_participant } = require('../models');
+const { person, task, task_participant, refresh_token } = require('../models');
 const bcrypt = require('bcryptjs');
 
 const getAllPersons = async () => {
-  return await person.findAll();
   return await person.findAll();
 };
 
@@ -105,6 +104,19 @@ const updatePerson = async (
 
   if (password && password.trim() !== '') {
     updateData.password = await bcrypt.hash(password, 10);
+    // Xóa toàn bộ refresh token trong DB của person đó khi đổi mật khẩu
+    await refresh_token.destroy({
+      where: { person_id: id }
+    });
+    console.log(`[Person Service] Đã xóa toàn bộ refresh token cho person_id: ${id} do đổi mật khẩu.`);
+  }
+
+  if (status === false) {
+    // Xóa toàn bộ refresh token nếu tài khoản bị vô hiệu hóa
+    await refresh_token.destroy({
+      where: { person_id: id }
+    });
+    console.log(`[Person Service] Đã xóa toàn bộ refresh token cho person_id: ${id} do vô hiệu hóa tài khoản.`);
   }
 
   return await data.update(updateData);
@@ -114,6 +126,11 @@ const removePerson = async (id) => {
   const data = await person.findByPk(id);
   if (!data) throw new Error('Person not found');
   await data.update({ status: false });
+  // Xóa toàn bộ refresh token khi xóa/vô hiệu hóa person
+  await refresh_token.destroy({
+    where: { person_id: id }
+  });
+  console.log(`[Person Service] Đã xóa toàn bộ refresh token cho person_id: ${id} do xóa person.`);
 };
 
 

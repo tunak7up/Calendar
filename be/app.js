@@ -136,8 +136,9 @@ async function startServer() {
       console.log('Task statuses seeded successfully.');
     }
 
-
-
+    // Cleanup expired refresh tokens on server startup
+    const { cleanupExpiredRefreshTokens } = require('./services/authService');
+    await cleanupExpiredRefreshTokens();
   } catch (error) {
     console.error('Unable to connect to the database:', error.message);
     console.error('Server will still start, but DB features may not work.');

@@ -46,57 +46,104 @@ pipeline {
                 expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop' }
             }
             steps {
-                echo 'Loading environment files from S3...'
-                withCredentials([
-                    file(credentialsId: 'calendar-s3-env-reader', variable: 'AWS_ENV_FILE')
-                ]) {
-                    sh '''
-                        set -e
+                script {
+                    def s3Loaded = false
+                    echo '📦 Attempting to load environment files from S3...'
+                    try {
+                        withCredentials([
+                            file(credentialsId: 'calendar-s3-env-reader', variable: 'AWS_ENV_FILE')
+                        ]) {
+                            sh '''
+                                set -e
 
-                        # Load các biến AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_DEFAULT_REGION từ Secret file
-                        set -a
-                        . "$AWS_ENV_FILE"
-                        set +a
+                                # Load các biến AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_DEFAULT_REGION từ Secret file
+                                set -a
+                                . "$AWS_ENV_FILE"
+                                set +a
 
-                        echo "Target S3 Bucket: s3://${AWS_S3_BUCKET}"
-                        
-                        mkdir -p be fe
+                                if [ -z "$AWS_S3_BUCKET" ]; then
+                                    echo "AWS_S3_BUCKET is empty or missing in Secret file!" >&2
+                                    exit 1
+                                fi
 
-                        if command -v aws >/dev/null 2>&1; then
-                            echo "Using host AWS CLI..."
-                            aws s3 cp "s3://${AWS_S3_BUCKET}/.env" .env
-                            aws s3 cp "s3://${AWS_S3_BUCKET}/.env.docker" be/.env.docker
-                            aws s3 cp "s3://${AWS_S3_BUCKET}/.env.production" fe/.env.production
-                        elif command -v docker >/dev/null 2>&1; then
-                            echo "AWS CLI not found on host, using amazon/aws-cli container..."
-                            docker run --rm \
-                                -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-                                -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-                                -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
-                                -v "$(pwd):/aws_ws" \
-                                -w /aws_ws \
-                                amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env" .env
-                            docker run --rm \
-                                -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-                                -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-                                -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
-                                -v "$(pwd):/aws_ws" \
-                                -w /aws_ws \
-                                amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env.docker" be/.env.docker
-                            docker run --rm \
-                                -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-                                -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-                                -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
-                                -v "$(pwd):/aws_ws" \
-                                -w /aws_ws \
-                                amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env.production" fe/.env.production
-                        else
-                            echo "ERROR: Neither 'aws' CLI nor 'docker' is available to pull env files from S3!" >&2
-                            exit 1
-                        fi
+                                echo "Target S3 Bucket: s3://${AWS_S3_BUCKET}"
+                                
+                                mkdir -p be fe
 
-                        echo "Environment files loaded successfully."
-                    '''
+                                if command -v aws >/dev/null 2>&1; then
+                                    echo "Using host AWS CLI..."
+                                    aws s3 cp "s3://${AWS_S3_BUCKET}/.env" .env
+                                    aws s3 cp "s3://${AWS_S3_BUCKET}/.env.docker" be/.env.docker
+                                    aws s3 cp "s3://${AWS_S3_BUCKET}/.env.production" fe/.env.production
+                                elif command -v docker >/dev/null 2>&1; then
+                                    echo "AWS CLI not found on host, using amazon/aws-cli container..."
+                                    docker run --rm \
+                                        -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                                        -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                                        -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
+                                        -v "$(pwd):/aws_ws" \
+                                        -w /aws_ws \
+                                        amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env" .env
+                                    docker run --rm \
+                                        -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                                        -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                                        -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
+                                        -v "$(pwd):/aws_ws" \
+                                        -w /aws_ws \
+                                        amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env.docker" be/.env.docker
+                                    docker run --rm \
+                                        -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                                        -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                                        -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
+                                        -v "$(pwd):/aws_ws" \
+                                        -w /aws_ws \
+                                        amazon/aws-cli s3 cp "s3://${AWS_S3_BUCKET}/.env.production" fe/.env.production
+                                else
+                                    echo "ERROR: Neither 'aws' CLI nor 'docker' is available to pull env files from S3!" >&2
+                                    exit 1
+                                fi
+
+                                # Kiểm tra đảm bảo các file đã tải về và không bị rỗng
+                                if [ ! -s .env ] || [ ! -s be/.env.docker ] || [ ! -s fe/.env.production ]; then
+                                    echo "ERROR: One or more env files from S3 are missing or empty!" >&2
+                                    exit 1
+                                fi
+
+                                echo "Environment files loaded successfully from S3."
+                            '''
+                        }
+                        s3Loaded = true
+                        echo '✅ Successfully loaded environment files from S3!'
+                    } catch (Exception e) {
+                        echo "⚠️ S3 load failed or 'calendar-s3-env-reader' not found: ${e.message}"
+                        echo "🔄 Switching to fallback: Loading from Jenkins Credentials..."
+                    }
+
+                    if (!s3Loaded) {
+                        withCredentials([
+                            file(credentialsId: 'calendar-root-env', variable: 'ROOT_ENV'),
+                            file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER'),
+                            file(credentialsId: 'calendar-fe-env-production', variable: 'FE_ENV_PRODUCTION')
+                        ]) {
+                            sh '''
+                                set -e
+                                mkdir -p be fe
+                                if [ -n "$ROOT_ENV" ] && [ -f "$ROOT_ENV" ]; then
+                                    cp "$ROOT_ENV" .env
+                                    echo "Loaded .env from Jenkins Credentials"
+                                fi
+                                if [ -n "$BE_ENV_DOCKER" ] && [ -f "$BE_ENV_DOCKER" ]; then
+                                    cp "$BE_ENV_DOCKER" be/.env.docker
+                                    echo "Loaded be/.env.docker from Jenkins Credentials"
+                                fi
+                                if [ -n "$FE_ENV_PRODUCTION" ] && [ -f "$FE_ENV_PRODUCTION" ]; then
+                                    cp "$FE_ENV_PRODUCTION" fe/.env.production
+                                    echo "Loaded fe/.env.production from Jenkins Credentials"
+                                fi
+                            '''
+                        }
+                        echo '✅ Successfully loaded environment files from Jenkins Credentials (Fallback)!'
+                    }
                 }
             }
         }

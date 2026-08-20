@@ -8,12 +8,24 @@ const createSchedule = async ({
     end_time,
     working_date
 }) => {
-    return await schedule.create({
+    const newSchedule = await schedule.create({
         person_id,
         start_time,
         end_time,
         working_date
     });
+
+    // Tự động lên lịch thông báo điểm danh cho ca làm việc mới
+    try {
+        const { scheduleMilestonesForSchedule } = require('./attendanceNotificationService');
+        scheduleMilestonesForSchedule(newSchedule).catch(err => {
+            console.error('[Schedule Service] Error scheduling milestones for new schedule:', err);
+        });
+    } catch (err) {
+        console.error('[Schedule Service] Error requiring attendanceNotificationService:', err);
+    }
+
+    return newSchedule;
 };
 
 const getScheduleByPersonId = async (personId) => {
@@ -83,7 +95,19 @@ const getAllSchedules = async () => {
 const updateSchedule = async (schedule_id, { start_time, end_time, working_date }) => {
     const data = await schedule.findByPk(schedule_id);
     if (!data) throw new Error('Schedule not found');
-    return await data.update({ start_time, end_time, working_date });
+    const updatedSchedule = await data.update({ start_time, end_time, working_date });
+
+    // Tự động lên lịch lại thông báo điểm danh cho ca làm việc đã cập nhật
+    try {
+        const { scheduleMilestonesForSchedule } = require('./attendanceNotificationService');
+        scheduleMilestonesForSchedule(updatedSchedule).catch(err => {
+            console.error('[Schedule Service] Error rescheduling milestones for updated schedule:', err);
+        });
+    } catch (err) {
+        console.error('[Schedule Service] Error requiring attendanceNotificationService:', err);
+    }
+
+    return updatedSchedule;
 };
 
 const deleteSchedule = async (schedule_id) => {

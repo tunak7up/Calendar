@@ -15,9 +15,11 @@ const {
   checkMorningCheckIn,
   checkMorningCheckOut,
   checkAfternoonCheckIn,
-  checkAfternoonCheckOut
+  checkAfternoonCheckOut,
+  scheduleAllTodayMilestones
 } = require('./services/attendanceNotificationService');
 const { getVNTime } = require('./utils/dateUtils');
+const { notificationQueue } = require('./utils/queue');
 
 // Initialize the notification worker
 require('./workers/notificationWorker');
@@ -96,20 +98,28 @@ app.post('/api/test/attendance-email', async (req, res) => {
 });
 
 /**
- * Setup cron jobs cho attendance notifications
- * Chạy check mỗi 1 phút theo các mốc thời gian đăng ký và deadline
+ * Setup BullMQ Repeatable Job & khởi tạo lịch thông báo điểm danh hôm nay
  */
-const setupAttendanceNotificationCrons = () => {
-  // Polling interval: chạy check mỗi 1 phút (60000ms)
-  setInterval(async () => {
-    try {
-      await checkAttendanceMilestones();
-    } catch (err) {
-      console.error('[Scheduler] Error in attendance milestones check:', err);
-    }
-  }, 60000);
+const setupAttendanceNotificationCrons = async () => {
+  try {
+    // 1. Đăng ký Repeatable Job chạy lúc 00:01 hàng ngày trên BullMQ
+    await notificationQueue.add('daily-attendance-scheduler', {}, {
+      jobId: 'daily_attendance_scheduler_repeatable',
+      repeat: {
+        pattern: '1 0 * * *' // 00:01 mỗi ngày
+      },
+      removeOnComplete: true
+    }).catch(err => {
+      console.error('[Scheduler] Warning adding repeatable job:', err.message);
+    });
 
-  console.log('[Scheduler] Attendance notification crons initialized successfully (checking all check-in & check-out milestones every 1 minute).');
+    // 2. Nạp ngay các mốc thông báo của ngày hôm nay vào hàng đợi Delayed Jobs
+    await scheduleAllTodayMilestones();
+
+    console.log('[Scheduler] Attendance notification BullMQ scheduler initialized successfully.');
+  } catch (err) {
+    console.error('[Scheduler] Error initializing attendance notification scheduler:', err);
+  }
 };
 
 async function startServer() {
@@ -119,8 +129,8 @@ async function startServer() {
     await sequelize.sync(); // Avoid using alter: true as it generates invalid ALTER COLUMN syntax for constraints in MSSQL
     console.log('Database synced successfully.');
 
-    // Setup cron jobs for attendance notifications
-    setupAttendanceNotificationCrons();
+    // Setup BullMQ scheduler for attendance notifications
+    await setupAttendanceNotificationCrons();
 
     // Seed default task statuses if table is empty
     const { task_status } = require('./models');

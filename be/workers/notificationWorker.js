@@ -2,7 +2,7 @@ const { Worker } = require('bullmq');
 const { connection } = require('../utils/queue');
 const { sendPushNotification } = require('../utils/onesignal');
 
-console.log('[Notification Worker] Initializing...');
+console.log('[Notification Worker] Initializing BullMQ Worker...');
 
 const worker = new Worker('notification-queue', async (job) => {
   if (job.name === 'send-push') {
@@ -23,17 +23,27 @@ const worker = new Worker('notification-queue', async (job) => {
       throw err; // Rethrow to let BullMQ handle retry/fail state
     }
   }
+
+  if (job.name === 'attendance-milestone') {
+    const { processMilestoneJob } = require('../services/attendanceNotificationService');
+    return await processMilestoneJob(job.data);
+  }
+
+  if (job.name === 'daily-attendance-scheduler') {
+    const { scheduleAllTodayMilestones } = require('../services/attendanceNotificationService');
+    return await scheduleAllTodayMilestones();
+  }
 }, {
   connection,
-  concurrency: 3
+  concurrency: 5
 });
 
 worker.on('completed', (job) => {
-  console.log(`[Notification Worker] Job ${job.id} completed successfully.`);
+  console.log(`[Notification Worker] Job ${job.id} (${job.name}) completed successfully.`);
 });
 
 worker.on('failed', (job, err) => {
-  console.error(`[Notification Worker] Job ${job.id} failed with error:`, err.message);
+  console.error(`[Notification Worker] Job ${job?.id} (${job?.name}) failed with error:`, err.message);
 });
 
 // Handle connection errors gracefully to prevent crashing the server

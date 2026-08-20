@@ -41,27 +41,50 @@ pipeline {
             }
         }
 
+        // stage('Prepare Environment') {
+        //     when {
+        //         expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop' }
+        //     }
+        //     steps {
+        //         echo 'Loading environment files from Jenkins Credentials...'
+        //         withCredentials([
+        //             file(credentialsId: 'calendar-root-env', variable: 'ROOT_ENV'),
+        //             file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER'),
+        //             file(credentialsId: 'calendar-fe-env-production', variable: 'FE_ENV_PRODUCTION')
+        //         ]) {
+        //             sh '''
+        //                 if [ -n "$ROOT_ENV" ] && [ -f "$ROOT_ENV" ]; then
+        //                     cp "$ROOT_ENV" .env
+        //                 fi
+        //                 if [ -n "$BE_ENV_DOCKER" ] && [ -f "$BE_ENV_DOCKER" ]; then
+        //                     cp "$BE_ENV_DOCKER" be/.env.docker
+        //                 fi
+        //                 if [ -n "$FE_ENV_PRODUCTION" ] && [ -f "$FE_ENV_PRODUCTION" ]; then
+        //                     cp "$FE_ENV_PRODUCTION" fe/.env.production
+        //                 fi
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Prepare Environment') {
             when {
                 expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop' }
             }
             steps {
-                echo 'Loading environment files from Jenkins Credentials...'
+                echo 'Loading environment files from S3...'
                 withCredentials([
-                    file(credentialsId: 'calendar-root-env', variable: 'ROOT_ENV'),
-                    file(credentialsId: 'calendar-be-env-docker', variable: 'BE_ENV_DOCKER'),
-                    file(credentialsId: 'calendar-fe-env-production', variable: 'FE_ENV_PRODUCTION')
+                    usernamePassword(
+                        credentialsId: 'calendar-s3-env-reader', // access key id / secret access key
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
                 ]) {
                     sh '''
-                        if [ -n "$ROOT_ENV" ] && [ -f "$ROOT_ENV" ]; then
-                            cp "$ROOT_ENV" .env
-                        fi
-                        if [ -n "$BE_ENV_DOCKER" ] && [ -f "$BE_ENV_DOCKER" ]; then
-                            cp "$BE_ENV_DOCKER" be/.env.docker
-                        fi
-                        if [ -n "$FE_ENV_PRODUCTION" ] && [ -f "$FE_ENV_PRODUCTION" ]; then
-                            cp "$FE_ENV_PRODUCTION" fe/.env.production
-                        fi
+                        set -e
+
+                        aws s3 cp "s3://${AWS_S3_BUCKET}/.env" .env
+                        aws s3 cp "s3://${AWS_S3_BUCKET}/env.docker" be/.env.docker
+                        aws s3 cp "s3://${AWS_S3_BUCKET}/env.production" fe/.env.production
                     '''
                 }
             }

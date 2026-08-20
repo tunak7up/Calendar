@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSelector from '../components/LanguageSelector'
-import { apiFetch } from '../services/api'
+import { apiFetch, BASE_URL, getAccessToken } from '../services/api'
 import { taskService } from '../services/taskService'
 import { useState, useEffect } from 'react'
 
@@ -116,7 +116,7 @@ export default function HeaderPage({ isAdmin }) {
   const fetchNotifications = async () => {
     setLoadingNotifs(true);
     try {
-      const response = await apiFetch('/notification');
+      const response = await apiFetch('/notification?limit=20');
       if (response && response.success) {
         setNotifications(response.data || []);
       }
@@ -128,12 +128,56 @@ export default function HeaderPage({ isAdmin }) {
   };
 
   useEffect(() => {
-    if (user?.person_id) {
-      fetchNotifications();
-      // Poll notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
+    if (!user?.person_id) return;
+
+    // 1. Lấy 20 thông báo gần nhất khi load trang (chỉ gọi 1 lần ban đầu)
+    fetchNotifications();
+
+    // 2. Mở kết nối Realtime Server-Sent Events (SSE) để nhận thông báo mới tức thì
+    const token = getAccessToken();
+    const sseUrl = `${BASE_URL}/notification/stream?token=${encodeURIComponent(token || '')}`;
+    const eventSource = new EventSource(sseUrl);
+
+    // Lắng nghe sự kiện thông báo mới từ server
+    eventSource.addEventListener('new_notification', (e) => {
+      try {
+        const newNotif = JSON.parse(e.data);
+        console.log('[SSE] 🔔 Nhận thông báo mới realtime:', newNotif);
+        setNotifications((prev) => {
+          const exists = prev.some(n => n.notification_id === newNotif.notification_id);
+          if (exists) return prev;
+          return [newNotif, ...prev];
+        });
+      } catch (err) {
+        console.error('[SSE] Error parsing new_notification:', err);
+      }
+    });
+
+    // Lắng nghe sự kiện đã đọc thông báo (đồng bộ giữa các tab)
+    eventSource.addEventListener('notification_read', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setNotifications((prev) =>
+          prev.map(n => n.notification_id === data.notification_id ? { ...n, is_read: true } : n)
+        );
+      } catch (err) {
+        console.error('[SSE] Error parsing notification_read:', err);
+      }
+    });
+
+    // Lắng nghe sự kiện đã đọc tất cả
+    eventSource.addEventListener('all_notifications_read', () => {
+      setNotifications((prev) => prev.map(n => ({ ...n, is_read: true })));
+    });
+
+    eventSource.onerror = (err) => {
+      // EventSource sẽ tự động reconnect ngầm khi có sự cố mạng
+      console.warn('[SSE] EventSource interrupted, auto-reconnecting...', err);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [user?.person_id]);
 
   const handleBellClick = async () => {

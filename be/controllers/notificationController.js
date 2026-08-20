@@ -1,13 +1,52 @@
 const notificationService = require('../services/notificationService');
+const sseManager = require('../utils/sseManager');
 
 const getNotifications = async (req, res) => {
     try {
         const personId = req.user.person_id;
-        const notifications = await notificationService.getNotificationsByPerson(personId);
+        const { limit, offset } = req.query;
+        const notifications = await notificationService.getNotificationsByPerson(personId, { limit, offset });
         res.json({ success: true, data: notifications });
     } catch (error) {
         console.error('[Notification Controller] getNotifications error:', error);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getUnreadCount = async (req, res) => {
+    try {
+        const personId = req.user.person_id;
+        const unreadCount = await notificationService.getUnreadCount(personId);
+        res.json({ success: true, data: { unreadCount } });
+    } catch (error) {
+        console.error('[Notification Controller] getUnreadCount error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Server-Sent Events (SSE) Stream Endpoint
+ */
+const streamNotifications = (req, res) => {
+    try {
+        const personId = req.user.person_id;
+
+        // Thiết lập headers chuẩn cho Server-Sent Events
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no' // Tắt output buffering trên Nginx/Proxy
+        });
+
+        if (typeof res.flushHeaders === 'function') {
+            res.flushHeaders();
+        }
+
+        sseManager.addClient(personId, res);
+    } catch (error) {
+        console.error('[Notification Controller] streamNotifications error:', error);
+        res.status(500).end();
     }
 };
 
@@ -39,6 +78,8 @@ const markAllAsRead = async (req, res) => {
 
 module.exports = {
     getNotifications,
+    getUnreadCount,
+    streamNotifications,
     markAsRead,
     markAllAsRead
 };

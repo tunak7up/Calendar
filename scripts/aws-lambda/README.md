@@ -27,8 +27,14 @@ Tài liệu này hướng dẫn chi tiết từng bước thao tác trên **AWS 
 3. Xóa toàn bộ nội dung mẫu và dán toàn bộ nội dung từ file [`dailyScheduler.mjs`](./dailyScheduler.mjs) vào:
    ```javascript
    export const handler = async (event, context) => {
-     const backendUrl = process.env.BACKEND_URL || 'https://qltt.kis-v.com/api/internal/cron/daily-scheduler';
+     const backendUrl = process.env.BACKEND_URL;
      const cronSecret = process.env.CRON_SECRET_TOKEN;
+
+     if (!backendUrl) {
+       const errorMsg = 'BACKEND_URL environment variable is not configured on Lambda!';
+       console.error(`[Lambda Daily Scheduler] ❌ ${errorMsg}`);
+       return { statusCode: 500, body: JSON.stringify({ success: false, error: errorMsg }) };
+     }
 
      console.log(`[Lambda Daily Scheduler] ⏰ Bắt đầu kích hoạt webhook tại: ${backendUrl}`);
 
@@ -80,10 +86,9 @@ Tài liệu này hướng dẫn chi tiết từng bước thao tác trên **AWS 
 2. Chọn menu **Environment variables** ở cột bên trái.
 3. Nhấn nút **Edit** và thêm 2 biến sau:
    - **Key 1**: `BACKEND_URL`  
-     **Value 1**: `https://qltt.kis-v.com/api/internal/cron/daily-scheduler`  
-     *(hoặc URL backend của bạn nếu dùng domain khác)*
+     **Value 1**: `https://<YOUR_BACKEND_DOMAIN>/api/internal/cron/daily-scheduler`
    - **Key 2**: `CRON_SECRET_TOKEN`  
-     **Value 2**: Giá trị token bảo mật trong file `be/.env` của bạn *(Ví dụ: `calendar_cron_secret_key_2026`)*
+     **Value 2**: Mã token bí mật trong file môi trường `.env.docker` của bạn
 4. Nhấn **Save**.
 
 ---
@@ -130,7 +135,7 @@ Tài liệu này hướng dẫn chi tiết từng bước thao tác trên **AWS 
 
 ### 1. Kiểm tra trạng thái từ API Backend:
 Bạn có thể mở trình duyệt hoặc Postman gọi API:
-`GET https://qltt.kis-v.com/api/internal/cron/daily-scheduler/status`
+`GET https://<YOUR_BACKEND_DOMAIN>/api/internal/cron/daily-scheduler/status`
 Sẽ trả về thông tin: Hôm nay cronjob đã chạy chưa, chạy lúc mấy giờ, và do ai gọi (`aws_lambda` hay `bullmq_fallback`).
 
 ### 2. Khi muốn xóa tài nguyên để tránh phát sinh chi phí:

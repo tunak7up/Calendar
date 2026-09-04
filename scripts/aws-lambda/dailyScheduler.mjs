@@ -4,13 +4,22 @@
  * Dependencies: Không cần cài thêm npm packages (sử dụng native fetch)
  * 
  * Biến môi trường (Environment Variables trên AWS Lambda):
- * - BACKEND_URL: URL backend API (ví dụ: https://qltt.kis-v.com/api/internal/cron/daily-scheduler)
+ * - BACKEND_URL: URL backend API (ví dụ: https://your-backend-domain.com/api/internal/cron/daily-scheduler)
  * - CRON_SECRET_TOKEN: Mã token bảo mật tương ứng trong be/.env
  */
 
 export const handler = async (event, context) => {
-  const backendUrl = process.env.BACKEND_URL || 'https://qltt.kis-v.com/api/internal/cron/daily-scheduler';
+  const backendUrl = process.env.BACKEND_URL;
   const cronSecret = process.env.CRON_SECRET_TOKEN;
+
+  if (!backendUrl) {
+    const errorMsg = 'BACKEND_URL environment variable is not configured on Lambda!';
+    console.error(`[Lambda Daily Scheduler] ❌ ${errorMsg}`);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: errorMsg })
+    };
+  }
 
   console.log(`[Lambda Daily Scheduler] ⏰ Bắt đầu kích hoạt webhook tại: ${backendUrl}`);
   console.log(`[Lambda Daily Scheduler] Event Time: ${event?.time || new Date().toISOString()}`);

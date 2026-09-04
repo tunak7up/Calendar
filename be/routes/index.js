@@ -5,6 +5,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 // Public routes (no auth required)
 router.use('/auth', require('./auth'));   // POST /api/auth/login
+router.use('/internal', require('./internal')); // Webhooks / Cronjobs (secured via secret key)
 
 // Protected routes (auth required)
 router.use('/person', authenticate, require('./person'));

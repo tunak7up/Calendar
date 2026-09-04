@@ -102,11 +102,12 @@ app.post('/api/test/attendance-email', async (req, res) => {
  */
 const setupAttendanceNotificationCrons = async () => {
   try {
-    // 1. Đăng ký Repeatable Job chạy lúc 00:01 hàng ngày trên BullMQ
+    // 1. Đăng ký Repeatable Job chạy lúc 00:05 hàng ngày trên BullMQ làm Fallback dự phòng
+    // (AWS Lambda sẽ chạy lúc 00:01, nếu Lambda chạy thành công thì BullMQ lúc 00:05 sẽ tự động bỏ qua)
     await notificationQueue.add('daily-attendance-scheduler', {}, {
       jobId: 'daily_attendance_scheduler_repeatable',
       repeat: {
-        pattern: '1 0 * * *' // 00:01 mỗi ngày
+        pattern: '5 0 * * *' // 00:05 mỗi ngày (Fallback watchdog)
       },
       removeOnComplete: true
     }).catch(err => {

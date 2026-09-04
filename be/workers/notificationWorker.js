@@ -30,7 +30,38 @@ const worker = new Worker('notification-queue', async (job) => {
   }
 
   if (job.name === 'daily-attendance-scheduler') {
+    const { getVNTime } = require('../utils/dateUtils');
+    const redisClient = require('../utils/redis');
     const { scheduleAllTodayMilestones } = require('../services/attendanceNotificationService');
+
+    const nowVN = getVNTime();
+    const todayStr = nowVN.dateStr;
+    const redisKey = `cron:daily_attendance:${todayStr}`;
+
+    // Kiểm tra xem AWS Lambda đã kích hoạt trước đó (lúc 00:01) chưa
+    if (redisClient) {
+      try {
+        const executedData = await redisClient.get(redisKey);
+        if (executedData) {
+          console.log(`[Notification Worker] ⏩ Lambda đã kích hoạt nạp lịch hôm nay (${todayStr}), bỏ qua lượt chạy BullMQ Fallback.`);
+          return { skipped: true, reason: 'Already executed by Lambda', details: JSON.parse(executedData) };
+        }
+      } catch (err) {
+        console.error('[Notification Worker] Lỗi kiểm tra Redis flag cho BullMQ fallback:', err.message);
+      }
+    }
+
+    // Nếu Lambda chưa chạy (AWS sập, rớt mạng, Lambda bị xóa...) -> Tự động chạy dự phòng
+    console.warn(`[Notification Worker] ⚠️ [FALLBACK ALERT] AWS Lambda chưa kích hoạt hôm nay (${todayStr})! Tự động chạy nạp lịch dự phòng qua BullMQ...`);
+
+    if (redisClient) {
+      await redisClient.set(redisKey, JSON.stringify({
+        source: 'bullmq_fallback',
+        executedAt: new Date().toISOString(),
+        dateStr: todayStr
+      }), 'EX', 86400).catch(() => {});
+    }
+
     return await scheduleAllTodayMilestones();
   }
 }, {

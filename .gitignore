@@ -3,3 +3,4 @@
 *.env
 calendar-key.pem
 .env.aws
+awstuna_accessKeys.csv

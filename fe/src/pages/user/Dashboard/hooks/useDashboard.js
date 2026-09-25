@@ -4,6 +4,7 @@ import { apiFetch, getAccessToken } from "../../../../services/api";
 import { taskService } from "../../../../services/taskService";
 import { taskStatusService } from "../../../../services/taskStatusService";
 import { fileService } from "../../../../services/fileService";
+import { syncSystemTime, getSystemDate, getSystemDateStrSync } from "../../../../services/systemTimeService";
 import { useTranslation } from "react-i18next";
 import { Capacitor } from "@capacitor/core";
 
@@ -96,10 +97,9 @@ export function useDashboard() {
   }, []);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────────────────────
   const getWorkingDate = () => {
-    const d = new Date();
-    const pad = (n) => (n < 10 ? "0" + n : n);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return getSystemDateStrSync();
   };
 
   const adjustReportTextareaHeight = useCallback(() => {
@@ -118,7 +118,8 @@ export function useDashboard() {
     const checkDailyReport = async () => {
       if (!user) return;
       try {
-        const workingDate = getWorkingDate();
+        const sysTime = await syncSystemTime();
+        const workingDate = sysTime?.dateStr || getWorkingDate();
         const response = await apiFetch(
           `/daily-report/person/${user.person_id}/date/${workingDate}`,
         );
@@ -196,7 +197,7 @@ export function useDashboard() {
       );
       if (response.success) {
         let allTasks = response.data;
-        const now = new Date();
+        const now = getSystemDate();
         allTasks = allTasks.filter((task) => {
           const isWithinDeadline =
             !task.due_date || new Date(task.due_date) >= now;
@@ -226,7 +227,7 @@ export function useDashboard() {
   const { tasksByStatus, overdueList } = useMemo(() => {
     const groups = {};
     const overdue = [];
-    const now = new Date();
+    const now = getSystemDate();
 
     statuses.forEach((s) => {
       groups[s.name] = [];
@@ -260,7 +261,8 @@ export function useDashboard() {
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleCheckIn = async () => {
     try {
-      const workingDate = getWorkingDate();
+      const sysTime = await syncSystemTime();
+      const workingDate = sysTime?.dateStr || getWorkingDate();
       const response = await apiFetch("/daily-report", {
         method: "POST",
         body: JSON.stringify({
@@ -271,8 +273,21 @@ export function useDashboard() {
       if (response.success && response.data) {
         const report = response.data;
         setIsCheckedIn(true);
-        setCheckInTime(new Date());
         setReportId(report.report_id || report.id);
+
+        const parseDate = (dateStr, fallbackDate) => {
+          if (!dateStr) return null;
+          let d = new Date(dateStr);
+          if (isNaN(d.getTime())) {
+            d = new Date(`${fallbackDate}T${dateStr}`);
+            if (isNaN(d.getTime()))
+              d = new Date(`${fallbackDate} ${dateStr}`);
+          }
+          return isNaN(d.getTime()) ? null : d;
+        };
+
+        const cIn = parseDate(report.check_in, report.working_date) || getSystemDate();
+        setCheckInTime(cIn);
       } else {
         alert(
           t("dashboard.alert_checkin_fail", {
@@ -307,16 +322,29 @@ export function useDashboard() {
           body: JSON.stringify({ description: reportText }),
         });
         if (response.success) {
-          const now = new Date();
+          const report = response.data;
           const isUpdating = !!checkOutTime;
-          setCheckOutTime(now);
+
+          const parseDate = (dateStr, fallbackDate) => {
+            if (!dateStr) return null;
+            let d = new Date(dateStr);
+            if (isNaN(d.getTime())) {
+              d = new Date(`${fallbackDate}T${dateStr}`);
+              if (isNaN(d.getTime()))
+                d = new Date(`${fallbackDate} ${dateStr}`);
+            }
+            return isNaN(d.getTime()) ? null : d;
+          };
+
+          const cOut = parseDate(report?.check_out, report?.working_date) || getSystemDate();
+          setCheckOutTime(cOut);
           alert(
             isUpdating
               ? t("dashboard.alert_update_success", {
-                  time: now.toLocaleTimeString(),
+                  time: cOut.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 })
               : t("dashboard.alert_checkout_success", {
-                  time: now.toLocaleTimeString(),
+                  time: cOut.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 }),
           );
           setPendingStatusUpdates({});

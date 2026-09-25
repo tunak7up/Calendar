@@ -8,6 +8,7 @@ import { apiFetch } from '../../../../services/api';
 import { taskService } from '../../../../services/taskService';
 import { useTheme, useTaskColor } from '../../../../context/ThemeContext';
 import { getLocalYYYYMMDD } from '../../../../utils/dateUtils';
+import { getSystemDate, getSystemDateStrSync } from '../../../../services/systemTimeService';
 
 export function useMySchedule() {
   const { t, i18n } = useTranslation();
@@ -21,8 +22,8 @@ export function useMySchedule() {
   const absentTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Absent"]'] || { bg: '#ffe4e6', text: '#9f1239' }, [theme]);
   const upcomingTheme = useMemo(() => theme?.['[data-custom-component="Schedule-User-Upcoming"]'] || { bg: '#ede9fe', text: '#6d28d9' }, [theme]);
 
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const today = getSystemDate();
+  const todayStr = getSystemDateStrSync();
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [viewDate, setViewDate] = useState(today);
   const calendarRef = useRef(null);
@@ -134,7 +135,7 @@ export function useMySchedule() {
 
   const dayStatusMap = useMemo(() => {
     const map = {};
-    const todayLocalStr = getLocalYYYYMMDD(new Date());
+    const todayLocalStr = getLocalYYYYMMDD(getSystemDate());
 
     workingHours.forEach(wh => {
       if (wh.extendedProps?.isWorkHour) {
@@ -284,7 +285,7 @@ export function useMySchedule() {
 
   const handleDatesSet = useCallback((info) => {
     const midPoint = new Date(info.view.currentStart.getTime() + 15 * 24 * 60 * 60 * 1000);
-    const localDateStr = midPoint.toLocaleDateString('sv-SE');
+    const localDateStr = midPoint.toLocaleDateString('sv-SE'); 
     const [localYear, localMonth] = localDateStr.split('-').map(Number);
     const lang = i18n.language;
     const key = `${localYear}-${localMonth}-${lang}`;

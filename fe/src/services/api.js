@@ -40,6 +40,19 @@ export const refreshAccessToken = () => {
   return refreshPromise;
 };
 
+let serverTimeOffset = 0;
+let lastSyncTime = 0;
+
+export const updateServerTimeOffset = (serverTimestamp) => {
+  if (serverTimestamp && !isNaN(serverTimestamp)) {
+    serverTimeOffset = serverTimestamp - Date.now();
+    lastSyncTime = Date.now();
+  }
+};
+
+export const getServerTimeOffset = () => serverTimeOffset;
+export const getLastSyncTime = () => lastSyncTime;
+
 export const apiFetch = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;
 
@@ -64,6 +77,12 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   let response = await fetch(url, fetchOptions);
 
+  if (response && response.headers && response.headers.get("date")) {
+    const serverDateHeader = response.headers.get("date");
+    const serverTs = new Date(serverDateHeader).getTime();
+    updateServerTimeOffset(serverTs);
+  }
+
   if (response.status === 401) {
     if (
       !endpoint.includes("/auth/refresh-token") &&
@@ -74,6 +93,11 @@ export const apiFetch = async (endpoint, options = {}) => {
         headers["Authorization"] = `Bearer ${newToken}`;
         fetchOptions.headers = headers;
         response = await fetch(url, fetchOptions);
+        if (response && response.headers && response.headers.get("date")) {
+          const serverDateHeader = response.headers.get("date");
+          const serverTs = new Date(serverDateHeader).getTime();
+          updateServerTimeOffset(serverTs);
+        }
       } catch {
         setAccessToken(null);
         localStorage.removeItem("user");

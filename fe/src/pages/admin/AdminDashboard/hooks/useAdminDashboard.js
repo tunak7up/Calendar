@@ -6,12 +6,7 @@ import { requestService } from '../../../../services/requestService';
 import { scheduleService } from '../../../../services/scheduleService';
 import { taskService } from '../../../../services/taskService';
 import { aiAgentService } from '../../../../services/aiAgentService';
-
-const now = new Date();
-const todayStr = now.toISOString().split('T')[0];
-const defaultChartStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-const defaultChartEnd = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+import { getSystemDate, getSystemDateStrSync } from '../../../../services/systemTimeService';
 
 const formatDateDisplay = (isoStr) => {
   const d = new Date(isoStr);
@@ -25,7 +20,7 @@ const formatDateDisplay = (isoStr) => {
 
 const isOverdue = (task) => {
   if (task.status?.toLowerCase() === 'completed') return false;
-  return task.due_date && new Date(task.due_date) < new Date();
+  return task.due_date && new Date(task.due_date) < getSystemDate();
 };
 
 const getTaskPriority = (task) => {
@@ -121,16 +116,23 @@ export function useAdminDashboard() {
 
   const [taskSearchTerm, setTaskSearchTerm] = useState('');
 
-  const [chartStartDate, setChartStartDate] = useState(defaultChartStart);
-  const [chartEndDate, setChartEndDate] = useState(defaultChartEnd);
+  const [chartStartDate, setChartStartDate] = useState(() => {
+    const now = getSystemDate();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [chartEndDate, setChartEndDate] = useState(() => {
+    const now = getSystemDate();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+  });
   const [chartLoading, setChartLoading] = useState(false);
   const [allSchedules, setAllSchedules] = useState([]);
   const [allReports, setAllReports] = useState([]);
 
-  const [attendanceDate, setAttendanceDate] = useState(todayStr);
+  const [attendanceDate, setAttendanceDate] = useState(() => getSystemDateStrSync());
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [showAttendanceCalendar, setShowAttendanceCalendar] = useState(false);
-  const [inputDateStr, setInputDateStr] = useState(() => formatDateDisplay(todayStr));
+  const [inputDateStr, setInputDateStr] = useState(() => formatDateDisplay(getSystemDateStrSync()));
 
   const applyInputDate = (raw) => {
     const parts = raw.replace(/-/g, '/').split('/');
@@ -291,7 +293,7 @@ export function useAdminDashboard() {
           (task.participants && Array.isArray(task.participants) && task.participants.some(p => p.name?.toLowerCase().includes(term)));
         if (!matchesText) return false;
       }
-      const todayStrLocal = new Date().toISOString().split('T')[0];
+      const todayStrLocal = getSystemDateStrSync();
       const taskDateStr = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
       const isCompleted = task.status?.toLowerCase() === 'completed';
       if (!taskDateStr) return true;

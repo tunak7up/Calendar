@@ -2,12 +2,16 @@ const { daily_report, person } = require('../models');
 const sequelize = require('../config/db');
 const ExcelJS = require('exceljs');
 const { Op } = require('sequelize');
+const { getVNTime } = require('../utils/dateUtils');
 
 const createDailyReport = async (data) => {
+    const vnTime = getVNTime();
+    const serverWorkingDate = vnTime.dateStr;
+
     const existingReport = await daily_report.findOne({
         where: {
             person_id: data.person_id,
-            working_date: data.working_date
+            working_date: serverWorkingDate
         }
     });
     if (existingReport) {
@@ -16,10 +20,8 @@ const createDailyReport = async (data) => {
     return await daily_report.create({
         person_id: data.person_id,
         description: null,
-        working_date: data.working_date,
-        check_in: new Date().toLocaleTimeString('it-IT', {
-            timeZone: 'Asia/Ho_Chi_Minh'
-        }),
+        working_date: serverWorkingDate,
+        check_in: vnTime.timeStr,
         check_out: null,
         check_in_ip: data.clientIp || "khong lay duoc ip",
         check_in_device: typeof data.check_in_device === 'object' ? JSON.stringify(data.check_in_device) : (data.check_in_device || "khong lay duoc device")
@@ -31,10 +33,9 @@ const updateDailyReport = async (id, data) => {
     if (!report) {
         throw new Error('Daily report not found');
     }
+    const vnTime = getVNTime();
     return await report.update({
-        check_out: new Date().toLocaleTimeString('it-IT', {
-            timeZone: 'Asia/Ho_Chi_Minh'
-        }),
+        check_out: vnTime.timeStr,
         check_out_ip: data.clientIp || "khong lay duoc ip",
         description: data.description,
         check_out_device: typeof data.check_out_device === 'object' ? JSON.stringify(data.check_out_device) : (data.check_out_device || "khong lay duoc device")
@@ -197,7 +198,7 @@ const exportDailyReport = async (personIds, startDate, endDate) => {
 };
 
 const checkTodayReportExists = async (person_id) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getVNTime().dateStr;
     const report = await daily_report.findOne({
         where: {
             person_id: person_id,

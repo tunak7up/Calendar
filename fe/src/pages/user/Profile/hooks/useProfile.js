@@ -8,6 +8,7 @@ import { dailyReportService } from '../../../../services/dailyReportService';
 import { aiAgentService } from '../../../../services/aiAgentService';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
+import { getSystemDate, getSystemDateStrSync } from '../../../../services/systemTimeService';
 
 export function useProfile() {
   const { t, i18n } = useTranslation();
@@ -36,7 +37,7 @@ export function useProfile() {
   const [analysisError, setAnalysisError] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getSystemDateStrSync());
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
@@ -130,8 +131,8 @@ export function useProfile() {
         }
 
         if (!checkIn) {
-          const todayStr = new Date().toISOString().split('T')[0];
-          const now = new Date();
+          const todayStr = getSystemDateStrSync();
+          const now = getSystemDate();
           const isFuture = item.date > todayStr || (item.date === todayStr && item.schedule.start_time && new Date(item.schedule.start_time) > now);
 
           if (isFuture) {

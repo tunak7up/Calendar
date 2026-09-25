@@ -140,6 +140,22 @@ const importDirectDailyReports = async (req, res) => {
     }
 };
 
+const getSystemTime = async (req, res) => {
+    try {
+        const { getVNTime } = require('../utils/dateUtils');
+        const vnTime = getVNTime();
+        sendRes(res, 200, 'System time retrieved successfully', {
+            timestamp: Date.now(),
+            iso: new Date().toISOString(),
+            dateStr: vnTime.dateStr,
+            timeStr: vnTime.timeStr,
+            dateTimeStr: vnTime.dateTimeStr
+        });
+    } catch (error) {
+        sendRes(res, 400, 'Error retrieving system time', null, error.message);
+    }
+};
+
 module.exports = {
     createDailyReport,
     updateDailyReport,
@@ -152,5 +168,6 @@ module.exports = {
     checkTodayReportExists,
     importDailyReports,
     previewImportDailyReports,
-    importDirectDailyReports
+    importDirectDailyReports,
+    getSystemTime
 };

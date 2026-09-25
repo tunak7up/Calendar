@@ -5,6 +5,7 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
+router.get('/system-time', dailyReportController.getSystemTime);
 router.post('/', captureClientIp, dailyReportController.createDailyReport);
 router.patch('/:id', captureClientIp, dailyReportController.updateDailyReport);
 router.get('/person/:person_id/date/:working_date', dailyReportController.getDailyReportByPersonIdAndDate);

@@ -183,10 +183,12 @@ export function useAdminBackup() {
         }
       } else {
         setCreating(false);
+        setShowProgressPanel(false);
         showError(res?.message || 'Không thể bắt đầu sao lưu');
       }
     } catch (err) {
       setCreating(false);
+      setShowProgressPanel(false);
       showError('Lỗi khi kích hoạt sao lưu: ' + err.message);
     }
   };

@@ -1,12 +1,28 @@
 const fs = require('fs');
 const path = require('path');
-const archiver = require('archiver');
+const archiverModule = require('archiver');
 const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { s3, bucketName } = require('../config/aws');
 const models = require('../models');
 const { backup_log } = models;
 const sseManager = require('../utils/sseManager');
+
+/**
+ * Khởi tạo Zip Archive tương thích cả Archiver v8+ (ZipArchive class) và v7- (function)
+ */
+const createZipInstance = (options = {}) => {
+    if (archiverModule.ZipArchive) {
+        return new archiverModule.ZipArchive(options);
+    }
+    if (typeof archiverModule === 'function') {
+        return archiverModule('zip', options);
+    }
+    if (archiverModule.default && typeof archiverModule.default === 'function') {
+        return archiverModule.default('zip', options);
+    }
+    throw new Error('Thư viện archiver không hỗ trợ định dạng zip');
+};
 
 // Thư mục lưu file uploads người dùng
 const UPLOADS_DIR = process.env.UPLOADS_DIR
@@ -238,7 +254,7 @@ const createZipArchive = ({ dbData, uploadFiles, outputPath, onProgress }) => {
     return new Promise((resolve, reject) => {
         ensureBackupDir();
         const output = fs.createWriteStream(outputPath);
-        const archive = archiver('zip', {
+        const archive = createZipInstance({
             zlib: { level: 6 } // Cân bằng độ nén và CPU
         });
 

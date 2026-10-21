@@ -86,7 +86,7 @@ const downloadBackup = async (req, res) => {
             // Stream file từ disk local
             const filename = path.basename(result.localPath);
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-            res.setHeader('Content-Type', 'application/gzip');
+            res.setHeader('Content-Type', filename.endsWith('.zip') ? 'application/zip' : 'application/gzip');
             const fs = require('fs');
             const stream = fs.createReadStream(result.localPath);
             stream.on('error', () => sendRes(res, 404, 'File backup không tồn tại trên máy chủ'));

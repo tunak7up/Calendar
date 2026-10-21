@@ -24,6 +24,8 @@ export function useAdminBackup() {
     tableName: '',
     rowsRead: 0,
     totalRows: 0,
+    filesCount: 0,
+    filesSizeBytes: 0,
     sizeBytes: 0,
     speedText: '—',
     elapsedSeconds: 0,
@@ -105,6 +107,11 @@ export function useAdminBackup() {
         if (!isMounted || !res?.data) return;
         if (res.data.running) {
           applyProgressUpdate(res.data);
+        } else {
+          setProgress(prev => ({
+            ...prev,
+            s3Configured: res.data.s3Configured
+          }));
         }
       })
       .catch(() => {});

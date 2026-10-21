@@ -47,10 +47,11 @@ const getStageStep = (stage) => {
     case 'initializing':
     case 'reading_db':
       return 1;
-    case 'compressing':
+    case 'scanning_files':
       return 2;
-    case 'saving_local':
+    case 'compressing_zip':
       return 3;
+    case 'saving_local':
     case 'uploading_s3':
       return 4;
     case 'completed':
@@ -120,11 +121,24 @@ export default function AdminBackup() {
 
   const currentStep = getStageStep(progress.stage);
 
+  const isS3Configured = progress.s3Configured !== undefined 
+    ? Boolean(progress.s3Configured)
+    : Boolean(progress.result?.s3Configured ?? (progress.result?.log?.s3_key || progress.result?.downloadUrl));
+
+  const isS3Uploaded = Boolean(
+    progress.s3Success ??
+    progress.result?.s3Success ??
+    (progress.result?.log?.s3_key || progress.result?.downloadUrl)
+  );
+
   const pipelineSteps = [
-    { id: 1, label: 'Đọc DB (18 bảng)' },
-    { id: 2, label: 'Nén Gzip' },
+    { id: 1, label: 'Đọc CSDL (18 bảng)' },
+    { id: 2, label: 'Đóng gói Full ZIP' },
     { id: 3, label: 'Lưu Local' },
-    { id: 4, label: 'Đẩy lên S3' },
+    {
+      id: 4,
+      label: isS3Configured ? 'Đẩy lên S3' : 'Không thiết lập S3'
+    },
   ];
 
   return (
@@ -140,7 +154,7 @@ export default function AdminBackup() {
             <div>
               <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Quản lý Backup</h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                Sao lưu dữ liệu lên S3 + máy chủ · Tổng: <span className="font-semibold text-gray-700">{total}</span> bản
+                Full Backup: CSDL + Toàn bộ tệp đính kèm vật lý (ảnh, tài liệu) lên S3 & máy chủ · Tổng: <span className="font-semibold text-gray-700">{total}</span> bản
               </p>
             </div>
           </div>
@@ -286,17 +300,17 @@ export default function AdminBackup() {
                 </div>
               </div>
 
-              {/* Metric 2: Bản ghi đã đọc */}
+              {/* Metric 2: Bản ghi & Tệp tin */}
               <div className="bg-gradient-to-br from-blue-50/60 to-white border border-blue-100/80 rounded-xl p-3 shadow-sm">
                 <div className="flex items-center gap-1.5 text-xs text-blue-800 font-medium mb-1">
                   <DocumentTextIcon className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>Bản ghi đã đọc</span>
+                  <span>CSDL & Tệp đính kèm</span>
                 </div>
                 <div className="text-sm font-extrabold text-gray-900 truncate">
                   {(progress.rowsRead || 0).toLocaleString('vi-VN')} dòng
-                  {progress.tableName && (
-                    <span className="text-xs font-normal text-gray-500 ml-1">
-                      ({progress.tableName})
+                  {progress.filesCount > 0 && (
+                    <span className="text-xs font-semibold text-indigo-600 ml-1">
+                      · {progress.filesCount} file
                     </span>
                   )}
                 </div>
@@ -331,6 +345,51 @@ export default function AdminBackup() {
             <div className="border-t border-gray-100 pt-4 mb-4 z-10 relative">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {pipelineSteps.map((step) => {
+                  // Xử lý riêng cho Bước S3 (step.id === 4)
+                  if (step.id === 4) {
+                    if (!isS3Configured) {
+                      // Không thiết lập S3 -> Màu vàng cảnh báo
+                      const isReached = progress.stage === 'completed' || currentStep >= 4;
+                      return (
+                        <div
+                          key={step.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                            isReached
+                              ? 'bg-amber-50 text-amber-800 border border-amber-300 shadow-sm'
+                              : 'bg-amber-50/50 text-amber-700/80 border border-dashed border-amber-200'
+                          }`}
+                          title="Chưa thiết lập cấu hình AWS S3 trong file .env — file backup chỉ được lưu trên máy chủ Local"
+                        >
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
+                            isReached
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-amber-200 text-amber-800'
+                          }`}>
+                            ⚠️
+                          </div>
+                          <span className="truncate">{step.label}</span>
+                        </div>
+                      );
+                    }
+
+                    // S3 có cấu hình nhưng bị lỗi upload
+                    if (progress.stage === 'completed' && !isS3Uploaded) {
+                      return (
+                        <div
+                          key={step.id}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-300 shadow-sm"
+                          title="Lỗi khi tải file lên AWS S3 (file local vẫn được lưu an toàn)"
+                        >
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold bg-rose-500 text-white">
+                            ✕
+                          </div>
+                          <span className="truncate">Lỗi đẩy lên S3</span>
+                        </div>
+                      );
+                    }
+                  }
+
+                  // Các bước thông thường
                   const isDone = progress.stage === 'completed' || currentStep > step.id;
                   const isCurrent = progress.stage !== 'completed' && currentStep === step.id;
                   return (
@@ -410,25 +469,40 @@ export default function AdminBackup() {
 
         {/* Info Banner */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-3">
-            <CloudIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className={`flex-1 border rounded-xl px-4 py-3 flex items-start gap-3 transition-colors ${
+            isS3Configured
+              ? 'bg-blue-50 border-blue-200'
+              : 'bg-amber-50/70 border-amber-200/90'
+          }`}>
+            <CloudIcon className={`w-5 h-5 shrink-0 mt-0.5 ${isS3Configured ? 'text-blue-600' : 'text-amber-600'}`} />
             <div>
-              <p className="text-sm font-semibold text-blue-900">Lưu trữ đám mây (S3)</p>
-              <p className="text-xs text-blue-700 mt-0.5">File backup được upload lên AWS S3 — an toàn ngay cả khi máy chủ gặp sự cố</p>
+              <p className={`text-sm font-semibold flex items-center gap-2 ${isS3Configured ? 'text-blue-900' : 'text-amber-900'}`}>
+                <span>Lưu trữ đám mây (S3)</span>
+                {!isS3Configured && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">
+                    Chưa thiết lập
+                  </span>
+                )}
+              </p>
+              <p className={`text-xs mt-0.5 ${isS3Configured ? 'text-blue-700' : 'text-amber-700'}`}>
+                {isS3Configured
+                  ? 'Bản Full Backup ZIP (CSDL + toàn bộ tệp đính kèm) được đẩy lên AWS S3 an toàn'
+                  : 'Chưa cấu hình AWS S3 trong file .env — file backup hiện chỉ lưu an toàn tại máy chủ Local'}
+              </p>
             </div>
           </div>
           <div className="flex-1 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex items-start gap-3">
             <ServerIcon className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-violet-900">Lưu trữ máy chủ (Local)</p>
-              <p className="text-xs text-violet-700 mt-0.5">File backup luôn được lưu trên máy chủ — download trực tiếp không cần internet</p>
+              <p className="text-xs text-violet-700 mt-0.5">File ZIP luôn được lưu một bản tại máy chủ — download trực tiếp không lo mạng chậm</p>
             </div>
           </div>
           <div className="flex-1 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
             <ClockIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-amber-900">Tự động hàng ngày</p>
-              <p className="text-xs text-amber-700 mt-0.5">Hệ thống tự backup lúc 2:00 AM mỗi ngày · Giữ tối đa 30 bản cron</p>
+              <p className="text-xs text-amber-700 mt-0.5">Hệ thống tự Full Backup lúc 2:00 AM mỗi ngày · Tự động giữ tối đa 30 bản gần nhất</p>
             </div>
           </div>
         </div>

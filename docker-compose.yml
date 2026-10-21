@@ -22,7 +22,7 @@ services:
     env_file:
       - ./be/.env.docker
     volumes:
-      - ./be/uploads:/usr/src/app/uploads
+      - C:/Calendar/be/uploads:/usr/src/app/uploads
     depends_on:
       - redis
     networks:

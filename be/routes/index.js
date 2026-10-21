@@ -22,6 +22,7 @@ router.use('/preset-reason', authenticate, require('./presetReason'));
 router.use('/theme-setting', require('./themeSetting'));
 router.use('/task-status', authenticate, require('./taskStatus'));
 router.use('/notification', authenticate, require('./notification'));
+router.use('/backup', authenticate, require('./backup'));
 router.use('/ai-report', authenticate, require('../ai-agents/routes/dailyReportRoutes'));
 router.use('/ai-agent', authenticate, require('../ai-agents/routes/adminRoutes'));
 router.use('/ai-performance-analysis', authenticate, require('../ai-agents/routes/performanceAnalysisRoutes'));

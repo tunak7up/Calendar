@@ -76,6 +76,26 @@ class SSEManager {
   }
 
   /**
+   * Phát sự kiện tới tất cả người dùng đang kết nối
+   * @param {string} eventName
+   * @param {any} data
+   */
+  broadcast(eventName, data) {
+    if (this.clients.size === 0) return;
+    const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+
+    for (const [pId, userConnections] of this.clients.entries()) {
+      userConnections.forEach((res) => {
+        try {
+          res.write(payload);
+        } catch (err) {
+          // Connection broken, handled by close listener
+        }
+      });
+    }
+  }
+
+  /**
    * Gửi heartbeat ping giữ kết nối cho tất cả clients đang mở
    */
   broadcastPing() {

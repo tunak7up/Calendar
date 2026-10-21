@@ -17,6 +17,7 @@ const task_status = require('./task_status');
 const push_subscription = require('./pushSubscription');
 const change_history = require('./change_history');
 const fileAttachment = require('./fileAttachment');
+const backup_log = require('./backup_log');
 
 person.hasMany(task, { foreignKey: 'assigner_id', as: 'assigned_tasks' });
 task.belongsTo(person, { foreignKey: 'assigner_id', as: 'assigner' });
@@ -88,5 +89,6 @@ module.exports = {
     task_status,
     push_subscription,
     change_history,
-    fileAttachment
+    fileAttachment,
+    backup_log
 };

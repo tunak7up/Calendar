@@ -1,5 +1,5 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon, ExclamationTriangleIcon, ClockIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Cog6ToothIcon, UserIcon, SparklesIcon, ExclamationTriangleIcon, ClockIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, CheckIcon, CircleStackIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -168,6 +168,16 @@ export default function HeaderPage({ isAdmin }) {
     // Lắng nghe sự kiện đã đọc tất cả
     eventSource.addEventListener('all_notifications_read', () => {
       setNotifications((prev) => prev.map(n => ({ ...n, is_read: true })));
+    });
+
+    // Lắng nghe sự kiện tiến độ backup realtime và dispatch tới các page/hook quan tâm
+    eventSource.addEventListener('backup_progress', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        window.dispatchEvent(new CustomEvent('backup_progress', { detail: data }));
+      } catch (err) {
+        console.error('[SSE] Error parsing backup_progress:', err);
+      }
     });
 
     eventSource.onerror = (err) => {
@@ -377,6 +387,17 @@ export default function HeaderPage({ isAdmin }) {
                     className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
                   >
                     <SparklesIcon className="h-6 w-6 text-purple-600 hover:text-purple-800 transition-colors" aria-hidden="true" />
+                  </Link>
+                )}
+
+                {/* Admin Backup Icon */}
+                {isAdmin && (
+                  <Link
+                    to="/admin/backup"
+                    title="Quản lý Backup"
+                    className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#86b7fe]"
+                  >
+                    <CircleStackIcon className="h-6 w-6 text-blue-600 hover:text-blue-800 transition-colors" aria-hidden="true" />
                   </Link>
                 )}
 

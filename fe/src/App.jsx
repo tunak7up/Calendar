@@ -36,6 +36,7 @@ import AdminReportHistory from "./pages/admin/AdminReportHistory";
 import AdminPresetReasons from "./pages/admin/AdminPresetReasons";
 import AdminThemeSettings from "./pages/admin/AdminThemeSettings";
 import AdminAiAgents from "./pages/admin/AdminAiAgents";
+import AdminBackup from "./pages/admin/AdminBackup";
 
 import "./styles/App.css";
 
@@ -302,6 +303,7 @@ function App() {
       "/admin/reports",
       "/admin/preset-reasons",
       "/admin/ai-agents",
+      "/admin/backup",
     ];
     if (isAdmin && singleItemAdminPaths.includes(location.pathname)) {
       return null;
@@ -444,6 +446,12 @@ function App() {
               path="/admin/ai-agents"
               element={
                 isAdmin ? <AdminAiAgents /> : <Navigate to="/schedule" />
+              }
+            />
+            <Route
+              path="/admin/backup"
+              element={
+                isAdmin ? <AdminBackup /> : <Navigate to="/schedule" />
               }
             />
 

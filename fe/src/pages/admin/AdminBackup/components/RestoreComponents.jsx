@@ -186,7 +186,7 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="Nhập mã bí mật trigger để xác thực..."
               autoComplete="off"
-              className="w-full px-3.5 py-2 text-sm font-mono border border-amber-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition"
+              className="w-full px-3.5 py-2.5 text-sm font-mono font-medium text-gray-900 bg-white placeholder:text-gray-400 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm"
             />
             <p className="text-[11px] text-amber-800/80 mt-1">
               Bắt buộc nhập chính xác mã bí mật để can thiệp trigger bảo vệ CSDL.
@@ -195,8 +195,8 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
 
           {/* Confirm keyword */}
           <div>
-            <label htmlFor="restore-confirm-input" className="text-xs font-medium text-gray-600">
-              Gõ <span className="font-mono font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded">{CONFIRM_KEYWORD}</span> để xác nhận
+            <label htmlFor="restore-confirm-input" className="text-xs font-medium text-gray-700">
+              Gõ <span className="font-mono font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">{CONFIRM_KEYWORD}</span> để xác nhận
             </label>
             <input
               id="restore-confirm-input"
@@ -205,7 +205,7 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder={CONFIRM_KEYWORD}
               autoComplete="off"
-              className="mt-1.5 w-full px-3.5 py-2.5 text-sm font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition"
+              className="mt-1.5 w-full px-3.5 py-2.5 text-sm font-mono font-medium text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm"
             />
           </div>
         </div>

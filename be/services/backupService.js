@@ -248,6 +248,105 @@ const getUploadFilesRecursively = (dir = UPLOADS_DIR, base = '') => {
 };
 
 /**
+ * Định dạng giá trị JavaScript sang cú pháp T-SQL chuẩn MSSQL
+ */
+const formatSqlValue = (val) => {
+    if (val === null || val === undefined) {
+        return 'NULL';
+    }
+    if (typeof val === 'boolean') {
+        return val ? '1' : '0';
+    }
+    if (typeof val === 'number') {
+        return Number.isFinite(val) ? String(val) : 'NULL';
+    }
+    if (val instanceof Date) {
+        return `'${val.toISOString()}'`;
+    }
+    if (typeof val === 'object') {
+        const jsonStr = JSON.stringify(val).replace(/'/g, "''");
+        return `N'${jsonStr}'`;
+    }
+    const str = String(val).replace(/'/g, "''");
+    return `N'${str}'`;
+};
+
+/**
+ * Sinh file script T-SQL Dump (.sql) hoàn chỉnh để import vào Microsoft SQL Server
+ */
+const generateSqlDump = (dbData) => {
+    const lines = [];
+    const exportedAt = new Date().toISOString();
+    const dbName = process.env.DB_NAME || 'Calendar';
+
+    lines.push('-- =========================================================================');
+    lines.push(`-- KIS CALENDAR - FULL DATABASE SQL DUMP (MS SQL SERVER)`);
+    lines.push(`-- Exported At: ${exportedAt}`);
+    lines.push(`-- Target Database: [${dbName}]`);
+    lines.push(`-- Instructions: Mở file này trong SSMS (SQL Server Management Studio) và bấm Execute (F5)`);
+    lines.push('-- =========================================================================\n');
+
+    lines.push(`USE [${dbName}];`);
+    lines.push('GO\n');
+
+    lines.push('SET NOCOUNT ON;');
+    lines.push('SET XACT_ABORT ON;\n');
+
+    lines.push('-- 1. Tạm thời vô hiệu hóa toàn bộ ràng buộc khóa ngoại để import không bị lỗi thứ tự bảng');
+    lines.push("EXEC sp_msforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';");
+    lines.push('GO\n');
+
+    for (const [modelKey, rows] of Object.entries(dbData)) {
+        if (!Array.isArray(rows) || rows.length === 0) {
+            lines.push(`-- Bảng [${modelKey}]: Không có dữ liệu để import\n`);
+            continue;
+        }
+
+        // Lấy tên bảng thực tế trong Database (ví dụ theme_setting -> ThemeSettings)
+        const model = models[modelKey];
+        const actualTableName = (model && typeof model.getTableName === 'function')
+            ? model.getTableName()
+            : (model && model.tableName ? model.tableName : modelKey);
+
+        const columns = Object.keys(rows[0]);
+        const escapedCols = columns.map(c => `[${c}]`).join(', ');
+
+        lines.push(`-- -------------------------------------------------------------------------`);
+        lines.push(`-- Bảng: [dbo].[${actualTableName}] (${rows.length.toLocaleString('vi-VN')} bản ghi)`);
+        lines.push(`-- -------------------------------------------------------------------------`);
+        lines.push(`IF OBJECTPROPERTY(OBJECT_ID(N'[dbo].[${actualTableName}]'), 'TableHasIdentity') = 1 SET IDENTITY_INSERT [dbo].[${actualTableName}] ON;`);
+        lines.push('GO\n');
+
+        // Chia chunk (100 dòng mỗi câu lệnh INSERT để tối ưu bộ nhớ và hiệu năng MSSQL)
+        const chunkSize = 100;
+        for (let i = 0; i < rows.length; i += chunkSize) {
+            const chunk = rows.slice(i, i + chunkSize);
+            const valuesClauses = chunk.map(row => {
+                const vals = columns.map(col => formatSqlValue(row[col])).join(', ');
+                return `  (${vals})`;
+            });
+
+            lines.push(`INSERT INTO [dbo].[${actualTableName}] (${escapedCols}) VALUES`);
+            lines.push(valuesClauses.join(',\n') + ';');
+            lines.push('GO\n');
+        }
+
+        lines.push(`IF OBJECTPROPERTY(OBJECT_ID(N'[dbo].[${actualTableName}]'), 'TableHasIdentity') = 1 SET IDENTITY_INSERT [dbo].[${actualTableName}] OFF;`);
+        lines.push('GO\n');
+    }
+
+    lines.push('-- =========================================================================');
+    lines.push('-- 2. Kích hoạt lại toàn bộ ràng buộc khóa ngoại sau khi import xong');
+    lines.push('-- =========================================================================');
+    lines.push("EXEC sp_msforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';");
+    lines.push('GO\n');
+    lines.push(`PRINT '>>> KIS Calendar: Da import thanh cong toan bo CSDL tu file Dump!';`);
+    lines.push('GO\n');
+
+    return lines.join('\n');
+};
+
+/**
  * Đóng gói toàn bộ Database và Uploads thành file ZIP
  */
 const createZipArchive = ({ dbData, uploadFiles, outputPath, onProgress }) => {
@@ -294,7 +393,21 @@ const createZipArchive = ({ dbData, uploadFiles, outputPath, onProgress }) => {
         }, null, 0);
         archive.append(dbPayload, { name: 'database.json' });
 
-        // 2. Thêm manifest.json (thông tin tổng quan bản sao lưu)
+        // 2. Thêm file dump.sql (và database.sql) để import trực tiếp vào SQL Server
+        const sqlDump = generateSqlDump(dbData);
+        archive.append(sqlDump, { name: 'dump.sql' });
+        archive.append(sqlDump, { name: 'database.sql' });
+
+        // Ghi thêm 1 bản file dump.sql trực tiếp ra thư mục backups trên máy chủ để dùng ngay mà không cần unzip
+        try {
+            const sqlDumpPath = outputPath.replace(/\.zip$/, '.sql');
+            fs.writeFileSync(sqlDumpPath, sqlDump, 'utf8');
+            console.log(`[BackupService] 📄 Đã tạo file SQL dump độc lập: ${sqlDumpPath}`);
+        } catch (dumpErr) {
+            console.warn('[BackupService] Không thể ghi file .sql độc lập:', dumpErr.message);
+        }
+
+        // 3. Thêm manifest.json (thông tin tổng quan bản sao lưu)
         const totalUploadSize = uploadFiles.reduce((sum, f) => sum + f.size, 0);
         const manifest = JSON.stringify({
             createdAt: new Date().toISOString(),
@@ -303,11 +416,17 @@ const createZipArchive = ({ dbData, uploadFiles, outputPath, onProgress }) => {
             tablesCount: Object.keys(dbData).length,
             uploadFilesCount: uploadFiles.length,
             uploadFilesSizeBytes: totalUploadSize,
-            description: 'Full Backup gồm toàn bộ cơ sở dữ liệu và các tệp đính kèm vật lý (Local uploads)'
+            description: 'Full Backup gồm CSDL (dump.sql, database.json) và các tệp đính kèm vật lý (Local uploads)',
+            files: [
+                'dump.sql (File script T-SQL dùng import vào SQL Server qua SSMS)',
+                'database.sql (Bản sao lưu T-SQL tương tự dump.sql)',
+                'database.json (Dữ liệu dạng JSON có cấu trúc)',
+                'uploads/ (Toàn bộ tệp đính kèm vật lý)'
+            ]
         }, null, 2);
         archive.append(manifest, { name: 'manifest.json' });
 
-        // 3. Đưa toàn bộ file vật lý vào thư mục uploads/ trong file zip
+        // 4. Đưa toàn bộ file vật lý vào thư mục uploads/ trong file zip
         for (const file of uploadFiles) {
             archive.file(file.fullPath, { name: path.join('uploads', file.relPath) });
         }
@@ -659,10 +778,21 @@ const deleteBackup = async (id) => {
         }
     }
 
-    // Xóa file local
+    // Xóa file local .zip
     if (record.local_path && fs.existsSync(record.local_path)) {
         fs.unlinkSync(record.local_path);
         console.log(`[BackupService] 🗑️ Đã xóa local: ${record.local_path}`);
+
+        // Xóa luôn file .sql tương ứng nếu có
+        const sqlPath = record.local_path.replace(/\.zip$/, '.sql');
+        if (fs.existsSync(sqlPath)) {
+            try {
+                fs.unlinkSync(sqlPath);
+                console.log(`[BackupService] 🗑️ Đã xóa local sql dump: ${sqlPath}`);
+            } catch (err) {
+                console.warn('[BackupService] Không thể xóa file .sql:', err.message);
+            }
+        }
     }
 
     await record.destroy();

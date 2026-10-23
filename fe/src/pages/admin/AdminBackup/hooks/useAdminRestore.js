@@ -123,7 +123,7 @@ export function useAdminRestore({ onFinished, onSuccess, onError } = {}) {
 
   const closeRestoreModal = useCallback(() => setRestoreTarget(null), []);
 
-  const confirmRestore = async () => {
+  const confirmRestore = async (triggerSecret = '') => {
     if (!restoreTarget) return;
     const target = restoreTarget;
     setRestoreTarget(null);
@@ -139,9 +139,10 @@ export function useAdminRestore({ onFinished, onSuccess, onError } = {}) {
     });
 
     try {
+      const payloadOptions = { ...restoreOptions, triggerSecret };
       const res = target.type === 'file'
-        ? await backupService.restoreFromFile(target.file, restoreOptions)
-        : await backupService.restore(target.backup.id, restoreOptions);
+        ? await backupService.restoreFromFile(target.file, payloadOptions)
+        : await backupService.restore(target.backup.id, payloadOptions);
 
       if (res?.success) {
         if (res.data?.progress) applyUpdate(res.data.progress);

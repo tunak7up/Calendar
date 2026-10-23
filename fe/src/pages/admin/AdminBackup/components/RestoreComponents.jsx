@@ -13,6 +13,7 @@ import {
   DocumentTextIcon,
   PaperClipIcon,
   ClockIcon,
+  KeyIcon,
 } from '@heroicons/react/24/outline';
 
 const CONFIRM_KEYWORD = 'KHOI PHUC';
@@ -55,6 +56,8 @@ export function RestoreConfirmModal(props) {
 
 function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm }) {
   const [keyword, setKeyword] = useState('');
+  const [triggerSecret, setTriggerSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onCancel();
@@ -65,7 +68,13 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
   const isFile = target.type === 'file';
   const name = isFile ? target.file.name : target.backup.filename;
   const size = isFile ? target.file.size : target.backup.size_bytes;
-  const canConfirm = keyword.trim().toUpperCase() === CONFIRM_KEYWORD;
+  const canConfirm = keyword.trim().toUpperCase() === CONFIRM_KEYWORD && triggerSecret.trim().length > 0;
+
+  const handleSubmit = () => {
+    if (canConfirm) {
+      onConfirm(triggerSecret.trim());
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -153,6 +162,37 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
             </p>
           </div>
 
+          {/* Trigger Secret Input */}
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5">
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="restore-trigger-secret-input" className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <KeyIcon className="w-4 h-4 text-amber-600" />
+                Mã bí mật Trigger CSDL (DB_APP_CONTEXT_SECRET) <span className="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowSecret(!showSecret)}
+                className="text-[11px] text-amber-800 hover:text-amber-950 font-semibold underline"
+              >
+                {showSecret ? 'Ẩn' : 'Hiện'}
+              </button>
+            </div>
+            <input
+              id="restore-trigger-secret-input"
+              type={showSecret ? 'text' : 'password'}
+              autoFocus
+              value={triggerSecret}
+              onChange={(e) => setTriggerSecret(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="Nhập mã bí mật trigger để xác thực..."
+              autoComplete="off"
+              className="w-full px-3.5 py-2 text-sm font-mono border border-amber-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition"
+            />
+            <p className="text-[11px] text-amber-800/80 mt-1">
+              Bắt buộc nhập chính xác mã bí mật để can thiệp trigger bảo vệ CSDL.
+            </p>
+          </div>
+
           {/* Confirm keyword */}
           <div>
             <label htmlFor="restore-confirm-input" className="text-xs font-medium text-gray-600">
@@ -160,10 +200,9 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
             </label>
             <input
               id="restore-confirm-input"
-              autoFocus
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && canConfirm && onConfirm()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder={CONFIRM_KEYWORD}
               autoComplete="off"
               className="mt-1.5 w-full px-3.5 py-2.5 text-sm font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition"
@@ -182,7 +221,7 @@ function RestoreConfirmDialog({ target, options, setOptions, onCancel, onConfirm
           </button>
           <button
             id="btn-confirm-restore"
-            onClick={onConfirm}
+            onClick={handleSubmit}
             disabled={!canConfirm}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed rounded-xl shadow-md shadow-orange-500/20 transition active:scale-[0.97]"
           >

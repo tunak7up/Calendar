@@ -49,6 +49,27 @@ let currentProgress = { ...INITIAL_PROGRESS };
 
 const ts = () => `[${new Date().toLocaleTimeString('vi-VN')}]`;
 
+/**
+ * Trích xuất thông báo lỗi chi tiết từ AggregateError / Sequelize / MSSQL error
+ */
+const extractErrorMessage = (err) => {
+    if (!err) return 'Lỗi không xác định';
+    if (Array.isArray(err.errors) && err.errors.length > 0) {
+        const msgs = err.errors.map(e => e.message || String(e)).filter(Boolean);
+        if (msgs.length > 0) return msgs.join('; ');
+    }
+    if (err.original && err.original.message) {
+        return err.original.message;
+    }
+    if (err.parent && err.parent.message) {
+        return err.parent.message;
+    }
+    if (err.message && err.message.trim() !== '') {
+        return err.message;
+    }
+    return String(err);
+};
+
 const notifyProgress = (updates = {}, logMsg = null) => {
     const logs = [...(currentProgress.logs || [])];
     if (logMsg) {
@@ -168,19 +189,37 @@ const getTableName = (model) => {
 };
 
 /**
- * Bật / tắt ràng buộc khóa ngoại cho các bảng được restore
+ * Bật / tắt ràng buộc khóa ngoại và triggers cho các bảng được restore
  */
-const setConstraints = async (enable, transaction) => {
+const setConstraints = async (enable, transaction, triggerSecret = null) => {
     const dialect = sequelize.getDialect();
     if (dialect === 'mssql') {
-        for (const key of BACKUP_TABLES) {
-            const model = models[key];
-            if (!model) continue;
-            const table = getTableName(model);
-            const sql = enable
-                ? `IF OBJECT_ID(N'[dbo].[${table}]', N'U') IS NOT NULL ALTER TABLE [dbo].[${table}] CHECK CONSTRAINT ALL`
-                : `IF OBJECT_ID(N'[dbo].[${table}]', N'U') IS NOT NULL ALTER TABLE [dbo].[${table}] NOCHECK CONSTRAINT ALL`;
-            await sequelize.query(sql, { transaction });
+        const secret = triggerSecret || process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
+        // Luôn gán app_context để vượt qua các trigger bảo vệ dữ liệu (ví dụ: trg_protect_daily_report_mutation)
+        await sequelize.query(`EXEC sp_set_session_context N'app_context', N'${secret}';`, { transaction }).catch(() => {});
+
+        if (enable) {
+            // 1. Kích hoạt lại toàn bộ triggers
+            await sequelize.query("EXEC sp_msforeachtable 'ALTER TABLE ? ENABLE TRIGGER ALL';", { transaction }).catch(() => {});
+            // 2. Kích hoạt lại khóa ngoại
+            for (const key of BACKUP_TABLES) {
+                const model = models[key];
+                if (!model) continue;
+                const table = getTableName(model);
+                const sql = `IF OBJECT_ID(N'[dbo].[${table}]', N'U') IS NOT NULL ALTER TABLE [dbo].[${table}] CHECK CONSTRAINT ALL`;
+                await sequelize.query(sql, { transaction }).catch(() => {});
+            }
+        } else {
+            // 1. Vô hiệu hóa toàn bộ triggers trong lúc restore
+            await sequelize.query("EXEC sp_msforeachtable 'ALTER TABLE ? DISABLE TRIGGER ALL';", { transaction }).catch(() => {});
+            // 2. Vô hiệu hóa khóa ngoại
+            for (const key of BACKUP_TABLES) {
+                const model = models[key];
+                if (!model) continue;
+                const table = getTableName(model);
+                const sql = `IF OBJECT_ID(N'[dbo].[${table}]', N'U') IS NOT NULL ALTER TABLE [dbo].[${table}] NOCHECK CONSTRAINT ALL`;
+                await sequelize.query(sql, { transaction }).catch(() => {});
+            }
         }
     } else if (dialect === 'mysql' || dialect === 'mariadb') {
         await sequelize.query(`SET FOREIGN_KEY_CHECKS = ${enable ? 1 : 0}`, { transaction });
@@ -192,7 +231,7 @@ const setConstraints = async (enable, transaction) => {
 /**
  * Khôi phục CSDL từ payload database.json (trong 1 transaction, lỗi sẽ rollback toàn bộ)
  */
-const restoreDatabase = async (dbData) => {
+const restoreDatabase = async (dbData, triggerSecret = null) => {
     const tablesToRestore = BACKUP_TABLES.filter(key => models[key] && Array.isArray(dbData[key]));
     const totalRows = tablesToRestore.reduce((sum, key) => sum + dbData[key].length, 0);
     let rowsRestored = 0;
@@ -200,7 +239,7 @@ const restoreDatabase = async (dbData) => {
     notifyProgress({ totalRows, totalTables: tablesToRestore.length });
 
     await sequelize.transaction(async (transaction) => {
-        await setConstraints(false, transaction);
+        await setConstraints(false, transaction, triggerSecret);
 
         // 1. Xóa dữ liệu hiện tại (thứ tự ngược để con trước cha)
         notifyProgress({
@@ -245,7 +284,7 @@ const restoreDatabase = async (dbData) => {
             notifyProgress({ rowsRestored }, `${ts()} ✅ Khôi phục bảng [${key}]: ${rows.length} dòng`);
         }
 
-        await setConstraints(true, transaction);
+        await setConstraints(true, transaction, triggerSecret);
     });
 
     return { rowsRestored, tablesRestored: tablesToRestore.length };
@@ -292,6 +331,7 @@ const restoreUploadFiles = async (uploadEntries) => {
  * @param {string} [options.uploadedFileName] - Tên gốc file upload
  * @param {boolean} [options.restoreFiles=true] - Có khôi phục tệp đính kèm hay không
  * @param {boolean} [options.safetyBackup=true] - Tạo bản backup an toàn trước khi restore
+ * @param {string|null} [options.triggerSecret] - Mã bí mật trigger CSDL
  * @param {number|null} [options.requestedBy]
  */
 const restoreBackup = async ({
@@ -300,6 +340,7 @@ const restoreBackup = async ({
     uploadedFileName = null,
     restoreFiles = true,
     safetyBackup = true,
+    triggerSecret = null,
     requestedBy = null
 } = {}) => {
     if (isRestoreRunning()) throw new Error('Một tiến trình khôi phục khác đang chạy');
@@ -388,7 +429,7 @@ const restoreBackup = async ({
         }
 
         // 4. Khôi phục CSDL
-        const { rowsRestored, tablesRestored } = await restoreDatabase(payload.data);
+        const { rowsRestored, tablesRestored } = await restoreDatabase(payload.data, triggerSecret);
 
         // 5. Khôi phục tệp đính kèm
         let filesRestored = 0;
@@ -426,13 +467,14 @@ const restoreBackup = async ({
         return result;
     } catch (err) {
         console.error('[RestoreService] ❌ Lỗi restore:', err);
+        const errorMsg = extractErrorMessage(err);
         notifyProgress({
             running: false,
             stage: 'failed',
-            error: err.message,
+            error: errorMsg,
             completedAt: Date.now(),
-            message: `Khôi phục thất bại: ${err.message}`
-        }, `${ts()} ❌ Khôi phục thất bại (CSDL đã được rollback): ${err.message}`);
+            message: `Khôi phục thất bại: ${errorMsg}`
+        }, `${ts()} ❌ Khôi phục thất bại (CSDL đã được rollback): ${errorMsg}`);
         throw err;
     } finally {
         if (tempFileToCleanup && fs.existsSync(tempFileToCleanup)) {

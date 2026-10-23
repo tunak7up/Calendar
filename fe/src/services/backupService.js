@@ -69,21 +69,22 @@ export const backupService = {
   /**
    * Khôi phục dữ liệu từ một bản backup có sẵn
    */
-  restore: async (id, { restoreFiles = true, safetyBackup = true } = {}) => {
+  restore: async (id, { restoreFiles = true, safetyBackup = true, triggerSecret = '' } = {}) => {
     return await apiFetch(`/backup/restore/${id}`, {
       method: 'POST',
-      body: JSON.stringify({ restoreFiles, safetyBackup })
+      body: JSON.stringify({ restoreFiles, safetyBackup, triggerSecret })
     });
   },
 
   /**
    * Khôi phục dữ liệu từ file Full Backup (.zip) upload từ máy
    */
-  restoreFromFile: async (file, { restoreFiles = true, safetyBackup = true } = {}) => {
+  restoreFromFile: async (file, { restoreFiles = true, safetyBackup = true, triggerSecret = '' } = {}) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('restoreFiles', String(restoreFiles));
     formData.append('safetyBackup', String(safetyBackup));
+    formData.append('triggerSecret', triggerSecret);
     return await apiFetch('/backup/restore-upload', {
       method: 'POST',
       body: formData

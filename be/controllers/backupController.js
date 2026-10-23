@@ -198,12 +198,23 @@ const restoreFromBackup = async (req, res) => {
         if (!backupId) return sendRes(res, 400, 'ID backup không hợp lệ');
 
         const requestedBy = req.user?.person_id || null;
+        const triggerSecret = req.body?.triggerSecret;
+        const expectedSecret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
+
+        if (!triggerSecret) {
+            return sendRes(res, 400, 'Vui lòng nhập mã bí mật Trigger CSDL để tiếp tục.');
+        }
+        if (triggerSecret !== expectedSecret) {
+            return sendRes(res, 403, 'Mã bí mật Trigger CSDL không chính xác. Thao tác khôi phục bị từ chối.');
+        }
+
         console.log(`[BackupController] ♻️ Admin ID ${requestedBy} khôi phục từ backup ID ${backupId}...`);
 
         restoreService.restoreBackup({
             backupId,
             restoreFiles: parseBool(req.body?.restoreFiles),
             safetyBackup: parseBool(req.body?.safetyBackup),
+            triggerSecret,
             requestedBy
         }).catch(err => console.error('[BackupController] ❌ Background restore error:', err.message));
 
@@ -231,6 +242,18 @@ const restoreFromUpload = async (req, res) => {
         }
 
         const requestedBy = req.user?.person_id || null;
+        const triggerSecret = req.body?.triggerSecret;
+        const expectedSecret = process.env.DB_APP_CONTEXT_SECRET || 'backend_service_secret';
+
+        if (!triggerSecret) {
+            fs.unlink(uploaded.path, () => {});
+            return sendRes(res, 400, 'Vui lòng nhập mã bí mật Trigger CSDL để tiếp tục.');
+        }
+        if (triggerSecret !== expectedSecret) {
+            fs.unlink(uploaded.path, () => {});
+            return sendRes(res, 403, 'Mã bí mật Trigger CSDL không chính xác. Thao tác khôi phục bị từ chối.');
+        }
+
         console.log(`[BackupController] ♻️ Admin ID ${requestedBy} khôi phục từ file upload: ${uploaded.originalname}`);
 
         restoreService.restoreBackup({
@@ -238,6 +261,7 @@ const restoreFromUpload = async (req, res) => {
             uploadedFileName: uploaded.originalname,
             restoreFiles: parseBool(req.body?.restoreFiles),
             safetyBackup: parseBool(req.body?.safetyBackup),
+            triggerSecret,
             requestedBy
         }).catch(err => console.error('[BackupController] ❌ Background restore error:', err.message));
 

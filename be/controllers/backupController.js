@@ -1,5 +1,7 @@
 const path = require('path');
+const fs = require('fs');
 const backupService = require('../services/backupService');
+const restoreService = require('../services/restoreService');
 const { sendRes } = require('../utils/responseHelper');
 
 /**
@@ -14,6 +16,10 @@ const createBackup = async (req, res) => {
             return sendRes(res, 409, 'Một tiến trình sao lưu khác đang được thực hiện. Vui lòng chờ...', {
                 progress: backupService.getProgress()
             });
+        }
+
+        if (restoreService.isRestoreRunning()) {
+            return sendRes(res, 409, 'Đang có tiến trình khôi phục dữ liệu, không thể sao lưu lúc này.');
         }
 
         console.log(`[BackupController] 🚀 Admin ID ${createdBy} kích hoạt backup thủ công...`);
@@ -130,6 +136,11 @@ const triggerCronBackup = async (req, res) => {
 
         console.log('[BackupController] ⏰ Cron backup kích hoạt...');
 
+        if (restoreService.isRestoreRunning() || backupService.isBackupRunning()) {
+            console.warn('[BackupController] ⚠️ Bỏ qua cron backup vì đang có tiến trình backup/restore chạy');
+            return res.json({ success: false, message: 'Đang có tiến trình backup/restore chạy, bỏ qua lần này' });
+        }
+
         // Chạy backup không chờ (non-blocking) để trả response nhanh
         backupService.createBackup({ triggeredBy: 'cron', createdBy: null })
             .then(async (result) => {
@@ -155,11 +166,110 @@ const triggerCronBackup = async (req, res) => {
     }
 };
 
+const parseBool = (val, defaultVal = true) => {
+    if (val === undefined || val === null || val === '') return defaultVal;
+    return !(val === false || val === 'false' || val === '0' || val === 0);
+};
+
+const checkRestoreBusy = (res) => {
+    if (restoreService.isRestoreRunning()) {
+        sendRes(res, 409, 'Một tiến trình khôi phục khác đang chạy. Vui lòng chờ...', {
+            progress: restoreService.getRestoreProgress()
+        });
+        return true;
+    }
+    if (backupService.isBackupRunning()) {
+        sendRes(res, 409, 'Đang có tiến trình sao lưu chạy, vui lòng chờ hoàn tất rồi thử lại.');
+        return true;
+    }
+    return false;
+};
+
+/**
+ * POST /api/backup/restore/:id
+ * Khôi phục dữ liệu từ một bản backup có sẵn trong danh sách (chạy nền)
+ * Body: { restoreFiles?: boolean, safetyBackup?: boolean }
+ */
+const restoreFromBackup = async (req, res) => {
+    try {
+        if (checkRestoreBusy(res)) return;
+
+        const backupId = parseInt(req.params.id);
+        if (!backupId) return sendRes(res, 400, 'ID backup không hợp lệ');
+
+        const requestedBy = req.user?.person_id || null;
+        console.log(`[BackupController] ♻️ Admin ID ${requestedBy} khôi phục từ backup ID ${backupId}...`);
+
+        restoreService.restoreBackup({
+            backupId,
+            restoreFiles: parseBool(req.body?.restoreFiles),
+            safetyBackup: parseBool(req.body?.safetyBackup),
+            requestedBy
+        }).catch(err => console.error('[BackupController] ❌ Background restore error:', err.message));
+
+        sendRes(res, 202, 'Tiến trình khôi phục đã được khởi chạy', {
+            started: true,
+            progress: restoreService.getRestoreProgress()
+        });
+    } catch (error) {
+        sendRes(res, 500, 'Lỗi khi khôi phục dữ liệu', null, error.message);
+    }
+};
+
+/**
+ * POST /api/backup/restore-upload  (multipart/form-data, field: file)
+ * Khôi phục dữ liệu từ file Full Backup ZIP được upload từ máy admin
+ */
+const restoreFromUpload = async (req, res) => {
+    const uploaded = req.file;
+    try {
+        if (!uploaded) return sendRes(res, 400, 'Vui lòng chọn file backup (.zip)');
+
+        if (checkRestoreBusy(res)) {
+            fs.unlink(uploaded.path, () => {});
+            return;
+        }
+
+        const requestedBy = req.user?.person_id || null;
+        console.log(`[BackupController] ♻️ Admin ID ${requestedBy} khôi phục từ file upload: ${uploaded.originalname}`);
+
+        restoreService.restoreBackup({
+            uploadedFilePath: uploaded.path,
+            uploadedFileName: uploaded.originalname,
+            restoreFiles: parseBool(req.body?.restoreFiles),
+            safetyBackup: parseBool(req.body?.safetyBackup),
+            requestedBy
+        }).catch(err => console.error('[BackupController] ❌ Background restore error:', err.message));
+
+        sendRes(res, 202, 'Tiến trình khôi phục đã được khởi chạy', {
+            started: true,
+            progress: restoreService.getRestoreProgress()
+        });
+    } catch (error) {
+        if (uploaded?.path) fs.unlink(uploaded.path, () => {});
+        sendRes(res, 500, 'Lỗi khi khôi phục dữ liệu', null, error.message);
+    }
+};
+
+/**
+ * GET /api/backup/restore/progress
+ */
+const getRestoreProgress = async (req, res) => {
+    try {
+        sendRes(res, 200, 'Lấy tiến trình khôi phục thành công', restoreService.getRestoreProgress());
+    } catch (error) {
+        sendRes(res, 500, 'Lỗi khi lấy tiến trình khôi phục', null, error.message);
+    }
+};
+
 module.exports = {
     createBackup,
     getBackupProgress,
     getBackupList,
     downloadBackup,
     deleteBackup,
-    triggerCronBackup
+    triggerCronBackup,
+    restoreFromBackup,
+    restoreFromUpload,
+    getRestoreProgress
 };

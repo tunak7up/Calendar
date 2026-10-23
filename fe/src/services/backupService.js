@@ -64,5 +64,36 @@ export const backupService = {
     return await apiFetch(`/backup/${id}`, {
       method: 'DELETE'
     });
+  },
+
+  /**
+   * Khôi phục dữ liệu từ một bản backup có sẵn
+   */
+  restore: async (id, { restoreFiles = true, safetyBackup = true } = {}) => {
+    return await apiFetch(`/backup/restore/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ restoreFiles, safetyBackup })
+    });
+  },
+
+  /**
+   * Khôi phục dữ liệu từ file Full Backup (.zip) upload từ máy
+   */
+  restoreFromFile: async (file, { restoreFiles = true, safetyBackup = true } = {}) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('restoreFiles', String(restoreFiles));
+    formData.append('safetyBackup', String(safetyBackup));
+    return await apiFetch('/backup/restore-upload', {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  /**
+   * Lấy tiến trình khôi phục thời gian thực
+   */
+  getRestoreProgress: async () => {
+    return await apiFetch('/backup/restore/progress');
   }
 };

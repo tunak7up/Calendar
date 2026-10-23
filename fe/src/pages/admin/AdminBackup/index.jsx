@@ -15,8 +15,12 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   CommandLineIcon,
+  ArrowUturnLeftIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 import { useAdminBackup } from './hooks/useAdminBackup';
+import { useAdminRestore } from './hooks/useAdminRestore';
+import { RestoreConfirmModal, RestoreProgressPanel } from './components/RestoreComponents';
 
 const formatBytes = (bytes) => {
   if (!bytes) return '—';
@@ -106,8 +110,28 @@ export default function AdminBackup() {
     backups, loading, creating, downloadingId, deletingId,
     error, successMsg, page, setPage, total, totalPages, LIMIT,
     progress, showProgressPanel, dismissProgressPanel,
-    handleCreate, handleDownload, handleDelete
+    handleCreate, handleDownload, handleDelete,
+    loadBackups, showSuccess, showError
   } = useAdminBackup();
+
+  const {
+    restoreProgress, showRestorePanel, dismissRestorePanel, restoring,
+    restoreTarget, restoreOptions, setRestoreOptions,
+    openRestoreFromBackup, openRestoreFromFile, closeRestoreModal, confirmRestore
+  } = useAdminRestore({
+    onFinished: () => { setPage(1); loadBackups(1); },
+    onSuccess: showSuccess,
+    onError: showError
+  });
+
+  const restoreFileInputRef = useRef(null);
+  const isBusy = creating || progress.running || restoring || restoreProgress.running;
+
+  const handlePickRestoreFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    openRestoreFromFile(file);
+  };
 
   const [showLogs, setShowLogs] = useState(false);
   const logTerminalRef = useRef(null);
@@ -159,10 +183,38 @@ export default function AdminBackup() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <input
+              ref={restoreFileInputRef}
+              type="file"
+              accept=".zip,application/zip"
+              className="hidden"
+              onChange={handlePickRestoreFile}
+            />
+            <button
+              id="btn-restore-from-file"
+              onClick={() => restoreFileInputRef.current?.click()}
+              disabled={isBusy}
+              title="Khôi phục dữ liệu từ file Full Backup (.zip) trên máy của bạn"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl shadow-sm transition-all active:scale-[0.97]"
+            >
+              {restoring || restoreProgress.running ? (
+                <>
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  Đang khôi phục ({restoreProgress.percent}%)...
+                </>
+              ) : (
+                <>
+                  <ArrowUpTrayIcon className="w-5 h-5" />
+                  Khôi phục từ file
+                </>
+              )}
+            </button>
+
           <button
             id="btn-create-backup"
             onClick={handleCreate}
-            disabled={creating || progress.running}
+            disabled={isBusy}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-md shadow-blue-500/20 transition-all active:scale-[0.97] disabled:cursor-not-allowed"
           >
             {creating || progress.running ? (
@@ -177,6 +229,7 @@ export default function AdminBackup() {
               </>
             )}
           </button>
+          </div>
         </div>
 
         {/* Alert Messages */}
@@ -191,6 +244,11 @@ export default function AdminBackup() {
             <XCircleIcon className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
             {error}
           </div>
+        )}
+
+        {/* Real-time Restore Progress Panel */}
+        {showRestorePanel && (
+          <RestoreProgressPanel progress={restoreProgress} onDismiss={dismissRestorePanel} />
         )}
 
         {/* Real-time Backup Progress Panel */}
@@ -553,9 +611,15 @@ export default function AdminBackup() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                           backup.triggered_by === 'cron'
                             ? 'bg-slate-100 text-slate-600'
+                            : backup.triggered_by === 'pre_restore'
+                            ? 'bg-amber-100 text-amber-700'
                             : 'bg-blue-100 text-blue-700'
                         }`}>
-                          {backup.triggered_by === 'cron' ? '⏰ Tự động' : '👤 Thủ công'}
+                          {backup.triggered_by === 'cron'
+                            ? '⏰ Tự động'
+                            : backup.triggered_by === 'pre_restore'
+                            ? '🛡️ Trước khôi phục'
+                            : '👤 Thủ công'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
@@ -583,6 +647,17 @@ export default function AdminBackup() {
                                 ? <ArrowPathIcon className="w-4 h-4 animate-spin" />
                                 : <CloudArrowDownIcon className="w-4 h-4" />
                               }
+                            </button>
+                          )}
+                          {backup.status === 'success' && (
+                            <button
+                              id={`btn-restore-backup-${backup.id}`}
+                              onClick={() => openRestoreFromBackup(backup)}
+                              disabled={isBusy}
+                              title="Khôi phục dữ liệu từ bản backup này"
+                              className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <ArrowUturnLeftIcon className="w-4 h-4" />
                             </button>
                           )}
                           <button
@@ -633,6 +708,14 @@ export default function AdminBackup() {
         </div>
 
       </div>
+
+      <RestoreConfirmModal
+        target={restoreTarget}
+        options={restoreOptions}
+        setOptions={setRestoreOptions}
+        onCancel={closeRestoreModal}
+        onConfirm={confirmRestore}
+      />
     </div>
   );
 }

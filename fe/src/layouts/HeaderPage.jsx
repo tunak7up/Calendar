@@ -180,6 +180,16 @@ export default function HeaderPage({ isAdmin }) {
       }
     });
 
+    // Lắng nghe sự kiện tiến độ khôi phục dữ liệu (restore) realtime
+    eventSource.addEventListener('restore_progress', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        window.dispatchEvent(new CustomEvent('restore_progress', { detail: data }));
+      } catch (err) {
+        console.error('[SSE] Error parsing restore_progress:', err);
+      }
+    });
+
     eventSource.onerror = (err) => {
       // EventSource sẽ tự động reconnect ngầm khi có sự cố mạng
       console.warn('[SSE] EventSource interrupted, auto-reconnecting...', err);

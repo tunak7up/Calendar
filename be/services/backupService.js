@@ -163,7 +163,8 @@ const readAllData = async (onProgress) => {
         }
 
         try {
-            const rows = await model.findAll({ raw: true });
+            // hooks: false để lấy dữ liệu gốc (VD: person.afterFind đổi email placeholder thành '' sẽ gây lỗi UNIQUE khi restore)
+            const rows = await model.findAll({ raw: true, hooks: false });
             data[tableName] = rows;
             totalRows += rows.length;
 
